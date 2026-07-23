@@ -47,6 +47,8 @@ class RoundState(BaseModel):
 
     motherlode: int
 
+    # Raw protocol reward array.
+    # Semantics are intentionally not assumed to map to board squares.
     rewards: SquareValues
 
     total_vaulted: int
@@ -62,13 +64,15 @@ class ObserverSnapshot(BaseModel):
     """
     Immutable point-in-time observation.
 
-    Raw observations should be preserved exactly as seen by the Observer.
-    Derived metrics belong in the feature layer.
+    Raw protocol observations should be preserved exactly.
+    Derived strategy features belong in the feature layer.
     """
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: int = 1
+    schema_version: int = 2
+
+    collector_session_id: str
 
     observed_at_utc: datetime
     rpc_slot: int
