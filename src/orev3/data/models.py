@@ -6,7 +6,10 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field
 
 
-SquareValues = Annotated[list[int], Field(min_length=25, max_length=25)]
+SquareValues = Annotated[
+    list[int],
+    Field(min_length=25, max_length=25),
+]
 
 
 class BoardState(BaseModel):
@@ -20,6 +23,14 @@ class BoardState(BaseModel):
     production_cost_ema: int | None = None
 
 
+class TreasuryState(BaseModel):
+    """Decoded global ORE Treasury state."""
+
+    model_config = ConfigDict(frozen=True)
+
+    motherlode: int
+
+
 class RoundState(BaseModel):
     """Decoded state for one ORE mining round."""
 
@@ -31,10 +42,18 @@ class RoundState(BaseModel):
     mass: SquareValues
     miner_counts: SquareValues
 
-    motherlode: int | None = None
-    total_miners: int | None = None
-    total_vaulted: int | None = None
-    total_winnings: int | None = None
+    slot_hash_hex: str
+    expires_at: int
+
+    motherlode: int
+
+    rewards: SquareValues
+
+    total_vaulted: int
+    total_winnings: int
+    total_miners: int
+
+    top_miner: str
 
     entropy: int | None = None
 
@@ -44,7 +63,7 @@ class ObserverSnapshot(BaseModel):
     Immutable point-in-time observation.
 
     Raw observations should be preserved exactly as seen by the Observer.
-    Derived metrics belong in the feature layer, not here.
+    Derived metrics belong in the feature layer.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -55,4 +74,5 @@ class ObserverSnapshot(BaseModel):
     rpc_slot: int
 
     board: BoardState
+    treasury: TreasuryState
     round: RoundState
