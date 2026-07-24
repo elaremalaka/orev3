@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 from pathlib import Path
 
 from orev3.historical.models import (
@@ -65,6 +66,29 @@ def load_round_index(
     return rounds
 
 
+@lru_cache(
+    maxsize=None,
+)
+def _load_source_lines(
+    source_file: str,
+) -> tuple[str, ...]:
+    """
+    Read one snapshot JSONL file once per process.
+    """
+
+    path = Path(
+        source_file
+    )
+
+    with path.open(
+        "r",
+        encoding="utf-8",
+    ) as handle:
+        return tuple(
+            handle
+        )
+
+
 def load_snapshot_reference(
     source_file: str,
     source_line_number: int,
@@ -84,36 +108,35 @@ def load_snapshot_reference(
             "source_line_number must be >= 1"
         )
 
-    with path.open(
-        "r",
-        encoding="utf-8",
-    ) as handle:
-        for current_line_number, line in enumerate(
-            handle,
-            start=1,
-        ):
-            if (
-                current_line_number
-                != source_line_number
-            ):
-                continue
+    lines = _load_source_lines(
+        source_file
+    )
 
-            raw = json.loads(
-                line
-            )
+    zero_based_index = (
+        source_line_number - 1
+    )
 
-            return normalize_snapshot(
-                raw=raw,
-                source_file=path,
-                source_line_number=(
-                    current_line_number
-                ),
-            )
+    if zero_based_index >= len(
+        lines
+    ):
+        raise ValueError(
+            f"Snapshot reference not found: "
+            f"{source_file}:"
+            f"{source_line_number}"
+        )
 
-    raise ValueError(
-        f"Snapshot reference not found: "
-        f"{source_file}:"
-        f"{source_line_number}"
+    raw = json.loads(
+        lines[
+            zero_based_index
+        ]
+    )
+
+    return normalize_snapshot(
+        raw=raw,
+        source_file=path,
+        source_line_number=(
+            source_line_number
+        ),
     )
 
 
