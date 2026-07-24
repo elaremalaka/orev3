@@ -143,6 +143,16 @@ def main() -> None:
     )
 
     print(
+        f"Maximum allowed distance: "
+        f"{selection.max_slot_distance}"
+    )
+
+    print(
+        f"Within tolerance: "
+        f"{selection.within_tolerance}"
+    )
+
+    print(
         f"Observed at UTC: "
         f"{point.observed_at_utc}"
     )
