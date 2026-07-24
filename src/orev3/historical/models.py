@@ -193,6 +193,13 @@ class RoundLifecycle(BaseModel):
 
     finalized_outcome: FinalizedRoundOutcome | None
 
+    # Distinguishes outcomes captured in the live observation
+    # timeline from outcomes fetched later for scoring/backtesting.
+    finalized_outcome_source: Literal[
+        "observed",
+        "enriched",
+    ] | None = None
+
     quality: RoundQualityMetadata
 
 
@@ -207,3 +214,92 @@ class LifecycleAssemblyResult(BaseModel):
 
     total_snapshots: int
     total_rounds: int
+
+
+class ObservationReference(BaseModel):
+    """
+    Pointer back to one immutable raw snapshot.
+
+    The full observation remains in the raw JSONL file.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    source_file: str
+    source_line_number: int
+
+    observed_at_utc: datetime
+    rpc_slot: int
+
+
+class RoundLifecycleIndexRecord(BaseModel):
+    """
+    Compact persistent historical record for one round.
+
+    Full observation history is represented by references
+    to immutable raw JSONL source records.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    lifecycle_schema_version: int = 1
+
+    round_id: int
+
+    start_slot: int
+    end_slot: int | None
+
+    first_observed_at_utc: datetime
+    last_observed_at_utc: datetime
+
+    first_observed_rpc_slot: int
+    last_observed_rpc_slot: int
+
+    observation_count: int
+
+    collector_session_ids: list[str]
+    source_schema_versions: list[int]
+    source_files: list[str]
+
+    observation_references: list[
+        ObservationReference
+    ]
+
+    finalized_outcome: (
+        FinalizedRoundOutcome
+        | None
+    )
+
+    finalized_outcome_source: Literal[
+        "observed",
+        "enriched",
+    ] | None
+
+    quality: RoundQualityMetadata
+
+
+class HistoricalDatasetManifest(BaseModel):
+    """
+    Metadata describing one reproducible derived dataset build.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    dataset_schema_version: int = 1
+
+    generated_at_utc: datetime
+
+    input_files: list[str]
+
+    lines_read: int
+    normalized_snapshots: int
+    malformed_source_records: int
+
+    total_rounds: int
+
+    observed_outcomes: int
+    enriched_outcomes: int
+    missing_outcomes: int
+
+    enrichment_unavailable: int
+    enrichment_failed: int

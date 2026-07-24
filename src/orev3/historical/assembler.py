@@ -410,6 +410,12 @@ def assemble_rounds(
                 finalized_outcome=(
                     finalized_outcome
                 ),
+                finalized_outcome_source=(
+                    "observed"
+                    if finalized_outcome
+                    is not None
+                    else None
+                ),
                 quality=quality,
             )
         )
