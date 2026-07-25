@@ -14,6 +14,10 @@ from orev3.collection.health import (
     deterministic_health,
     health_snapshot,
 )
+from orev3.collection.gate_b import (
+    freeze_gate_b_marker,
+    gate_b_status,
+)
 from orev3.collection.metrics import evaluate_burn_in
 from orev3.collection.reporting import export_collection
 from orev3.collection.writer_lock import WriterLease
@@ -193,6 +197,41 @@ def command_archive(args: argparse.Namespace) -> None:
     print(f"Archived ledger without deleting source: {args.output}")
 
 
+def command_freeze_gate_b(args: argparse.Namespace) -> None:
+    _reject_live(args)
+    config = CollectionConfig.from_path(args.config)
+    with CollectionStore(args.ledger, read_only=True) as store:
+        marker = freeze_gate_b_marker(
+            store,
+            repository_commit=args.repository_commit,
+            branch=args.branch,
+            configuration_hash=config.configuration_hash,
+        )
+    write_strict_json(
+        args.output,
+        marker.model_dump(mode="json"),
+        force=False,
+    )
+    print(
+        json.dumps(
+            marker.model_dump(mode="json"),
+            allow_nan=False,
+            sort_keys=True,
+        )
+    )
+
+
+def command_gate_b_status(args: argparse.Namespace) -> None:
+    _reject_live(args)
+    with CollectionStore(args.ledger, read_only=True) as store:
+        value = gate_b_status(
+            store,
+            args.marker,
+            expected_marker_sha256=args.expected_marker_sha256,
+        )
+    print(json.dumps(value, allow_nan=False, sort_keys=True))
+
+
 def _live_tripwires(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--submit", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--sign", action="store_true", help=argparse.SUPPRESS)
@@ -263,6 +302,22 @@ def build_parser() -> argparse.ArgumentParser:
     archive.add_argument("--force", action="store_true")
     _live_tripwires(archive)
     archive.set_defaults(handler=command_archive)
+
+    freeze_gate_b = sub.add_parser("freeze-gate-b")
+    freeze_gate_b.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+    freeze_gate_b.add_argument("--ledger", type=Path, required=True)
+    freeze_gate_b.add_argument("--output", type=Path, required=True)
+    freeze_gate_b.add_argument("--repository-commit", required=True)
+    freeze_gate_b.add_argument("--branch", required=True)
+    _live_tripwires(freeze_gate_b)
+    freeze_gate_b.set_defaults(handler=command_freeze_gate_b)
+
+    gate_b = sub.add_parser("gate-b-status")
+    gate_b.add_argument("--ledger", type=Path, required=True)
+    gate_b.add_argument("--marker", type=Path, required=True)
+    gate_b.add_argument("--expected-marker-sha256", required=True)
+    _live_tripwires(gate_b)
+    gate_b.set_defaults(handler=command_gate_b_status)
     return root
 
 
