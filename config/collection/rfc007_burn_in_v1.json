@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "collector_version": "rfc007-v1",
+  "source_glob": "data/raw/observer_*.jsonl",
+  "outcome_source": "data/derived/round_lifecycles_v1.jsonl",
+  "poll_interval_seconds": 1.0,
+  "batch_size": 100,
+  "strategy_id": "existing_least_crowded",
+  "strategy_version": "1.0.0",
+  "square_count": 4,
+  "allocation_rule": "equal",
+  "deployment_total_lamports": 50000,
+  "random_seed": 20260725,
+  "assumed_deploy_fee_lamports": 5000,
+  "assumed_claim_fee_lamports": 5000,
+  "retain_verbose_payloads": false,
+  "busy_timeout_ms": 5000,
+  "checkpoint_every_records": 100,
+  "live_start_mode": "end",
+  "chronological_blocks": [
+    {"block_id": "block_1", "start_index": 0, "end_index": 249, "target_opportunities": 250, "report_only": false},
+    {"block_id": "block_2", "start_index": 250, "end_index": 499, "target_opportunities": 250, "report_only": false},
+    {"block_id": "block_3", "start_index": 500, "end_index": 749, "target_opportunities": 250, "report_only": false},
+    {"block_id": "block_4", "start_index": 750, "end_index": 999, "target_opportunities": 250, "report_only": true}
+  ],
+  "allow_transaction_building": false,
+  "allow_transaction_submission": false,
+  "allow_signing": false,
+  "allow_claims": false
+}

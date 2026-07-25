@@ -87,3 +87,7 @@ data/ledger/
 participant_ledger_v*.sqlite
 participant_*_v*.csv
 participant_*_v*.json
+
+# RFC-007 continuous paper collection outputs.
+data/ledger/rfc007_*
+logs/rfc007_*
