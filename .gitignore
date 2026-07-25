@@ -81,3 +81,9 @@ data/research/baseline_feature_sets_v*.json
 data/research/economic_simulation_results_v*.json
 data/research/economic_assumptions_v*.json
 data/research/economic_strategy_definitions_v*.json
+
+# Participant economic ledgers contain wallet-sensitive local activity.
+data/ledger/
+participant_ledger_v*.sqlite
+participant_*_v*.csv
+participant_*_v*.json

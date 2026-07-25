@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "attribution_window_seconds": 120,
+  "external_funding_threshold_lamports": 100000000,
+  "external_funding_rule": "positive wallet delta above threshold not explained by known mining returns or claims",
+  "commitment": "confirmed",
+  "allow_rpc_reads": true,
+  "allow_transaction_building": false,
+  "allow_transaction_submission": false,
+  "allow_signing": false,
+  "allow_claims": false
+}
