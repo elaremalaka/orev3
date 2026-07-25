@@ -70,3 +70,7 @@ orev3_research_platform_ratification/
 
 # Local source backups
 *.before_snapshot_cache
+
+# Generated ORE research outputs
+data/research/*_summary.json
+data/research/*.manifest.json
