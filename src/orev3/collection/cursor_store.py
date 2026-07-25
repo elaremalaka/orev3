@@ -4,7 +4,11 @@ import json
 import sqlite3
 from pathlib import Path
 
-from orev3.collection.schemas import SourceCursor
+from orev3.collection.schemas import (
+    CollectorRunEvidence,
+    CursorCheckpoint,
+    SourceCursor,
+)
 from orev3.ledger.storage import LedgerStore
 
 
@@ -93,12 +97,40 @@ class CollectionStore:
                     key TEXT PRIMARY KEY,
                     value INTEGER NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS collector_runs (
+                    run_id TEXT PRIMARY KEY,
+                    prior_run_id TEXT,
+                    started_at TEXT NOT NULL,
+                    ended_at TEXT,
+                    validation_status TEXT NOT NULL,
+                    record_json TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS collector_runs_started
+                ON collector_runs(started_at, run_id);
                 """
             )
             self.connection.execute(
                 """
                 INSERT OR IGNORE INTO collection_metadata(key, value)
                 VALUES ('schema_version', '1')
+                """
+            )
+            version = self.connection.execute(
+                """
+                SELECT value FROM collection_metadata
+                WHERE key='collection_schema_version'
+                """
+            ).fetchone()
+            if version is not None and int(version[0]) > 2:
+                raise ValueError(
+                    "Unsupported collection schema version: "
+                    f"{version[0]} (maximum supported 2)"
+                )
+            self.connection.execute(
+                """
+                INSERT INTO collection_metadata(key, value)
+                VALUES ('collection_schema_version', '2')
+                ON CONFLICT(key) DO UPDATE SET value=excluded.value
                 """
             )
 
@@ -127,8 +159,9 @@ class CollectionStore:
     def save_cursor(self, cursor: SourceCursor) -> None:
         self.connection.execute(
             """
-            INSERT INTO source_cursors
-            (source_id, source_path, source_inode, byte_offset, line_number, record_json)
+                INSERT INTO source_cursors
+                (source_id, source_path, source_inode, byte_offset,
+                 line_number, record_json)
             VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT(source_id) DO UPDATE SET
                 source_path=excluded.source_path,
@@ -146,6 +179,135 @@ class CollectionStore:
                 self._json(cursor),
             ),
         )
+
+    def cursor_checkpoints(self) -> list[CursorCheckpoint]:
+        return [
+            CursorCheckpoint(
+                source_id=str(row[0]),
+                source_path=str(row[1]),
+                source_inode=int(row[2]),
+                byte_offset=int(row[3]),
+                line_number=int(row[4]),
+            )
+            for row in self.connection.execute(
+                """
+                SELECT source_id, source_path, source_inode, byte_offset,
+                       line_number
+                FROM source_cursors
+                ORDER BY source_id
+                """
+            )
+        ]
+
+    def run_counts(self) -> tuple[int, int, int]:
+        return (
+            int(
+                self.connection.execute(
+                    "SELECT COUNT(*) FROM ingested_source_records"
+                ).fetchone()[0]
+            ),
+            self.ledger.count("opportunities"),
+            int(
+                self.connection.execute(
+                    "SELECT COUNT(*) FROM paper_decisions"
+                ).fetchone()[0]
+            ),
+        )
+
+    def insert_collector_run(self, run: CollectorRunEvidence) -> None:
+        try:
+            self.connection.execute(
+                """
+                INSERT INTO collector_runs
+                (run_id, prior_run_id, started_at, ended_at,
+                 validation_status, record_json)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    run.run_id,
+                    run.prior_run_id,
+                    run.started_at.isoformat(),
+                    run.ended_at.isoformat() if run.ended_at else None,
+                    run.validation_status,
+                    self._json(run),
+                ),
+            )
+        except sqlite3.IntegrityError as exc:
+            raise ValueError(
+                f"Collector run identity was reused: {run.run_id}"
+            ) from exc
+
+    def save_collector_run(self, run: CollectorRunEvidence) -> None:
+        cursor = self.connection.execute(
+            """
+            UPDATE collector_runs
+            SET prior_run_id=?, started_at=?, ended_at=?,
+                validation_status=?, record_json=?
+            WHERE run_id=?
+            """,
+            (
+                run.prior_run_id,
+                run.started_at.isoformat(),
+                run.ended_at.isoformat() if run.ended_at else None,
+                run.validation_status,
+                self._json(run),
+                run.run_id,
+            ),
+        )
+        if cursor.rowcount != 1:
+            raise ValueError(f"Unknown collector run: {run.run_id}")
+
+    def load_collector_run(
+        self, run_id: str
+    ) -> CollectorRunEvidence | None:
+        row = self.connection.execute(
+            "SELECT record_json FROM collector_runs WHERE run_id=?",
+            (run_id,),
+        ).fetchone()
+        return (
+            CollectorRunEvidence.model_validate_json(row[0])
+            if row
+            else None
+        )
+
+    def latest_collector_run(
+        self,
+        *,
+        include_legacy: bool = True,
+    ) -> CollectorRunEvidence | None:
+        try:
+            rows = self.connection.execute(
+                """
+                SELECT record_json FROM collector_runs
+                ORDER BY rowid DESC
+                """
+            )
+        except sqlite3.OperationalError as exc:
+            if "no such table" in str(exc):
+                return None
+            raise
+        for row in rows:
+            record = CollectorRunEvidence.model_validate_json(row[0])
+            if include_legacy or record.run_kind == "real_time":
+                return record
+        return None
+
+    def collector_runs(self) -> list[CollectorRunEvidence]:
+        try:
+            rows = self.connection.execute(
+                """
+                SELECT record_json FROM collector_runs
+                ORDER BY started_at, run_id
+                """
+            )
+        except sqlite3.OperationalError as exc:
+            if "no such table" in str(exc):
+                return []
+            raise
+        return [
+            CollectorRunEvidence.model_validate_json(row[0])
+            for row in rows
+        ]
 
     def mark_source_record(
         self,

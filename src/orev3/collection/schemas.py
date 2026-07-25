@@ -34,6 +34,47 @@ class SourceCursor(CollectionModel):
     source_inode: int = Field(ge=0)
 
 
+class CursorCheckpoint(CollectionModel):
+    source_id: str
+    source_path: str
+    source_inode: int = Field(ge=0)
+    byte_offset: int = Field(ge=0)
+    line_number: int = Field(ge=0)
+
+
+class CollectorRunEvidence(CollectionModel):
+    schema_version: int = 1
+    run_id: str
+    run_kind: Literal["real_time", "legacy_checkpoint"] = "real_time"
+    configuration_hash: str
+    started_at: datetime
+    ended_at: datetime | None = None
+    process_id: int | None = Field(default=None, ge=1)
+    prior_run_id: str | None = None
+    lease_exclusive: bool
+    starting_cursors: list[CursorCheckpoint]
+    latest_cursors: list[CursorCheckpoint]
+    resumed_from_checkpoint: bool
+    first_post_resume_record_id: str | None = None
+    first_post_resume_source_id: str | None = None
+    first_post_resume_line_number: int | None = Field(default=None, ge=1)
+    first_post_resume_start_offset: int | None = Field(default=None, ge=0)
+    first_post_resume_imported_at: datetime | None = None
+    starting_source_records: int = Field(ge=0)
+    latest_source_records: int = Field(ge=0)
+    starting_opportunities: int = Field(ge=0)
+    latest_opportunities: int = Field(ge=0)
+    starting_decisions: int = Field(ge=0)
+    latest_decisions: int = Field(ge=0)
+    starting_counters: dict[str, int]
+    latest_counters: dict[str, int]
+    validation_status: Literal[
+        "legacy_checkpoint", "pending", "proven", "failed"
+    ]
+    validation_timestamp: datetime | None = None
+    failure_reason: str | None = None
+
+
 class TailRecord(CollectionModel):
     source_id: str
     source_path: str
@@ -214,6 +255,9 @@ class BurnInEvaluation(CollectionModel):
     database_lock_failures: int = Field(ge=0)
     provenance_complete: bool
     restart_resume_proven: bool
+    restart_resume_run_id: str | None = None
+    restart_resume_status: str | None = None
+    restart_resume_failure_reason: str | None = None
     observer_modified: bool
     live_actions: int = Field(ge=0)
     passed: bool

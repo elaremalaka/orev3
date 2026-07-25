@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import glob
+import os
 import signal
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import Event
@@ -21,10 +23,16 @@ from orev3.collection.outcome_linker import (
 )
 from orev3.collection.paper_accounting import account_paper_decision
 from orev3.collection.paper_strategy import create_paper_decision
+from orev3.collection.restart_proof import (
+    assess_restart_proof,
+    same_checkpoint,
+)
 from orev3.collection.schemas import (
+    CollectorRunEvidence,
     FinalOutcome,
     PaperDecision,
     PaperReconciliation,
+    TailRecord,
 )
 from orev3.collection.tailer import SourceChangedError, read_complete_lines
 from orev3.ledger.event_types import EventType
@@ -58,6 +66,174 @@ class PaperCollector:
             config.outcome_source
         )
         self.initial_sources: set[str] = set()
+        self.run_id: str | None = None
+
+    def _legacy_checkpoint_run(
+        self,
+        *,
+        created_at: datetime,
+    ) -> CollectorRunEvidence | None:
+        checkpoints = self.store.cursor_checkpoints()
+        source_records, opportunities, decisions = self.store.run_counts()
+        if not checkpoints or source_records == 0:
+            return None
+        counters = self.store.counters()
+        identity = deterministic_id(
+            "rfc007-legacy-checkpoint",
+            self.config.configuration_hash,
+            "|".join(
+                (
+                    f"{item.source_id}:{item.source_inode}:"
+                    f"{item.byte_offset}:{item.line_number}"
+                )
+                for item in checkpoints
+            ),
+            str(source_records),
+            str(opportunities),
+            str(decisions),
+        )
+        return CollectorRunEvidence(
+            run_id=identity,
+            run_kind="legacy_checkpoint",
+            configuration_hash=self.config.configuration_hash,
+            started_at=datetime(1970, 1, 1, tzinfo=timezone.utc),
+            ended_at=created_at,
+            process_id=None,
+            prior_run_id=None,
+            lease_exclusive=True,
+            starting_cursors=checkpoints,
+            latest_cursors=checkpoints,
+            resumed_from_checkpoint=False,
+            starting_source_records=source_records,
+            latest_source_records=source_records,
+            starting_opportunities=opportunities,
+            latest_opportunities=opportunities,
+            starting_decisions=decisions,
+            latest_decisions=decisions,
+            starting_counters=counters,
+            latest_counters=counters,
+            validation_status="legacy_checkpoint",
+            validation_timestamp=created_at,
+            failure_reason="migrated_durable_legacy_checkpoint",
+        )
+
+    def begin_real_time_run(
+        self,
+        *,
+        run_id: str | None = None,
+        started_at: datetime | None = None,
+        process_id: int | None = None,
+        lease_exclusive: bool,
+    ) -> CollectorRunEvidence:
+        if self.mode != "real_time_burn_in":
+            raise ValueError("Run evidence is only valid for real-time collection")
+        now = started_at or datetime.now(timezone.utc)
+        with self.store.connection:
+            prior = self.store.latest_collector_run()
+            if prior is None:
+                legacy = self._legacy_checkpoint_run(created_at=now)
+                if legacy is not None:
+                    self.store.insert_collector_run(legacy)
+                    prior = legacy
+            checkpoints = self.store.cursor_checkpoints()
+            source_records, opportunities, decisions = self.store.run_counts()
+            counters = self.store.counters()
+            evidence = CollectorRunEvidence(
+                run_id=run_id or str(uuid.uuid4()),
+                configuration_hash=self.config.configuration_hash,
+                started_at=now,
+                process_id=process_id or os.getpid(),
+                prior_run_id=prior.run_id if prior else None,
+                lease_exclusive=lease_exclusive,
+                starting_cursors=checkpoints,
+                latest_cursors=checkpoints,
+                resumed_from_checkpoint=bool(
+                    prior
+                    and checkpoints
+                    and same_checkpoint(checkpoints, prior.latest_cursors)
+                ),
+                starting_source_records=source_records,
+                latest_source_records=source_records,
+                starting_opportunities=opportunities,
+                latest_opportunities=opportunities,
+                starting_decisions=decisions,
+                latest_decisions=decisions,
+                starting_counters=counters,
+                latest_counters=counters,
+                validation_status="pending",
+            )
+            evidence = assess_restart_proof(
+                evidence, prior, validated_at=now
+            )
+            self.store.insert_collector_run(evidence)
+        self.run_id = evidence.run_id
+        return evidence
+
+    def refresh_run_evidence(
+        self,
+        *,
+        first_imported_record: TailRecord | None = None,
+        validated_at: datetime | None = None,
+    ) -> CollectorRunEvidence | None:
+        if self.run_id is None:
+            return None
+        run = self.store.load_collector_run(self.run_id)
+        if run is None:
+            raise ValueError(f"Missing collector run evidence: {self.run_id}")
+        source_records, opportunities, decisions = self.store.run_counts()
+        now = validated_at or datetime.now(timezone.utc)
+        updates: dict[str, object] = {
+            "latest_cursors": self.store.cursor_checkpoints(),
+            "latest_source_records": source_records,
+            "latest_opportunities": opportunities,
+            "latest_decisions": decisions,
+            "latest_counters": self.store.counters(),
+        }
+        if (
+            first_imported_record is not None
+            and run.first_post_resume_record_id is None
+        ):
+            updates.update(
+                {
+                    "first_post_resume_record_id": (
+                        first_imported_record.record_id
+                    ),
+                    "first_post_resume_source_id": (
+                        first_imported_record.source_id
+                    ),
+                    "first_post_resume_line_number": (
+                        first_imported_record.source_line_number
+                    ),
+                    "first_post_resume_start_offset": (
+                        first_imported_record.start_offset
+                    ),
+                    "first_post_resume_imported_at": now,
+                }
+            )
+        run = run.model_copy(update=updates)
+        prior = (
+            self.store.load_collector_run(run.prior_run_id)
+            if run.prior_run_id
+            else None
+        )
+        run = assess_restart_proof(run, prior, validated_at=now)
+        self.store.save_collector_run(run)
+        return run
+
+    def finish_real_time_run(
+        self,
+        *,
+        ended_at: datetime | None = None,
+    ) -> CollectorRunEvidence | None:
+        with self.store.connection:
+            run = self.refresh_run_evidence(validated_at=ended_at)
+            if run is None:
+                return None
+            run = run.model_copy(
+                update={"ended_at": ended_at or datetime.now(timezone.utc)}
+            )
+            self.store.save_collector_run(run)
+        return run
 
     def request_stop(self, *_args) -> None:
         self.stop_requested.set()
@@ -178,7 +354,7 @@ class PaperCollector:
             source_record_id=record.record_id,
             run_id=deterministic_id(
                 "rfc007-run", self.config.configuration_hash
-            ),
+            ) if self.run_id is None else self.run_id,
             session_id=self.mode,
             round_id=opportunity.round_id,
             observation_index=opportunity.observation_index,
@@ -373,6 +549,7 @@ class PaperCollector:
                 self.store.increment("source_corruption")
             raise
         imported = 0
+        first_imported_record: TailRecord | None = None
         with self.store.connection:
             self.store.increment(
                 "source_records_seen",
@@ -395,6 +572,8 @@ class PaperCollector:
                 ):
                     self.store.increment("source_records_duplicate")
                     continue
+                if first_imported_record is None:
+                    first_imported_record = record
                 self.store.increment("source_records_imported")
                 finalized, observed_outcome = outcome_from_observer_record(
                     record
@@ -434,6 +613,9 @@ class PaperCollector:
                     }
                 )
             self.store.save_cursor(cursor_to_save)
+            self.refresh_run_evidence(
+                first_imported_record=first_imported_record
+            )
         return {
             "records_read": len(batch.records),
             "opportunities_imported": imported,

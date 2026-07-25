@@ -137,12 +137,14 @@ def command_run(args: argparse.Namespace) -> None:
                 config=config,
                 mode="real_time_burn_in",
             )
+            collector.begin_real_time_run(lease_exclusive=True)
             print(
                 "RFC-007 paper collector starting; observer remains untouched; "
                 "no transaction can be built or submitted",
                 flush=True,
             )
             collector.run_forever()
+            collector.finish_real_time_run()
             print("RFC-007 paper collector stopped cleanly", flush=True)
 
 

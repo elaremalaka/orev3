@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from orev3.collection.cursor_store import CollectionStore
+from orev3.collection.restart_proof import assess_restart_proof
 from orev3.collection.schemas import BurnInEvaluation
 
 
@@ -42,6 +43,31 @@ def evaluate_burn_in(
     ) and len(accounting) == outcome_linked
     duplicates_opportunity = len(opportunity_ids) - len(set(opportunity_ids))
     duplicates_decision = len(decision_ids) - len(set(decision_ids))
+    restart_run = None
+    restart_status = None
+    restart_reason = None
+    if mode == "real_time_burn_in":
+        restart_run = store.latest_collector_run(include_legacy=False)
+        if restart_run is None:
+            restart_proven = False
+            restart_status = "pending"
+            restart_reason = "no_real_time_run_evidence"
+        else:
+            prior = (
+                store.load_collector_run(restart_run.prior_run_id)
+                if restart_run.prior_run_id
+                else None
+            )
+            assessed = assess_restart_proof(restart_run, prior)
+            restart_proven = assessed.validation_status == "proven"
+            restart_status = assessed.validation_status
+            restart_reason = assessed.failure_reason
+    else:
+        restart_proven = metadata.get("restart_resume_proven") == "1"
+        restart_status = "proven" if restart_proven else "pending"
+        restart_reason = (
+            None if restart_proven else "replay_restart_not_proven"
+        )
     failed: list[str] = []
     if len(opportunity_ids) < 100:
         failed.append("fewer_than_100_consecutive_opportunities")
@@ -57,7 +83,7 @@ def evaluate_burn_in(
         failed.append("database_locking_failure")
     if not provenance_complete:
         failed.append("paper_accounting_provenance_incomplete")
-    if metadata.get("restart_resume_proven") != "1":
+    if not restart_proven:
         failed.append("restart_resume_not_proven")
     if metadata.get("observer_modified", "0") != "0":
         failed.append("observer_modified")
@@ -78,7 +104,10 @@ def evaluate_burn_in(
         source_corruption=counters.get("source_corruption", 0),
         database_lock_failures=counters.get("database_lock_failures", 0),
         provenance_complete=provenance_complete,
-        restart_resume_proven=metadata.get("restart_resume_proven") == "1",
+        restart_resume_proven=restart_proven,
+        restart_resume_run_id=restart_run.run_id if restart_run else None,
+        restart_resume_status=restart_status,
+        restart_resume_failure_reason=restart_reason,
         observer_modified=metadata.get("observer_modified", "0") != "0",
         live_actions=counters.get("live_actions", 0),
         passed=not failed,
