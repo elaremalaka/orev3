@@ -52,3 +52,21 @@ id_ed25519.pub
 config.local.*
 *.local.json
 data/derived/
+
+# ============================================
+# Local research datasets and generated artifacts
+# ============================================
+data/research/*.csv
+
+# Profiling and local experiment exports
+*.prof
+timing_sweep_results.csv
+
+# Local installation/checkpoint bundles
+orev3_checkpoint_v0_1/
+orev3_feature_dataset_step/
+orev3_phase2_constitution/
+orev3_research_platform_ratification/
+
+# Local source backups
+*.before_snapshot_cache

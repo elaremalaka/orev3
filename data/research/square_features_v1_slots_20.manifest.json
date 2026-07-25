@@ -1,0 +1,14 @@
+{
+  "accepted_rounds": 437,
+  "dataset_version": "square_features_v1",
+  "feature_version": "1.0.0",
+  "generated_at_utc": "2026-07-24T05:14:00.595951Z",
+  "max_slot_distance": 3,
+  "output_csv": "data/research/square_features_v1_slots_20.csv",
+  "rejected_rounds": 2,
+  "requested_slots_remaining": 20,
+  "row_count": 10925,
+  "schema_version": "1.0.0",
+  "square_count": 25,
+  "total_rounds": 439
+}
