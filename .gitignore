@@ -78,3 +78,6 @@ data/research/feature_audit_v*.json
 data/research/end_to_end_validation_v*.json
 data/research/baseline_model_results_v*.json
 data/research/baseline_feature_sets_v*.json
+data/research/economic_simulation_results_v*.json
+data/research/economic_assumptions_v*.json
+data/research/economic_strategy_definitions_v*.json

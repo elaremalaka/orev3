@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "accounting_mode": "historical_price_taking_reconstructed",
+  "lamports_per_sol": 1000000000,
+  "ore_raw_per_ore": 100000000000,
+  "deployment_lamports": [
+    50000,
+    100000,
+    250000,
+    500000,
+    1000000,
+    2500000,
+    5000000,
+    10000000
+  ],
+  "square_counts": [1, 2, 3, 4, 5],
+  "allocation_rules": ["equal", "rank_decay"],
+  "deploy_fee_lamports": 5000,
+  "claim_fee_lamports": 5000,
+  "priority_fee_lamports": 0,
+  "failed_transaction_cost_lamports": 0,
+  "claim_batch_size": 1,
+  "claim_timing": "immediate_after_positive_return_or_ore",
+  "random_seed": 20260725,
+  "random_seed_count": 20,
+  "bootstrap_seed": 20260726,
+  "bootstrap_samples": 500,
+  "reference_deployment_lamports": 1000000,
+  "reference_square_count": 1,
+  "reference_allocation_rule": "equal",
+  "starting_bankroll_lamports": [
+    100000000,
+    500000000,
+    1000000000,
+    5000000000
+  ],
+  "insufficient_bankroll_rule": "skip",
+  "sol_price_usd_scenarios": [100.0, 200.0],
+  "ore_price_usd_scenarios": [1.0, 5.0, 10.0],
+  "fee_provenance": "configurable_assumption_not_observed",
+  "ore_scope": "round_motherlode_only_base_ore_unavailable",
+  "principal_treatment": "deployment_is_cost_total_winnings_is_gross_return_pool"
+}
