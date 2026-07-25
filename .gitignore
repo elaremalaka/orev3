@@ -76,3 +76,5 @@ data/research/*_summary.json
 data/research/*.manifest.json
 data/research/feature_audit_v*.json
 data/research/end_to_end_validation_v*.json
+data/research/baseline_model_results_v*.json
+data/research/baseline_feature_sets_v*.json
