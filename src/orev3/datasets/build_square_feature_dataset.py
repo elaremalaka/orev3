@@ -214,6 +214,7 @@ def write_round_features(
         tuple[BoardSnapshot, dict[str, Any]]
     ],
     pipeline: Any,
+    performance_profile: dict[str, Any] | None = None,
 ) -> int:
     square_histories: list[
         list[SquareSnapshot]
@@ -223,8 +224,18 @@ def write_round_features(
     ]
 
     rows_written = 0
+    board_history: list[BoardSnapshot] = []
 
     for board, metadata in observations:
+        board_history.append(board)
+        profile_observation = (
+            performance_profile is not None
+            and (board.round_id + board.observation_index) % 32 == 0
+        )
+
+        if profile_observation:
+            performance_profile["sampled_observations"] += 1
+
         for square_index in range(SQUARE_COUNT):
             current_square = board.squares[
                 square_index
@@ -239,9 +250,17 @@ def write_round_features(
                 square_history=tuple(
                     square_histories[square_index]
                 ),
+                board_history=tuple(board_history),
             )
 
-            feature_values = pipeline.compute(context)
+            if profile_observation:
+                feature_values = pipeline.compute_profiled(
+                    context,
+                    performance_profile["feature_classes"],
+                )
+                performance_profile["sampled_rows"] += 1
+            else:
+                feature_values = pipeline.compute(context)
 
             output_row = {
                 "round_id": board.round_id,
@@ -322,6 +341,12 @@ def build_dataset(
     round_count = 0
     observation_count = 0
     row_count = 0
+    performance_profile: dict[str, Any] = {
+        "sample_rule": "(round_id + observation_index) % 32 == 0",
+        "sampled_observations": 0,
+        "sampled_rows": 0,
+        "feature_classes": {},
+    }
 
     with input_path.open(
         newline="",
@@ -347,6 +372,7 @@ def build_dataset(
                 writer,
                 observations,
                 pipeline,
+                performance_profile,
             )
             round_count += 1
             observation_count += len(observations)
@@ -371,6 +397,39 @@ def build_dataset(
 
     runtime_seconds = (
         time.perf_counter() - started_at
+    )
+    family_by_name = {
+        feature.name: feature.family
+        for feature in pipeline.registry
+    }
+    family_seconds: dict[str, float] = {}
+
+    for name, record in performance_profile["feature_classes"].items():
+        family = family_by_name[name]
+        family_seconds[family] = (
+            family_seconds.get(family, 0.0)
+            + float(record["seconds"])
+        )
+
+    performance_profile.update(
+        {
+            "profiling_status": "deterministic sampled class timings",
+            "total_build_seconds": runtime_seconds,
+            "observations_per_second": (
+                observation_count / runtime_seconds
+            ),
+            "square_rows_per_second": row_count / runtime_seconds,
+            "profiled_compute_seconds": sum(
+                float(record["seconds"])
+                for record
+                in performance_profile["feature_classes"].values()
+            ),
+            "family_seconds": dict(sorted(family_seconds.items())),
+            "all_history_ema_note": (
+                "rolling_dynamics contains retained all-history EMA "
+                "calculations whose work grows with available square history"
+            ),
+        }
     )
 
     manifest = {
@@ -398,6 +457,7 @@ def build_dataset(
             output_path
         ),
         "runtime_seconds": runtime_seconds,
+        "performance_profile": performance_profile,
     }
 
     manifest_path.write_text(

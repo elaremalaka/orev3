@@ -3,6 +3,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from orev3.features.base import Feature
+from orev3.features.board_summary import (
+    average_descending_ranks,
+    summarize_board,
+)
 from orev3.features.context import FeatureContext
 from orev3.features.types import FeatureValues
 
@@ -17,25 +21,30 @@ def safe_share(
     return value / total
 
 
+def safe_ratio(value: int, denominator: int | float) -> float:
+    if denominator <= 0:
+        return 0.0
+
+    return value / denominator
+
+
+def safe_z_score(
+    value: int,
+    mean: float,
+    standard_deviation: float,
+) -> float:
+    if standard_deviation <= 0:
+        return 0.0
+
+    return (value - mean) / standard_deviation
+
+
 def average_descending_rank(
     values: Sequence[int],
     square_index: int,
 ) -> float:
-    target = values[square_index]
-
-    strictly_greater = sum(
-        value > target
-        for value in values
-    )
-    equal = sum(
-        value == target
-        for value in values
-    )
-
-    first_rank = strictly_greater + 1
-    last_rank = strictly_greater + equal
-
-    return (first_rank + last_rank) / 2
+    """Preserve the original single-square ranking helper interface."""
+    return average_descending_ranks(values)[square_index]
 
 
 class BoardRelativeFeature(Feature):
@@ -48,6 +57,12 @@ class BoardRelativeFeature(Feature):
         "deployed_average_rank",
         "miner_ratio_to_leader",
         "deployed_ratio_to_leader",
+        "miner_ratio_to_mean",
+        "deployed_ratio_to_mean",
+        "miner_difference_from_mean",
+        "deployed_difference_from_mean",
+        "miner_z_score",
+        "deployed_z_score",
     )
 
     def compute(
@@ -65,42 +80,63 @@ class BoardRelativeFeature(Feature):
 
         square = context.square
 
-        total_miners = sum(miner_values)
-        total_deployed = sum(deployed_values)
-
-        miner_leader = max(miner_values)
-        deployed_leader = max(deployed_values)
+        miner_summary = summarize_board(miner_values)
+        deployed_summary = summarize_board(deployed_values)
 
         return {
             "miner_share": safe_share(
                 square.miner_count,
-                total_miners,
+                miner_summary.total,
             ),
             "deployed_share": safe_share(
                 square.deployed_lamports,
-                total_deployed,
+                deployed_summary.total,
             ),
             "miner_average_rank": (
-                average_descending_rank(
-                    miner_values,
-                    context.square_index,
-                )
+                miner_summary.average_ranks[
+                    context.square_index
+                ]
             ),
             "deployed_average_rank": (
-                average_descending_rank(
-                    deployed_values,
-                    context.square_index,
-                )
+                deployed_summary.average_ranks[
+                    context.square_index
+                ]
             ),
             "miner_ratio_to_leader": (
-                square.miner_count / miner_leader
-                if miner_leader > 0
-                else 0.0
+                safe_ratio(
+                    square.miner_count,
+                    miner_summary.leader,
+                )
             ),
             "deployed_ratio_to_leader": (
+                safe_ratio(
+                    square.deployed_lamports,
+                    deployed_summary.leader,
+                )
+            ),
+            "miner_ratio_to_mean": safe_ratio(
+                square.miner_count,
+                miner_summary.mean,
+            ),
+            "deployed_ratio_to_mean": safe_ratio(
+                square.deployed_lamports,
+                deployed_summary.mean,
+            ),
+            "miner_difference_from_mean": (
+                square.miner_count - miner_summary.mean
+            ),
+            "deployed_difference_from_mean": (
                 square.deployed_lamports
-                / deployed_leader
-                if deployed_leader > 0
-                else 0.0
+                - deployed_summary.mean
+            ),
+            "miner_z_score": safe_z_score(
+                square.miner_count,
+                miner_summary.mean,
+                miner_summary.standard_deviation,
+            ),
+            "deployed_z_score": safe_z_score(
+                square.deployed_lamports,
+                deployed_summary.mean,
+                deployed_summary.standard_deviation,
             ),
         }

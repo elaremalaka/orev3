@@ -4,7 +4,14 @@ from orev3.features.pipeline import FeaturePipeline
 from orev3.features.raw import RawSquareFeature
 from orev3.features.registry import FeatureRegistry
 from orev3.features.relative import BoardRelativeFeature
-from orev3.features.temporal import OneStepDeltaFeature
+from orev3.features.temporal import (
+    BoardVolatilityFeature,
+    LagDeltaFeature,
+    LeaderDynamicsFeature,
+    OneStepDeltaFeature,
+    RollingDynamicsFeature,
+    TemporalExpansionFeature,
+)
 
 
 def create_default_registry() -> FeatureRegistry:
@@ -13,6 +20,11 @@ def create_default_registry() -> FeatureRegistry:
             RawSquareFeature(),
             BoardRelativeFeature(),
             OneStepDeltaFeature(),
+            LagDeltaFeature(),
+            RollingDynamicsFeature(),
+            LeaderDynamicsFeature(),
+            BoardVolatilityFeature(),
+            TemporalExpansionFeature(),
         ]
     )
 

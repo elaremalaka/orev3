@@ -74,3 +74,5 @@ orev3_research_platform_ratification/
 # Generated ORE research outputs
 data/research/*_summary.json
 data/research/*.manifest.json
+data/research/feature_audit_v*.json
+data/research/end_to_end_validation_v*.json
