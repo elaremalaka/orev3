@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "protocol_version": "rfc008-v1",
+  "experiment_id": "rfc008-round-level-paper-v1",
+  "collector_version": "rfc008-paper-collector-v1",
+  "source_glob": "data/raw/observer_*.jsonl",
+  "candidate_configuration_sha256": "e60722e845d6364c41d28ebc7d1641f8c8726766f87bdb838f3822decf50a372",
+  "approval_manifest_sha256": "9fe94099ed3d9e15e015eef72db5543f16c756b1c3c5463f014e18467a44d789",
+  "trigger_seconds_remaining": 30.0,
+  "trigger_slots_remaining": 75,
+  "slot_duration_seconds": 0.4,
+  "square_count": 4,
+  "deployment_total_lamports": 50000,
+  "allocation_rule": "equal",
+  "random_algorithm": "sha256_digest_sort",
+  "random_seed_prefix": "rfc008-random-top4-v1-seed-20260725",
+  "direct_outcomes_only_primary": true,
+  "arms": [
+    {
+      "arm_id": "highest_reward_top4_v1",
+      "role": "candidate",
+      "statistical_independent": true,
+      "deployment_lamports": 50000
+    },
+    {
+      "arm_id": "random_top4_v1",
+      "role": "baseline",
+      "statistical_independent": true,
+      "deployment_lamports": 50000
+    },
+    {
+      "arm_id": "least_crowded_v1",
+      "role": "historical",
+      "statistical_independent": true,
+      "deployment_lamports": 50000
+    },
+    {
+      "arm_id": "rfc007_frozen_reference_v1",
+      "role": "historical",
+      "statistical_independent": false,
+      "deployment_lamports": 50000
+    },
+    {
+      "arm_id": "no_deploy_v1",
+      "role": "economic_control",
+      "statistical_independent": true,
+      "deployment_lamports": 0
+    }
+  ],
+  "fees": {
+    "deploy_fee_lamports": 5000,
+    "claim_fee_lamports": 5000,
+    "priority_fee_lamports": 0,
+    "failed_transaction_fee_lamports": 0,
+    "accounting_mode": "historical_price_taking_reconstructed_not_wallet_realized"
+  },
+  "criteria": {
+    "alpha_predictive": 0.025,
+    "alpha_economic": 0.025,
+    "minimum_paired_hit_improvement": 0.06,
+    "minimum_analyzable_rounds": 600,
+    "maximum_started_rounds": 632,
+    "maximum_calendar_days": 14,
+    "maximum_unusable_rate": 0.05
+  },
+  "poll_interval_seconds": 1.0,
+  "batch_size": 100,
+  "busy_timeout_ms": 5000,
+  "allow_transaction_building": false,
+  "allow_transaction_submission": false,
+  "allow_signing": false,
+  "allow_claims": false,
+  "allow_wallet_access": false,
+  "allow_rpc_outcome_recovery": false
+}
