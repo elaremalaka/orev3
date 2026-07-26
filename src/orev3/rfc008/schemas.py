@@ -151,7 +151,11 @@ class ExperimentMarker(StrictModel):
     configuration_fingerprint: str
     latest_preholdout_round_id: int
     first_eligible_round_id: int
+    # Publication-time cursors seed collection and prevent replay. They may be
+    # later than, and must never redefine, the historical eligibility boundary.
     source_identities: tuple[str, ...]
+    # Schema-v2 keeps the legacy runtime_source_* names for the immutable
+    # historical burn-in eligibility boundary.
     runtime_source_path: str
     runtime_source_inode: int = Field(ge=0)
     runtime_source_byte_offset: int = Field(ge=0)

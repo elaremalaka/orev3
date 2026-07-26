@@ -15,6 +15,10 @@ from orev3.collection.outcome_recovery import RpcRecoveryProvider
 from orev3.ledger.identifiers import deterministic_id
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.marker import derive_runtime_source_boundary
+from orev3.rfc008.lifecycle import (
+    capture_marker_pair,
+    validate_production_isolation,
+)
 from orev3.rfc008.outcomes import enqueue_pending, quarantine_expired
 from orev3.rfc008.resolver import (
     FinalizedOutcomeResolver,
@@ -1089,20 +1093,6 @@ def _safety_inspection(experiment: RFC008Config) -> bool:
     )
 
 
-def _production_artifacts_absent(root: Path) -> bool:
-    paths = (
-        root / "data/ledger/rfc008_marker_v1.json",
-        root / "data/ledger/rfc008_marker_v1.json.sha256",
-        root / "data/ledger/rfc008_paper_ledger_v1.sqlite",
-        root / "data/ledger/rfc008_paper_ledger_v1.sqlite-wal",
-        root / "data/ledger/rfc008_paper_ledger_v1.sqlite-shm",
-        root / "data/freeze/rfc008_final_freeze_v1.json",
-        root / "data/analysis/rfc008_dataset_v1",
-        root / "data/analysis/rfc008_results_v1",
-    )
-    return not any(path.exists() for path in paths)
-
-
 def _safe_burnin_paths(
     ledger_path: str | Path, output_path: str | Path
 ) -> tuple[Path, Path]:
@@ -1159,6 +1149,8 @@ def run_resolver_burn_in(
     resolver_config = ResolverConfig.from_path(resolver_config_path)
     current = now or datetime.now(timezone.utc)
     root = Path(repository_root).resolve()
+    production_marker = root / "data/ledger/rfc008_marker_v1.json"
+    initial_lifecycle = capture_marker_pair(production_marker)
     approval_path = Path(release_approval_path)
     if not approval_path.is_absolute():
         approval_path = root / approval_path
@@ -1356,7 +1348,12 @@ def run_resolver_burn_in(
         store.connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
     ledger_hash = hashlib.sha256(ledger.read_bytes()).hexdigest()
     rpc_counts = real_accounting.evidence()
-    production_absent = _production_artifacts_absent(root)
+    lifecycle = validate_production_isolation(
+        repository_root=root,
+        config_path=experiment_config_path,
+        expected_snapshot=initial_lifecycle,
+    )
+    production_absent = bool(lifecycle["ready"])
     final_processes = (
         _process_snapshot(preserve_process_ids)
         if mode == "operational"

@@ -184,6 +184,29 @@ rotation of that record fails closed. The current observer cursor is recorded
 separately only to seed future collection cursors. Marker publication remains
 one-time and does not authorize or start collection.
 
+### Lifecycle and cursor terminology
+
+RFC-008 lifecycle checks are phase-specific:
+
+* **Pre-marker:** marker, sidecar, production ledger family, collector,
+  dataset, freeze, and analysis outputs are absent.
+* **Post-marker, pre-collection:** one valid immutable marker and matching
+  sidecar are present; the marker keeps collection authorization false; the
+  production ledger family, collector, dataset, freeze, and analysis outputs
+  remain absent.
+* **Collection:** only a separately authorized run may create the production
+  ledger or start the collector. Dataset, freeze, and analysis outputs remain
+  subject to their later authorization boundaries.
+
+The schema-v2 `runtime_source_*` fields are the immutable historical burn-in
+eligibility boundary. For the published marker this remains round `346052`,
+line `69558`, record-end offset `74568652`, and the approved record hash.
+The `source_identities` values are later marker-publication cursors used to
+seed collection and prevent replay. They may advance with normal observer
+appends and are not required to equal the historical eligibility boundary.
+They cannot redefine the eligible burn-in rounds or move collection seeding
+backward before the historical boundary.
+
 ## 6. Future collection start
 
 Collection requires separate authorization and the same operational provider

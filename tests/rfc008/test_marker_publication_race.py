@@ -17,6 +17,10 @@ from orev3.rfc008.marker import (
     sha256_file,
     verify_marker,
 )
+from orev3.rfc008.lifecycle import (
+    capture_marker_pair,
+    marker_pair_unchanged,
+)
 from orev3.rfc008.schemas import ExperimentMarker
 from orev3.rfc008.storage import strict_json
 
@@ -416,6 +420,8 @@ def test_publication_path_races_fail_without_overwrite(
 
 
 def test_temporary_marker_has_no_collection_side_effects(monkeypatch) -> None:
+    production_marker = ROOT / "data/ledger/rfc008_marker_v1.json"
+    production_before = capture_marker_pair(production_marker)
     with race_directory() as directory:
         environment = build_environment(directory, monkeypatch)
         marker, digest = create(environment)
@@ -432,10 +438,10 @@ def test_temporary_marker_has_no_collection_side_effects(monkeypatch) -> None:
         )
         assert sha256_file(environment["marker"]) == digest
         assert not environment["ledger"].exists()
-        assert not (ROOT / "data/ledger/rfc008_marker_v1.json").exists()
-        assert not (
-            ROOT / "data/ledger/rfc008_marker_v1.json.sha256"
-        ).exists()
         assert not (
             ROOT / "data/ledger/rfc008_paper_ledger_v1.sqlite"
         ).exists()
+    assert marker_pair_unchanged(
+        production_before,
+        capture_marker_pair(production_marker),
+    )
