@@ -1,10 +1,12 @@
 {
   "artifact_type": "rfc008_implementation_release_approval",
-  "schema_version": 1,
-  "status": "post_marker_lifecycle_approved_for_independent_review_only",
-  "approved_implementation_commit": "775c1d5583063534f366cc2a047ded655134bac3",
+  "schema_version": 2,
+  "rfc_identifier": "RFC-008",
+  "repository_branch": "research/rfc-007-paper-collection-burn-in",
+  "status": "approval_supersession_hardened_for_independent_review_only",
+  "approved_implementation_commit": "b4805f11cead23622b91fdbc2030820387a9abb8",
   "approval_commit_policy": "head_must_equal_approved_implementation_or_be_its_approval_artifact_child",
-  "supersedes_release_implementation_approval_sha256": "da8a3613857fd7d5e615914f56034c3414b44b27e62fe72f67cfc5fcbde8a1df",
+  "supersedes_release_implementation_approval_sha256": "0724f705905021912ab65ac048c14ee6c8372678c4336c77a40d5f0868f01a80",
   "validated_production_marker_sha256": "3d73ba3c3943b588789d0fd017f70bdc6ff5aa08f16c887fe635f85004e5af77",
   "validated_production_marker_sidecar_sha256": "786ab3e03a90b9995db40116e5c4ede784587fd4b8fb28bdc82845216f82dd6d",
   "validated_production_marker_repository_commit": "fa3f4fe47d04dd24ab52ecb23190fcd813583550",
@@ -18,7 +20,7 @@
   "candidate_configuration_sha256": "e60722e845d6364c41d28ebc7d1641f8c8726766f87bdb838f3822decf50a372",
   "resolver_configuration_sha256": "3df0eadaf9e611a0898dd28937b72d75a1288e0f01763f7aaea8500f40236dd3",
   "audit_version": "rfc008-release-preflight-v5",
-  "audit_correction_identifier": "rfc008-post-marker-lifecycle-v1",
+  "audit_correction_identifier": "rfc008-approval-supersession-v1",
   "resolver_version": "rfc008-finalized-resolver-v1",
   "decoder_version": "ore-round-decoder-v1",
   "database_family": "orev3-rfc008",
@@ -44,11 +46,11 @@
   "cli_version": "rfc008-cli-v4",
   "cli_sha256": "2fadb7a12ea2b7e3533ce75f5b42f48810561ecbfe841d7112e26c94b50be4d5",
   "runbook_version": "rfc008-operator-runbook-v5",
-  "runbook_sha256": "85ee8e4fc88bc20bb033c673b2e59d0b01a5e8898cd419b1e0fe3105ec15a3c1",
+  "runbook_sha256": "a1d2c952f7da20c3ddc0db47ac45123ccdaa5e1d4d41c2d56b7bc7ba9066a4c6",
   "verification": {
-    "focused_lifecycle_test_count": 25,
-    "rfc008_test_count": 203,
-    "full_test_count": 440,
+    "focused_lifecycle_test_count": 73,
+    "rfc008_test_count": 254,
+    "full_test_count": 491,
     "fixture_resolver_burn_in_required": true,
     "operational_resolver_burn_in_required_before_marker": true,
     "external_rpc_burn_in_performed": true
@@ -60,6 +62,7 @@
     "marker_creation_authorized": false,
     "collection_authorized": false,
     "wallet_access_authorized": false,
-    "live_action_authorized": false
+    "live_action_authorized": false,
+    "transaction_authorized": false
   }
 }
