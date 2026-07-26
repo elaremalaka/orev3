@@ -37,7 +37,12 @@ The fixture ledger and evidence are never holdout inputs.
 
 This step requires separate authorization and two independent provider URLs in
 `ORE_RECOVERY_PRIMARY_RPC_URL` and `ORE_RECOVERY_SECONDARY_RPC_URL`. URLs and
-credentials are never printed or stored.
+credentials are never printed or stored. It deterministically selects exactly
+the latest five completed rounds strictly before the durable observer boundary
+captured at burn-in start: `boundary_round - 5` through
+`boundary_round - 1`. Selection is bounded; unavailable rounds cause failure
+instead of a broader historical search. These rounds are non-production,
+non-holdout, and ineligible for the 600-round target.
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli resolver-burn-in \
@@ -46,12 +51,32 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli resolver-burn-in \
   --ledger data/resolver/rfc008_operational_burn_in_v1.sqlite \
   --output data/resolver/rfc008_operational_burn_in_v1.json \
   --mode operational \
+  --sample-size 5 \
+  --release-approval docs/research/rfc008/release_implementation_approval_v1.json \
+  --repository-root . \
   --authorization-token RFC008_OPERATIONAL_RESOLVER_BURN_IN_AUTHORIZED
 ```
 
-The command deterministically chooses the round immediately before the latest
-observer source round as its finalized control. Operational evidence is valid
-for 24 hours.
+Operational evidence schema version 2 records complete per-round provenance
+and exact RPC counts by provider and method. Every real round must be read from
+both providers at finalized commitment and must pass owner, PDA, returned
+identity, decoded round, finalized-context, deployment-vector, accounting, and
+canonical-agreement checks. Fewer than five successes, duplicates, missing
+counts, incomplete provenance, or any provider disagreement fail closed.
+
+The same isolated ledger also performs four separately reported controlled
+checks. Restart/retry persists a pending fixture attempt, closes and reopens the
+ledger, validates deterministic jitter, and then finalizes it. Conflict injects
+a non-authoritative disagreement and proves terminal overwrite refusal.
+Quarantine creates a different unresolved fixture round, invokes the production
+expiry transition with a controlled clock, reopens the ledger, and proves that
+later resolution cannot silently overwrite quarantine. Fixture calls never
+count as operational RPC calls or authoritative successes.
+
+The command exits nonzero unless every operational, restart, retry/jitter,
+conflict, quarantine, integrity, safety, and isolation gate passes. Even a
+passing burn-in grants neither marker nor collection authorization.
+Operational evidence is valid for 24 hours.
 
 ## 4. Read-only release preflight
 
@@ -70,8 +95,10 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli preflight-marker \
 
 `ready: true` requires the approved HEAD policy, completely clean worktree,
 absent production artifacts, valid frozen hashes, recent hash-validated
-operational burn-in, and a current runtime source boundary. It is not
-authorization.
+schema-v2 operational evidence, at least five distinct authoritative successes,
+internally consistent RPC accounting, complete provider provenance, separate
+passing restart/retry, conflict, and quarantine evidence, and a current runtime
+source boundary. It is not authorization.
 
 ## 5. Future marker creation
 
