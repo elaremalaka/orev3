@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import glob
-import hashlib
 import os
 import signal
 import time
@@ -14,7 +13,6 @@ from orev3.collection.opportunity_builder import (
     IncompleteOpportunityError,
     build_opportunity,
 )
-from orev3.collection.outcome_linker import outcome_from_observer_record
 from orev3.collection.schemas import SourceCursor, TailRecord
 from orev3.collection.tailer import (
     SourceChangedError,
@@ -28,8 +26,8 @@ from orev3.rfc008.decisions import (
     snapshot_from_opportunity,
 )
 from orev3.rfc008.marker import verify_marker
-from orev3.rfc008.outcomes import accept_outcome, enqueue_pending
-from orev3.rfc008.schemas import OutcomeEvidence
+from orev3.rfc008.outcomes import enqueue_pending
+from orev3.rfc008.resolver import FinalizedOutcomeResolver
 from orev3.rfc008.storage import RFC008Store, strict_json
 from orev3.ledger.identifiers import deterministic_id
 
@@ -45,6 +43,7 @@ class RFC008Collector:
         config: RFC008Config,
         marker_path: str | Path,
         expected_marker_sha256: str,
+        resolver: FinalizedOutcomeResolver | None = None,
     ) -> None:
         self.store = store
         self.config = config
@@ -53,6 +52,13 @@ class RFC008Collector:
         )
         self.stop_requested = Event()
         self.run_id: str | None = None
+        self.resolver = resolver
+        if (
+            resolver is not None
+            and self.marker.resolver_configuration_sha256
+            != resolver.config.fingerprint
+        ):
+            raise ValueError("Marker and resolver configuration mismatch")
 
     def request_stop(self, *_args) -> None:
         self.stop_requested.set()
@@ -102,38 +108,6 @@ class RFC008Collector:
         if not self.store.has_snapshot(prior_round):
             self.store.exclude_round(prior_round, "no_timely_complete_snapshot")
 
-    def _direct_finalized_outcome(
-        self, record: TailRecord
-    ) -> OutcomeEvidence | None:
-        # Confirmed observer snapshots are not silently promoted to finalized.
-        commitment = str(record.raw.get("commitment", "")).lower()
-        if commitment != "finalized":
-            return None
-        explicit, outcome = outcome_from_observer_record(record)
-        if not explicit or outcome is None:
-            return None
-        return OutcomeEvidence(
-            outcome_id=deterministic_id(
-                "rfc008-direct-finalized-outcome",
-                outcome.round_id,
-                outcome.winner_square,
-                outcome.final_square_deployments,
-                outcome.total_winnings,
-                record.content_sha256,
-            ),
-            round_id=outcome.round_id,
-            winner_square=outcome.winner_square,
-            finalized_at=outcome.finalized_at,
-            provenance="direct_observed",
-            commitment="finalized",
-            final_square_deployments=tuple(outcome.final_square_deployments),
-            total_winnings_lamports=outcome.total_winnings,
-            motherlode_raw=outcome.motherlode_raw,
-            base_ore_raw=outcome.base_ore_raw,
-            source_reference=outcome.source_reference,
-            source_content_sha256=record.content_sha256,
-        )
-
     def process_record(self, record: TailRecord) -> None:
         if not self.store.mark_source_record(
             record.record_id,
@@ -160,16 +134,12 @@ class RFC008Collector:
             self._transition(last_round, record.observed_at)
         self.store.set_metadata("last_round_id", str(board_round))
         self.store.start_round(board_round, record.observed_at)
-        outcome = self._direct_finalized_outcome(record)
-        if outcome is not None:
-            if self.store.queue(outcome.round_id) is None:
-                enqueue_pending(self.store, outcome.round_id, at=record.observed_at)
-            accept_outcome(self.store, outcome, self.config, at=record.observed_at)
-            if not self.store.has_snapshot(board_round):
-                self.store.exclude_round(
-                    board_round, "finalized_before_canonical_decision_snapshot"
-                )
-            # Finalized records are labels only and can never become inputs.
+        if str(record.raw.get("commitment", "")).lower() == "finalized":
+            # Observer records never bypass the validated provider resolver.
+            self.store.increment("unvalidated_finalized_source_records")
+            self.store.exclude_round(
+                board_round, "unvalidated_finalized_observer_record"
+            )
             return
         if self.store.has_snapshot(board_round):
             return
@@ -259,6 +229,8 @@ class RFC008Collector:
                 self.process_record(record)
                 processed += 1
             self.store.save_cursor(batch.cursor)
+        if self.resolver is not None:
+            self.resolver.process_due()
         return processed
 
     def run(self) -> None:

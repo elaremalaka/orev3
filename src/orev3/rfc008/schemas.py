@@ -84,6 +84,16 @@ class OutcomeEvidence(StrictModel):
     base_ore_raw: int | None = Field(default=None, ge=0)
     source_reference: str
     source_content_sha256: str
+    round_pda: str
+    program_owner: str
+    provider_ids: tuple[str, ...]
+    provider_response_sha256: tuple[str, ...]
+    provider_context_slots: tuple[int, ...]
+    requested_at: datetime
+    decoder_version: str
+    resolver_version: str
+    configuration_fingerprint: str
+    conflict_status: Literal["accepted"] = "accepted"
 
     @model_validator(mode="after")
     def complete(self):
@@ -94,6 +104,7 @@ class OutcomeEvidence(StrictModel):
 
 class OutcomeQueueRecord(StrictModel):
     round_id: int = Field(ge=0)
+    round_pda: str
     state: Literal["pending", "resolving", "finalized", "conflicted", "quarantined", "failed"]
     enqueued_at: datetime
     updated_at: datetime
@@ -141,5 +152,85 @@ class ExperimentMarker(StrictModel):
     latest_preholdout_round_id: int
     first_eligible_round_id: int
     source_identities: tuple[str, ...]
+    runtime_source_path: str
+    runtime_source_inode: int = Field(ge=0)
+    runtime_source_byte_offset: int = Field(ge=0)
+    runtime_source_line_number: int = Field(ge=1)
+    runtime_source_record_sha256: str
+    runtime_source_observed_at: datetime
+    resolver_configuration_sha256: str
+    resolver_burn_in_evidence_sha256: str
+    release_approval_sha256: str
     start_conditions: dict[str, object]
     collection_authorized: Literal[False] = False
+
+
+class ResolverBurnInEvidence(StrictModel):
+    schema_version: Literal[1] = 1
+    evidence_type: Literal["rfc008_resolver_burn_in"]
+    mode: Literal["fixture", "operational"]
+    created_at: datetime
+    resolver_configuration_sha256: str
+    experiment_configuration_fingerprint: str
+    resolver_version: str
+    decoder_version: str
+    provider_ids: tuple[str, ...]
+    finalized_commitment: Literal[True] = True
+    direct_finalization_passed: bool
+    owner_identity_passed: bool
+    round_identity_passed: bool
+    restart_recovery_passed: bool
+    retry_passed: bool
+    deterministic_jitter_passed: bool
+    provenance_passed: bool
+    conflict_quarantine_passed: bool
+    primary_authoritative_capable: bool
+    fixture_only: bool
+    ledger_sha256: str
+    checks: dict[str, object]
+
+
+class RuntimeSourceBoundary(StrictModel):
+    source_path: str
+    source_inode: int = Field(ge=0)
+    source_byte_offset: int = Field(ge=0)
+    source_line_number: int = Field(ge=1)
+    source_record_sha256: str
+    source_observed_at: datetime
+    round_id: int = Field(ge=0)
+
+
+class FinalFreezeManifest(StrictModel):
+    schema_version: Literal[1] = 1
+    freeze_id: str
+    created_at: datetime
+    authorization: Literal["RFC008_FINAL_FREEZE_AUTHORIZED"]
+    experiment_id: str
+    configuration_fingerprint: str
+    marker_sha256: str
+    ledger_sha256: str
+    ledger_data_version: int = Field(ge=0)
+    terminal_source_cursors: tuple[dict[str, object], ...]
+    total_started_rounds: int = Field(ge=0)
+    eligible_rounds: int = Field(ge=0)
+    primary_analyzable_rounds: int = Field(ge=0)
+    pending_rounds: int = Field(ge=0)
+    failed_rounds: int = Field(ge=0)
+    conflicted_rounds: int = Field(ge=0)
+    quarantined_rounds: int = Field(ge=0)
+    excluded_rounds: int = Field(ge=0)
+    recovered_sensitivity_rounds: int = Field(ge=0)
+    unusable_numerator: int = Field(ge=0)
+    unusable_denominator: int = Field(ge=0)
+    unusable_rate: float = Field(ge=0)
+    safety_counters: dict[str, int]
+    configuration_mismatch_count: int = Field(ge=0)
+    marker_mismatch_count: int = Field(ge=0)
+    duplicate_counters: dict[str, int]
+    writer_lease_violations: int = Field(ge=0)
+    outcome_provenance_counts: dict[str, int]
+    started_round_cap_reached: bool
+    calendar_cap_reached: bool
+    collection_stop_reason: str
+    final_freeze_authorized: Literal[True] = True
+    sqlite_integrity: Literal["ok"]

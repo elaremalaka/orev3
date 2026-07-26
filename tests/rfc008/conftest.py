@@ -38,6 +38,17 @@ def marker_file(tmp_path: Path, config: RFC008Config) -> tuple[Path, str]:
         latest_preholdout_round_id=345999,
         first_eligible_round_id=346000,
         source_identities=("/tmp/observer.jsonl|1|0|0",),
+        runtime_source_path="/tmp/observer.jsonl",
+        runtime_source_inode=1,
+        runtime_source_byte_offset=1,
+        runtime_source_line_number=1,
+        runtime_source_record_sha256="d" * 64,
+        runtime_source_observed_at=datetime(
+            2026, 7, 25, tzinfo=timezone.utc
+        ),
+        resolver_configuration_sha256="e" * 64,
+        resolver_burn_in_evidence_sha256="f" * 64,
+        release_approval_sha256="1" * 64,
         start_conditions={
             "minimum_analyzable_rounds": 600,
             "maximum_started_rounds": 632,
@@ -98,4 +109,13 @@ def make_outcome(
         base_ore_raw=None,
         source_reference=f"outcome:{round_id}",
         source_content_sha256=hashlib.sha256(content).hexdigest(),
+        round_pda=f"pda:{round_id}",
+        program_owner="ore-program",
+        provider_ids=("primary", "secondary"),
+        provider_response_sha256=("a" * 64, "a" * 64),
+        provider_context_slots=(1, 1),
+        requested_at=datetime(2026, 7, 25, 0, 2, tzinfo=timezone.utc),
+        decoder_version="ore-round-decoder-v1",
+        resolver_version="rfc008-finalized-resolver-v1",
+        configuration_fingerprint="fixture",
     )

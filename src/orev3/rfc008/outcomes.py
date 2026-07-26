@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import hashlib
 
 from orev3.ledger.identifiers import deterministic_id
+from orev3.observer.accounts import derive_round_address
 from orev3.rfc008.accounting import account_round
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.schemas import OutcomeEvidence, OutcomeQueueRecord
@@ -18,6 +20,7 @@ def enqueue_pending(
     now = at or datetime.now(timezone.utc)
     queue = OutcomeQueueRecord(
         round_id=round_id,
+        round_pda=str(derive_round_address(round_id)),
         state="pending",
         enqueued_at=now,
         updated_at=now,
@@ -37,6 +40,9 @@ def mark_attempt(
     response_sha256: str | None = None,
     error: str | None = None,
     at: datetime | None = None,
+    base_retry_seconds: int = 2,
+    maximum_retry_seconds: int = 300,
+    jitter_modulus_seconds: int = 7,
 ) -> OutcomeQueueRecord:
     now = at or datetime.now(timezone.utc)
     queue = store.queue(round_id)
@@ -71,7 +77,13 @@ def mark_attempt(
         ),
     )
     retry = queue.retry_count + 1
-    delay = min(2 ** min(retry, 8), 300)
+    exponential = base_retry_seconds * (2 ** max(retry - 1, 0))
+    jitter_material = f"rfc008-retry-jitter-v1:{round_id}:{retry}".encode()
+    jitter = (
+        int.from_bytes(hashlib.sha256(jitter_material).digest()[:8], "big")
+        % jitter_modulus_seconds
+    )
+    delay = min(exponential + jitter, maximum_retry_seconds)
     updated = queue.model_copy(
         update={
             "state": "pending" if status != "conflict" else "conflicted",
@@ -83,6 +95,58 @@ def mark_attempt(
     )
     store.save_queue(updated)
     return updated
+
+
+def record_provider_conflict(
+    store: RFC008Store,
+    round_id: int,
+    *,
+    provider_evidence: dict[str, object],
+    at: datetime | None = None,
+) -> None:
+    now = at or datetime.now(timezone.utc)
+    queue = store.queue(round_id)
+    if queue is None:
+        raise ValueError("Conflict requires a durable pending round")
+    conflict_id = deterministic_id(
+        "rfc008-provider-conflict",
+        round_id,
+        provider_evidence,
+    )
+    store.connection.execute(
+        """
+        INSERT OR IGNORE INTO outcome_conflicts
+        (conflict_id,round_id,created_at,record_json) VALUES (?,?,?,?)
+        """,
+        (
+            conflict_id,
+            round_id,
+            now.isoformat(),
+            strict_json(
+                {
+                    "conflict_id": conflict_id,
+                    "round_id": round_id,
+                    "provider_evidence": provider_evidence,
+                    "conflict_status": "conflicted",
+                }
+            ),
+        ),
+    )
+    store.save_queue(
+        queue.model_copy(
+            update={
+                "state": "conflicted",
+                "updated_at": now,
+                "next_retry_at": None,
+                "last_error": "authoritative_provider_disagreement",
+            }
+        )
+    )
+    store.connection.execute(
+        "UPDATE experiment_rounds SET state='conflicted' WHERE round_id=?",
+        (round_id,),
+    )
+    store.increment("outcome_conflicts")
 
 
 def begin_resolution(
@@ -176,23 +240,32 @@ def accept_outcome(
         }
     )
     store.save_queue(updated)
-    for decision in store.decisions(outcome.round_id):
+    decisions = store.decisions(outcome.round_id)
+    for decision in decisions:
         store.insert_accounting(account_round(decision, outcome, config))
-    store.connection.execute(
-        """
-        UPDATE experiment_rounds SET state=? WHERE round_id=?
-        """,
-        (
-            "finalized_primary"
+    prior = store.connection.execute(
+        "SELECT state FROM experiment_rounds WHERE round_id=?",
+        (outcome.round_id,),
+    ).fetchone()
+    if len(decisions) == 5 and prior is not None and prior[0] != "excluded":
+        store.connection.execute(
+            """
+            UPDATE experiment_rounds SET state=? WHERE round_id=?
+            """,
+            (
+                "finalized_primary"
+                if outcome.provenance == "direct_observed"
+                else "finalized_sensitivity",
+                outcome.round_id,
+            ),
+        )
+        store.increment(
+            "primary_outcomes"
             if outcome.provenance == "direct_observed"
-            else "finalized_sensitivity",
-            outcome.round_id,
-        ),
-    )
-    store.increment(
-        "primary_outcomes" if outcome.provenance == "direct_observed"
-        else "recovered_outcomes"
-    )
+            else "recovered_outcomes"
+        )
+    else:
+        store.increment("outcomes_for_unanalyzable_rounds")
     return LiteralResult("accepted")
 
 

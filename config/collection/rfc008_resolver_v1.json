@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "resolver_version": "rfc008-finalized-resolver-v1",
+  "decoder_version": "ore-round-decoder-v1",
+  "commitment": "finalized",
+  "network": "solana-mainnet",
+  "expected_genesis_hash": "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d",
+  "expected_program_owner": "oreV3EG1i9BEgiAJ8b177Z2S2rMarzak4NMv1kULvWv",
+  "provider_ids": [
+    "primary",
+    "secondary"
+  ],
+  "provider_url_environment_variables": [
+    "ORE_RECOVERY_PRIMARY_RPC_URL",
+    "ORE_RECOVERY_SECONDARY_RPC_URL"
+  ],
+  "minimum_provider_count": 2,
+  "base_retry_seconds": 2,
+  "maximum_retry_seconds": 300,
+  "jitter_modulus_seconds": 7,
+  "quarantine_after_seconds": 86400,
+  "burn_in_maximum_age_seconds": 86400,
+  "resolver_schema_version": 1,
+  "paper_only": true
+}

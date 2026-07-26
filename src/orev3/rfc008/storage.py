@@ -8,6 +8,12 @@ from typing import Any
 
 from orev3.collection.schemas import SourceCursor
 from orev3.rfc008.config import RFC008Config
+from orev3.rfc008.migrations import (
+    APPLICATION_ID,
+    DATABASE_FAMILY,
+    MIGRATIONS,
+    apply_migrations,
+)
 from orev3.rfc008.schemas import (
     ArmDecision,
     DecisionSnapshot,
@@ -17,7 +23,7 @@ from orev3.rfc008.schemas import (
 )
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = len(MIGRATIONS)
 PROTECTED_LEDGER_NAMES = {
     "rfc007_live_ledger_v1.sqlite",
     "participant_ledger_v1.sqlite",
@@ -74,8 +80,20 @@ class RFC008Store:
         if create:
             if config is None:
                 raise ValueError("Creating a ledger requires RFC-008 configuration")
+            self.connection.execute(f"PRAGMA application_id={APPLICATION_ID}")
+            apply_migrations(self.connection)
             self.initialize(config)
+        elif not read_only:
+            self._verify_application_identity()
+            apply_migrations(self.connection)
+            self.connection.execute(
+                "UPDATE metadata SET value=? WHERE key='schema_version'",
+                (str(SCHEMA_VERSION),),
+            )
+            self.connection.commit()
         self.verify_identity(config)
+        if not read_only and self._metadata_or_none("ledger_state") == "frozen":
+            self.connection.execute("PRAGMA query_only=ON")
 
     def close(self) -> None:
         self.connection.close()
@@ -88,112 +106,15 @@ class RFC008Store:
 
     def initialize(self, config: RFC008Config) -> None:
         with self.connection:
-            self.connection.executescript(
-                """
-                CREATE TABLE metadata (
-                    key TEXT PRIMARY KEY,
-                    value TEXT NOT NULL
-                );
-                CREATE TABLE source_cursors (
-                    source_id TEXT PRIMARY KEY,
-                    source_path TEXT NOT NULL UNIQUE,
-                    record_json TEXT NOT NULL
-                );
-                CREATE TABLE source_records (
-                    record_id TEXT PRIMARY KEY,
-                    source_id TEXT NOT NULL,
-                    line_number INTEGER NOT NULL,
-                    content_sha256 TEXT NOT NULL,
-                    UNIQUE(source_id, line_number),
-                    UNIQUE(source_id, content_sha256)
-                );
-                CREATE TABLE experiment_rounds (
-                    round_id INTEGER PRIMARY KEY,
-                    started_at TEXT NOT NULL,
-                    transition_at TEXT,
-                    state TEXT NOT NULL,
-                    exclusion_reason TEXT,
-                    record_json TEXT NOT NULL
-                );
-                CREATE TABLE decision_snapshots (
-                    snapshot_id TEXT PRIMARY KEY,
-                    round_id INTEGER NOT NULL UNIQUE,
-                    source_content_sha256 TEXT NOT NULL,
-                    record_json TEXT NOT NULL
-                );
-                CREATE TABLE arm_decisions (
-                    decision_id TEXT PRIMARY KEY,
-                    round_id INTEGER NOT NULL,
-                    arm_id TEXT NOT NULL,
-                    snapshot_id TEXT NOT NULL,
-                    record_json TEXT NOT NULL,
-                    UNIQUE(round_id, arm_id)
-                );
-                CREATE TABLE outcome_queue (
-                    round_id INTEGER PRIMARY KEY,
-                    state TEXT NOT NULL,
-                    next_retry_at TEXT,
-                    record_json TEXT NOT NULL
-                );
-                CREATE TABLE outcome_attempts (
-                    attempt_id TEXT PRIMARY KEY,
-                    round_id INTEGER NOT NULL,
-                    attempted_at TEXT NOT NULL,
-                    source_type TEXT NOT NULL,
-                    status TEXT NOT NULL,
-                    response_sha256 TEXT,
-                    record_json TEXT NOT NULL
-                );
-                CREATE TABLE finalized_outcomes (
-                    outcome_id TEXT PRIMARY KEY,
-                    round_id INTEGER NOT NULL,
-                    provenance TEXT NOT NULL,
-                    source_content_sha256 TEXT NOT NULL,
-                    record_json TEXT NOT NULL,
-                    UNIQUE(round_id, provenance)
-                );
-                CREATE TABLE outcome_conflicts (
-                    conflict_id TEXT PRIMARY KEY,
-                    round_id INTEGER NOT NULL,
-                    created_at TEXT NOT NULL,
-                    record_json TEXT NOT NULL
-                );
-                CREATE TABLE round_accounting (
-                    accounting_id TEXT PRIMARY KEY,
-                    round_id INTEGER NOT NULL,
-                    arm_id TEXT NOT NULL,
-                    decision_id TEXT NOT NULL,
-                    outcome_id TEXT NOT NULL,
-                    record_json TEXT NOT NULL,
-                    UNIQUE(round_id, arm_id)
-                );
-                CREATE TABLE safety_audit (
-                    audit_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    created_at TEXT NOT NULL,
-                    event_type TEXT NOT NULL,
-                    record_json TEXT NOT NULL
-                );
-                CREATE TABLE counters (
-                    key TEXT PRIMARY KEY,
-                    value INTEGER NOT NULL
-                );
-                CREATE TABLE collector_runs (
-                    run_id TEXT PRIMARY KEY,
-                    started_at TEXT NOT NULL,
-                    ended_at TEXT,
-                    process_id INTEGER NOT NULL,
-                    configuration_fingerprint TEXT NOT NULL,
-                    record_json TEXT NOT NULL
-                );
-                """
-            )
             values = {
                 "schema_version": str(SCHEMA_VERSION),
+                "database_family": DATABASE_FAMILY,
                 "experiment_id": config.experiment_id,
                 "configuration_fingerprint": config.configuration_fingerprint,
                 "candidate_configuration_sha256": config.candidate_configuration_sha256,
                 "approval_manifest_sha256": config.approval_manifest_sha256,
                 "last_round_id": "",
+                "ledger_state": "collecting",
             }
             self.connection.executemany(
                 "INSERT INTO metadata(key,value) VALUES (?,?)", values.items()
@@ -207,13 +128,41 @@ class RFC008Store:
                 },
             )
 
+    def _verify_application_identity(self) -> None:
+        application_id = int(
+            self.connection.execute("PRAGMA application_id").fetchone()[0]
+        )
+        if application_id != APPLICATION_ID:
+            raise ValueError("Not an RFC-008 database application")
+
+    def _metadata_or_none(self, key: str) -> str | None:
+        try:
+            row = self.connection.execute(
+                "SELECT value FROM metadata WHERE key=?", (key,)
+            ).fetchone()
+        except sqlite3.OperationalError:
+            return None
+        return str(row[0]) if row is not None else None
+
     def verify_identity(self, config: RFC008Config | None) -> None:
+        self._verify_application_identity()
         try:
             values = dict(self.connection.execute("SELECT key,value FROM metadata"))
         except sqlite3.OperationalError as exc:
             raise ValueError("Not an initialized RFC-008 ledger") from exc
         if int(values.get("schema_version", -1)) != SCHEMA_VERSION:
             raise ValueError("Unsupported RFC-008 schema version")
+        if values.get("database_family") != DATABASE_FAMILY:
+            raise ValueError("RFC-008 database family sentinel mismatch")
+        applied = {
+            int(row[0]): str(row[1])
+            for row in self.connection.execute(
+                "SELECT version,checksum FROM schema_migrations"
+            )
+        }
+        expected = {migration.version: migration.checksum for migration in MIGRATIONS}
+        if applied != expected:
+            raise ValueError("RFC-008 migration history mismatch")
         if config is not None:
             if values.get("experiment_id") != config.experiment_id:
                 raise ValueError("RFC-008 experiment identity mismatch")
@@ -232,6 +181,41 @@ class RFC008Store:
         self.connection.execute(
             "UPDATE metadata SET value=? WHERE key=?", (value, key)
         )
+
+    def data_version(self) -> int:
+        return int(self.connection.execute("PRAGMA data_version").fetchone()[0])
+
+    def source_cursor_records(self) -> tuple[dict[str, object], ...]:
+        return tuple(
+            json.loads(row[0])
+            for row in self.connection.execute(
+                "SELECT record_json FROM source_cursors ORDER BY source_id"
+            )
+        )
+
+    def freeze(self, freeze_id: str, record: dict[str, object]) -> None:
+        if self.metadata("ledger_state") == "frozen":
+            existing = self.connection.execute(
+                "SELECT record_json FROM final_freezes WHERE freeze_id=?",
+                (freeze_id,),
+            ).fetchone()
+            if existing is None or json.loads(existing[0]) != record:
+                raise ValueError("Ledger is already frozen with different evidence")
+            return
+        self.connection.execute(
+            """
+            INSERT INTO final_freezes
+            (freeze_id,created_at,ledger_data_version,record_json)
+            VALUES (?,?,?,?)
+            """,
+            (
+                freeze_id,
+                str(record["created_at"]),
+                int(record["ledger_data_version"]),
+                strict_json(record),
+            ),
+        )
+        self.set_metadata("ledger_state", "frozen")
 
     def audit(self, event_type: str, record: dict[str, Any]) -> None:
         self.connection.execute(
