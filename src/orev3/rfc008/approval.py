@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from orev3.rfc008.approval_contract import (
+    SCHEMA2_APPROVAL_FIELDS,
+    active_schema2_structure_failures,
+    decode_approval_json,
+    generate_schema2_approval,
+    get_path,
+    leaf_paths,
+)
 from orev3.rfc008.marker import sha256_file
 
 
@@ -17,7 +24,7 @@ RELEASE_BRANCH = "research/rfc-007-paper-collection-burn-in"
 RELEASE_APPROVAL_COMMIT_POLICY = (
     "head_must_equal_approved_implementation_or_be_its_approval_artifact_child"
 )
-RELEASE_STATUS = "approval_supersession_hardened_for_independent_review_only"
+RELEASE_STATUS = "schema2_field_authority_defined_for_independent_review_only"
 DATABASE_FAMILY = "orev3-rfc008"
 DATABASE_SCHEMA_VERSION = 3
 MARKER_SCHEMA_VERSION = 2
@@ -26,7 +33,7 @@ CLI_VERSION = "rfc008-cli-v4"
 CLI_SHA256 = "2fadb7a12ea2b7e3533ce75f5b42f48810561ecbfe841d7112e26c94b50be4d5"
 RUNBOOK_VERSION = "rfc008-operator-runbook-v5"
 RUNBOOK_SHA256 = (
-    "a1d2c952f7da20c3ddc0db47ac45123ccdaa5e1d4d41c2d56b7bc7ba9066a4c6"
+    "68686e76e7cc14e6afa3d5db740bef17f4c9be52a6b91bb5a794793ba4b4bd87"
 )
 MIGRATION_SET_SHA256 = (
     "ece66b7732cdc61af7c549aa8e2161d6f1f305e533e43165cf58e9ad492c2bd5"
@@ -51,9 +58,136 @@ class ReleaseApprovalPolicy:
     resolver_configuration_sha256: str
     burn_in_evidence_sha256: str
     burn_in_ledger_sha256: str
+    burn_in_repository_commit: str
+    resolver_version: str
+    decoder_version: str
+    external_rpc_burn_in_performed: bool
     cli_sha256: str
     runbook_sha256: str
     repository_branch: str = RELEASE_BRANCH
+    audit_version: str = "rfc008-release-preflight-v5"
+    minimum_operational_sample_size: int = 5
+    protected_process_policy: dict[str, dict[str, str]] = field(
+        default_factory=lambda: {
+            "48404": {
+                "role": "observer",
+                "sanitized_command_identity": "-m orev3.observer.collect",
+            },
+            "48405": {
+                "role": "observer_caffeinate",
+                "sanitized_command_identity": (
+                    "caffeinate -i python -m orev3.observer.collect"
+                ),
+            },
+            "78317": {
+                "role": "rfc007_collector",
+                "sanitized_command_identity": (
+                    "-m orev3.collection.cli run --config "
+                    "config/collection/rfc007_burn_in_v1.json --ledger "
+                    "data/ledger/rfc007_live_ledger_v1.sqlite"
+                ),
+            },
+        }
+    )
+
+
+def _authoritative_release_values(
+    policy: ReleaseApprovalPolicy,
+) -> dict[str, Any]:
+    values: dict[str, Any] = {
+        "artifact_type": RELEASE_ARTIFACT_TYPE,
+        "schema_version": RELEASE_SCHEMA_VERSION,
+        "rfc_identifier": RELEASE_RFC_IDENTIFIER,
+        "repository_branch": policy.repository_branch,
+        "status": RELEASE_STATUS,
+        "approved_implementation_commit": policy.expected_implementation_commit,
+        "approval_commit_policy": RELEASE_APPROVAL_COMMIT_POLICY,
+        "supersedes_release_implementation_approval_sha256": (
+            policy.expected_predecessor_sha256
+        ),
+        "validated_production_marker_sha256": policy.marker_sha256,
+        "validated_production_marker_sidecar_sha256": (
+            policy.marker_sidecar_sha256
+        ),
+        "validated_production_marker_repository_commit": (
+            policy.marker_repository_commit
+        ),
+        "validated_production_marker_release_approval_sha256": (
+            policy.marker_original_approval_sha256
+        ),
+        "validated_production_marker_collection_authorized": False,
+        "validated_operational_burn_in_evidence_sha256": (
+            policy.burn_in_evidence_sha256
+        ),
+        "validated_operational_burn_in_ledger_sha256": (
+            policy.burn_in_ledger_sha256
+        ),
+        "validated_operational_burn_in_repository_commit": (
+            policy.burn_in_repository_commit
+        ),
+        "frozen_approval_manifest_sha256": APPROVAL_MANIFEST_SHA256,
+        "configuration_fingerprint": policy.configuration_fingerprint,
+        "candidate_configuration_sha256": (
+            policy.candidate_configuration_sha256
+        ),
+        "resolver_configuration_sha256": (
+            policy.resolver_configuration_sha256
+        ),
+        "audit_version": policy.audit_version,
+        "resolver_version": policy.resolver_version,
+        "decoder_version": policy.decoder_version,
+        "database_family": DATABASE_FAMILY,
+        "database_schema_version": DATABASE_SCHEMA_VERSION,
+        "migration_set_sha256": MIGRATION_SET_SHA256,
+        "burn_in_evidence_schema_version": BURN_IN_EVIDENCE_SCHEMA_VERSION,
+        "marker_schema_version": MARKER_SCHEMA_VERSION,
+        "minimum_operational_sample_size": (
+            policy.minimum_operational_sample_size
+        ),
+        "cli_version": CLI_VERSION,
+        "cli_sha256": policy.cli_sha256,
+        "runbook_version": RUNBOOK_VERSION,
+        "runbook_sha256": policy.runbook_sha256,
+        "verification.fixture_resolver_burn_in_required": True,
+        "verification.operational_resolver_burn_in_required_before_marker": True,
+        "verification.external_rpc_burn_in_performed": (
+            policy.external_rpc_burn_in_performed
+        ),
+        "authorization_boundary.implementation_authorized": True,
+        "authorization_boundary.fixture_burn_in_authorized": True,
+        "authorization_boundary.operational_rpc_burn_in_authorized": False,
+        "authorization_boundary.marker_creation_authorized": False,
+        "authorization_boundary.collection_authorized": False,
+        "authorization_boundary.wallet_access_authorized": False,
+        "authorization_boundary.live_action_authorized": False,
+        "authorization_boundary.transaction_authorized": False,
+    }
+    for pid, process in policy.protected_process_policy.items():
+        for key, item in process.items():
+            values[f"protected_process_policy.{pid}.{key}"] = item
+    return values
+
+
+def generate_release_approval(
+    *,
+    policy: ReleaseApprovalPolicy,
+    audit_correction_identifier: str,
+    focused_lifecycle_test_count: int,
+    rfc008_test_count: int,
+    full_test_count: int,
+) -> dict[str, Any]:
+    values = _authoritative_release_values(policy)
+    values.update(
+        {
+            "audit_correction_identifier": audit_correction_identifier,
+            "verification.focused_lifecycle_test_count": (
+                focused_lifecycle_test_count
+            ),
+            "verification.rfc008_test_count": rfc008_test_count,
+            "verification.full_test_count": full_test_count,
+        }
+    )
+    return generate_schema2_approval(values)
 
 
 def _failure(
@@ -92,7 +226,7 @@ def _load_json_object(
     failures: list[dict[str, str]],
 ) -> dict[str, Any] | None:
     try:
-        value = _decode_json_object(path.read_bytes())
+        value = decode_approval_json(path.read_bytes())
     except (OSError, ValueError) as exc:
         _failure(failures, "release_chain_valid", str(exc))
         return None
@@ -103,21 +237,6 @@ def _load_json_object(
             "Release approval must be a JSON object",
         )
         return None
-    return value
-
-
-def _decode_json_object(raw: bytes) -> dict[str, Any]:
-    def reject_duplicates(pairs):
-        value: dict[str, Any] = {}
-        for key, item in pairs:
-            if key in value:
-                raise ValueError(f"Duplicate JSON field: {key}")
-            value[key] = item
-        return value
-
-    value = json.loads(raw, object_pairs_hook=reject_duplicates)
-    if not isinstance(value, dict):
-        raise ValueError("Release approval must be a JSON object")
     return value
 
 
@@ -194,127 +313,186 @@ def _validate_historical_identity(
         )
 
 
+def _validate_historical_schema2_identity(
+    value: dict[str, Any],
+    *,
+    policy: ReleaseApprovalPolicy,
+    failures: list[dict[str, str]],
+) -> None:
+    _exact(
+        value,
+        "artifact_type",
+        RELEASE_ARTIFACT_TYPE,
+        "release_artifact_type_matches",
+        failures,
+    )
+    _exact(
+        value,
+        "schema_version",
+        RELEASE_SCHEMA_VERSION,
+        "release_schema_supported",
+        failures,
+    )
+    for check, reason in active_schema2_structure_failures(value):
+        _failure(failures, check, reason)
+    present = leaf_paths(value)
+    for item in SCHEMA2_APPROVAL_FIELDS:
+        if item.path not in present:
+            continue
+        actual = get_path(value, item.path)
+        if item.canonical == "lowercase_full_sha256" and (
+            not isinstance(actual, str) or not HEX_64.fullmatch(actual)
+        ):
+            _failure(
+                failures,
+                item.failure_reason,
+                f"Historical SHA-256 is not canonical: {item.path}",
+            )
+        if item.canonical == "lowercase_full_git_commit" and (
+            not isinstance(actual, str) or not HEX_40.fullmatch(actual)
+        ):
+            _failure(
+                failures,
+                item.failure_reason,
+                f"Historical commit is not canonical: {item.path}",
+            )
+    expected = _authoritative_release_values(policy)
+    invariant_paths = {
+        "rfc_identifier",
+        "repository_branch",
+        "approval_commit_policy",
+        "validated_production_marker_sha256",
+        "validated_production_marker_sidecar_sha256",
+        "validated_production_marker_repository_commit",
+        "validated_production_marker_release_approval_sha256",
+        "validated_production_marker_collection_authorized",
+        "validated_operational_burn_in_evidence_sha256",
+        "validated_operational_burn_in_ledger_sha256",
+        "validated_operational_burn_in_repository_commit",
+        "frozen_approval_manifest_sha256",
+        "configuration_fingerprint",
+        "candidate_configuration_sha256",
+        "resolver_configuration_sha256",
+        "resolver_version",
+        "decoder_version",
+        "minimum_operational_sample_size",
+        "verification.fixture_resolver_burn_in_required",
+        "verification.operational_resolver_burn_in_required_before_marker",
+        "verification.external_rpc_burn_in_performed",
+        "authorization_boundary.implementation_authorized",
+        "authorization_boundary.fixture_burn_in_authorized",
+        "authorization_boundary.operational_rpc_burn_in_authorized",
+        "authorization_boundary.marker_creation_authorized",
+        "authorization_boundary.collection_authorized",
+        "authorization_boundary.wallet_access_authorized",
+        "authorization_boundary.live_action_authorized",
+        "authorization_boundary.transaction_authorized",
+    }
+    invariant_paths.update(
+        item.path
+        for item in SCHEMA2_APPROVAL_FIELDS
+        if item.path.startswith("protected_process_policy.")
+    )
+    for path in sorted(invariant_paths):
+        item = next(
+            field for field in SCHEMA2_APPROVAL_FIELDS if field.path == path
+        )
+        if path in present and get_path(value, path) != expected[path]:
+            _failure(
+                failures,
+                item.failure_reason,
+                f"Historical schema-2 invariant changed: {path}",
+            )
+
+
+def _validate_historical_approval(
+    value: dict[str, Any],
+    *,
+    terminal: bool,
+    policy: ReleaseApprovalPolicy,
+    failures: list[dict[str, str]],
+) -> None:
+    if value.get("schema_version") == RELEASE_SCHEMA_VERSION:
+        if terminal:
+            _failure(
+                failures,
+                "release_chain_valid",
+                "Marker-anchored terminal approval must remain schema 1",
+            )
+        _validate_historical_schema2_identity(
+            value,
+            policy=policy,
+            failures=failures,
+        )
+        return
+    _validate_historical_identity(
+        value,
+        terminal=terminal,
+        policy=policy,
+        failures=failures,
+    )
+
+
 def _validate_current_release(
     value: dict[str, Any],
     policy: ReleaseApprovalPolicy,
     failures: list[dict[str, str]],
 ) -> None:
-    expected = (
-        (
-            "artifact_type",
-            RELEASE_ARTIFACT_TYPE,
-            "release_artifact_type_matches",
-        ),
-        ("schema_version", RELEASE_SCHEMA_VERSION, "release_schema_supported"),
-        (
-            "rfc_identifier",
-            RELEASE_RFC_IDENTIFIER,
-            "release_rfc_identity_matches",
-        ),
-        ("repository_branch", policy.repository_branch, "release_repository_matches"),
-        ("status", RELEASE_STATUS, "release_schema_supported"),
-        (
-            "approval_commit_policy",
-            RELEASE_APPROVAL_COMMIT_POLICY,
-            "approved_implementation_commit_matches",
-        ),
-        (
-            "approved_implementation_commit",
-            policy.expected_implementation_commit,
-            "approved_implementation_commit_matches",
-        ),
-        (
-            "supersedes_release_implementation_approval_sha256",
-            policy.expected_predecessor_sha256,
-            "release_predecessor_matches",
-        ),
-        (
-            "validated_production_marker_sha256",
-            policy.marker_sha256,
-            "release_marker_hash_matches",
-        ),
-        (
-            "validated_production_marker_sidecar_sha256",
-            policy.marker_sidecar_sha256,
-            "release_marker_sidecar_hash_matches",
-        ),
-        (
-            "validated_production_marker_repository_commit",
-            policy.marker_repository_commit,
-            "release_repository_matches",
-        ),
-        (
-            "validated_production_marker_release_approval_sha256",
-            policy.marker_original_approval_sha256,
-            "release_chain_valid",
-        ),
-        (
-            "validated_production_marker_collection_authorized",
-            False,
-            "release_collection_authorization_false",
-        ),
-        (
-            "validated_operational_burn_in_evidence_sha256",
-            policy.burn_in_evidence_sha256,
-            "release_configuration_binding_matches",
-        ),
-        (
-            "validated_operational_burn_in_ledger_sha256",
-            policy.burn_in_ledger_sha256,
-            "release_configuration_binding_matches",
-        ),
-        (
-            "frozen_approval_manifest_sha256",
-            APPROVAL_MANIFEST_SHA256,
-            "release_approval_manifest_matches",
-        ),
-        (
-            "configuration_fingerprint",
-            policy.configuration_fingerprint,
-            "release_experiment_fingerprint_matches",
-        ),
-        (
-            "candidate_configuration_sha256",
-            policy.candidate_configuration_sha256,
-            "release_candidate_hash_matches",
-        ),
-        (
-            "resolver_configuration_sha256",
-            policy.resolver_configuration_sha256,
-            "release_resolver_fingerprint_matches",
-        ),
-        (
-            "migration_set_sha256",
-            MIGRATION_SET_SHA256,
-            "release_migration_set_matches",
-        ),
-        (
-            "marker_schema_version",
-            MARKER_SCHEMA_VERSION,
-            "release_marker_schema_matches",
-        ),
-        (
-            "burn_in_evidence_schema_version",
-            BURN_IN_EVIDENCE_SCHEMA_VERSION,
-            "release_evidence_schema_matches",
-        ),
-        (
-            "database_family",
-            DATABASE_FAMILY,
-            "release_database_schema_matches",
-        ),
-        (
-            "database_schema_version",
-            DATABASE_SCHEMA_VERSION,
-            "release_database_schema_matches",
-        ),
-        ("cli_version", CLI_VERSION, "release_cli_contract_matches"),
-        ("cli_sha256", policy.cli_sha256, "release_cli_hash_matches"),
-        ("runbook_version", RUNBOOK_VERSION, "release_runbook_hash_matches"),
-        ("runbook_sha256", policy.runbook_sha256, "release_runbook_hash_matches"),
+    _exact(
+        value,
+        "artifact_type",
+        RELEASE_ARTIFACT_TYPE,
+        "release_artifact_type_matches",
+        failures,
     )
-    for field, frozen, check in expected:
-        _exact(value, field, frozen, check, failures)
+    _exact(
+        value,
+        "schema_version",
+        RELEASE_SCHEMA_VERSION,
+        "release_schema_supported",
+        failures,
+    )
+    for check, reason in active_schema2_structure_failures(value):
+        _failure(failures, check, reason)
+    present = leaf_paths(value)
+    expected_values = _authoritative_release_values(policy)
+
+    for item in SCHEMA2_APPROVAL_FIELDS:
+        if item.path not in present:
+            continue
+        actual = get_path(value, item.path)
+        json_type = {"string": str, "integer": int, "boolean": bool}[
+            item.json_type
+        ]
+        if type(actual) is not json_type:
+            continue
+        if item.authority == "informational":
+            if item.json_type == "integer" and actual < 0:
+                _failure(
+                    failures,
+                    item.failure_reason,
+                    f"Informational count must be non-negative: {item.path}",
+                )
+            if (
+                item.path == "audit_correction_identifier"
+                and not re.fullmatch(r"rfc008-[a-z0-9-]+-v[0-9]+", actual)
+            ):
+                _failure(
+                    failures,
+                    item.failure_reason,
+                    "Audit correction identifier is malformed",
+                )
+            continue
+        if item.authority == "authorization":
+            continue
+        expected = expected_values.get(item.path)
+        if actual != expected:
+            _failure(
+                failures,
+                item.failure_reason,
+                f"Active approval field does not match authority: {item.path}",
+            )
+
     implementation = value.get("approved_implementation_commit")
     if not isinstance(implementation, str) or not HEX_40.fullmatch(
         implementation
@@ -333,31 +511,23 @@ def _validate_current_release(
             "release_predecessor_matches",
             "Predecessor must be a lowercase SHA-256",
         )
-    boundary = value.get("authorization_boundary")
-    _false_authorization(
-        boundary,
-        "collection_authorized",
-        "release_collection_authorization_false",
-        failures,
-    )
-    _false_authorization(
-        boundary,
-        "live_action_authorized",
-        "release_live_authorization_false",
-        failures,
-    )
-    _false_authorization(
-        boundary,
-        "wallet_access_authorized",
-        "release_wallet_authorization_false",
-        failures,
-    )
-    _false_authorization(
-        boundary,
-        "transaction_authorized",
-        "release_transaction_authorization_false",
-        failures,
-    )
+
+
+def _validate_current_authorizations(
+    value: dict[str, Any],
+    failures: list[dict[str, str]],
+) -> None:
+    present = leaf_paths(value)
+    for item in SCHEMA2_APPROVAL_FIELDS:
+        if item.authority != "authorization" or item.path not in present:
+            continue
+        actual = get_path(value, item.path)
+        if type(actual) is bool and actual is not False:
+            _failure(
+                failures,
+                item.failure_reason,
+                f"Authorization must be explicitly false: {item.path}",
+            )
 
 
 def validate_release_approval_chain(
@@ -420,7 +590,7 @@ def validate_release_approval_chain(
             )
             break
         try:
-            predecessor_value = _decode_json_object(predecessor_bytes)
+            predecessor_value = decode_approval_json(predecessor_bytes)
         except (UnicodeDecodeError, ValueError) as exc:
             _failure(failures, "release_chain_valid", str(exc))
             break
@@ -433,7 +603,7 @@ def validate_release_approval_chain(
             break
         hashes.append(predecessor)
         terminal = predecessor == policy.marker_original_approval_sha256
-        _validate_historical_identity(
+        _validate_historical_approval(
             predecessor_value,
             terminal=terminal,
             policy=policy,
@@ -457,6 +627,7 @@ def validate_release_approval_chain(
             "release_chain_valid",
             "Approval chain does not terminate at the marker approval",
         )
+    _validate_current_authorizations(current, failures)
     return {
         "valid": not failures,
         "failures": failures,

@@ -14,6 +14,10 @@ from typing import Callable
 
 from pydantic import ValidationError
 
+from orev3.rfc008.approval_contract import (
+    active_schema2_structure_failures,
+    decode_approval_json,
+)
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.migrations import migration_set_hash
 from orev3.rfc008.resolver_config import ResolverConfig
@@ -249,9 +253,16 @@ def validate_historical_source_boundary(
 
 
 def _load_release_approval(path: str | Path) -> dict[str, object]:
-    value = json.loads(Path(path).read_text(encoding="utf-8"))
+    value = decode_approval_json(Path(path).read_bytes())
     if value.get("artifact_type") != "rfc008_implementation_release_approval":
         raise ValueError("Invalid RFC-008 release approval artifact")
+    if value.get("schema_version") == 2:
+        failures = active_schema2_structure_failures(value)
+        if failures:
+            raise ValueError(
+                "Invalid RFC-008 schema-2 approval structure: "
+                + "; ".join(reason for _, reason in failures)
+            )
     return value
 
 

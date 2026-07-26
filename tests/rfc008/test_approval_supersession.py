@@ -7,21 +7,9 @@ from pathlib import Path
 import pytest
 
 from orev3.rfc008.approval import (
-    APPROVAL_MANIFEST_SHA256,
-    BURN_IN_EVIDENCE_SCHEMA_VERSION,
-    CLI_VERSION,
-    DATABASE_FAMILY,
-    DATABASE_SCHEMA_VERSION,
-    MARKER_SCHEMA_VERSION,
-    MIGRATION_SET_SHA256,
-    RELEASE_APPROVAL_COMMIT_POLICY,
     RELEASE_ARTIFACT_TYPE,
-    RELEASE_BRANCH,
-    RELEASE_RFC_IDENTIFIER,
-    RELEASE_SCHEMA_VERSION,
-    RELEASE_STATUS,
-    RUNBOOK_VERSION,
     ReleaseApprovalPolicy,
+    generate_release_approval,
     validate_release_approval_chain,
 )
 
@@ -78,44 +66,34 @@ def legacy_approval(
 
 
 def current_approval(predecessor: str) -> dict[str, object]:
-    return {
-        "artifact_type": RELEASE_ARTIFACT_TYPE,
-        "schema_version": RELEASE_SCHEMA_VERSION,
-        "rfc_identifier": RELEASE_RFC_IDENTIFIER,
-        "repository_branch": RELEASE_BRANCH,
-        "status": RELEASE_STATUS,
-        "approved_implementation_commit": SHA["implementation"],
-        "approval_commit_policy": RELEASE_APPROVAL_COMMIT_POLICY,
-        "supersedes_release_implementation_approval_sha256": predecessor,
-        "validated_production_marker_sha256": SHA["marker"],
-        "validated_production_marker_sidecar_sha256": SHA["sidecar"],
-        "validated_production_marker_repository_commit": SHA[
-            "marker_repository"
-        ],
-        "validated_production_marker_release_approval_sha256": "",
-        "validated_production_marker_collection_authorized": False,
-        "validated_operational_burn_in_evidence_sha256": SHA["evidence"],
-        "validated_operational_burn_in_ledger_sha256": SHA["ledger"],
-        "frozen_approval_manifest_sha256": APPROVAL_MANIFEST_SHA256,
-        "configuration_fingerprint": SHA["experiment"],
-        "candidate_configuration_sha256": SHA["candidate"],
-        "resolver_configuration_sha256": SHA["resolver"],
-        "migration_set_sha256": MIGRATION_SET_SHA256,
-        "marker_schema_version": MARKER_SCHEMA_VERSION,
-        "burn_in_evidence_schema_version": BURN_IN_EVIDENCE_SCHEMA_VERSION,
-        "database_family": DATABASE_FAMILY,
-        "database_schema_version": DATABASE_SCHEMA_VERSION,
-        "cli_version": CLI_VERSION,
-        "cli_sha256": SHA["cli"],
-        "runbook_version": RUNBOOK_VERSION,
-        "runbook_sha256": SHA["runbook"],
-        "authorization_boundary": {
-            "collection_authorized": False,
-            "live_action_authorized": False,
-            "wallet_access_authorized": False,
-            "transaction_authorized": False,
-        },
-    }
+    policy = ReleaseApprovalPolicy(
+        expected_implementation_commit=SHA["implementation"],
+        expected_predecessor_sha256=predecessor,
+        marker_sha256=SHA["marker"],
+        marker_sidecar_sha256=SHA["sidecar"],
+        marker_original_approval_sha256="",
+        marker_repository_commit=SHA["marker_repository"],
+        configuration_fingerprint=SHA["experiment"],
+        candidate_configuration_sha256=SHA["candidate"],
+        resolver_configuration_sha256=SHA["resolver"],
+        burn_in_evidence_sha256=SHA["evidence"],
+        burn_in_ledger_sha256=SHA["ledger"],
+        burn_in_repository_commit=(
+            "c41262fa789eb7a2e5f3f326c856beb6bd27aa5a"
+        ),
+        resolver_version="rfc008-finalized-resolver-v1",
+        decoder_version="ore-round-decoder-v1",
+        external_rpc_burn_in_performed=True,
+        cli_sha256=SHA["cli"],
+        runbook_sha256=SHA["runbook"],
+    )
+    return generate_release_approval(
+        policy=policy,
+        audit_correction_identifier="rfc008-schema2-field-authority-v1",
+        focused_lifecycle_test_count=0,
+        rfc008_test_count=0,
+        full_test_count=0,
+    )
 
 
 def valid_chain(tmp_path: Path):
@@ -147,6 +125,12 @@ def valid_chain(tmp_path: Path):
         resolver_configuration_sha256=SHA["resolver"],
         burn_in_evidence_sha256=SHA["evidence"],
         burn_in_ledger_sha256=SHA["ledger"],
+        burn_in_repository_commit=(
+            "c41262fa789eb7a2e5f3f326c856beb6bd27aa5a"
+        ),
+        resolver_version="rfc008-finalized-resolver-v1",
+        decoder_version="ore-round-decoder-v1",
+        external_rpc_burn_in_performed=True,
         cli_sha256=SHA["cli"],
         runbook_sha256=SHA["runbook"],
     )
@@ -185,6 +169,62 @@ def test_current_valid_multi_step_approval_chain(tmp_path) -> None:
     report = validate(release, history, policy)
     assert report["valid"]
     assert len(report["approval_hashes"]) == 3
+
+
+def test_hash_addressed_historical_schema2_predecessor_is_valid(
+    tmp_path,
+) -> None:
+    history = tmp_path / "history"
+    original_path = tmp_path / "original.json"
+    original_hash = write_json(
+        original_path,
+        legacy_approval(predecessor="f" * 64, marker_fields=False),
+    )
+    history.mkdir()
+    (history / f"{original_hash}.json").write_bytes(
+        original_path.read_bytes()
+    )
+    prior_path = tmp_path / "prior-schema2.json"
+    prior = current_approval(original_hash)
+    prior["validated_production_marker_release_approval_sha256"] = (
+        original_hash
+    )
+    prior_hash = write_json(prior_path, prior)
+    (history / f"{prior_hash}.json").write_bytes(prior_path.read_bytes())
+    release = tmp_path / "release.json"
+    current = current_approval(prior_hash)
+    current["validated_production_marker_release_approval_sha256"] = (
+        original_hash
+    )
+    write_json(release, current)
+    policy = ReleaseApprovalPolicy(
+        expected_implementation_commit=SHA["implementation"],
+        expected_predecessor_sha256=prior_hash,
+        marker_sha256=SHA["marker"],
+        marker_sidecar_sha256=SHA["sidecar"],
+        marker_original_approval_sha256=original_hash,
+        marker_repository_commit=SHA["marker_repository"],
+        configuration_fingerprint=SHA["experiment"],
+        candidate_configuration_sha256=SHA["candidate"],
+        resolver_configuration_sha256=SHA["resolver"],
+        burn_in_evidence_sha256=SHA["evidence"],
+        burn_in_ledger_sha256=SHA["ledger"],
+        burn_in_repository_commit=(
+            "c41262fa789eb7a2e5f3f326c856beb6bd27aa5a"
+        ),
+        resolver_version="rfc008-finalized-resolver-v1",
+        decoder_version="ore-round-decoder-v1",
+        external_rpc_burn_in_performed=True,
+        cli_sha256=SHA["cli"],
+        runbook_sha256=SHA["runbook"],
+    )
+    report = validate(release, history, policy)
+    assert report["valid"]
+    assert report["approval_hashes"] == [
+        hashlib.sha256(release.read_bytes()).hexdigest(),
+        prior_hash,
+        original_hash,
+    ]
 
 
 def test_valid_one_step_supersession(tmp_path) -> None:
@@ -274,7 +314,7 @@ def test_valid_one_step_supersession(tmp_path) -> None:
         (
             "validated_operational_burn_in_evidence_sha256",
             "0" * 64,
-            "release_configuration_binding_matches",
+            "release_burn_in_evidence_matches",
         ),
         (
             "frozen_approval_manifest_sha256",
@@ -376,6 +416,21 @@ def test_authorization_flags_must_be_present_and_false(
     report = validate(release, history, policy)
     assert not report["valid"]
     assert expected_check in checks(report)
+
+
+def test_current_authorization_value_checks_follow_chain_validation(
+    tmp_path,
+) -> None:
+    release, history, policy = valid_chain(tmp_path)
+    document = json.loads(release.read_text())
+    document["supersedes_release_implementation_approval_sha256"] = "0" * 64
+    document["authorization_boundary"]["collection_authorized"] = True
+    write_json(release, document)
+    report = validate(release, history, policy)
+    ordered = [failure["check"] for failure in report["failures"]]
+    assert ordered.index("release_chain_valid") < ordered.index(
+        "release_collection_authorization_false"
+    )
 
 
 def test_wrong_or_missing_immediate_predecessor_fails(tmp_path) -> None:

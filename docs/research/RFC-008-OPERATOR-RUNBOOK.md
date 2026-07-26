@@ -218,6 +218,95 @@ walk the ordered chain to the approval embedded in the immutable marker.
 Every link must keep collection, live-action, wallet, and transaction
 authorization false. Copied marker hashes alone never establish approval.
 
+### Schema-2 approval field authority
+
+The canonical active approval contract is
+`docs/research/rfc008/schema2_approval_field_authority_v1.json`. It is
+mechanically generated from `SCHEMA2_APPROVAL_FIELDS` in
+`src/orev3/rfc008/approval_contract.py`; the same ordered registry drives
+generation, duplicate-safe parsing, validation, documentation-consistency
+tests, and exhaustive mutation tests.
+
+The contract contains exactly 54 required leaf fields: 11 exact
+release-bound fields, 17 derived release-bound fields, 17 policy-bound fields,
+5 explicit authorization fields, and 4 informational fields. Every entry
+declares its JSON type, applicability, validation source, structured failure
+reason, canonical representation, and mutation policy. Active approvals reject
+unknown top-level or nested fields and aliases. Duplicate JSON keys are
+rejected before a mapping is created.
+
+Informational fields are required and type/format checked, but their values do
+not grant authority and valid alternatives do not invalidate an otherwise
+valid approval. All other active fields are checked against their authoritative
+release, evidence, marker, repository, configuration, schema, process, or
+policy source. Missing, null, mistyped, or changed authoritative values fail
+closed.
+
+<!-- BEGIN GENERATED SCHEMA-2 APPROVAL FIELD AUTHORITY TABLE -->
+| Field path | Authority class | Required | Validation source | Applicability | Mutation behavior |
+|---|---|---:|---|---|---|
+| `artifact_type` | `release_bound_exact` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `schema_version` | `release_bound_exact` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `rfc_identifier` | `release_bound_exact` | yes | `constant` | `active` | `reject_mutation` |
+| `repository_branch` | `release_bound_exact` | yes | `git_branch` | `active` | `reject_mutation` |
+| `status` | `release_bound_exact` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `approved_implementation_commit` | `release_bound_derived` | yes | `git_approval_parent` | `active_and_legacy` | `reject_mutation` |
+| `approval_commit_policy` | `policy_bound` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `supersedes_release_implementation_approval_sha256` | `release_bound_derived` | yes | `git_parent_approval` | `active_and_legacy` | `reject_mutation` |
+| `validated_production_marker_sha256` | `release_bound_derived` | yes | `marker_bytes` | `active_and_legacy` | `reject_mutation` |
+| `validated_production_marker_sidecar_sha256` | `release_bound_derived` | yes | `marker_sidecar_bytes` | `active_and_legacy` | `reject_mutation` |
+| `validated_production_marker_repository_commit` | `release_bound_derived` | yes | `marker_document` | `active_and_legacy` | `reject_mutation` |
+| `validated_production_marker_release_approval_sha256` | `release_bound_derived` | yes | `marker_document` | `active_and_legacy` | `reject_mutation` |
+| `validated_production_marker_collection_authorized` | `authorization` | yes | `marker_document_false` | `active_and_legacy` | `reject_mutation` |
+| `validated_operational_burn_in_evidence_sha256` | `release_bound_derived` | yes | `burn_in_evidence_bytes` | `active_and_legacy` | `reject_mutation` |
+| `validated_operational_burn_in_ledger_sha256` | `release_bound_derived` | yes | `burn_in_ledger_bytes` | `active_and_legacy` | `reject_mutation` |
+| `validated_operational_burn_in_repository_commit` | `release_bound_derived` | yes | `burn_in_evidence_document` | `active_and_legacy` | `reject_mutation` |
+| `frozen_approval_manifest_sha256` | `release_bound_derived` | yes | `approval_manifest_bytes` | `active_and_legacy` | `reject_mutation` |
+| `configuration_fingerprint` | `release_bound_derived` | yes | `experiment_config` | `active_and_legacy` | `reject_mutation` |
+| `candidate_configuration_sha256` | `release_bound_derived` | yes | `marker_document` | `active_and_legacy` | `reject_mutation` |
+| `resolver_configuration_sha256` | `release_bound_derived` | yes | `resolver_config` | `active_and_legacy` | `reject_mutation` |
+| `audit_version` | `policy_bound` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `audit_correction_identifier` | `informational` | yes | `format_only` | `active_and_legacy` | `accept_valid_alternative` |
+| `resolver_version` | `policy_bound` | yes | `resolver_config` | `active_and_legacy` | `reject_mutation` |
+| `decoder_version` | `policy_bound` | yes | `resolver_config` | `active_and_legacy` | `reject_mutation` |
+| `database_family` | `release_bound_exact` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `database_schema_version` | `release_bound_exact` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `migration_set_sha256` | `release_bound_derived` | yes | `migration_registry` | `active_and_legacy` | `reject_mutation` |
+| `burn_in_evidence_schema_version` | `release_bound_exact` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `marker_schema_version` | `release_bound_exact` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `minimum_operational_sample_size` | `policy_bound` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `protected_process_policy.48404.role` | `policy_bound` | yes | `protected_process_registry` | `active_and_legacy` | `reject_mutation` |
+| `protected_process_policy.48404.sanitized_command_identity` | `policy_bound` | yes | `protected_process_registry` | `active_and_legacy` | `reject_mutation` |
+| `protected_process_policy.48405.role` | `policy_bound` | yes | `protected_process_registry` | `active_and_legacy` | `reject_mutation` |
+| `protected_process_policy.48405.sanitized_command_identity` | `policy_bound` | yes | `protected_process_registry` | `active_and_legacy` | `reject_mutation` |
+| `protected_process_policy.78317.role` | `policy_bound` | yes | `protected_process_registry` | `active_and_legacy` | `reject_mutation` |
+| `protected_process_policy.78317.sanitized_command_identity` | `policy_bound` | yes | `protected_process_registry` | `active_and_legacy` | `reject_mutation` |
+| `cli_version` | `release_bound_exact` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `cli_sha256` | `release_bound_derived` | yes | `cli_bytes` | `active_and_legacy` | `reject_mutation` |
+| `runbook_version` | `release_bound_exact` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `runbook_sha256` | `release_bound_derived` | yes | `runbook_bytes` | `active_and_legacy` | `reject_mutation` |
+| `verification.focused_lifecycle_test_count` | `informational` | yes | `format_only` | `active_and_legacy` | `accept_valid_alternative` |
+| `verification.rfc008_test_count` | `informational` | yes | `format_only` | `active_and_legacy` | `accept_valid_alternative` |
+| `verification.full_test_count` | `informational` | yes | `format_only` | `active_and_legacy` | `accept_valid_alternative` |
+| `verification.fixture_resolver_burn_in_required` | `policy_bound` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `verification.operational_resolver_burn_in_required_before_marker` | `policy_bound` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `verification.external_rpc_burn_in_performed` | `release_bound_derived` | yes | `burn_in_evidence_document` | `active_and_legacy` | `reject_mutation` |
+| `authorization_boundary.implementation_authorized` | `policy_bound` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `authorization_boundary.fixture_burn_in_authorized` | `policy_bound` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `authorization_boundary.operational_rpc_burn_in_authorized` | `policy_bound` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `authorization_boundary.marker_creation_authorized` | `policy_bound` | yes | `constant` | `active_and_legacy` | `reject_mutation` |
+| `authorization_boundary.collection_authorized` | `authorization` | yes | `explicit_false` | `active_and_legacy` | `reject_mutation` |
+| `authorization_boundary.wallet_access_authorized` | `authorization` | yes | `explicit_false` | `active_and_legacy` | `reject_mutation` |
+| `authorization_boundary.live_action_authorized` | `authorization` | yes | `explicit_false` | `active_and_legacy` | `reject_mutation` |
+| `authorization_boundary.transaction_authorized` | `authorization` | yes | `explicit_false` | `active` | `reject_mutation` |
+<!-- END GENERATED SCHEMA-2 APPROVAL FIELD AUTHORITY TABLE -->
+
+Schema-1 approvals are legacy compatibility records only. They are accepted
+solely when reached by immutable SHA-256 links while walking a schema-2
+approval chain to the approval embedded in the production marker. A schema-1
+document cannot be used as the active release approval unless it is that
+marker-anchored terminal document.
+
 ## 6. Future collection start
 
 Collection requires separate authorization and the same operational provider

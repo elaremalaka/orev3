@@ -425,6 +425,13 @@ def validate_post_marker_pre_collection_state(
                     burn_in_ledger_sha256=evidence.ledger_sha256,
                     cli_sha256=CLI_SHA256,
                     runbook_sha256=RUNBOOK_SHA256,
+                    burn_in_repository_commit=evidence.repository_commit,
+                    resolver_version=evidence.resolver_version,
+                    decoder_version=evidence.decoder_version,
+                    external_rpc_burn_in_performed=(
+                        evidence.mode == "operational"
+                        and evidence.real_rpc_request_counts.total > 0
+                    ),
                 ),
             )
             failures.extend(chain["failures"])
