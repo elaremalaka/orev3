@@ -211,6 +211,11 @@ def marker_preflight(
                 if isinstance(raw_operational, dict)
                 else []
             )
+            raw_success_count = (
+                raw_operational.get("successful_authoritative_count")
+                if isinstance(raw_operational, dict)
+                else None
+            )
             check(
                 "deployment_validation_incomplete",
                 bool(raw_rounds)
@@ -218,7 +223,11 @@ def marker_preflight(
                     isinstance(value, dict)
                     and value.get("deployment_vector_validated") is True
                     for value in raw_rounds
-                ),
+                )
+                and raw_operational.get(
+                    "deployment_validation_pass_count"
+                )
+                == raw_success_count,
                 "Deployment-vector validation is incomplete",
             )
             check(
@@ -228,19 +237,191 @@ def marker_preflight(
                     isinstance(value, dict)
                     and value.get("accounting_validated") is True
                     for value in raw_rounds
-                ),
+                )
+                and raw_operational.get(
+                    "accounting_validation_pass_count"
+                )
+                == raw_success_count,
                 "Accounting validation is incomplete",
             )
             raw_attempts = raw_burn.get("operational_attempts")
+            raw_requests = raw_burn.get("operational_requests")
             check(
                 "attempt_history_missing",
                 isinstance(raw_attempts, list) and bool(raw_attempts),
                 "Operational attempt evidence is absent",
             )
+            attempts_by_round = (
+                {
+                    value.get("round_id"): sum(
+                        item.get("round_id") == value.get("round_id")
+                        for item in raw_attempts
+                        if isinstance(item, dict)
+                    )
+                    for value in raw_rounds
+                    if isinstance(value, dict)
+                }
+                if isinstance(raw_attempts, list)
+                else {}
+            )
+            check(
+                "attempt_count_mismatch",
+                bool(raw_rounds)
+                and all(
+                    isinstance(value, dict)
+                    and value.get("attempt_count", 0) >= 1
+                    and value.get("attempt_count")
+                    == attempts_by_round.get(value.get("round_id"), 0)
+                    for value in raw_rounds
+                ),
+                "Operational attempt counts do not match persisted evidence",
+            )
+            raw_provider_ids = raw_burn.get("provider_ids", [])
+            check(
+                "provider_request_coverage_incomplete",
+                isinstance(raw_requests, list)
+                and bool(raw_rounds)
+                and all(
+                    {
+                        request.get("provider_id")
+                        for request in raw_requests
+                        if isinstance(request, dict)
+                        and isinstance(value, dict)
+                        and request.get("round_id") == value.get("round_id")
+                        and request.get("method")
+                        == "get_account_info_with_context"
+                        and request.get("classification") == "successful"
+                    }
+                    == set(raw_provider_ids)
+                    for value in raw_rounds
+                ),
+                "Both providers did not cover every operational round",
+            )
+            raw_counts = raw_burn.get("real_rpc_request_counts")
+            raw_methods = (
+                "get_genesis_hash",
+                "get_account_info_with_context",
+            )
+            derived_by_provider = (
+                {
+                    provider_id: sum(
+                        isinstance(value, dict)
+                        and value.get("provider_id") == provider_id
+                        for value in raw_requests
+                    )
+                    for provider_id in raw_provider_ids
+                }
+                if isinstance(raw_requests, list)
+                else {}
+            )
+            derived_by_method = (
+                {
+                    method: sum(
+                        isinstance(value, dict)
+                        and value.get("method") == method
+                        for value in raw_requests
+                    )
+                    for method in raw_methods
+                }
+                if isinstance(raw_requests, list)
+                else {}
+            )
+            derived_by_provider_and_method = (
+                {
+                    provider_id: {
+                        method: sum(
+                            isinstance(value, dict)
+                            and value.get("provider_id") == provider_id
+                            and value.get("method") == method
+                            for value in raw_requests
+                        )
+                        for method in raw_methods
+                    }
+                    for provider_id in raw_provider_ids
+                }
+                if isinstance(raw_requests, list)
+                else {}
+            )
+            raw_attempt_links_valid = (
+                isinstance(raw_attempts, list)
+                and isinstance(raw_requests, list)
+                and all(
+                    isinstance(attempt, dict)
+                    and set(attempt.get("provider_request_ids", []))
+                    == {
+                        request.get("request_id")
+                        for request in raw_requests
+                        if isinstance(request, dict)
+                        and request.get("attempt_id")
+                        == attempt.get("attempt_id")
+                    }
+                    and all(
+                        request.get("retry_request")
+                        == (attempt.get("attempt_number", 0) > 1)
+                        for request in raw_requests
+                        if isinstance(request, dict)
+                        and request.get("attempt_id")
+                        == attempt.get("attempt_id")
+                    )
+                    for attempt in raw_attempts
+                )
+            )
+            raw_rpc_reconciles = (
+                isinstance(raw_requests, list)
+                and isinstance(raw_counts, dict)
+                and raw_counts.get("total") == len(raw_requests)
+                and raw_counts.get("by_provider") == derived_by_provider
+                and raw_counts.get("by_method") == derived_by_method
+                and raw_counts.get("by_provider_and_method")
+                == derived_by_provider_and_method
+                and raw_counts.get("successful_responses")
+                == sum(
+                    isinstance(value, dict)
+                    and value.get("classification") == "successful"
+                    for value in raw_requests
+                )
+                and raw_counts.get("unavailable_responses")
+                == sum(
+                    isinstance(value, dict)
+                    and value.get("classification") == "unavailable"
+                    for value in raw_requests
+                )
+                and raw_counts.get("malformed_responses")
+                == sum(
+                    isinstance(value, dict)
+                    and value.get("classification") == "malformed"
+                    for value in raw_requests
+                )
+                and raw_counts.get("failed_responses")
+                == sum(
+                    isinstance(value, dict)
+                    and value.get("classification")
+                    in {"unavailable", "malformed"}
+                    for value in raw_requests
+                )
+                and raw_counts.get("retried_requests")
+                == sum(
+                    isinstance(value, dict)
+                    and value.get("retry_request") is True
+                    for value in raw_requests
+                )
+                and raw_counts.get("finalized_account_reads")
+                == derived_by_method.get(
+                    "get_account_info_with_context", 0
+                )
+                and raw_counts.get("genesis_hash_reads")
+                == derived_by_method.get("get_genesis_hash", 0)
+                and raw_attempt_links_valid
+            )
             check(
                 "rpc_attempt_reconciliation_failed",
                 raw_burn.get("rpc_attempt_reconciliation_passed") is True
                 and raw_burn.get("rpc_attempt_reconciliation_errors") == [],
+                "Serialized RPC/attempt reconciliation did not pass",
+            )
+            check(
+                "rpc_attempt_reconciliation_failed",
+                raw_rpc_reconciles,
                 "RPC requests do not reconcile with persisted attempts",
             )
             raw_conflict = raw_burn.get("conflict")
@@ -253,7 +434,40 @@ def marker_preflight(
                 != raw_quarantine.get("quarantine_round_id"),
                 "Conflict and quarantine rounds collide",
             )
+            raw_restart = raw_burn.get("restart_retry")
+            raw_selected = (
+                set(raw_operational.get("selected_round_ids", []))
+                if isinstance(raw_operational, dict)
+                else set()
+            )
+            raw_controlled_ids = (
+                {
+                    raw_restart.get("round_id"),
+                    raw_conflict.get("round_id"),
+                    raw_quarantine.get("quarantine_round_id"),
+                }
+                if all(
+                    isinstance(value, dict)
+                    for value in (raw_restart, raw_conflict, raw_quarantine)
+                )
+                else set()
+            )
+            check(
+                "controlled_round_overlaps_operational_sample",
+                bool(raw_controlled_ids)
+                and not (raw_controlled_ids & raw_selected),
+                "A controlled round overlaps the operational sample",
+            )
             raw_jitter = raw_burn.get("jitter")
+            check(
+                "controlled_evidence_not_independent",
+                isinstance(raw_jitter, dict)
+                and isinstance(raw_restart, dict)
+                and raw_jitter.get("round_id")
+                == raw_restart.get("round_id")
+                and len(raw_controlled_ids) == 3,
+                "Controlled evidence identities are not independent",
+            )
             check(
                 "jitter_test_failed",
                 isinstance(raw_jitter, dict)
@@ -298,6 +512,18 @@ def marker_preflight(
                     if isinstance(value, dict)
                 ),
                 "Protected-process before/after evidence is incomplete",
+            )
+            check(
+                "protected_process_command_changed",
+                isinstance(raw_processes, list)
+                and len(raw_processes) == 3
+                and all(
+                    isinstance(value, dict)
+                    and value.get("before_command_sha256")
+                    == value.get("after_command_sha256")
+                    for value in raw_processes
+                ),
+                "A protected process command changed during burn-in",
             )
             check(
                 "protected_process_identity_mismatch",
@@ -361,6 +587,34 @@ def marker_preflight(
                 "source_boundary_timestamp_invalid",
                 timestamps_valid,
                 "Source-boundary timestamps are invalid or timezone-naive",
+            )
+            boundary_selection_valid = False
+            if (
+                isinstance(raw_boundary, dict)
+                and isinstance(raw_operational, dict)
+            ):
+                try:
+                    boundary_round = int(raw_boundary["round_id"])
+                    sample_size = int(
+                        raw_operational["requested_sample_size"]
+                    )
+                    boundary_selection_valid = (
+                        raw_operational.get("selection_boundary_round_id")
+                        == boundary_round
+                        and raw_operational.get("selected_round_ids")
+                        == list(
+                            range(
+                                boundary_round - sample_size,
+                                boundary_round,
+                            )
+                        )
+                    )
+                except (KeyError, TypeError, ValueError):
+                    boundary_selection_valid = False
+            check(
+                "source_boundary_selection_mismatch",
+                boundary_selection_valid,
+                "Operational sample differs from the structured source boundary",
             )
             burn = ResolverBurnInEvidence.model_validate(raw_burn)
         except (json.JSONDecodeError, ValidationError, ValueError) as exc:

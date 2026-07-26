@@ -602,8 +602,30 @@ def test_preflight_rejects_missing_required_burnin_section(
             "accounting_validation_incomplete",
         ),
         (
+            lambda value: value["operational"].__setitem__(
+                "deployment_validation_pass_count", 4
+            ),
+            "deployment_validation_incomplete",
+        ),
+        (
             lambda value: value.__setitem__("operational_attempts", []),
             "attempt_history_missing",
+        ),
+        (
+            lambda value: value["operational"]["rounds"][0].__setitem__(
+                "attempt_count", 0
+            ),
+            "attempt_count_mismatch",
+        ),
+        (
+            lambda value: value["operational_requests"].pop(),
+            "provider_request_coverage_incomplete",
+        ),
+        (
+            lambda value: value["real_rpc_request_counts"].__setitem__(
+                "total", 13
+            ),
+            "rpc_attempt_reconciliation_failed",
         ),
         (
             lambda value: value.__setitem__(
@@ -618,14 +640,45 @@ def test_preflight_rejects_missing_required_burnin_section(
             "conflict_quarantine_identity_collision",
         ),
         (
+            lambda value: value["conflict"].__setitem__(
+                "round_id",
+                value["operational"]["selected_round_ids"][0],
+            ),
+            "controlled_round_overlaps_operational_sample",
+        ),
+        (
+            lambda value: value["jitter"].__setitem__(
+                "round_id", value["conflict"]["round_id"]
+            ),
+            "controlled_evidence_not_independent",
+        ),
+        (
             lambda value: value.__setitem__(
                 "protected_processes", value["protected_processes"][:1]
             ),
             "protected_process_missing",
         ),
         (
+            lambda value: value.__setitem__(
+                "protected_processes", value["protected_processes"][:1]
+            ),
+            "protected_process_role_missing",
+        ),
+        (
+            lambda value: value["protected_processes"][0].__setitem__(
+                "after_command_sha256", "0" * 64
+            ),
+            "protected_process_command_changed",
+        ),
+        (
             lambda value: value.pop("jitter"),
             "jitter_test_missing",
+        ),
+        (
+            lambda value: value["jitter"].__setitem__(
+                "jitter_test_passed", False
+            ),
+            "jitter_test_failed",
         ),
         (
             lambda value: value["source_boundary"].pop("source_path"),
@@ -642,6 +695,12 @@ def test_preflight_rejects_missing_required_burnin_section(
                 "observed_at", "not-a-time"
             ),
             "source_boundary_timestamp_invalid",
+        ),
+        (
+            lambda value: value["source_boundary"].__setitem__(
+                "round_id", value["source_boundary"]["round_id"] + 1
+            ),
+            "source_boundary_selection_mismatch",
         ),
     ),
 )
