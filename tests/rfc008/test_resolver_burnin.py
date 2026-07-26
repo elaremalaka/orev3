@@ -1,18 +1,26 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
+import pytest
+from pydantic import ValidationError
+
 from orev3.observer.accounts import derive_round_address
 from orev3.rfc008.burnin import (
+    DEFAULT_OPERATIONAL_SAMPLE_SIZE,
     FixtureOutcomeProvider,
+    RpcAccounting,
     _round_account_bytes,
     run_resolver_burn_in,
+    select_operational_rounds,
 )
 from orev3.rfc008.decisions import build_decisions, snapshot_from_opportunity
 from orev3.rfc008.outcomes import enqueue_pending
 from orev3.rfc008.resolver import FinalizedOutcomeResolver, derive_round_pda
 from orev3.rfc008.resolver_config import ResolverConfig
+from orev3.rfc008.schemas import ResolverBurnInEvidence
 from orev3.rfc008.storage import RFC008Store
 from orev3.rfc008.collector import RFC008Collector
 
@@ -187,6 +195,156 @@ def test_fixture_burn_in_proves_restart_retry_conflict_and_provenance(
     assert not result["primary_authoritative_capable"]
     assert (tmp_path / "resolver_burn_in.json").exists()
     assert (tmp_path / "resolver_burn_in.json.sha256").exists()
+    evidence = ResolverBurnInEvidence.model_validate_json(
+        (tmp_path / "resolver_burn_in.json").read_text()
+    )
+    assert evidence.schema_version == 2
+    assert evidence.real_rpc_request_counts.total == 0
+    assert evidence.conflict.conflict_test_passed
+    assert evidence.quarantine.quarantine_test_passed
+    assert (
+        evidence.conflict.round_id
+        != evidence.quarantine.quarantine_round_id
+    )
+    assert evidence.quarantine.quarantine_restart_persistence
+    assert evidence.quarantine.quarantine_overwrite_refused
+
+
+def test_operational_selection_is_bounded_distinct_and_deterministic():
+    assert DEFAULT_OPERATIONAL_SAMPLE_SIZE == 5
+    expected = (346295, 346296, 346297, 346298, 346299)
+    assert select_operational_rounds(346300) == expected
+    assert select_operational_rounds(346300) == expected
+    assert len(set(expected)) == 5
+    with pytest.raises(ValueError, match="at least 5"):
+        select_operational_rounds(346300, 4)
+    with pytest.raises(ValueError, match="cannot supply"):
+        select_operational_rounds(5, 5)
+
+
+def test_rpc_accounting_counts_failures_retries_and_reconciles():
+    counts = RpcAccounting(("primary", "secondary"))
+    counts.begin("primary", "get_genesis_hash")
+    counts.success()
+    counts.begin("secondary", "get_genesis_hash")
+    counts.success()
+    counts.begin("primary", "get_account_info_with_context", "pda")
+    counts.unavailable("primary", "get_account_info_with_context", "pda")
+    counts.begin("primary", "get_account_info_with_context", "pda")
+    counts.success()
+    value = counts.evidence()
+    assert value.total == 4
+    assert value.by_provider == {"primary": 3, "secondary": 1}
+    assert value.by_method["get_account_info_with_context"] == 2
+    assert value.retried_requests == 1
+    assert value.unavailable_responses == 1
+    assert value.successful_responses == 3
+
+
+def test_synthetic_operational_five_round_evidence_and_rpc_counts(
+    tmp_path, monkeypatch
+):
+    resolver_config = ResolverConfig.from_path(RESOLVER_CONFIG_PATH)
+    boundary_round = 346300
+    selected = select_operational_rounds(boundary_round)
+    accounts = {
+        derive_round_pda(round_id, resolver_config.expected_program_owner):
+        _round_account_bytes(round_id)
+        for round_id in selected
+    }
+
+    def provider(provider_id, _url):
+        return FixtureOutcomeProvider(
+            provider_id, resolver_config, accounts
+        )
+
+    monkeypatch.setattr(
+        "orev3.rfc008.burnin.RpcRecoveryProvider", provider
+    )
+    monkeypatch.setattr(
+        "orev3.rfc008.burnin.derive_runtime_source_boundary",
+        lambda _glob: (
+            SimpleNamespace(
+                round_id=boundary_round,
+                source_path="/tmp/observer.jsonl",
+                source_inode=1,
+                source_byte_offset=100,
+                source_line_number=5,
+                source_record_sha256="a" * 64,
+            ),
+            (),
+        ),
+    )
+    monkeypatch.setenv("ORE_RECOVERY_PRIMARY_RPC_URL", "mock://primary")
+    monkeypatch.setenv("ORE_RECOVERY_SECONDARY_RPC_URL", "mock://secondary")
+    result = run_resolver_burn_in(
+        ledger_path=tmp_path / "operational.sqlite",
+        output_path=tmp_path / "operational.json",
+        experiment_config_path=CONFIG_PATH,
+        resolver_config_path=RESOLVER_CONFIG_PATH,
+        mode="operational",
+        authorization_token="RFC008_OPERATIONAL_RESOLVER_BURN_IN_AUTHORIZED",
+        now=datetime(2026, 7, 25, tzinfo=timezone.utc),
+    )
+    assert result["passed"]
+    assert result["primary_authoritative_capable"]
+    evidence = ResolverBurnInEvidence.model_validate_json(
+        (tmp_path / "operational.json").read_text()
+    )
+    assert evidence.operational.selected_round_ids == selected
+    assert evidence.operational.successful_authoritative_count == 5
+    assert evidence.operational.complete_provenance_count == 5
+    assert evidence.real_rpc_request_counts.total == 12
+    assert evidence.real_rpc_request_counts.genesis_hash_reads == 2
+    assert evidence.real_rpc_request_counts.finalized_account_reads == 10
+    assert evidence.real_rpc_request_counts.by_provider == {
+        "primary": 6,
+        "secondary": 6,
+    }
+    assert evidence.real_rpc_request_counts.by_provider_and_method[
+        "primary"
+    ]["get_account_info_with_context"] == 5
+
+
+def test_operational_burn_in_rejects_below_minimum_before_provider_use(
+    tmp_path,
+):
+    with pytest.raises(ValueError, match="at least 5"):
+        run_resolver_burn_in(
+            ledger_path=tmp_path / "operational.sqlite",
+            output_path=tmp_path / "operational.json",
+            experiment_config_path=CONFIG_PATH,
+            resolver_config_path=RESOLVER_CONFIG_PATH,
+            mode="operational",
+            sample_size=4,
+            authorization_token=(
+                "RFC008_OPERATIONAL_RESOLVER_BURN_IN_AUTHORIZED"
+            ),
+        )
+    assert not (tmp_path / "operational.sqlite").exists()
+
+
+def test_evidence_fails_closed_for_small_sample_and_missing_quarantine(
+    tmp_path, monkeypatch
+):
+    # Generate a complete fixture artifact, then prove strict v2 rejects
+    # unsupported/missing controlled evidence instead of accepting legacy flags.
+    run_resolver_burn_in(
+        ledger_path=tmp_path / "fixture.sqlite",
+        output_path=tmp_path / "fixture.json",
+        experiment_config_path=CONFIG_PATH,
+        resolver_config_path=RESOLVER_CONFIG_PATH,
+        mode="fixture",
+        now=datetime(2026, 7, 25, tzinfo=timezone.utc),
+    )
+    raw = json.loads((tmp_path / "fixture.json").read_text())
+    raw.pop("quarantine")
+    with pytest.raises(ValidationError):
+        ResolverBurnInEvidence.model_validate(raw)
+    raw = json.loads((tmp_path / "fixture.json").read_text())
+    raw["schema_version"] = 1
+    with pytest.raises(ValidationError):
+        ResolverBurnInEvidence.model_validate(raw)
 
 
 def test_resolver_quarantines_expired_queue_before_provider_attempt(
