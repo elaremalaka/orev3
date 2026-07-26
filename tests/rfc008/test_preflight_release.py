@@ -35,6 +35,15 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
                 ),
                 "resolver_configuration_sha256": resolver.fingerprint,
                 "migration_set_sha256": migration_set_hash(),
+                "cli_sha256": hashlib.sha256(
+                    (ROOT / "src/orev3/rfc008/cli.py").read_bytes()
+                ).hexdigest(),
+                "runbook_sha256": hashlib.sha256(
+                    (
+                        ROOT
+                        / "docs/research/RFC-008-OPERATOR-RUNBOOK.md"
+                    ).read_bytes()
+                ).hexdigest(),
             }
         )
         + "\n"

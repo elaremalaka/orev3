@@ -184,6 +184,19 @@ def marker_preflight(
         release.get("migration_set_sha256") == migration_set_hash(),
         "Release approval does not bind the migration set",
     )
+    root = Path(repository_root)
+    check(
+        "cli_implementation_approved",
+        release.get("cli_sha256")
+        == sha256_file(root / "src/orev3/rfc008/cli.py"),
+        "Release approval does not bind the CLI implementation",
+    )
+    check(
+        "runbook_approved",
+        release.get("runbook_sha256")
+        == sha256_file(root / "docs/research/RFC-008-OPERATOR-RUNBOOK.md"),
+        "Release approval does not bind the operator runbook",
+    )
     check(
         "branch_matches",
         repository["branch"] == expected_branch,

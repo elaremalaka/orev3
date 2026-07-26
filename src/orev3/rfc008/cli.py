@@ -30,6 +30,7 @@ from orev3.rfc008.writer import RFC008WriterLease
 
 
 ANALYSIS_AUTHORIZATION = "RFC008_FORMAL_ANALYSIS_AUTHORIZED"
+CLI_VERSION = "rfc008-cli-v2"
 
 
 def _print(value: object) -> None:
