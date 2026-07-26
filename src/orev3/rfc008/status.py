@@ -6,6 +6,7 @@ from pathlib import Path
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.marker import verify_marker
 from orev3.rfc008.storage import RFC008Store
+from orev3.rfc008.storage import SCHEMA_VERSION
 
 
 def status_report(
@@ -35,7 +36,7 @@ def status_report(
         conflicted = store.count("outcome_queue", "state='conflicted'")
         quarantined = store.count("outcome_queue", "state='quarantined'")
         failed = store.count("outcome_queue", "state='failed'")
-        unusable = excluded + conflicted + quarantined + failed
+        unusable = excluded + conflicted + quarantined + failed + sensitivity
         unusable_rate = unusable / started if started else 0.0
         counters = store.counters()
         integrity = store.integrity()
@@ -60,7 +61,7 @@ def status_report(
             and not cap_reached
         )
         return {
-            "schema_version": 1,
+            "schema_version": SCHEMA_VERSION,
             "experiment_id": config.experiment_id,
             "configuration_fingerprint": config.configuration_fingerprint,
             "marker_verified": True,

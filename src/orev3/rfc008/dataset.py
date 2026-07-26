@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 
 from orev3.rfc008.config import RFC008Config
+from orev3.rfc008.freeze import verify_freeze
 from orev3.rfc008.marker import sha256_file, verify_marker
 from orev3.rfc008.schemas import ArmDecision, OutcomeEvidence, RoundAccounting
 from orev3.rfc008.storage import RFC008Store, strict_json
@@ -112,6 +113,8 @@ def build_dataset(
     config_path: str | Path,
     marker_path: str | Path,
     expected_marker_sha256: str,
+    freeze_path: str | Path,
+    expected_freeze_sha256: str,
     output_dir: str | Path,
 ) -> dict[str, object]:
     output = Path(output_dir)
@@ -120,6 +123,13 @@ def build_dataset(
     config = RFC008Config.from_path(config_path)
     marker = verify_marker(
         marker_path, config, expected_sha256=expected_marker_sha256
+    )
+    freeze = verify_freeze(
+        freeze_path=freeze_path,
+        expected_freeze_sha256=expected_freeze_sha256,
+        ledger_path=ledger_path,
+        config=config,
+        marker_sha256=expected_marker_sha256,
     )
     with RFC008Store(ledger_path, config=config, read_only=True) as store:
         if store.integrity() != "ok":
@@ -153,6 +163,8 @@ def build_dataset(
             "configuration_fingerprint": config.configuration_fingerprint,
             "marker_sha256": sha256_file(marker_path),
             "marker_repository_commit": marker.repository_commit,
+            "final_freeze_sha256": expected_freeze_sha256,
+            "experiment_summary": freeze.model_dump(mode="json"),
             "primary_round_count": len(primary),
             "sensitivity_round_count": len(sensitivity),
             "primary_path": primary_path.name,
@@ -171,8 +183,13 @@ def build_dataset(
         }
         manifest_path = output / "manifest.json"
         manifest_path.write_text(strict_json(manifest) + "\n", encoding="utf-8")
+        manifest_hash = sha256_file(manifest_path)
+        sidecar = output / "manifest.json.sha256"
+        sidecar.write_text(
+            f"{manifest_hash}  {manifest_path.name}\n", encoding="utf-8"
+        )
         return {
             **manifest,
             "manifest_path": str(manifest_path),
-            "manifest_sha256": sha256_file(manifest_path),
+            "manifest_sha256": manifest_hash,
         }

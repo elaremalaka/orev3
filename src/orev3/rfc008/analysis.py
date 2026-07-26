@@ -110,21 +110,68 @@ def analyze_dataset(
     *,
     dataset_dir: str | Path,
     config_path: str | Path,
+    expected_manifest_sha256: str,
     output_path: str | Path | None = None,
     bootstrap_samples: int = 100000,
 ) -> dict[str, object]:
     directory = Path(dataset_dir)
     manifest_path = directory / "manifest.json"
+    if hashlib.sha256(manifest_path.read_bytes()).hexdigest() != (
+        expected_manifest_sha256
+    ):
+        raise ValueError("Dataset manifest SHA-256 mismatch")
     manifest = json.loads(manifest_path.read_text())
     config = RFC008Config.from_path(config_path)
     if manifest["configuration_fingerprint"] != config.configuration_fingerprint:
         raise ValueError("Dataset configuration fingerprint mismatch")
+    summary = manifest.get("experiment_summary")
+    required_summary = {
+        "total_started_rounds",
+        "primary_analyzable_rounds",
+        "pending_rounds",
+        "failed_rounds",
+        "conflicted_rounds",
+        "quarantined_rounds",
+        "excluded_rounds",
+        "recovered_sensitivity_rounds",
+        "unusable_numerator",
+        "unusable_denominator",
+        "unusable_rate",
+        "safety_counters",
+        "configuration_mismatch_count",
+        "marker_mismatch_count",
+        "duplicate_counters",
+        "writer_lease_violations",
+        "started_round_cap_reached",
+        "calendar_cap_reached",
+        "collection_stop_reason",
+        "final_freeze_authorized",
+        "sqlite_integrity",
+    }
+    if not isinstance(summary, dict) or not required_summary.issubset(summary):
+        raise ValueError("Dataset lacks complete frozen experiment summary")
+    if not summary["final_freeze_authorized"] or summary["sqlite_integrity"] != "ok":
+        raise ValueError("Dataset was not produced from an authorized healthy freeze")
+    if int(summary["pending_rounds"]):
+        raise ValueError("Frozen experiment still contains pending outcomes")
+    denominator = int(summary["unusable_denominator"])
+    expected_rate = (
+        int(summary["unusable_numerator"]) / denominator
+        if denominator
+        else 0.0
+    )
+    if not math.isclose(
+        float(summary["unusable_rate"]), expected_rate, rel_tol=0, abs_tol=1e-15
+    ):
+        raise ValueError("Frozen unusable-rate evidence is inconsistent")
     primary_path = directory / str(manifest["primary_path"])
     if hashlib.sha256(primary_path.read_bytes()).hexdigest() != manifest["primary_sha256"]:
         raise ValueError("Primary dataset hash mismatch")
     rows = _load_jsonl(primary_path)
     if len(rows) != config.criteria.minimum_analyzable_rounds:
         raise ValueError("Locked analysis requires exactly 600 primary rounds")
+    if int(summary["primary_analyzable_rounds"]) != len(rows):
+        raise ValueError("Frozen primary count does not match dataset rows")
     candidate = np.array(
         [int(row["arms"]["highest_reward_top4_v1"]["winner_selected"]) for row in rows]
     )
@@ -233,18 +280,34 @@ def analyze_dataset(
             "rounds": 0,
             "confirmatory": False,
         }
+    safety_failure = any(
+        int(value) != 0
+        for value in {
+            **dict(summary["safety_counters"]),
+            **dict(summary["duplicate_counters"]),
+            "configuration_mismatches": summary[
+                "configuration_mismatch_count"
+            ],
+            "marker_mismatches": summary["marker_mismatch_count"],
+            "writer_lease_violations": summary["writer_lease_violations"],
+        }.values()
+    )
+    result["experiment_summary"] = summary
     result["decision"] = classify_result(
         analyzable_rounds=len(rows),
-        started_rounds=len(rows),
+        started_rounds=int(summary["total_started_rounds"]),
         paired_difference=difference,
         paired_interval=paired_ci,
         mcnemar_p=float(result["exact_one_sided_mcnemar_p"]),
         roi_after_fees=roi_after,
         roi_interval=roi_ci,
         economic_p=economic_p,
-        unusable_rate=0,
-        safety_failure=False,
-        cap_reached=True,
+        unusable_rate=float(summary["unusable_rate"]),
+        safety_failure=safety_failure,
+        cap_reached=bool(
+            summary["started_round_cap_reached"]
+            or summary["calendar_cap_reached"]
+        ),
         config=config,
     )
     if output_path is not None:
