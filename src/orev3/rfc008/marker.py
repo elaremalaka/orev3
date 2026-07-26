@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
+from pydantic import ValidationError
+
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.migrations import migration_set_hash
 from orev3.rfc008.resolver_config import ResolverConfig
@@ -153,9 +155,36 @@ def marker_preflight(
     burn_path = Path(burn_in_evidence_path)
     burn: ResolverBurnInEvidence | None = None
     if burn_path.exists():
-        burn = ResolverBurnInEvidence.model_validate_json(
-            burn_path.read_text(encoding="utf-8")
-        )
+        try:
+            raw_burn = json.loads(burn_path.read_text(encoding="utf-8"))
+            check(
+                "burnin_schema_supported",
+                raw_burn.get("schema_version") == 2,
+                "Operational burn-in evidence schema version is unsupported",
+            )
+            check(
+                "rpc_counts_missing",
+                isinstance(raw_burn.get("real_rpc_request_counts"), dict),
+                "Operational burn-in RPC counts are absent",
+            )
+            check(
+                "quarantine_test_missing",
+                isinstance(raw_burn.get("quarantine"), dict),
+                "Separate quarantine evidence is absent",
+            )
+            check(
+                "conflict_test_missing",
+                isinstance(raw_burn.get("conflict"), dict),
+                "Separate conflict evidence is absent",
+            )
+            burn = ResolverBurnInEvidence.model_validate(raw_burn)
+        except (json.JSONDecodeError, ValidationError, ValueError) as exc:
+            failures.append(
+                {
+                    "check": "burnin_evidence_invalid",
+                    "reason": f"Strict burn-in evidence validation failed: {exc}",
+                }
+            )
     burn_sidecar = Path(str(burn_path) + ".sha256")
     check(
         "approval_manifest_matches",
@@ -260,23 +289,116 @@ def marker_preflight(
             "Burn-in evidence configuration mismatch",
         )
         check(
+            "resolver_fingerprint_mismatch",
+            burn.resolver_configuration_sha256 == resolver.fingerprint,
+            "Burn-in resolver fingerprint differs from current configuration",
+        )
+        check(
             "burn_in_recent",
             0 <= age <= resolver.burn_in_maximum_age_seconds,
             "Burn-in evidence is stale or future-dated",
         )
+        check(
+            "burnin_evidence_stale",
+            0 <= age <= resolver.burn_in_maximum_age_seconds,
+            "Burn-in evidence is stale or future-dated",
+        )
+        check(
+            "burnin_release_approval_matches",
+            burn.release_implementation_approval_sha256 == release_hash,
+            "Burn-in evidence does not bind the current release approval",
+        )
+        check(
+            "burnin_repository_matches",
+            burn.repository_commit == repository["commit"]
+            and burn.repository_branch == repository["branch"],
+            "Burn-in evidence repository identity differs from preflight",
+        )
+        check(
+            "operational_sample_too_small",
+            burn.operational.selected_round_count >= 5,
+            "Operational burn-in selected fewer than five real rounds",
+        )
+        check(
+            "operational_success_count_too_small",
+            burn.operational.successful_authoritative_count >= 5,
+            "Operational burn-in has fewer than five authoritative successes",
+        )
+        check(
+            "duplicate_operational_rounds",
+            burn.operational.distinct_round_count
+            == burn.operational.selected_round_count,
+            "Operational burn-in contains duplicate round identities",
+        )
+        expected_account_reads = (
+            burn.operational.selected_round_count * len(burn.provider_ids)
+        )
+        rpc_counts_present = (
+            burn.real_rpc_request_counts.total > 0
+            and burn.real_rpc_request_counts.genesis_hash_reads
+            == len(burn.provider_ids)
+        )
+        check(
+            "rpc_counts_missing",
+            rpc_counts_present,
+            "Operational burn-in RPC counts are absent",
+        )
+        check(
+            "rpc_counts_inconsistent",
+            burn.real_rpc_request_counts.finalized_account_reads
+            == expected_account_reads,
+            "Operational burn-in RPC counts do not match selected rounds",
+        )
+        check(
+            "quarantine_test_missing",
+            burn.quarantine.test_type == "controlled_quarantine",
+            "Separate quarantine evidence is absent",
+        )
+        check(
+            "quarantine_test_failed",
+            burn.quarantine.quarantine_test_passed,
+            "Controlled quarantine validation failed",
+        )
+        check(
+            "conflict_test_missing",
+            burn.conflict.test_type == "controlled_conflict",
+            "Separate conflict evidence is absent",
+        )
+        check(
+            "conflict_test_failed",
+            burn.conflict.conflict_test_passed,
+            "Controlled conflict validation failed",
+        )
+        check(
+            "restart_test_failed",
+            burn.restart_retry.restart_test_passed
+            and burn.restart_retry.retry_test_passed
+            and burn.restart_retry.deterministic_jitter_test_passed,
+            "Controlled restart, retry, or jitter validation failed",
+        )
+        check(
+            "provider_agreement_incomplete",
+            burn.operational.provider_agreement_count
+            == burn.operational.selected_round_count
+            and burn.genesis_agreement_passed,
+            "Provider agreement is incomplete",
+        )
+        check(
+            "provenance_incomplete",
+            burn.operational.complete_provenance_count
+            == burn.operational.selected_round_count,
+            "Operational provider provenance is incomplete",
+        )
         passed = all(
             (
-                burn.direct_finalization_passed,
-                burn.owner_identity_passed,
-                burn.round_identity_passed,
-                burn.restart_recovery_passed,
-                burn.retry_passed,
-                burn.deterministic_jitter_passed,
-                burn.provenance_passed,
-                burn.conflict_quarantine_passed,
-                burn.primary_authoritative_capable,
-                not burn.fixture_only,
                 burn.mode == "operational",
+                not burn.fixture_only,
+                burn.operational.five_round_criterion_passed,
+                burn.primary_authoritative_capable,
+                burn.sqlite_integrity == "ok",
+                burn.safety_inspection_passed,
+                burn.production_artifacts_absent,
+                burn.running_processes_preserved,
             )
         )
         check(

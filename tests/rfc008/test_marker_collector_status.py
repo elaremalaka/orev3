@@ -277,3 +277,22 @@ def test_cli_requires_explicit_commands_and_arguments() -> None:
     )
     assert args.command == "run"
     assert not args.create_new_ledger
+    burn_in = commands.parse_args(
+        [
+            "resolver-burn-in",
+            "--config",
+            "config.json",
+            "--resolver-config",
+            "resolver.json",
+            "--ledger",
+            "burnin.sqlite",
+            "--output",
+            "burnin.json",
+            "--mode",
+            "operational",
+        ]
+    )
+    assert burn_in.sample_size == 5
+    assert burn_in.release_approval.endswith(
+        "release_implementation_approval_v1.json"
+    )

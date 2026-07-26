@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 
@@ -49,27 +51,163 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
         + "\n"
     )
     burn = tmp_path / "burn.json"
+    release_sha256 = hashlib.sha256(release.read_bytes()).hexdigest()
+    round_ids = tuple(range(346000, 346005))
+    rounds = []
+    for order, round_id in enumerate(round_ids, 1):
+        pda = f"pda:{round_id}"
+        provider_evidence = [
+            {
+                "provider_id": provider_id,
+                "request_method": "get_account_info_with_context",
+                "requested_at": created_at,
+                "commitment": "finalized",
+                "genesis_hash": resolver.expected_genesis_hash,
+                "response_context_slot": 500,
+                "raw_response_sha256": f"{order:064x}",
+                "canonical_response_sha256": "c" * 64,
+                "account_owner": resolver.expected_program_owner,
+                "returned_account_identity": pda,
+                "decoded_round_id": round_id,
+            }
+            for provider_id in resolver.provider_ids
+        ]
+        rounds.append(
+            {
+                "round_id": round_id,
+                "round_pda": pda,
+                "selection_order": order,
+                "provider_ids": resolver.provider_ids,
+                "provider_evidence": provider_evidence,
+                "entropy": 26,
+                "winning_square": 1,
+                "deployment_vector_validated": True,
+                "accounting_validated": True,
+                "provider_agreement": True,
+                "owner_validation_passed": True,
+                "pda_validation_passed": True,
+                "account_identity_passed": True,
+                "decoded_round_identity_passed": True,
+                "finalized_validation_passed": True,
+                "provenance_complete": True,
+                "final_state": "accepted",
+                "attempt_count": 1,
+                "request_timestamps": [created_at, created_at],
+            }
+        )
     value = ResolverBurnInEvidence(
         evidence_type="rfc008_resolver_burn_in",
         mode="operational",
         created_at=created_at,
+        completed_at=created_at,
+        repository_commit="a" * 40,
+        repository_branch="research/rfc-007-paper-collection-burn-in",
+        release_implementation_approval_sha256=release_sha256,
         resolver_configuration_sha256=resolver.fingerprint,
         experiment_configuration_fingerprint=config.configuration_fingerprint,
         resolver_version=resolver.resolver_version,
         decoder_version=resolver.decoder_version,
         provider_ids=resolver.provider_ids,
-        direct_finalization_passed=True,
-        owner_identity_passed=True,
-        round_identity_passed=True,
-        restart_recovery_passed=True,
-        retry_passed=True,
-        deterministic_jitter_passed=True,
-        provenance_passed=True,
-        conflict_quarantine_passed=True,
+        provider_independence_passed=True,
+        provider_genesis_hashes={
+            provider_id: resolver.expected_genesis_hash
+            for provider_id in resolver.provider_ids
+        },
+        genesis_agreement_passed=True,
+        operational={
+            "requested_sample_size": 5,
+            "minimum_required_sample_size": 5,
+            "selection_policy": "fixture preflight evidence",
+            "selection_source": "fixture",
+            "selection_boundary_round_id": 346005,
+            "selected_round_ids": round_ids,
+            "selected_round_count": 5,
+            "distinct_round_count": 5,
+            "successful_authoritative_count": 5,
+            "failed_count": 0,
+            "unresolved_count": 0,
+            "conflicted_count": 0,
+            "quarantined_count": 0,
+            "provider_agreement_count": 5,
+            "owner_validation_pass_count": 5,
+            "identity_validation_pass_count": 5,
+            "finalized_validation_pass_count": 5,
+            "complete_provenance_count": 5,
+            "five_round_criterion_passed": True,
+            "rounds": rounds,
+        },
+        real_rpc_request_counts={
+            "total": 12,
+            "by_provider": {"primary": 6, "secondary": 6},
+            "by_method": {
+                "get_genesis_hash": 2,
+                "get_account_info_with_context": 10,
+            },
+            "by_provider_and_method": {
+                "primary": {
+                    "get_genesis_hash": 1,
+                    "get_account_info_with_context": 5,
+                },
+                "secondary": {
+                    "get_genesis_hash": 1,
+                    "get_account_info_with_context": 5,
+                },
+            },
+            "successful_responses": 12,
+            "unavailable_responses": 0,
+            "malformed_responses": 0,
+            "retried_requests": 0,
+            "finalized_account_reads": 10,
+            "genesis_hash_reads": 2,
+        },
+        controlled_fixture_call_counts={"get_account_info_with_context": 7},
+        restart_retry={
+            "test_type": "controlled_restart_retry",
+            "evidence_mode": "fixture",
+            "round_id": 446000,
+            "initial_state": "pending",
+            "persisted_retry_count": 1,
+            "persisted_next_retry_time": created_at + timedelta(seconds=2),
+            "persisted_pda": "fixture-pda",
+            "persisted_attempt_count": 1,
+            "restart_state": "pending",
+            "final_result": "accepted",
+            "final_state": "finalized",
+            "restart_test_passed": True,
+            "retry_test_passed": True,
+            "deterministic_jitter_test_passed": True,
+        },
+        conflict={
+            "test_type": "controlled_conflict",
+            "evidence_mode": "fixture",
+            "round_id": 446001,
+            "injected_non_authoritative_disagreement": True,
+            "conflict_state": "conflicted",
+            "provenance_retained": True,
+            "overwrite_refused": True,
+            "primary_analysis_ineligible": True,
+            "conflict_test_passed": True,
+        },
+        quarantine={
+            "test_type": "controlled_quarantine",
+            "evidence_mode": "fixture",
+            "quarantine_round_id": 446002,
+            "configured_expiration_seconds": 86400,
+            "quarantine_initial_state": "pending",
+            "quarantine_final_state": "quarantined",
+            "quarantine_restart_persistence": True,
+            "quarantine_overwrite_refused": True,
+            "primary_analysis_ineligible": True,
+            "quarantine_test_passed": True,
+        },
+        sqlite_integrity="ok",
+        safety_inspection_passed=True,
+        production_artifacts_absent=True,
+        running_processes_preserved=True,
         primary_authoritative_capable=True,
         fixture_only=False,
         ledger_sha256="b" * 64,
-        checks={},
+        limitations=(),
     )
     burn.write_text(strict_json(value) + "\n")
     digest = hashlib.sha256(burn.read_bytes()).hexdigest()
@@ -113,6 +251,16 @@ def run_preflight(tmp_path, config, monkeypatch, release, burn, **updates):
         repository_root=ROOT,
         expected_branch="research/rfc-007-paper-collection-burn-in",
         now=NOW,
+    )
+
+
+def rewrite_burn(path, mutate):
+    value = json.loads(path.read_text())
+    mutate(value)
+    path.write_text(strict_json(value) + "\n")
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    Path(str(path) + ".sha256").write_text(
+        f"{digest}  {path.name}\n"
     )
 
 
@@ -216,3 +364,71 @@ def test_resolver_configuration_rejects_confirmed_or_single_provider():
     raw["provider_url_environment_variables"] = ["PRIMARY_URL"]
     with pytest.raises(ValueError, match="exactly two"):
         ResolverConfig.model_validate(raw)
+
+
+def test_preflight_rejects_four_round_operational_evidence(
+    tmp_path, config, monkeypatch
+):
+    release, burn = write_release_and_burn_in(tmp_path, config)
+
+    def reduce_to_four(value):
+        operational = value["operational"]
+        operational["selected_round_ids"] = operational["selected_round_ids"][:4]
+        operational["rounds"] = operational["rounds"][:4]
+        for name in (
+            "selected_round_count",
+            "distinct_round_count",
+            "successful_authoritative_count",
+            "provider_agreement_count",
+            "owner_validation_pass_count",
+            "identity_validation_pass_count",
+            "finalized_validation_pass_count",
+            "complete_provenance_count",
+        ):
+            operational[name] = 4
+        operational["requested_sample_size"] = 4
+        operational["five_round_criterion_passed"] = False
+        counts = value["real_rpc_request_counts"]
+        counts["total"] = 10
+        counts["by_provider"] = {"primary": 5, "secondary": 5}
+        counts["by_method"]["get_account_info_with_context"] = 8
+        counts["by_provider_and_method"]["primary"][
+            "get_account_info_with_context"
+        ] = 4
+        counts["by_provider_and_method"]["secondary"][
+            "get_account_info_with_context"
+        ] = 4
+        counts["successful_responses"] = 10
+        counts["finalized_account_reads"] = 8
+        value["primary_authoritative_capable"] = False
+
+    rewrite_burn(burn, reduce_to_four)
+    result = run_preflight(
+        tmp_path, config, monkeypatch, release, burn
+    )
+    checks = {failure["check"] for failure in result["failures"]}
+    assert not result["ready"]
+    assert "operational_sample_too_small" in checks
+    assert "operational_success_count_too_small" in checks
+
+
+@pytest.mark.parametrize(
+    ("field", "expected"),
+    (
+        ("real_rpc_request_counts", "rpc_counts_missing"),
+        ("quarantine", "quarantine_test_missing"),
+        ("conflict", "conflict_test_missing"),
+    ),
+)
+def test_preflight_rejects_missing_required_burnin_section(
+    tmp_path, config, monkeypatch, field, expected
+):
+    release, burn = write_release_and_burn_in(tmp_path, config)
+    rewrite_burn(burn, lambda value: value.pop(field))
+    result = run_preflight(
+        tmp_path, config, monkeypatch, release, burn
+    )
+    checks = {failure["check"] for failure in result["failures"]}
+    assert not result["ready"]
+    assert expected in checks
+    assert "burnin_evidence_invalid" in checks

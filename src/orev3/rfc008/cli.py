@@ -8,7 +8,10 @@ from pathlib import Path
 
 from orev3.collection.tailer import new_cursor
 from orev3.rfc008.analysis import analyze_dataset
-from orev3.rfc008.burnin import run_resolver_burn_in
+from orev3.rfc008.burnin import (
+    DEFAULT_OPERATIONAL_SAMPLE_SIZE,
+    run_resolver_burn_in,
+)
 from orev3.collection.outcome_recovery import RpcRecoveryProvider
 from orev3.rfc008.collector import (
     COLLECTION_AUTHORIZATION,
@@ -30,7 +33,7 @@ from orev3.rfc008.writer import RFC008WriterLease
 
 
 ANALYSIS_AUTHORIZATION = "RFC008_FORMAL_ANALYSIS_AUTHORIZED"
-CLI_VERSION = "rfc008-cli-v2"
+CLI_VERSION = "rfc008-cli-v3"
 
 
 def _print(value: object) -> None:
@@ -180,17 +183,21 @@ def command_analyze(args: argparse.Namespace) -> None:
 
 
 def command_burn_in(args: argparse.Namespace) -> None:
-    _print(
-        run_resolver_burn_in(
-            ledger_path=args.ledger,
-            output_path=args.output,
-            experiment_config_path=args.config,
-            resolver_config_path=args.resolver_config,
-            mode=args.mode,
-            control_round_id=args.control_round_id,
-            authorization_token=args.authorization_token,
-        )
+    result = run_resolver_burn_in(
+        ledger_path=args.ledger,
+        output_path=args.output,
+        experiment_config_path=args.config,
+        resolver_config_path=args.resolver_config,
+        mode=args.mode,
+        sample_size=args.sample_size,
+        control_round_id=args.control_round_id,
+        authorization_token=args.authorization_token,
+        release_approval_path=args.release_approval,
+        repository_root=args.repository_root,
     )
+    _print(result)
+    if not result["passed"]:
+        raise SystemExit(1)
 
 
 def command_final_freeze(args: argparse.Namespace) -> None:
@@ -271,14 +278,32 @@ def parser() -> argparse.ArgumentParser:
     analysis.add_argument("--authorization-token", required=True)
     analysis.set_defaults(func=command_analyze)
 
-    burn_in = sub.add_parser("resolver-burn-in")
+    burn_in = sub.add_parser(
+        "resolver-burn-in",
+        description=(
+            "Run an isolated non-production resolver burn-in. Operational mode "
+            "requires at least five distinct real finalized rounds and does not "
+            "authorize marker creation or collection."
+        ),
+    )
     burn_in.add_argument("--config", required=True)
     burn_in.add_argument("--resolver-config", required=True)
     burn_in.add_argument("--ledger", required=True)
     burn_in.add_argument("--output", required=True)
     burn_in.add_argument("--mode", choices=("fixture", "operational"), required=True)
+    burn_in.add_argument(
+        "--sample-size",
+        type=int,
+        default=DEFAULT_OPERATIONAL_SAMPLE_SIZE,
+        help="Operational real-round sample size (minimum and default: 5)",
+    )
     burn_in.add_argument("--control-round-id", type=int)
     burn_in.add_argument("--authorization-token")
+    burn_in.add_argument(
+        "--release-approval",
+        default="docs/research/rfc008/release_implementation_approval_v1.json",
+    )
+    burn_in.add_argument("--repository-root", default=".")
     burn_in.set_defaults(func=command_burn_in)
 
     freeze = sub.add_parser("final-freeze")

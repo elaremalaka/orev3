@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from orev3.rfc008.cli import command_run
+from orev3.rfc008.cli import command_burn_in, command_run
 from orev3.rfc008.writer import DuplicateRFC008Writer, RFC008WriterLease
 
 
@@ -42,3 +42,29 @@ def test_rfc008_package_has_no_rpc_or_wallet_adapter() -> None:
     source = "\n".join(path.read_text() for path in package.glob("*.py"))
     assert "import httpx" not in source
     assert "from solders" not in source
+
+
+def test_incomplete_burn_in_exits_nonzero_after_reporting(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "orev3.rfc008.cli.run_resolver_burn_in",
+        lambda **kwargs: {
+            "passed": False,
+            "mode": "operational",
+            "primary_authoritative_capable": False,
+        },
+    )
+    args = argparse.Namespace(
+        ledger="burnin.sqlite",
+        output="burnin.json",
+        config="config.json",
+        resolver_config="resolver.json",
+        mode="operational",
+        sample_size=5,
+        control_round_id=None,
+        authorization_token="authorized-for-test",
+        release_approval="release.json",
+        repository_root=".",
+    )
+    with pytest.raises(SystemExit) as exc:
+        command_burn_in(args)
+    assert exc.value.code == 1
