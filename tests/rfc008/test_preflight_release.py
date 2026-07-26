@@ -7,7 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from orev3.rfc008.marker import marker_preflight
+from orev3.rfc008.marker import (
+    HistoricalSourceBoundaryValidation,
+    marker_preflight,
+)
 from orev3.rfc008.migrations import migration_set_hash
 from orev3.rfc008.resolver_config import ResolverConfig
 from orev3.rfc008.schemas import (
@@ -49,6 +52,7 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
                 "burn_in_evidence_schema_version": (
                     RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION
                 ),
+                "marker_schema_version": 2,
                 "audit_version": RFC008_BURN_IN_AUDIT_VERSION,
                 "minimum_operational_sample_size": 5,
                 "protected_process_policy": {
@@ -76,6 +80,11 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
         + "\n"
     )
     burn = tmp_path / "burn.json"
+    burn_ledger = tmp_path / "burn.sqlite"
+    burn_ledger.write_bytes(b"fixture burn-in ledger")
+    burn_ledger_sha256 = hashlib.sha256(
+        burn_ledger.read_bytes()
+    ).hexdigest()
     release_sha256 = hashlib.sha256(release.read_bytes()).hexdigest()
     round_ids = tuple(range(346000, 346005))
     rounds = []
@@ -358,7 +367,7 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
         ],
         primary_authoritative_capable=True,
         fixture_only=False,
-        ledger_sha256="b" * 64,
+        ledger_sha256=burn_ledger_sha256,
         limitations=(),
     )
     burn.write_text(strict_json(value) + "\n")
@@ -391,6 +400,24 @@ def run_preflight(tmp_path, config, monkeypatch, release, burn, **updates):
     monkeypatch.setattr(
         "orev3.rfc008.marker.derive_runtime_source_boundary",
         lambda source_glob: (boundary, ("/tmp/observer.jsonl|1|100|2",)),
+    )
+    monkeypatch.setattr(
+        "orev3.rfc008.marker.validate_historical_source_boundary",
+        lambda historical, source_glob: HistoricalSourceBoundaryValidation(
+            runtime_boundary=RuntimeSourceBoundary(
+                source_path=historical.source_path,
+                source_inode=historical.inode,
+                source_byte_offset=historical.byte_offset,
+                source_line_number=historical.line_number,
+                source_record_sha256=historical.record_sha256,
+                source_observed_at=historical.record_timestamp,
+                round_id=historical.round_id,
+            ),
+            record_timestamp=historical.record_timestamp,
+            boundary_observed_at=historical.observed_at,
+            current_source_size=historical.byte_offset,
+            append_bytes_after_boundary=0,
+        ),
     )
     return marker_preflight(
         config_path=CONFIG_PATH,

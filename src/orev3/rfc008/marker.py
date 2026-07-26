@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import fnmatch
 import glob
 import hashlib
 import json
 import os
 import re
 import subprocess
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
@@ -16,6 +18,7 @@ from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.migrations import migration_set_hash
 from orev3.rfc008.resolver_config import ResolverConfig
 from orev3.rfc008.schemas import (
+    BurnInSourceBoundary,
     ExperimentMarker,
     RFC008_BURN_IN_AUDIT_VERSION,
     RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION,
@@ -30,6 +33,22 @@ from orev3.rfc008.storage import strict_json
 
 
 MARKER_AUTHORIZATION = "RFC008_MARKER_CREATION_AUTHORIZED"
+
+
+class HistoricalSourceBoundaryError(ValueError):
+    def __init__(self, check: str, reason: str):
+        super().__init__(reason)
+        self.check = check
+        self.reason = reason
+
+
+@dataclass(frozen=True)
+class HistoricalSourceBoundaryValidation:
+    runtime_boundary: RuntimeSourceBoundary
+    record_timestamp: datetime
+    boundary_observed_at: datetime
+    current_source_size: int
+    append_bytes_after_boundary: int
 
 
 def sha256_file(path: str | Path) -> str:
@@ -125,11 +144,141 @@ def derive_runtime_source_boundary(
     return latest, identities
 
 
+def validate_historical_source_boundary(
+    boundary: BurnInSourceBoundary,
+    source_glob: str,
+) -> HistoricalSourceBoundaryValidation:
+    source = Path(boundary.source_path)
+    approved_pattern = str(Path(source_glob).resolve())
+    if not fnmatch.fnmatchcase(str(source.resolve()), approved_pattern):
+        raise HistoricalSourceBoundaryError(
+            "historical_source_path_changed",
+            "Burn-in source path is outside the approved observer source set",
+        )
+    if not source.exists():
+        raise HistoricalSourceBoundaryError(
+            "historical_source_record_missing",
+            "Burn-in source file is missing",
+        )
+    stat = source.stat()
+    if stat.st_ino != boundary.inode:
+        raise HistoricalSourceBoundaryError(
+            "historical_source_inode_changed",
+            "Burn-in source inode changed",
+        )
+    if stat.st_size < boundary.byte_offset:
+        raise HistoricalSourceBoundaryError(
+            "historical_source_record_truncated",
+            "Burn-in source is shorter than the recorded boundary offset",
+        )
+    record: bytes | None = None
+    record_end_offset: int | None = None
+    with source.open("rb") as handle:
+        for line_number, line in enumerate(handle, 1):
+            if line_number == boundary.line_number:
+                record = line.rstrip(b"\r\n")
+                record_end_offset = handle.tell()
+                break
+    if record is None or record_end_offset is None:
+        raise HistoricalSourceBoundaryError(
+            "historical_source_record_missing",
+            "Burn-in source line is missing",
+        )
+    if record_end_offset != boundary.byte_offset:
+        raise HistoricalSourceBoundaryError(
+            "historical_source_record_offset_changed",
+            "Burn-in source line no longer ends at the recorded byte offset",
+        )
+    record_hash = hashlib.sha256(record).hexdigest()
+    if record_hash != boundary.record_sha256:
+        raise HistoricalSourceBoundaryError(
+            "historical_source_record_changed",
+            "Burn-in source record SHA-256 changed",
+        )
+    try:
+        value = json.loads(record)
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise HistoricalSourceBoundaryError(
+            "historical_source_record_changed",
+            "Burn-in source record is no longer valid JSON",
+        ) from exc
+    board_round = value.get("board", {}).get("round_id")
+    round_round = value.get("round", {}).get("round_id")
+    if board_round != boundary.round_id or (
+        round_round is not None and round_round != boundary.round_id
+    ):
+        raise HistoricalSourceBoundaryError(
+            "historical_source_round_changed",
+            "Burn-in source record round identity changed",
+        )
+    observed_raw = value.get("observed_at_utc")
+    try:
+        record_timestamp = datetime.fromisoformat(
+            str(observed_raw).replace("Z", "+00:00")
+        )
+    except ValueError as exc:
+        raise HistoricalSourceBoundaryError(
+            "historical_source_timestamp_changed",
+            "Burn-in source record timestamp is invalid",
+        ) from exc
+    if record_timestamp != boundary.record_timestamp:
+        raise HistoricalSourceBoundaryError(
+            "historical_source_timestamp_changed",
+            "Burn-in source record timestamp changed",
+        )
+    if boundary.observed_at < boundary.record_timestamp:
+        raise HistoricalSourceBoundaryError(
+            "historical_source_boundary_inconsistent",
+            "Burn-in boundary observation predates its source record",
+        )
+    return HistoricalSourceBoundaryValidation(
+        runtime_boundary=RuntimeSourceBoundary(
+            source_path=str(source.resolve()),
+            source_inode=stat.st_ino,
+            source_byte_offset=record_end_offset,
+            source_line_number=boundary.line_number,
+            source_record_sha256=record_hash,
+            source_observed_at=record_timestamp,
+            round_id=boundary.round_id,
+        ),
+        record_timestamp=record_timestamp,
+        boundary_observed_at=boundary.observed_at,
+        current_source_size=stat.st_size,
+        append_bytes_after_boundary=stat.st_size - boundary.byte_offset,
+    )
+
+
 def _load_release_approval(path: str | Path) -> dict[str, object]:
     value = json.loads(Path(path).read_text(encoding="utf-8"))
     if value.get("artifact_type") != "rfc008_implementation_release_approval":
         raise ValueError("Invalid RFC-008 release approval artifact")
     return value
+
+
+def _burn_in_ledger_path(evidence_path: Path) -> Path:
+    if evidence_path.suffix != ".json":
+        raise ValueError("Burn-in evidence path must end in .json")
+    return evidence_path.with_suffix(".sqlite")
+
+
+def _release_preserves_burn_in(
+    *,
+    release: dict[str, object],
+    burn: ResolverBurnInEvidence,
+    evidence_sha256: str,
+) -> bool:
+    return all(
+        (
+            release.get("supersedes_release_implementation_approval_sha256")
+            == burn.release_implementation_approval_sha256,
+            release.get("validated_operational_burn_in_evidence_sha256")
+            == evidence_sha256,
+            release.get("validated_operational_burn_in_ledger_sha256")
+            == burn.ledger_sha256,
+            release.get("validated_operational_burn_in_repository_commit")
+            == burn.repository_commit,
+        )
+    )
 
 
 def marker_preflight(
@@ -160,7 +309,15 @@ def marker_preflight(
     release = _load_release_approval(release_approval_path)
     release_hash = sha256_file(release_approval_path)
     burn_path = Path(burn_in_evidence_path)
+    burn_ledger_path = _burn_in_ledger_path(burn_path)
+    burn_evidence_sha256 = (
+        sha256_file(burn_path) if burn_path.exists() else None
+    )
+    burn_ledger_sha256 = (
+        sha256_file(burn_ledger_path) if burn_ledger_path.exists() else None
+    )
     burn: ResolverBurnInEvidence | None = None
+    historical_validation: HistoricalSourceBoundaryValidation | None = None
     if burn_path.exists():
         try:
             raw_burn = json.loads(burn_path.read_text(encoding="utf-8"))
@@ -912,6 +1069,11 @@ def marker_preflight(
         "Release approval does not bind the burn-in evidence schema",
     )
     check(
+        "marker_schema_approved",
+        release.get("marker_schema_version") == 2,
+        "Release approval does not bind the marker schema",
+    )
+    check(
         "burnin_audit_approved",
         release.get("audit_version") == RFC008_BURN_IN_AUDIT_VERSION,
         "Release approval does not bind the current adversarial audit",
@@ -1011,7 +1173,25 @@ def marker_preflight(
         sidecar_matches,
         "Resolver burn-in checksum is absent or mismatched",
     )
+    if burn_path.exists():
+        check(
+            "burn_in_ledger_exists",
+            burn_ledger_path.exists(),
+            "Resolver burn-in ledger is absent",
+        )
     if burn is not None:
+        check(
+            "burn_in_ledger_hash_matches",
+            burn_ledger_sha256 == burn.ledger_sha256,
+            "Resolver burn-in ledger SHA-256 mismatches the evidence",
+        )
+        try:
+            historical_validation = validate_historical_source_boundary(
+                burn.source_boundary,
+                config.source_glob,
+            )
+        except HistoricalSourceBoundaryError as exc:
+            failures.append({"check": exc.check, "reason": exc.reason})
         age = (current - burn.created_at).total_seconds()
         check(
             "burn_in_configuration_matches",
@@ -1037,13 +1217,31 @@ def marker_preflight(
         )
         check(
             "burnin_release_approval_matches",
-            burn.release_implementation_approval_sha256 == release_hash,
+            burn.release_implementation_approval_sha256 == release_hash
+            or (
+                burn_evidence_sha256 is not None
+                and _release_preserves_burn_in(
+                    release=release,
+                    burn=burn,
+                    evidence_sha256=burn_evidence_sha256,
+                )
+            ),
             "Burn-in evidence does not bind the current release approval",
         )
         check(
             "burnin_repository_matches",
-            burn.repository_commit == repository["commit"]
-            and burn.repository_branch == repository["branch"],
+            burn.repository_branch == repository["branch"]
+            and (
+                burn.repository_commit == repository["commit"]
+                or (
+                    burn_evidence_sha256 is not None
+                    and _release_preserves_burn_in(
+                        release=release,
+                        burn=burn,
+                        evidence_sha256=burn_evidence_sha256,
+                    )
+                )
+            ),
             "Burn-in evidence repository identity differs from preflight",
         )
         check(
@@ -1322,13 +1520,31 @@ def marker_preflight(
         "failures": failures,
         "experiment_id": config.experiment_id,
         "configuration_fingerprint": config.configuration_fingerprint,
+        "resolver_configuration_sha256": resolver.fingerprint,
+        "marker_schema_version": 2,
         "resolver_compatible": burn is not None
         and burn.primary_authoritative_capable,
-        "burn_in_evidence_sha256": (
-            sha256_file(burn_path) if burn_path.exists() else None
-        ),
+        "burn_in_evidence_sha256": burn_evidence_sha256,
+        "burn_in_ledger_path": str(burn_ledger_path),
+        "burn_in_ledger_sha256": burn_ledger_sha256,
         "release_approval_sha256": release_hash,
         "repository": repository,
+        "burn_in_source_boundary": (
+            burn.source_boundary.model_dump(mode="json") if burn else None
+        ),
+        "burn_in_source_boundary_valid": historical_validation is not None,
+        "historical_source_record_hash_matches": (
+            historical_validation is not None
+        ),
+        "observer_append_after_burn_in_allowed": True,
+        "observer_append_bytes_after_burn_in": (
+            historical_validation.append_bytes_after_boundary
+            if historical_validation
+            else None
+        ),
+        "current_observer_cursor": (
+            boundary.model_dump(mode="json") if boundary else None
+        ),
         "source_cursor_boundary": (
             boundary.model_dump(mode="json") if boundary else None
         ),
@@ -1348,8 +1564,8 @@ def _build_marker(
     branch: str,
     created_at: datetime | None,
 ) -> ExperimentMarker:
-    boundary = RuntimeSourceBoundary.model_validate(
-        preflight["source_cursor_boundary"]
+    historical = BurnInSourceBoundary.model_validate(
+        preflight["burn_in_source_boundary"]
     )
     return ExperimentMarker(
         experiment_id=config.experiment_id,
@@ -1361,15 +1577,16 @@ def _build_marker(
         approval_manifest_sha256=config.approval_manifest_sha256,
         candidate_configuration_sha256=config.candidate_configuration_sha256,
         configuration_fingerprint=config.configuration_fingerprint,
-        latest_preholdout_round_id=boundary.round_id,
-        first_eligible_round_id=boundary.round_id + 1,
+        latest_preholdout_round_id=historical.round_id,
+        first_eligible_round_id=historical.round_id + 1,
         source_identities=tuple(preflight["source_identities"]),
-        runtime_source_path=boundary.source_path,
-        runtime_source_inode=boundary.source_inode,
-        runtime_source_byte_offset=boundary.source_byte_offset,
-        runtime_source_line_number=boundary.source_line_number,
-        runtime_source_record_sha256=boundary.source_record_sha256,
-        runtime_source_observed_at=boundary.source_observed_at,
+        runtime_source_path=historical.source_path,
+        runtime_source_inode=historical.inode,
+        runtime_source_byte_offset=historical.byte_offset,
+        runtime_source_line_number=historical.line_number,
+        runtime_source_record_sha256=historical.record_sha256,
+        runtime_source_observed_at=historical.record_timestamp,
+        burn_in_boundary_observed_at=historical.observed_at,
         resolver_configuration_sha256=resolver.fingerprint,
         resolver_burn_in_evidence_sha256=str(
             preflight["burn_in_evidence_sha256"]
@@ -1385,16 +1602,127 @@ def _build_marker(
     )
 
 
+@dataclass(frozen=True)
+class MarkerPublicationPlan:
+    marker: ExperimentMarker
+    marker_path: Path
+    production_ledger_paths: tuple[Path, ...]
+    historical_boundary: HistoricalSourceBoundaryValidation
+    burn_in_evidence_path: Path
+    burn_in_evidence_sha256: str
+    burn_in_ledger_path: Path
+    burn_in_ledger_sha256: str
+    release_approval_path: Path
+    release_approval_sha256: str
+    approval_manifest_path: Path
+    approval_manifest_sha256: str
+    repository_commit: str
+    repository_branch: str
+    authorization_valid: bool
+
+
+def _marker_publication_plan(
+    *,
+    preflight: dict[str, object],
+    config: RFC008Config,
+    resolver: ResolverConfig,
+    burn_in_evidence_path: str | Path,
+    release_approval_path: str | Path,
+    marker_path: str | Path,
+    ledger_path: str | Path,
+    approval_manifest_path: str | Path,
+    repository_root: str | Path,
+    authorization_valid: bool,
+    created_at: datetime | None,
+) -> MarkerPublicationPlan:
+    if not authorization_valid:
+        raise PermissionError("Explicit RFC-008 marker authorization is required")
+    if not preflight.get("burn_in_source_boundary_valid"):
+        raise ValueError("Historical burn-in source boundary is not valid")
+    if (
+        config.configuration_fingerprint
+        != preflight["configuration_fingerprint"]
+    ):
+        raise ValueError("Experiment configuration changed after preflight")
+    if (
+        resolver.fingerprint
+        != preflight["resolver_configuration_sha256"]
+    ):
+        raise ValueError("Resolver configuration changed after preflight")
+    historical = validate_historical_source_boundary(
+        BurnInSourceBoundary.model_validate(
+            preflight["burn_in_source_boundary"]
+        ),
+        config.source_glob,
+    )
+    evidence_path = Path(burn_in_evidence_path)
+    evidence_sha256 = sha256_file(evidence_path)
+    if evidence_sha256 != preflight["burn_in_evidence_sha256"]:
+        raise ValueError("Burn-in evidence changed after preflight")
+    burn_ledger_path = Path(str(preflight["burn_in_ledger_path"]))
+    burn_ledger_sha256 = sha256_file(burn_ledger_path)
+    if burn_ledger_sha256 != preflight["burn_in_ledger_sha256"]:
+        raise ValueError("Burn-in ledger changed after preflight")
+    release_path = Path(release_approval_path)
+    release_sha256 = sha256_file(release_path)
+    if release_sha256 != preflight["release_approval_sha256"]:
+        raise ValueError("Release approval changed after preflight")
+    approval_path = Path(approval_manifest_path)
+    approval_sha256 = sha256_file(approval_path)
+    if approval_sha256 != config.approval_manifest_sha256:
+        raise ValueError("Approval manifest changed after preflight")
+    repository = repository_state(repository_root)
+    expected_repository = preflight["repository"]
+    if repository != expected_repository:
+        raise ValueError("Repository state changed after preflight")
+    assert isinstance(expected_repository, dict)
+    marker = _build_marker(
+        preflight=preflight,
+        config=config,
+        resolver=resolver,
+        approval_manifest_path=approval_manifest_path,
+        repository_commit=str(expected_repository["commit"]),
+        branch=str(expected_repository["branch"]),
+        created_at=created_at,
+    )
+    ledger = Path(ledger_path)
+    return MarkerPublicationPlan(
+        marker=marker,
+        marker_path=Path(marker_path),
+        production_ledger_paths=(
+            ledger,
+            Path(str(ledger) + "-wal"),
+            Path(str(ledger) + "-shm"),
+            Path(str(ledger) + ".writer.lock"),
+        ),
+        historical_boundary=historical,
+        burn_in_evidence_path=evidence_path,
+        burn_in_evidence_sha256=evidence_sha256,
+        burn_in_ledger_path=burn_ledger_path,
+        burn_in_ledger_sha256=burn_ledger_sha256,
+        release_approval_path=release_path,
+        release_approval_sha256=release_sha256,
+        approval_manifest_path=approval_path,
+        approval_manifest_sha256=approval_sha256,
+        repository_commit=str(expected_repository["commit"]),
+        repository_branch=str(expected_repository["branch"]),
+        authorization_valid=True,
+    )
+
+
 def _atomic_marker_pair(
     marker: ExperimentMarker,
     marker_path: str | Path,
     *,
+    forbidden_paths: tuple[Path, ...] = (),
     failure_injector: Callable[[str], None] | None = None,
 ) -> str:
     target = Path(marker_path)
     sidecar = Path(str(target) + ".sha256")
     if target.exists() or sidecar.exists():
         raise FileExistsError("Marker or checksum destination already exists")
+    if any(path.exists() for path in forbidden_paths):
+        raise FileExistsError("Production ledger destination already exists")
     target.parent.mkdir(parents=True, exist_ok=True)
     payload = (strict_json(marker) + "\n").encode()
     digest = hashlib.sha256(payload).hexdigest()
@@ -1402,6 +1730,7 @@ def _atomic_marker_pair(
     marker_temp = target.with_name(f".{target.name}.{os.getpid()}.tmp")
     sidecar_temp = sidecar.with_name(f".{sidecar.name}.{os.getpid()}.tmp")
     sidecar_visible = False
+    marker_visible = False
     try:
         for path, content in (
             (marker_temp, payload),
@@ -1414,18 +1743,21 @@ def _atomic_marker_pair(
         ExperimentMarker.model_validate_json(marker_temp.read_text())
         if failure_injector:
             failure_injector("before_publish")
+        if any(path.exists() for path in forbidden_paths):
+            raise FileExistsError("Production ledger destination appeared")
         os.link(sidecar_temp, sidecar)
         sidecar_visible = True
         if failure_injector:
             failure_injector("between_sidecar_and_marker")
         os.link(marker_temp, target)
+        marker_visible = True
         directory_fd = os.open(target.parent, os.O_RDONLY)
         try:
             os.fsync(directory_fd)
         finally:
             os.close(directory_fd)
     except Exception:
-        if target.exists():
+        if marker_visible and target.exists():
             target.unlink()
         if sidecar_visible and sidecar.exists():
             sidecar.unlink()
@@ -1451,7 +1783,8 @@ def create_marker_pair(
     created_at: datetime | None = None,
     failure_injector: Callable[[str], None] | None = None,
 ) -> tuple[ExperimentMarker, str]:
-    if authorization_token != MARKER_AUTHORIZATION:
+    authorization_valid = authorization_token == MARKER_AUTHORIZATION
+    if not authorization_valid:
         raise PermissionError("Explicit RFC-008 marker authorization is required")
     preflight = marker_preflight(
         config_path=config_path,
@@ -1467,26 +1800,27 @@ def create_marker_pair(
     )
     if not preflight["ready"]:
         raise ValueError(f"Marker preflight failed: {preflight['failures']}")
-    # Re-derive immediately before publication to reject cursor races.
     config = RFC008Config.from_path(config_path)
-    boundary, _ = derive_runtime_source_boundary(config.source_glob)
-    if boundary.model_dump(mode="json") != preflight["source_cursor_boundary"]:
-        raise ValueError("Runtime source cursor changed after preflight")
-    repository = preflight["repository"]
-    assert isinstance(repository, dict)
-    marker = _build_marker(
+    plan = _marker_publication_plan(
         preflight=preflight,
         config=config,
         resolver=ResolverConfig.from_path(resolver_config_path),
+        burn_in_evidence_path=burn_in_evidence_path,
+        release_approval_path=release_approval_path,
+        marker_path=marker_path,
+        ledger_path=ledger_path,
         approval_manifest_path=approval_manifest_path,
-        repository_commit=str(repository["commit"]),
-        branch=str(repository["branch"]),
+        repository_root=repository_root,
+        authorization_valid=authorization_valid,
         created_at=created_at,
     )
     digest = _atomic_marker_pair(
-        marker, marker_path, failure_injector=failure_injector
+        plan.marker,
+        plan.marker_path,
+        forbidden_paths=plan.production_ledger_paths,
+        failure_injector=failure_injector,
     )
-    return marker, digest
+    return plan.marker, digest
 
 
 def verify_marker(

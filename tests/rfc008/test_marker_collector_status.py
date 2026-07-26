@@ -13,11 +13,10 @@ from orev3.rfc008.collector import RFC008Collector
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.marker import (
     _atomic_marker_pair,
-    create_marker_pair,
     sha256_file,
     verify_marker,
 )
-from orev3.rfc008.schemas import ExperimentMarker, RuntimeSourceBoundary
+from orev3.rfc008.schemas import ExperimentMarker
 from orev3.rfc008.status import status_report
 
 
@@ -99,56 +98,6 @@ def test_marker_and_configuration_mismatch_refuse(marker_file, config) -> None:
     raw["poll_interval_seconds"] = 3
     with pytest.raises(ValueError, match="configuration mismatch"):
         verify_marker(path, RFC008Config.model_validate(raw), expected_sha256=digest)
-
-
-def test_marker_creation_refuses_runtime_cursor_change(
-    tmp_path, monkeypatch, config
-) -> None:
-    first = RuntimeSourceBoundary(
-        source_path="/tmp/observer.jsonl",
-        source_inode=1,
-        source_byte_offset=10,
-        source_line_number=1,
-        source_record_sha256="a" * 64,
-        source_observed_at=datetime(2026, 7, 25, tzinfo=timezone.utc),
-        round_id=346000,
-    )
-    second = first.model_copy(
-        update={"source_byte_offset": 20, "source_record_sha256": "b" * 64}
-    )
-    monkeypatch.setattr(
-        "orev3.rfc008.marker.marker_preflight",
-        lambda **kwargs: {
-            "ready": True,
-            "failures": [],
-            "source_cursor_boundary": first.model_dump(mode="json"),
-            "source_identities": ["/tmp/observer.jsonl|1|10|1"],
-            "burn_in_evidence_sha256": "c" * 64,
-            "release_approval_sha256": "d" * 64,
-            "repository": {
-                "commit": "e" * 40,
-                "branch": "research/rfc-007-paper-collection-burn-in",
-            },
-        },
-    )
-    monkeypatch.setattr(
-        "orev3.rfc008.marker.derive_runtime_source_boundary",
-        lambda source_glob: (second, ("/tmp/observer.jsonl|1|20|1",)),
-    )
-    with pytest.raises(ValueError, match="cursor changed"):
-        create_marker_pair(
-            config_path=CONFIG_PATH,
-            resolver_config_path=ROOT
-            / "config/collection/rfc008_resolver_v1.json",
-            burn_in_evidence_path=tmp_path / "burn.json",
-            release_approval_path=tmp_path / "release.json",
-            marker_path=tmp_path / "marker.json",
-            ledger_path=tmp_path / "ledger.sqlite",
-            approval_manifest_path=APPROVAL,
-            repository_root=ROOT,
-            expected_branch="research/rfc-007-paper-collection-burn-in",
-            authorization_token="RFC008_MARKER_CREATION_AUTHORIZED",
-        )
 
 
 def test_collector_uses_one_snapshot_and_durable_transition_queue(

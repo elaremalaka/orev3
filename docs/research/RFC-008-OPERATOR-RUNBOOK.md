@@ -174,6 +174,16 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli create-marker \
 The marker and checksum sidecar are staged, fsynced, validated, and published
 as a fail-safe pair. The marker becomes visible last. No ledger is created.
 
+Marker publication binds the immutable historical source boundary recorded in
+the validated operational burn-in evidence. Append-only observer growth after
+that boundary is expected and does not invalidate publication. The command
+revalidates the exact historical path, inode, record-end offset, line, record
+hash, round, record timestamp, and boundary-observation timestamp immediately
+before atomic publication; mutation, truncation, replacement, or invalid
+rotation of that record fails closed. The current observer cursor is recorded
+separately only to seed future collection cursors. Marker publication remains
+one-time and does not authorize or start collection.
+
 ## 6. Future collection start
 
 Collection requires separate authorization and the same operational provider

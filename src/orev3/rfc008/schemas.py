@@ -139,7 +139,7 @@ class RoundAccounting(StrictModel):
 
 
 class ExperimentMarker(StrictModel):
-    marker_schema_version: Literal[1] = 1
+    marker_schema_version: Literal[2] = 2
     experiment_id: str
     protocol_version: str
     created_at: datetime
@@ -158,6 +158,7 @@ class ExperimentMarker(StrictModel):
     runtime_source_line_number: int = Field(ge=1)
     runtime_source_record_sha256: str
     runtime_source_observed_at: datetime
+    burn_in_boundary_observed_at: datetime
     resolver_configuration_sha256: str
     resolver_burn_in_evidence_sha256: str
     release_approval_sha256: str

@@ -46,6 +46,9 @@ def marker_file(tmp_path: Path, config: RFC008Config) -> tuple[Path, str]:
         runtime_source_observed_at=datetime(
             2026, 7, 25, tzinfo=timezone.utc
         ),
+        burn_in_boundary_observed_at=datetime(
+            2026, 7, 25, tzinfo=timezone.utc
+        ),
         resolver_configuration_sha256="e" * 64,
         resolver_burn_in_evidence_sha256="f" * 64,
         release_approval_sha256="1" * 64,
