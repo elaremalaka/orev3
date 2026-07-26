@@ -851,6 +851,36 @@ def test_provider_provenance_audit_mutations_report_reconciliation(
     assert "provider_provenance_invalid" in checks
 
 
+def test_attempt_round_mismatch_reports_rpc_reconciliation_failure(
+    tmp_path, config, monkeypatch
+):
+    release, burn = write_release_and_burn_in(tmp_path, config)
+    valid = run_preflight(
+        tmp_path, config, monkeypatch, release, burn
+    )
+    assert valid["ready"]
+    assert valid["resolver_compatible"]
+    assert not (tmp_path / "production_marker.json").exists()
+
+    rewrite_burn(
+        burn,
+        lambda value: value["operational_attempts"][0].__setitem__(
+            "round_id",
+            value["operational"]["selected_round_ids"][1],
+        ),
+    )
+    result = run_preflight(
+        tmp_path, config, monkeypatch, release, burn
+    )
+    checks = {failure["check"] for failure in result["failures"]}
+    assert not result["ready"]
+    assert "rpc_attempt_reconciliation_failed" in checks
+    assert "attempt_round_mismatch" in checks
+    assert "attempt_count_mismatch" in checks
+    assert "burnin_evidence_invalid" in checks
+    assert not (tmp_path / "production_marker.json").exists()
+
+
 def test_bounded_jitter_audit_mutation_reports_specific_failure(
     tmp_path, config, monkeypatch
 ):

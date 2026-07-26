@@ -366,6 +366,65 @@ def marker_preflight(
                     for attempt in raw_attempts
                 )
             )
+            raw_attempt_by_id = (
+                {
+                    value.get("attempt_id"): value
+                    for value in raw_attempts
+                    if isinstance(value, dict)
+                }
+                if isinstance(raw_attempts, list)
+                else {}
+            )
+            raw_operational_round_ids = {
+                value.get("round_id")
+                for value in raw_rounds
+                if isinstance(value, dict)
+            }
+            raw_attempt_rounds_present = (
+                isinstance(raw_attempts, list)
+                and len(raw_attempt_by_id) == len(raw_attempts)
+                and all(
+                    isinstance(attempt, dict)
+                    and attempt.get("round_id")
+                    in raw_operational_round_ids
+                    for attempt in raw_attempts
+                )
+            )
+            raw_request_attempts_exist = (
+                isinstance(raw_requests, list)
+                and all(
+                    request.get("method")
+                    != "get_account_info_with_context"
+                    or request.get("attempt_id") in raw_attempt_by_id
+                    for request in raw_requests
+                    if isinstance(request, dict)
+                )
+            )
+            raw_request_attempt_rounds_match = (
+                raw_request_attempts_exist
+                and isinstance(raw_requests, list)
+                and all(
+                    request.get("method")
+                    != "get_account_info_with_context"
+                    or request.get("round_id")
+                    == raw_attempt_by_id[request.get("attempt_id")].get(
+                        "round_id"
+                    )
+                    for request in raw_requests
+                    if isinstance(request, dict)
+                )
+            )
+            check(
+                "request_attempt_link_mismatch",
+                raw_attempt_links_valid and raw_request_attempts_exist,
+                "Operational requests do not reference matching attempts",
+            )
+            check(
+                "attempt_round_mismatch",
+                raw_attempt_rounds_present
+                and raw_request_attempt_rounds_match,
+                "Attempt, request, and operational round identities disagree",
+            )
             raw_request_by_id = (
                 {
                     value.get("request_id"): value
@@ -448,6 +507,9 @@ def marker_preflight(
                 and raw_counts.get("genesis_hash_reads")
                 == derived_by_method.get("get_genesis_hash", 0)
                 and raw_attempt_links_valid
+                and raw_attempt_rounds_present
+                and raw_request_attempts_exist
+                and raw_request_attempt_rounds_match
                 and raw_provider_provenance_valid
             )
             check(

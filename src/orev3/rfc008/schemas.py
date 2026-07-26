@@ -664,18 +664,31 @@ class ResolverBurnInEvidence(StrictModel):
             errors.append("duplicate_request_id")
         attempt_by_id = {value.attempt_id: value for value in attempts}
         request_by_id = {value.request_id: value for value in requests}
+        operational_round_ids = {
+            value.round_id for value in self.operational.rounds
+        }
         requests_by_attempt: dict[str, list[OperationalRequestEvidence]] = {}
         for request in requests:
             if request.method == "get_account_info_with_context":
                 if request.attempt_id not in attempt_by_id:
                     errors.append("account_request_without_attempt")
                 else:
+                    attempt = attempt_by_id[str(request.attempt_id)]
+                    if request.round_id != attempt.round_id:
+                        errors.append(
+                            "request_attempt_round_mismatch:"
+                            f"{request.request_id}"
+                        )
                     requests_by_attempt.setdefault(
                         str(request.attempt_id), []
                     ).append(request)
             elif request.attempt_id is not None or request.round_id is not None:
                 errors.append("genesis_request_bound_to_attempt")
         for attempt in attempts:
+            if attempt.round_id not in operational_round_ids:
+                errors.append(
+                    f"attempt_operational_round_missing:{attempt.attempt_id}"
+                )
             linked = requests_by_attempt.get(attempt.attempt_id, [])
             if set(attempt.provider_request_ids) != {
                 value.request_id for value in linked

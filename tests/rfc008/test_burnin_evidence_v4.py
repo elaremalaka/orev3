@@ -106,6 +106,60 @@ def test_attempt_terminal_state_must_reconcile(tmp_path, config):
     rejected(value)
 
 
+def test_attempt_round_must_reconcile_with_requests_and_operational_round(
+    tmp_path, config
+):
+    evidence = ResolverBurnInEvidence.model_validate(
+        valid_evidence(tmp_path, config)
+    )
+    attempt = evidence.operational_attempts[0]
+    wrong_round = evidence.operational.selected_round_ids[1]
+    mutated_attempt = attempt.model_copy(
+        update={"round_id": wrong_round}
+    )
+    mutated = evidence.model_copy(
+        update={
+            "operational_attempts": (
+                mutated_attempt,
+                *evidence.operational_attempts[1:],
+            )
+        }
+    )
+    errors = mutated.reconciliation_errors()
+    assert (
+        "request_attempt_round_mismatch:"
+        f"{attempt.provider_request_ids[0]}"
+    ) in errors
+    assert (
+        "request_attempt_round_mismatch:"
+        f"{attempt.provider_request_ids[1]}"
+    ) in errors
+    rejected(mutated.model_dump(mode="python"))
+
+
+def test_attempt_round_must_reference_an_operational_round(
+    tmp_path, config
+):
+    evidence = ResolverBurnInEvidence.model_validate(
+        valid_evidence(tmp_path, config)
+    )
+    attempt = evidence.operational_attempts[0]
+    mutated_attempt = attempt.model_copy(update={"round_id": 999_999})
+    mutated = evidence.model_copy(
+        update={
+            "operational_attempts": (
+                mutated_attempt,
+                *evidence.operational_attempts[1:],
+            )
+        }
+    )
+    assert (
+        f"attempt_operational_round_missing:{attempt.attempt_id}"
+        in mutated.reconciliation_errors()
+    )
+    rejected(mutated.model_dump(mode="python"))
+
+
 def test_fixture_request_cannot_be_counted_as_operational(tmp_path, config):
     value = valid_evidence(tmp_path, config)
     request = copy.deepcopy(value["operational_requests"][-1])
