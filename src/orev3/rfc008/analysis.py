@@ -74,6 +74,7 @@ def classify_result(
     unusable_rate: float,
     safety_failure: bool,
     cap_reached: bool,
+    evidence_complete: bool,
     config: RFC008Config,
 ) -> str:
     if (
@@ -83,6 +84,8 @@ def classify_result(
         or safety_failure
     ):
         return "failure"
+    if not evidence_complete:
+        return "inconclusive"
     success = (
         analyzable_rounds >= config.criteria.minimum_analyzable_rounds
         and mcnemar_p < config.criteria.alpha_predictive
@@ -147,6 +150,8 @@ def analyze_dataset(
         "collection_stop_reason",
         "final_freeze_authorized",
         "sqlite_integrity",
+        "incomplete_accounting_rounds",
+        "accounting_complete",
     }
     if not isinstance(summary, dict) or not required_summary.issubset(summary):
         raise ValueError("Dataset lacks complete frozen experiment summary")
@@ -308,6 +313,7 @@ def analyze_dataset(
             summary["started_round_cap_reached"]
             or summary["calendar_cap_reached"]
         ),
+        evidence_complete=bool(summary["accounting_complete"]),
         config=config,
     )
     if output_path is not None:

@@ -66,12 +66,16 @@ def test_decision_priority_success_failure_and_inconclusive(config) -> None:
         "unusable_rate": 0.0,
         "safety_failure": False,
         "cap_reached": True,
+        "evidence_complete": True,
         "config": config,
     }
     assert classify_result(**common) == "success"
     assert classify_result(**{**common, "roi_interval": (-0.2, 0.0)}) == "failure"
     assert classify_result(**{**common, "paired_difference": 0.05}) == "inconclusive"
     assert classify_result(**{**common, "unusable_rate": 0.051}) == "failure"
+    assert classify_result(
+        **{**common, "evidence_complete": False}
+    ) == "inconclusive"
 
 
 def test_dataset_requires_exact_primary_target(store, config, marker_file, tmp_path) -> None:

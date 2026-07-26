@@ -234,3 +234,5 @@ class FinalFreezeManifest(StrictModel):
     collection_stop_reason: str
     final_freeze_authorized: Literal[True] = True
     sqlite_integrity: Literal["ok"]
+    incomplete_accounting_rounds: int = Field(ge=0)
+    accounting_complete: bool

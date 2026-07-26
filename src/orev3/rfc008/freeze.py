@@ -94,6 +94,19 @@ def _round_summary(
     quarantined = store.count("outcome_queue", "state='quarantined'")
     unusable = excluded + failed + conflicted + quarantined + sensitivity
     counters = store.counters()
+    incomplete_accounting = int(
+        store.connection.execute(
+            """
+            SELECT COUNT(*)
+            FROM experiment_rounds r
+            WHERE r.state IN ('finalized_primary','finalized_sensitivity')
+              AND (
+                SELECT COUNT(*) FROM round_accounting a
+                WHERE a.round_id=r.round_id
+              ) != 5
+            """
+        ).fetchone()[0]
+    )
     elapsed_days = (now - marker_created_at).total_seconds() / 86400
     return {
         "total_started_rounds": started,
@@ -133,6 +146,8 @@ def _round_summary(
         >= config.criteria.maximum_started_rounds,
         "calendar_cap_reached": elapsed_days
         >= config.criteria.maximum_calendar_days,
+        "incomplete_accounting_rounds": incomplete_accounting,
+        "accounting_complete": incomplete_accounting == 0,
     }
 
 
@@ -183,7 +198,24 @@ def freeze_experiment(
         raise PermissionError("Explicit RFC-008 final-freeze authorization required")
     output = Path(output_path)
     if output.exists():
-        existing = FinalFreezeManifest.model_validate_json(output.read_text())
+        config = RFC008Config.from_path(config_path)
+        verify_marker(
+            marker_path, config, expected_sha256=expected_marker_sha256
+        )
+        sidecar = Path(str(output) + ".sha256")
+        if (
+            not sidecar.exists()
+            or sidecar.read_text(encoding="utf-8").split()[0]
+            != sha256_file(output)
+        ):
+            raise ValueError("Existing final-freeze checksum mismatch")
+        existing = verify_freeze(
+            freeze_path=output,
+            expected_freeze_sha256=sha256_file(output),
+            ledger_path=ledger_path,
+            config=config,
+            marker_sha256=expected_marker_sha256,
+        )
         return {
             "idempotent": True,
             "freeze_id": existing.freeze_id,
