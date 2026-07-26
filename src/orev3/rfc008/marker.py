@@ -366,6 +366,42 @@ def marker_preflight(
                     for attempt in raw_attempts
                 )
             )
+            raw_request_by_id = (
+                {
+                    value.get("request_id"): value
+                    for value in raw_requests
+                    if isinstance(value, dict)
+                }
+                if isinstance(raw_requests, list)
+                else {}
+            )
+            raw_provider_provenance_valid = bool(raw_rounds) and all(
+                isinstance(round_value, dict)
+                and all(
+                    isinstance(provider_value, dict)
+                    and (
+                        request := raw_request_by_id.get(
+                            provider_value.get("request_id")
+                        )
+                    )
+                    is not None
+                    and request.get("round_id")
+                    == round_value.get("round_id")
+                    and request.get("provider_id")
+                    == provider_value.get("provider_id")
+                    and request.get("method")
+                    == provider_value.get("request_method")
+                    and request.get("classification") == "successful"
+                    and request.get("commitment")
+                    == provider_value.get("commitment")
+                    and request.get("round_pda")
+                    == provider_value.get("returned_account_identity")
+                    for provider_value in round_value.get(
+                        "provider_evidence", []
+                    )
+                )
+                for round_value in raw_rounds
+            )
             raw_rpc_reconciles = (
                 isinstance(raw_requests, list)
                 and isinstance(raw_counts, dict)
@@ -412,6 +448,7 @@ def marker_preflight(
                 and raw_counts.get("genesis_hash_reads")
                 == derived_by_method.get("get_genesis_hash", 0)
                 and raw_attempt_links_valid
+                and raw_provider_provenance_valid
             )
             check(
                 "rpc_attempt_reconciliation_failed",
@@ -424,6 +461,11 @@ def marker_preflight(
                 raw_rpc_reconciles,
                 "RPC requests do not reconcile with persisted attempts",
             )
+            check(
+                "provider_provenance_invalid",
+                raw_provider_provenance_valid,
+                "Provider provenance does not reference a matching successful request",
+            )
             raw_conflict = raw_burn.get("conflict")
             raw_quarantine = raw_burn.get("quarantine")
             check(
@@ -433,6 +475,145 @@ def marker_preflight(
                 and raw_conflict.get("round_id")
                 != raw_quarantine.get("quarantine_round_id"),
                 "Conflict and quarantine rounds collide",
+            )
+            raw_conflict_required = {
+                "round_id",
+                "injected_non_authoritative_disagreement",
+                "conflict_state",
+                "provider_provenance_count",
+                "provenance_retained",
+                "disagreement_details_retained",
+                "terminal_conflict_persisted",
+                "overwrite_attempted",
+                "overwrite_refused",
+                "later_success_replacement_refused",
+                "primary_analysis_ineligible",
+                "recomputed_conflict_test_passed",
+                "conflict_test_passed",
+            }
+            check(
+                "conflict_test_missing",
+                isinstance(raw_conflict, dict)
+                and raw_conflict_required <= set(raw_conflict),
+                "Controlled conflict evidence is incomplete",
+            )
+            check(
+                "conflict_overwrite_refusal_missing",
+                isinstance(raw_conflict, dict)
+                and "overwrite_refused" in raw_conflict,
+                "Conflict overwrite-refusal evidence is absent",
+            )
+            check(
+                "conflict_overwrite_refusal_failed",
+                isinstance(raw_conflict, dict)
+                and raw_conflict.get("overwrite_refused") is True,
+                "Conflict overwrite attempt was not refused",
+            )
+            raw_conflict_pass = (
+                isinstance(raw_conflict, dict)
+                and raw_conflict_required <= set(raw_conflict)
+                and raw_conflict.get(
+                    "injected_non_authoritative_disagreement"
+                )
+                is True
+                and raw_conflict.get("conflict_state") == "conflicted"
+                and raw_conflict.get("provider_provenance_count") == 2
+                and raw_conflict.get("provenance_retained") is True
+                and raw_conflict.get("disagreement_details_retained") is True
+                and raw_conflict.get("terminal_conflict_persisted") is True
+                and raw_conflict.get("overwrite_attempted") is True
+                and raw_conflict.get("overwrite_refused") is True
+                and raw_conflict.get(
+                    "later_success_replacement_refused"
+                )
+                is True
+                and raw_conflict.get("primary_analysis_ineligible") is True
+            )
+            check(
+                "conflict_pass_state_mismatch",
+                isinstance(raw_conflict, dict)
+                and raw_conflict.get("recomputed_conflict_test_passed")
+                == raw_conflict_pass
+                and raw_conflict.get("conflict_test_passed")
+                == raw_conflict_pass,
+                "Serialized conflict pass state differs from recomputation",
+            )
+            check(
+                "conflict_test_failed",
+                raw_conflict_pass,
+                "Controlled conflict validation failed",
+            )
+            raw_quarantine_required = {
+                "quarantine_round_id",
+                "configured_expiration_seconds",
+                "quarantine_initial_state",
+                "expiry_reached",
+                "production_transition_invoked",
+                "quarantine_final_state",
+                "quarantine_restart_persistence",
+                "overwrite_attempted",
+                "quarantine_overwrite_refused",
+                "later_success_replacement_refused",
+                "primary_analysis_ineligible",
+                "recomputed_quarantine_test_passed",
+                "quarantine_test_passed",
+            }
+            check(
+                "quarantine_test_missing",
+                isinstance(raw_quarantine, dict)
+                and raw_quarantine_required <= set(raw_quarantine),
+                "Controlled quarantine evidence is incomplete",
+            )
+            check(
+                "quarantine_overwrite_refusal_missing",
+                isinstance(raw_quarantine, dict)
+                and "quarantine_overwrite_refused" in raw_quarantine,
+                "Quarantine overwrite-refusal evidence is absent",
+            )
+            check(
+                "quarantine_overwrite_refusal_failed",
+                isinstance(raw_quarantine, dict)
+                and raw_quarantine.get("quarantine_overwrite_refused")
+                is True,
+                "Quarantine overwrite attempt was not refused",
+            )
+            raw_quarantine_pass = (
+                isinstance(raw_quarantine, dict)
+                and raw_quarantine_required <= set(raw_quarantine)
+                and raw_quarantine.get("quarantine_initial_state")
+                == "pending"
+                and raw_quarantine.get("expiry_reached") is True
+                and raw_quarantine.get("production_transition_invoked")
+                is True
+                and raw_quarantine.get("quarantine_final_state")
+                == "quarantined"
+                and raw_quarantine.get("quarantine_restart_persistence")
+                is True
+                and raw_quarantine.get("overwrite_attempted") is True
+                and raw_quarantine.get("quarantine_overwrite_refused")
+                is True
+                and raw_quarantine.get(
+                    "later_success_replacement_refused"
+                )
+                is True
+                and raw_quarantine.get("primary_analysis_ineligible")
+                is True
+            )
+            check(
+                "quarantine_pass_state_mismatch",
+                isinstance(raw_quarantine, dict)
+                and raw_quarantine.get(
+                    "recomputed_quarantine_test_passed"
+                )
+                == raw_quarantine_pass
+                and raw_quarantine.get("quarantine_test_passed")
+                == raw_quarantine_pass,
+                "Serialized quarantine pass state differs from recomputation",
+            )
+            check(
+                "quarantine_test_failed",
+                raw_quarantine_pass,
+                "Controlled quarantine validation failed",
             )
             raw_restart = raw_burn.get("restart_retry")
             raw_selected = (
@@ -471,6 +652,16 @@ def marker_preflight(
             check(
                 "jitter_test_failed",
                 isinstance(raw_jitter, dict)
+                and raw_jitter.get("retry_numbers_tested") == [1, 2, 3]
+                and raw_jitter.get("expected_delays_seconds")
+                == raw_jitter.get("recomputed_delays_seconds")
+                and raw_jitter.get("deterministic_match") is True
+                and raw_jitter.get("bounded_delay_result") is True
+                and raw_jitter.get("persisted_schedule_match") is True
+                and raw_jitter.get("jitter_derivation_version")
+                == "rfc008-retry-jitter-v1"
+                and raw_jitter.get("recomputed_jitter_test_passed")
+                is True
                 and raw_jitter.get("jitter_test_passed") is True,
                 "Controlled deterministic-jitter validation failed",
             )
@@ -835,8 +1026,23 @@ def marker_preflight(
         )
         check(
             "quarantine_test_failed",
-            burn.quarantine.quarantine_test_passed,
+            burn.quarantine.recomputed_quarantine_test_passed
+            and burn.quarantine.quarantine_test_passed,
             "Controlled quarantine validation failed",
+        )
+        check(
+            "quarantine_overwrite_refusal_failed",
+            burn.quarantine.overwrite_attempted
+            and burn.quarantine.quarantine_overwrite_refused
+            and burn.quarantine.later_success_replacement_refused,
+            "Quarantine overwrite attempt was not durably refused",
+        )
+        check(
+            "quarantine_terminal_state_invalid",
+            burn.quarantine.quarantine_final_state == "quarantined"
+            and burn.quarantine.quarantine_restart_persistence
+            and burn.quarantine.primary_analysis_ineligible,
+            "Quarantine terminal state did not persist safely",
         )
         check(
             "conflict_test_missing",
@@ -845,12 +1051,32 @@ def marker_preflight(
         )
         check(
             "conflict_test_failed",
-            burn.conflict.conflict_test_passed,
+            burn.conflict.recomputed_conflict_test_passed
+            and burn.conflict.conflict_test_passed,
             "Controlled conflict validation failed",
         )
         check(
+            "conflict_overwrite_refusal_failed",
+            burn.conflict.overwrite_attempted
+            and burn.conflict.overwrite_refused
+            and burn.conflict.later_success_replacement_refused,
+            "Conflict overwrite attempt was not durably refused",
+        )
+        check(
+            "conflict_terminal_state_invalid",
+            burn.conflict.conflict_state == "conflicted"
+            and burn.conflict.terminal_conflict_persisted
+            and burn.conflict.provider_provenance_count == 2
+            and burn.conflict.provenance_retained
+            and burn.conflict.disagreement_details_retained
+            and burn.conflict.primary_analysis_ineligible,
+            "Conflict terminal state or provenance did not persist safely",
+        )
+        check(
             "restart_test_failed",
-            burn.restart_retry.restart_test_passed
+            burn.restart_retry.recomputed_restart_test_passed
+            and burn.restart_retry.recomputed_retry_test_passed
+            and burn.restart_retry.restart_test_passed
             and burn.restart_retry.retry_test_passed,
             "Controlled restart or retry validation failed",
         )
@@ -861,7 +1087,8 @@ def marker_preflight(
         )
         check(
             "jitter_test_failed",
-            burn.jitter.jitter_test_passed,
+            burn.jitter.recomputed_jitter_test_passed
+            and burn.jitter.jitter_test_passed,
             "Controlled deterministic-jitter validation failed",
         )
         check(

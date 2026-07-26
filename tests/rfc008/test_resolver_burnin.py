@@ -220,7 +220,7 @@ def test_fixture_burn_in_proves_restart_retry_conflict_and_provenance(
     evidence = ResolverBurnInEvidence.model_validate_json(
         (tmp_path / "resolver_burn_in.json").read_text()
     )
-    assert evidence.schema_version == 3
+    assert evidence.schema_version == 4
     assert evidence.real_rpc_request_counts.total == 0
     assert evidence.conflict.conflict_test_passed
     assert evidence.quarantine.quarantine_test_passed

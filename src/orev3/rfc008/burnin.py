@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import json
 import os
 import struct
 import subprocess
@@ -732,6 +733,17 @@ def _controlled_exercises(
             restart_state=persisted_after_restart.state,
             final_result=final_result,
             final_state=final_queue.state,
+            recomputed_restart_test_passed=(
+                persisted_after_restart.retry_count == retry_count
+                and persisted_after_restart.next_retry_at == retry_at
+                and persisted_after_restart.round_pda == retry_pda
+                and persisted_attempt_count == 1
+            ),
+            recomputed_retry_test_passed=(
+                initial_result == "retry"
+                and final_result == "accepted"
+                and final_queue.state == "finalized"
+            ),
             restart_test_passed=(
                 persisted_after_restart.retry_count == retry_count
                 and persisted_after_restart.next_retry_at == retry_at
@@ -758,6 +770,14 @@ def _controlled_exercises(
             ),
             persisted_schedule_match=retry_at == expected_retry_at,
             jitter_derivation_version="rfc008-retry-jitter-v1",
+            recomputed_jitter_test_passed=(
+                expected_delays == recomputed_delays
+                and retry_at == expected_retry_at
+                and all(
+                    0 < value <= resolver_config.maximum_retry_seconds
+                    for value in expected_delays
+                )
+            ),
             jitter_test_passed=(
                 expected_delays == recomputed_delays
                 and retry_at == expected_retry_at
@@ -801,26 +821,75 @@ def _controlled_exercises(
         except ValueError:
             overwrite_refused = True
         conflict_queue = restarted.queue(conflict_round)
-        conflict_count = restarted.count(
-            "outcome_conflicts", "round_id=?", (conflict_round,)
+        conflict_rows = restarted.connection.execute(
+            """
+            SELECT record_json FROM outcome_conflicts
+            WHERE round_id=? ORDER BY created_at, conflict_id
+            """,
+            (conflict_round,),
+        ).fetchall()
+        conflict_count = len(conflict_rows)
+        conflict_record = (
+            json.loads(str(conflict_rows[0][0]))
+            if conflict_count == 1
+            else {}
+        )
+        provider_provenance = conflict_record.get("provider_evidence", {})
+        provider_hashes = {
+            str(value.get("canonical_response_sha256"))
+            for value in provider_provenance.values()
+            if isinstance(value, dict)
+        } if isinstance(provider_provenance, dict) else set()
+        provenance_retained = (
+            isinstance(provider_provenance, dict)
+            and set(provider_provenance) == set(resolver_config.provider_ids)
+        )
+        disagreement_retained = (
+            conflict_record.get("conflict_status") == "conflicted"
+            and len(provider_hashes) == len(resolver_config.provider_ids)
+        )
+        terminal_conflict_persisted = (
+            conflict_queue is not None
+            and conflict_queue.state == "conflicted"
+        )
+        primary_ineligible_conflict = (
+            restarted.accepted_outcome(conflict_round) is None
+        )
+        later_conflict_replacement_refused = (
+            overwrite_refused
+            and terminal_conflict_persisted
+            and primary_ineligible_conflict
+        )
+        conflict_passed = (
+            conflict_result == "conflict"
+            and provenance_retained
+            and disagreement_retained
+            and terminal_conflict_persisted
+            and overwrite_refused
+            and later_conflict_replacement_refused
+            and primary_ineligible_conflict
         )
         conflict = ConflictTestEvidence(
             test_type="controlled_conflict",
             evidence_mode="fixture",
             round_id=conflict_round,
             conflict_state=conflict_queue.state if conflict_queue else "missing",
-            provenance_retained=conflict_count == 1,
+            provider_provenance_count=(
+                len(provider_provenance)
+                if isinstance(provider_provenance, dict)
+                else 0
+            ),
+            provenance_retained=provenance_retained,
+            disagreement_details_retained=disagreement_retained,
+            terminal_conflict_persisted=terminal_conflict_persisted,
+            overwrite_attempted=True,
             overwrite_refused=overwrite_refused,
-            primary_analysis_ineligible=(
-                restarted.accepted_outcome(conflict_round) is None
+            later_success_replacement_refused=(
+                later_conflict_replacement_refused
             ),
-            conflict_test_passed=(
-                conflict_result == "conflict"
-                and conflict_queue is not None
-                and conflict_queue.state == "conflicted"
-                and conflict_count == 1
-                and overwrite_refused
-            ),
+            primary_analysis_ineligible=primary_ineligible_conflict,
+            recomputed_conflict_test_passed=conflict_passed,
+            conflict_test_passed=conflict_passed,
         )
 
         quarantine_round = base_round_id + 2
@@ -856,6 +925,29 @@ def _controlled_exercises(
         primary_ineligible = (
             quarantine_restart.accepted_outcome(quarantine_round) is None
         )
+        final_quarantine = quarantine_restart.queue(quarantine_round)
+        quarantine_persisted = (
+            quarantined is not None
+            and persisted_quarantine is not None
+            and quarantined.state == "quarantined"
+            and persisted_quarantine.state == "quarantined"
+        )
+        later_quarantine_replacement_refused = (
+            quarantine_overwrite_refused
+            and final_quarantine is not None
+            and final_quarantine.state == "quarantined"
+            and primary_ineligible
+        )
+        quarantine_passed = (
+            initial.state == "pending"
+            and changed == 1
+            and persisted_quarantine is not None
+            and persisted_quarantine.state == "quarantined"
+            and quarantine_persisted
+            and quarantine_overwrite_refused
+            and later_quarantine_replacement_refused
+            and primary_ineligible
+        )
         quarantine = QuarantineTestEvidence(
             test_type="controlled_quarantine",
             evidence_mode="fixture",
@@ -864,26 +956,22 @@ def _controlled_exercises(
                 resolver_config.quarantine_after_seconds
             ),
             quarantine_initial_state=initial.state,
+            expiry_reached=True,
+            production_transition_invoked=changed == 1,
             quarantine_final_state=(
                 persisted_quarantine.state
                 if persisted_quarantine is not None
                 else "missing"
             ),
-            quarantine_restart_persistence=(
-                quarantined is not None
-                and persisted_quarantine is not None
-                and quarantined.state == "quarantined"
-                and persisted_quarantine.state == "quarantined"
-            ),
+            quarantine_restart_persistence=quarantine_persisted,
+            overwrite_attempted=True,
             quarantine_overwrite_refused=quarantine_overwrite_refused,
-            primary_analysis_ineligible=primary_ineligible,
-            quarantine_test_passed=(
-                changed == 1
-                and persisted_quarantine is not None
-                and persisted_quarantine.state == "quarantined"
-                and quarantine_overwrite_refused
-                and primary_ineligible
+            later_success_replacement_refused=(
+                later_quarantine_replacement_refused
             ),
+            primary_analysis_ineligible=primary_ineligible,
+            recomputed_quarantine_test_passed=quarantine_passed,
+            quarantine_test_passed=quarantine_passed,
         )
     return restart_retry, jitter, conflict, quarantine
 
@@ -1368,11 +1456,11 @@ def run_resolver_burn_in(
                 and value.attempt_count >= 1
                 for value in round_evidence
             ),
-            restart_retry.restart_test_passed,
-            restart_retry.retry_test_passed,
-            jitter.jitter_test_passed,
-            conflict.conflict_test_passed,
-            quarantine.quarantine_test_passed,
+            restart_retry.recomputed_restart_test_passed,
+            restart_retry.recomputed_retry_test_passed,
+            jitter.recomputed_jitter_test_passed,
+            conflict.recomputed_conflict_test_passed,
+            quarantine.recomputed_quarantine_test_passed,
             conflict.round_id != quarantine.quarantine_round_id,
             not (
                 {
@@ -1439,11 +1527,11 @@ def run_resolver_burn_in(
     evidence_hash = _write_evidence(evidence, output)
     controlled_passed = all(
         (
-            restart_retry.restart_test_passed,
-            restart_retry.retry_test_passed,
-            jitter.jitter_test_passed,
-            conflict.conflict_test_passed,
-            quarantine.quarantine_test_passed,
+            restart_retry.recomputed_restart_test_passed,
+            restart_retry.recomputed_retry_test_passed,
+            jitter.recomputed_jitter_test_passed,
+            conflict.recomputed_conflict_test_passed,
+            quarantine.recomputed_quarantine_test_passed,
             integrity == "ok",
             production_absent,
         )

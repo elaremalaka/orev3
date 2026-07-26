@@ -269,6 +269,8 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
             "restart_state": "pending",
             "final_result": "accepted",
             "final_state": "finalized",
+            "recomputed_restart_test_passed": True,
+            "recomputed_retry_test_passed": True,
             "restart_test_passed": True,
             "retry_test_passed": True,
         },
@@ -283,6 +285,7 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
             "bounded_delay_result": True,
             "persisted_schedule_match": True,
             "jitter_derivation_version": "rfc008-retry-jitter-v1",
+            "recomputed_jitter_test_passed": True,
             "jitter_test_passed": True,
         },
         conflict={
@@ -291,9 +294,15 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
             "round_id": 446001,
             "injected_non_authoritative_disagreement": True,
             "conflict_state": "conflicted",
+            "provider_provenance_count": 2,
             "provenance_retained": True,
+            "disagreement_details_retained": True,
+            "terminal_conflict_persisted": True,
+            "overwrite_attempted": True,
             "overwrite_refused": True,
+            "later_success_replacement_refused": True,
             "primary_analysis_ineligible": True,
+            "recomputed_conflict_test_passed": True,
             "conflict_test_passed": True,
         },
         quarantine={
@@ -302,10 +311,15 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
             "quarantine_round_id": 446002,
             "configured_expiration_seconds": 86400,
             "quarantine_initial_state": "pending",
+            "expiry_reached": True,
+            "production_transition_invoked": True,
             "quarantine_final_state": "quarantined",
             "quarantine_restart_persistence": True,
+            "overwrite_attempted": True,
             "quarantine_overwrite_refused": True,
+            "later_success_replacement_refused": True,
             "primary_analysis_ineligible": True,
+            "recomputed_quarantine_test_passed": True,
             "quarantine_test_passed": True,
         },
         sqlite_integrity="ok",
@@ -583,6 +597,7 @@ def test_preflight_rejects_missing_required_burnin_section(
     checks = {failure["check"] for failure in result["failures"]}
     assert not result["ready"]
     assert expected in checks
+    assert not (tmp_path / "production_marker.json").exists()
     assert "burnin_evidence_invalid" in checks
 
 
@@ -634,10 +649,55 @@ def test_preflight_rejects_missing_required_burnin_section(
             "rpc_attempt_reconciliation_failed",
         ),
         (
+            lambda value: value["operational"]["rounds"][0][
+                "provider_evidence"
+            ][0].__setitem__("request_id", "missing-request"),
+            "rpc_attempt_reconciliation_failed",
+        ),
+        (
+            lambda value: value["operational"]["rounds"][0][
+                "provider_evidence"
+            ][0].__setitem__(
+                "request_id",
+                value["operational"]["rounds"][0][
+                    "provider_evidence"
+                ][1]["request_id"],
+            ),
+            "rpc_attempt_reconciliation_failed",
+        ),
+        (
+            lambda value: value["operational_requests"][2].__setitem__(
+                "classification", "unavailable"
+            ),
+            "rpc_attempt_reconciliation_failed",
+        ),
+        (
             lambda value: value["quarantine"].__setitem__(
                 "quarantine_round_id", value["conflict"]["round_id"]
             ),
             "conflict_quarantine_identity_collision",
+        ),
+        (
+            lambda value: value["conflict"].__setitem__(
+                "overwrite_refused", False
+            ),
+            "conflict_overwrite_refusal_failed",
+        ),
+        (
+            lambda value: value["conflict"].pop("overwrite_refused"),
+            "conflict_overwrite_refusal_missing",
+        ),
+        (
+            lambda value: value["quarantine"].__setitem__(
+                "quarantine_overwrite_refused", False
+            ),
+            "quarantine_overwrite_refusal_failed",
+        ),
+        (
+            lambda value: value["quarantine"].pop(
+                "quarantine_overwrite_refused"
+            ),
+            "quarantine_overwrite_refusal_missing",
         ),
         (
             lambda value: value["conflict"].__setitem__(
@@ -681,6 +741,12 @@ def test_preflight_rejects_missing_required_burnin_section(
             "jitter_test_failed",
         ),
         (
+            lambda value: value["jitter"].__setitem__(
+                "bounded_delay_result", False
+            ),
+            "jitter_test_failed",
+        ),
+        (
             lambda value: value["source_boundary"].pop("source_path"),
             "source_boundary_incomplete",
         ),
@@ -704,7 +770,7 @@ def test_preflight_rejects_missing_required_burnin_section(
         ),
     ),
 )
-def test_preflight_surfaces_v3_structured_failures(
+def test_preflight_surfaces_v4_structured_failures(
     tmp_path, config, monkeypatch, mutate, expected
 ):
     release, burn = write_release_and_burn_in(tmp_path, config)
@@ -715,3 +781,90 @@ def test_preflight_surfaces_v3_structured_failures(
     checks = {failure["check"] for failure in result["failures"]}
     assert not result["ready"]
     assert expected in checks
+    assert not (tmp_path / "production_marker.json").exists()
+
+
+@pytest.mark.parametrize(
+    ("section", "field", "expected"),
+    (
+        (
+            "conflict",
+            "overwrite_refused",
+            "conflict_overwrite_refusal_failed",
+        ),
+        (
+            "quarantine",
+            "quarantine_overwrite_refused",
+            "quarantine_overwrite_refusal_failed",
+        ),
+    ),
+)
+def test_exact_audit_overwrite_mutations_fail_preflight(
+    tmp_path, config, monkeypatch, section, field, expected
+):
+    release, burn = write_release_and_burn_in(tmp_path, config)
+    rewrite_burn(
+        burn,
+        lambda value: value[section].__setitem__(field, False),
+    )
+    result = run_preflight(
+        tmp_path, config, monkeypatch, release, burn
+    )
+    checks = {failure["check"] for failure in result["failures"]}
+    assert not result["ready"]
+    assert expected in checks
+    assert f"{section}_pass_state_mismatch" in checks
+    assert "burnin_evidence_invalid" in checks
+    assert not (tmp_path / "production_marker.json").exists()
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        lambda value: value["operational"]["rounds"][0][
+            "provider_evidence"
+        ][0].__setitem__("request_id", "missing"),
+        lambda value: value["operational"]["rounds"][0][
+            "provider_evidence"
+        ][0].__setitem__(
+            "request_id",
+            value["operational"]["rounds"][0]["provider_evidence"][1][
+                "request_id"
+            ],
+        ),
+        lambda value: value["operational_requests"][2].__setitem__(
+            "classification", "unavailable"
+        ),
+    ),
+)
+def test_provider_provenance_audit_mutations_report_reconciliation(
+    tmp_path, config, monkeypatch, mutation
+):
+    release, burn = write_release_and_burn_in(tmp_path, config)
+    rewrite_burn(burn, mutation)
+    result = run_preflight(
+        tmp_path, config, monkeypatch, release, burn
+    )
+    checks = {failure["check"] for failure in result["failures"]}
+    assert not result["ready"]
+    assert "rpc_attempt_reconciliation_failed" in checks
+    assert "provider_provenance_invalid" in checks
+
+
+def test_bounded_jitter_audit_mutation_reports_specific_failure(
+    tmp_path, config, monkeypatch
+):
+    release, burn = write_release_and_burn_in(tmp_path, config)
+    rewrite_burn(
+        burn,
+        lambda value: value["jitter"].__setitem__(
+            "bounded_delay_result", False
+        ),
+    )
+    result = run_preflight(
+        tmp_path, config, monkeypatch, release, burn
+    )
+    checks = {failure["check"] for failure in result["failures"]}
+    assert not result["ready"]
+    assert "jitter_test_failed" in checks
+    assert "burnin_evidence_invalid" in checks

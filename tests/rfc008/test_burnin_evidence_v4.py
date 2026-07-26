@@ -144,6 +144,107 @@ def test_copied_conflict_cannot_be_quarantine(tmp_path, config):
     rejected(value)
 
 
+@pytest.mark.parametrize(
+    "field",
+    (
+        "overwrite_refused",
+        "provenance_retained",
+        "disagreement_details_retained",
+        "terminal_conflict_persisted",
+        "overwrite_attempted",
+        "later_success_replacement_refused",
+        "primary_analysis_ineligible",
+    ),
+)
+def test_conflict_pass_is_derived_from_every_subcheck(
+    tmp_path, config, field
+):
+    value = valid_evidence(tmp_path, config)
+    value["conflict"][field] = False
+    rejected(value)
+
+
+def test_conflict_overwrite_missing_or_pass_mismatch_fails(
+    tmp_path, config
+):
+    missing = valid_evidence(tmp_path, config)
+    missing["conflict"].pop("overwrite_refused")
+    rejected(missing)
+    serialized_false = valid_evidence(tmp_path, config)
+    serialized_false["conflict"]["conflict_test_passed"] = False
+    rejected(serialized_false)
+    recomputed_false = valid_evidence(tmp_path, config)
+    recomputed_false["conflict"][
+        "recomputed_conflict_test_passed"
+    ] = False
+    rejected(recomputed_false)
+
+
+def test_consistently_failed_conflict_is_non_authoritative(
+    tmp_path, config
+):
+    value = valid_evidence(tmp_path, config)
+    value["conflict"]["overwrite_refused"] = False
+    value["conflict"]["recomputed_conflict_test_passed"] = False
+    value["conflict"]["conflict_test_passed"] = False
+    value["primary_authoritative_capable"] = False
+    parsed = ResolverBurnInEvidence.model_validate(value)
+    assert not parsed.conflict.recomputed_conflict_test_passed
+    assert not parsed.primary_authoritative_capable
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "expiry_reached",
+        "production_transition_invoked",
+        "quarantine_restart_persistence",
+        "overwrite_attempted",
+        "quarantine_overwrite_refused",
+        "later_success_replacement_refused",
+        "primary_analysis_ineligible",
+    ),
+)
+def test_quarantine_pass_is_derived_from_every_subcheck(
+    tmp_path, config, field
+):
+    value = valid_evidence(tmp_path, config)
+    value["quarantine"][field] = False
+    rejected(value)
+
+
+def test_quarantine_terminal_state_and_pass_mismatch_fail(
+    tmp_path, config
+):
+    wrong_state = valid_evidence(tmp_path, config)
+    wrong_state["quarantine"]["quarantine_final_state"] = "pending"
+    rejected(wrong_state)
+    missing = valid_evidence(tmp_path, config)
+    missing["quarantine"].pop("quarantine_overwrite_refused")
+    rejected(missing)
+    serialized_false = valid_evidence(tmp_path, config)
+    serialized_false["quarantine"]["quarantine_test_passed"] = False
+    rejected(serialized_false)
+    recomputed_false = valid_evidence(tmp_path, config)
+    recomputed_false["quarantine"][
+        "recomputed_quarantine_test_passed"
+    ] = False
+    rejected(recomputed_false)
+
+
+def test_consistently_failed_quarantine_is_non_authoritative(
+    tmp_path, config
+):
+    value = valid_evidence(tmp_path, config)
+    value["quarantine"]["quarantine_overwrite_refused"] = False
+    value["quarantine"]["recomputed_quarantine_test_passed"] = False
+    value["quarantine"]["quarantine_test_passed"] = False
+    value["primary_authoritative_capable"] = False
+    parsed = ResolverBurnInEvidence.model_validate(value)
+    assert not parsed.quarantine.recomputed_quarantine_test_passed
+    assert not parsed.primary_authoritative_capable
+
+
 def test_single_arbitrary_process_fails(tmp_path, config):
     value = valid_evidence(tmp_path, config)
     value["protected_processes"] = [value["protected_processes"][0]]
@@ -189,8 +290,11 @@ def test_missing_or_failed_jitter_fails(tmp_path, config):
     rejected(missing)
     failed = valid_evidence(tmp_path, config)
     failed["jitter"]["persisted_schedule_match"] = False
+    failed["jitter"]["recomputed_jitter_test_passed"] = False
     failed["jitter"]["jitter_test_passed"] = False
-    rejected(failed)
+    failed["primary_authoritative_capable"] = False
+    parsed = ResolverBurnInEvidence.model_validate(failed)
+    assert not parsed.jitter.recomputed_jitter_test_passed
 
 
 def test_retry_cannot_substitute_for_jitter(tmp_path, config):
@@ -202,6 +306,30 @@ def test_retry_cannot_substitute_for_jitter(tmp_path, config):
 def test_retry_failure_with_passing_jitter_fails(tmp_path, config):
     value = valid_evidence(tmp_path, config)
     value["restart_retry"]["retry_test_passed"] = False
+    rejected(value)
+
+
+@pytest.mark.parametrize(
+    ("section", "field"),
+    (
+        ("restart_retry", "recomputed_restart_test_passed"),
+        ("restart_retry", "recomputed_retry_test_passed"),
+        ("jitter", "recomputed_jitter_test_passed"),
+    ),
+)
+def test_controlled_recomputed_flags_must_match(
+    tmp_path, config, section, field
+):
+    value = valid_evidence(tmp_path, config)
+    value[section][field] = False
+    rejected(value)
+
+
+def test_jitter_requires_exact_retry_coverage(tmp_path, config):
+    value = valid_evidence(tmp_path, config)
+    value["jitter"]["retry_numbers_tested"] = (1, 2)
+    value["jitter"]["expected_delays_seconds"] = (2, 4)
+    value["jitter"]["recomputed_delays_seconds"] = (2, 4)
     rejected(value)
 
 
@@ -244,7 +372,10 @@ def test_serialized_capability_must_equal_recomputed(tmp_path, config):
     rejected(value)
 
 
-def test_schema_v2_operational_evidence_is_unsupported(tmp_path, config):
+@pytest.mark.parametrize("schema_version", (2, 3))
+def test_legacy_operational_evidence_is_unsupported(
+    tmp_path, config, schema_version
+):
     value = valid_evidence(tmp_path, config)
-    value["schema_version"] = 2
+    value["schema_version"] = schema_version
     rejected(value)

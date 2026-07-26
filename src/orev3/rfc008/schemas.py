@@ -167,9 +167,9 @@ class ExperimentMarker(StrictModel):
 
 SHA256_PATTERN = r"^[0-9a-f]{64}$"
 RFC008_CLI_VERSION = "rfc008-cli-v4"
-RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION = 3
-RFC008_BURN_IN_AUDIT_VERSION = "rfc008-release-preflight-v4"
-RFC008_RUNBOOK_VERSION = "rfc008-operator-runbook-v4"
+RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION = 4
+RFC008_BURN_IN_AUDIT_VERSION = "rfc008-release-preflight-v5"
+RFC008_RUNBOOK_VERSION = "rfc008-operator-runbook-v5"
 REQUIRED_PROTECTED_PROCESSES = {
     48404: "observer",
     48405: "observer_caffeinate",
@@ -384,8 +384,37 @@ class RestartRetryEvidence(StrictModel):
     restart_state: str
     final_result: str
     final_state: str
+    recomputed_restart_test_passed: bool
+    recomputed_retry_test_passed: bool
     restart_test_passed: bool
     retry_test_passed: bool
+
+    @model_validator(mode="after")
+    def valid_restart_retry(self):
+        restart = (
+            self.initial_state == "pending"
+            and self.restart_state == "pending"
+            and bool(self.persisted_pda)
+            and self.persisted_retry_count >= 1
+            and self.persisted_attempt_count >= 1
+            and self.persisted_next_retry_time.utcoffset() is not None
+        )
+        retry = (
+            self.initial_state == "pending"
+            and self.final_result == "accepted"
+            and self.final_state == "finalized"
+        )
+        if (
+            self.recomputed_restart_test_passed != restart
+            or self.restart_test_passed != restart
+        ):
+            raise ValueError("Restart pass classification is invalid")
+        if (
+            self.recomputed_retry_test_passed != retry
+            or self.retry_test_passed != retry
+        ):
+            raise ValueError("Retry pass classification is invalid")
+        return self
 
 
 class JitterTestEvidence(StrictModel):
@@ -399,13 +428,14 @@ class JitterTestEvidence(StrictModel):
     bounded_delay_result: bool
     persisted_schedule_match: bool
     jitter_derivation_version: Literal["rfc008-retry-jitter-v1"]
+    recomputed_jitter_test_passed: bool
     jitter_test_passed: bool
 
     @model_validator(mode="after")
     def valid_jitter(self):
         count = len(self.retry_numbers_tested)
         if (
-            count == 0
+            self.retry_numbers_tested != (1, 2, 3)
             or len(self.expected_delays_seconds) != count
             or len(self.recomputed_delays_seconds) != count
         ):
@@ -419,8 +449,12 @@ class JitterTestEvidence(StrictModel):
             self.deterministic_match
             and self.bounded_delay_result
             and self.persisted_schedule_match
+            and all(value > 0 for value in self.expected_delays_seconds)
         )
-        if self.jitter_test_passed != expected_pass:
+        if (
+            self.recomputed_jitter_test_passed != expected_pass
+            or self.jitter_test_passed != expected_pass
+        ):
             raise ValueError("Jitter pass classification is invalid")
         return self
 
@@ -431,10 +465,37 @@ class ConflictTestEvidence(StrictModel):
     round_id: int = Field(ge=0)
     injected_non_authoritative_disagreement: Literal[True] = True
     conflict_state: str
+    provider_provenance_count: int = Field(ge=0)
     provenance_retained: bool
+    disagreement_details_retained: bool
+    terminal_conflict_persisted: bool
+    overwrite_attempted: bool
     overwrite_refused: bool
+    later_success_replacement_refused: bool
     primary_analysis_ineligible: bool
+    recomputed_conflict_test_passed: bool
     conflict_test_passed: bool
+
+    @model_validator(mode="after")
+    def valid_conflict(self):
+        recomputed = (
+            self.injected_non_authoritative_disagreement
+            and self.conflict_state == "conflicted"
+            and self.provider_provenance_count == 2
+            and self.provenance_retained
+            and self.disagreement_details_retained
+            and self.terminal_conflict_persisted
+            and self.overwrite_attempted
+            and self.overwrite_refused
+            and self.later_success_replacement_refused
+            and self.primary_analysis_ineligible
+        )
+        if (
+            self.recomputed_conflict_test_passed != recomputed
+            or self.conflict_test_passed != recomputed
+        ):
+            raise ValueError("Conflict pass classification is invalid")
+        return self
 
 
 class QuarantineTestEvidence(StrictModel):
@@ -443,11 +504,36 @@ class QuarantineTestEvidence(StrictModel):
     quarantine_round_id: int = Field(ge=0)
     configured_expiration_seconds: int = Field(ge=1)
     quarantine_initial_state: str
+    expiry_reached: bool
+    production_transition_invoked: bool
     quarantine_final_state: str
     quarantine_restart_persistence: bool
+    overwrite_attempted: bool
     quarantine_overwrite_refused: bool
+    later_success_replacement_refused: bool
     primary_analysis_ineligible: bool
+    recomputed_quarantine_test_passed: bool
     quarantine_test_passed: bool
+
+    @model_validator(mode="after")
+    def valid_quarantine(self):
+        recomputed = (
+            self.quarantine_initial_state == "pending"
+            and self.expiry_reached
+            and self.production_transition_invoked
+            and self.quarantine_final_state == "quarantined"
+            and self.quarantine_restart_persistence
+            and self.overwrite_attempted
+            and self.quarantine_overwrite_refused
+            and self.later_success_replacement_refused
+            and self.primary_analysis_ineligible
+        )
+        if (
+            self.recomputed_quarantine_test_passed != recomputed
+            or self.quarantine_test_passed != recomputed
+        ):
+            raise ValueError("Quarantine pass classification is invalid")
+        return self
 
 
 class BurnInSourceBoundary(StrictModel):
@@ -525,7 +611,7 @@ class ProtectedProcessEvidence(StrictModel):
 
 
 class ResolverBurnInEvidence(StrictModel):
-    schema_version: Literal[3] = RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION
+    schema_version: Literal[4] = RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION
     evidence_type: Literal["rfc008_resolver_burn_in"]
     mode: Literal["fixture", "operational"]
     non_production: Literal[True] = True
@@ -797,11 +883,11 @@ class ResolverBurnInEvidence(StrictModel):
                 per_round_complete,
                 counts_complete,
                 self.rpc_attempt_reconciliation_passed,
-                self.restart_retry.restart_test_passed,
-                self.restart_retry.retry_test_passed,
-                self.jitter.jitter_test_passed,
-                self.conflict.conflict_test_passed,
-                self.quarantine.quarantine_test_passed,
+                self.restart_retry.recomputed_restart_test_passed,
+                self.restart_retry.recomputed_retry_test_passed,
+                self.jitter.recomputed_jitter_test_passed,
+                self.conflict.recomputed_conflict_test_passed,
+                self.quarantine.recomputed_quarantine_test_passed,
                 controlled_independent,
                 boundary_matches,
                 self.sqlite_integrity == "ok",
