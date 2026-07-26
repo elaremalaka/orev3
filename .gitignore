@@ -94,3 +94,12 @@ logs/rfc007_*
 
 # RFC-007 generated derived analysis datasets.
 data/analysis/rfc007_*
+
+# RFC-008 generated paper-evaluation runtime artifacts.
+data/ledger/rfc008_*
+data/analysis/rfc008_*
+data/resolver/rfc008_*
+data/status/rfc008_*
+data/freeze/rfc008_*
+logs/rfc008_*
+*.rfc008-provider-response.tmp

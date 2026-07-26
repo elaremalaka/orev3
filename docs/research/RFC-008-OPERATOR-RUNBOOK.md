@@ -1,67 +1,108 @@
 # RFC-008 Paper Evaluation Operator Runbook
 
-Status: **Implementation reference; collection not authorized**
+Status: **Corrected implementation reference; marker and collection are not
+authorized**
 
-This runbook describes future commands. None of the marker, ledger,
-collection, dataset, or analysis commands below were executed while RFC-008
-was implemented.
+All commands run from `/Users/anisbaker/Documents/orev3`. Production commands
+below are future procedures and were not executed during implementation.
 
-All commands run from `/Users/anisbaker/Documents/orev3`.
+## 1. Boundaries that must not be confused
 
-## 1. Technical preflight
+The frozen candidate-training boundary is rounds `342132` through `342570`.
+It controls candidate selection only and is never passed to marker creation.
 
-The read-only preflight verifies the approved manifest, frozen configuration,
-branch, clean tracked worktree, available marker paths, observer source files,
-and paper-only safety boundary:
+The runtime holdout boundary is the last complete observer record immediately
+before marker publication. `preflight-marker` derives its round, source path,
+inode, byte offset, line number, record SHA-256, and timestamp automatically.
+`create-marker` derives it again and refuses a cursor race.
+
+## 2. Deterministic fixture resolver burn-in
+
+This isolated mode uses local providers and cannot establish operational
+provider readiness:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli resolver-burn-in \
+  --config config/collection/rfc008_paper_v1.json \
+  --resolver-config config/collection/rfc008_resolver_v1.json \
+  --ledger /tmp/rfc008_fixture_burn_in.sqlite \
+  --output /tmp/rfc008_fixture_burn_in.json \
+  --mode fixture \
+  --control-round-id 900001
+```
+
+The fixture ledger and evidence are never holdout inputs.
+
+## 3. Future operational read-only resolver burn-in
+
+This step requires separate authorization and two independent provider URLs in
+`ORE_RECOVERY_PRIMARY_RPC_URL` and `ORE_RECOVERY_SECONDARY_RPC_URL`. URLs and
+credentials are never printed or stored.
+
+```bash
+PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli resolver-burn-in \
+  --config config/collection/rfc008_paper_v1.json \
+  --resolver-config config/collection/rfc008_resolver_v1.json \
+  --ledger data/resolver/rfc008_operational_burn_in_v1.sqlite \
+  --output data/resolver/rfc008_operational_burn_in_v1.json \
+  --mode operational \
+  --authorization-token RFC008_OPERATIONAL_RESOLVER_BURN_IN_AUTHORIZED
+```
+
+The command deterministically chooses the round immediately before the latest
+observer source round as its finalized control. Operational evidence is valid
+for 24 hours.
+
+## 4. Read-only release preflight
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli preflight-marker \
   --config config/collection/rfc008_paper_v1.json \
+  --resolver-config config/collection/rfc008_resolver_v1.json \
+  --burn-in-evidence data/resolver/rfc008_operational_burn_in_v1.json \
+  --release-approval docs/research/rfc008/release_implementation_approval_v1.json \
   --marker data/ledger/rfc008_marker_v1.json \
+  --ledger data/ledger/rfc008_paper_ledger_v1.sqlite \
   --approval-manifest docs/research/rfc008/approval_manifest_v1.json \
   --repository-root . \
   --expected-branch research/rfc-007-paper-collection-burn-in
 ```
 
-`ready: true` is technical readiness only. It is not authorization.
+`ready: true` requires the approved HEAD policy, completely clean worktree,
+absent production artifacts, valid frozen hashes, recent hash-validated
+operational burn-in, and a current runtime source boundary. It is not
+authorization.
 
-## 2. Future marker creation
+## 5. Future marker creation
 
-After separate human authorization, use exactly:
+After separate human authorization:
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli create-marker \
   --config config/collection/rfc008_paper_v1.json \
+  --resolver-config config/collection/rfc008_resolver_v1.json \
+  --burn-in-evidence data/resolver/rfc008_operational_burn_in_v1.json \
+  --release-approval docs/research/rfc008/release_implementation_approval_v1.json \
   --marker data/ledger/rfc008_marker_v1.json \
+  --ledger data/ledger/rfc008_paper_ledger_v1.sqlite \
   --approval-manifest docs/research/rfc008/approval_manifest_v1.json \
   --repository-root . \
   --expected-branch research/rfc-007-paper-collection-burn-in \
-  --latest-preholdout-round-id 342570 \
   --authorization-token RFC008_MARKER_CREATION_AUTHORIZED
 ```
 
-This creates the immutable marker and
-`data/ledger/rfc008_marker_v1.json.sha256`. It does not create a ledger or
-start collection. Existing output paths are refused.
+The marker and checksum sidecar are staged, fsynced, validated, and published
+as a fail-safe pair. The marker becomes visible last. No ledger is created.
 
-## 3. Dry-run validation
+## 6. Future collection start
 
-Use only temporary fixture paths:
-
-```bash
-PYTHONPATH=src .venv/bin/pytest -q tests/rfc008
-```
-
-Do not point a dry run at an RFC-007 ledger, production marker, or observer
-output.
-
-## 4. Future collection start
-
-After marker review and separate collection authorization, use exactly:
+Collection requires separate authorization and the same operational provider
+environment:
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli run \
   --config config/collection/rfc008_paper_v1.json \
+  --resolver-config config/collection/rfc008_resolver_v1.json \
   --marker data/ledger/rfc008_marker_v1.json \
   --expected-marker-sha256-file data/ledger/rfc008_marker_v1.json.sha256 \
   --ledger data/ledger/rfc008_paper_ledger_v1.sqlite \
@@ -69,11 +110,11 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli run \
   --authorization-token RFC008_HOLDOUT_COLLECTION_AUTHORIZED
 ```
 
-The first run refuses an existing ledger. Restarts use the same command
-without `--create-new-ledger`. A writer lease prevents two collectors from
-targeting the ledger.
+Restarts omit `--create-new-ledger`. The writer lease, source cursors,
+pending queue, retry count, next retry time, attempts, conflicts, and accepted
+outcomes persist.
 
-## 5. Status monitoring
+## 7. Collection monitoring
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli status \
@@ -83,34 +124,37 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli status \
   --ledger data/ledger/rfc008_paper_ledger_v1.sqlite
 ```
 
-Review integrity, configuration, marker verification, primary-analyzable
-rounds, started rounds, pending/conflicted/quarantined outcomes, unusable
-rate, duplicates, safety counters, and caps. `collection_ready` is technical
-health and does not authorize a start.
+Monitor integrity, primary and sensitivity provenance, pending/conflicted/
+quarantined outcomes, unusable denominator and rate, duplicates, safety
+counters, and stopping caps. No interim efficacy analysis is allowed.
 
-## 6. Safe stop and restart recovery
+## 8. Safe stop and restart
 
-Send SIGINT only to the RFC-008 collector process. Do not signal the observer,
-RFC-007 collector, or caffeinate wrapper. Wait for the collector to exit and
-confirm the writer lease is released. Verify status, then restart with the
-same config, marker, hash sidecar, and ledger, omitting
-`--create-new-ledger`.
+Send SIGINT only to the RFC-008 collector. Do not signal the observer,
+RFC-007 collector, or caffeinate wrapper. Confirm the RFC-008 writer lease is
+released, run status, and restart with the exact marker, hash, configuration,
+resolver configuration, provider identities, and ledger.
 
-The source cursor, one-snapshot uniqueness, pending-outcome queue, resolver
-state, and accounting identities persist in SQLite. A transition is committed
-to the pending queue before resolution. No transition infers a winner.
+## 9. Future authorized final freeze
 
-## 7. Final freeze
+After the stopping rule is reached and the writer is stopped:
 
-Stop only after 600 directly observed primary-analyzable rounds or a frozen
-terminal boundary. Record the final status JSON, ledger SHA-256, marker
-SHA-256, configuration fingerprint, repository commit, and source cursors.
-Any conflict, marker drift, configuration drift, integrity failure, live
-action, or unusable rate above 5% requires human review.
+```bash
+PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli final-freeze \
+  --config config/collection/rfc008_paper_v1.json \
+  --marker data/ledger/rfc008_marker_v1.json \
+  --expected-marker-sha256-file data/ledger/rfc008_marker_v1.json.sha256 \
+  --ledger data/ledger/rfc008_paper_ledger_v1.sqlite \
+  --output data/freeze/rfc008_final_freeze_v1.json \
+  --stop-reason AUTHORIZED_TERMINAL_REASON \
+  --authorization-token RFC008_FINAL_FREEZE_AUTHORIZED
+```
 
-## 8. Dataset generation
+Freeze refuses an active writer, pending outcomes, integrity failure, marker
+or configuration drift, and an existing different freeze. Persistent write
+guards make the ledger immutable after the freeze.
 
-Only after final-freeze authorization:
+## 10. Dataset generation from the freeze
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli build-dataset \
@@ -118,31 +162,31 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli build-dataset \
   --marker data/ledger/rfc008_marker_v1.json \
   --expected-marker-sha256-file data/ledger/rfc008_marker_v1.json.sha256 \
   --ledger data/ledger/rfc008_paper_ledger_v1.sqlite \
+  --freeze data/freeze/rfc008_final_freeze_v1.json \
+  --expected-freeze-sha256-file data/freeze/rfc008_final_freeze_v1.json.sha256 \
   --output data/analysis/rfc008_round_dataset_v1
 ```
 
-Generation requires exactly 600 primary rounds, one shared snapshot per
-round, five arms, complete accounting, no conflicts, and no non-terminal
-outcomes. Recovered rounds are written only to the labeled sensitivity file.
+The dataset manifest carries the complete frozen experiment summary. Recovered
+outcomes remain sensitivity-only.
 
-## 9. Analysis authorization
-
-Formal analysis remains separately authorized:
+## 11. Formal analysis authorization
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli analyze \
   --config config/collection/rfc008_paper_v1.json \
   --dataset data/analysis/rfc008_round_dataset_v1 \
+  --expected-dataset-manifest-sha256-file data/analysis/rfc008_round_dataset_v1/manifest.json.sha256 \
   --output data/analysis/rfc008_results_v1.json \
   --authorization-token RFC008_FORMAL_ANALYSIS_AUTHORIZED
 ```
 
-The command validates dataset hashes before running the locked paired
-McNemar, paired bootstrap, economic randomization, ROI, and decision engine.
-Recovered provenance is descriptive sensitivity evidence only.
+Analysis refuses a missing or changed manifest and derives started rounds,
+missingness, safety, cap, provenance, and final-freeze inputs from frozen
+evidence. It never substitutes optimistic defaults.
 
 ## Safety boundary
 
-RFC-008 contains no signer, wallet loader, transaction builder, submitter,
-deploy instruction, claim instruction, or RPC recovery adapter. Paper success
-does not authorize live testing.
+RFC-008 has no wallet loader, signer, transaction builder, submitter, deploy
+instruction, or claim instruction. The resolver performs finalized read-only
+account acquisition only. Paper success does not authorize live testing.
