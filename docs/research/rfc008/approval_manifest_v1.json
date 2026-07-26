@@ -1,51 +1,65 @@
 {
   "artifact_type": "rfc008_human_approval_package_manifest",
   "schema_version": 1,
-  "status": "proposed_for_human_approval",
+  "status": "approved_and_frozen_for_paper_only_implementation",
   "repository_starting_commit": "1181c32c9296c572697f5bb0c285d2566a2378e7",
+  "approval_parent_commit": "c2fe1f6b74a406fc049d991ea970e541239b7ee2",
+  "approval_date": "2026-07-25",
   "candidate_configuration_sha256": "e60722e845d6364c41d28ebc7d1641f8c8726766f87bdb838f3822decf50a372",
   "artifacts": [
     {
       "path": "docs/rfcs/RFC-008-PREREGISTERED-ROUND-LEVEL-STRATEGY-EVALUATION.md",
-      "bytes": 19018,
-      "sha256": "bffc8420b37998c3ace63b29b2077f8b6d10381cb7624b27874412cf5f590e46"
+      "bytes": 19528,
+      "sha256": "735f5b163510757fb054fc9f842c2efe984cd3da950c7067b71d26d22e19eed1"
     },
     {
       "path": "docs/research/RFC-008-IMPLEMENTATION-PLAN.md",
-      "bytes": 8807,
-      "sha256": "4ec66af8533a26b5d9f21fea508febd24a3c39c64410933a214bdf9489f2d7c5"
+      "bytes": 8815,
+      "sha256": "4f3c55b038899e4b9da6a4d0c315f5d871b2d2a83b46b676919370c12d1b5b44"
     },
     {
       "path": "docs/research/RFC-008-CANDIDATE-SELECTION.md",
-      "bytes": 8514,
-      "sha256": "2d5973254724a63b2ae45493cb8ec69aff8c867219e3ae0e187fcc5d2d187b74"
+      "bytes": 8500,
+      "sha256": "ae6ca1aa47ebee25308e32309533996004c6fcb35e92b047767d64ebfb68d531"
     },
     {
       "path": "docs/research/RFC-008-HUMAN-APPROVAL-CHECKLIST.md",
-      "bytes": 5029,
-      "sha256": "ec412f6118d6542b6414a792e8caf26a307643d223121cda12f882b4f8c03ff2"
+      "bytes": 5271,
+      "sha256": "6d2a9a11613bf62a412661a9769f244720e08fccb7a5af2ef67c7e080c889dc1"
     },
     {
       "path": "docs/research/RFC-008-DECISION-TABLE.md",
-      "bytes": 1637,
-      "sha256": "8961d58b5941632f331fa844f0ebacb6240073f98cac0cbbccdbf70f42d8add2"
+      "bytes": 1886,
+      "sha256": "16421d2dbd6d27cf2ec5da483d1de63ebf7c2ea44e72e1d70f40627a4882734f"
+    },
+    {
+      "path": "docs/research/RFC-008-ECONOMIC-THRESHOLD-APPROVAL-AMENDMENT.md",
+      "bytes": 3317,
+      "sha256": "715765a94fe08978fb8d60cd5e2f17d38838d9a6e44d679001f7a485dfaa7e11"
     },
     {
       "path": "docs/research/rfc008/rfc008_candidate_v1.json",
-      "bytes": 2479,
-      "sha256": "b830e83ef0e1ddee3a27820068258c24cd998b5493257b6c6fb1c2cb74680c37"
+      "bytes": 2609,
+      "sha256": "406217a08268e369570fc1203f0188bdb89363c0cfaae7e168b0b2e43d930e2b"
     },
     {
       "path": "docs/research/rfc008/preholdout_evidence_v1.json",
       "bytes": 7121,
       "sha256": "5ad61b1dc81241382f99bc93fd8c4ca6205203e6d5b07dec1082db82bb0b721a"
+    },
+    {
+      "path": "docs/research/rfc008/economic_threshold_v1.json",
+      "bytes": 2309,
+      "sha256": "4ca4814d70e3c5c6984950437bd29ae6cce324b72331f358e75004a29cee7595"
     }
   ],
   "authorization_boundary": {
-    "implementation_authorized": false,
+    "implementation_authorized": true,
     "collection_authorized": false,
     "rpc_authorized": false,
     "live_action_authorized": false,
-    "human_approval_required": true
+    "human_approval_required": false,
+    "marker_creation_requires_separate_authorization": true,
+    "collection_requires_separate_authorization": true
   }
 }

@@ -1,7 +1,7 @@
 {
   "artifact_type": "rfc008_frozen_candidate_specification",
   "schema_version": 1,
-  "status": "proposed_for_human_approval_not_implemented",
+  "status": "approved_not_implemented",
   "candidate_configuration": {
     "strategy_name": "highest_reward_top4_v1",
     "strategy_version": "1.0.0",
@@ -41,6 +41,8 @@
   },
   "candidate_configuration_sha256": "e60722e845d6364c41d28ebc7d1641f8c8726766f87bdb838f3822decf50a372",
   "candidate_configuration_hash_method": "sha256_of_utf8_json_with_sorted_keys_and_no_insignificant_whitespace",
+  "approved_minimum_observed_paired_hit_rate_improvement": 0.06,
+  "economic_threshold_artifact": "docs/research/rfc008/economic_threshold_v1.json",
   "training_boundary": {
     "maximum_eligible_round_id": 342570,
     "maximum_eligible_observation_time_utc": "2026-07-23T15:48:13.823493Z",

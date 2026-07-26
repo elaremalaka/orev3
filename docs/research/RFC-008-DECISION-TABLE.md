@@ -1,6 +1,6 @@
 # RFC-008 Frozen Decision Table
 
-Status: **Proposed for human approval**
+Status: **Approved and frozen**
 
 All rates use started rounds as the denominator unless explicitly stated.
 All statistical units are independent rounds.
@@ -15,3 +15,8 @@ Recovered outcomes are excluded from the primary count and may appear only in
 a labeled sensitivity analysis. Failure takes precedence over inconclusive
 when both descriptions could otherwise apply. Paper success does not authorize
 live action.
+
+The +6-point gate was retained after the economic-threshold validation in
+`RFC-008-ECONOMIC-THRESHOLD-APPROVAL-AMENDMENT.md`. The calculated
+conservative break-even improvement was +4.96 points, rounded upward to +5;
+the approved +6 threshold is stricter.

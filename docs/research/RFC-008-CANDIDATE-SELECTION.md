@@ -1,6 +1,6 @@
 # RFC-008 Candidate Selection Memorandum
 
-Status: **Final proposal for human approval; not validation evidence**
+Status: **Approved and frozen; not validation evidence**
 
 ## Decision
 

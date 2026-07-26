@@ -1,7 +1,7 @@
 # RFC-008 — Preregistered Round-Level Strategy Evaluation
 
-Status: **Final proposed approval version; implementation and collection not
-authorized**
+Status: **Approved and frozen for paper-only implementation; marker creation
+and collection not authorized**
 
 ## 1. Purpose
 
@@ -19,8 +19,8 @@ This RFC is a design and preregistration artifact. It does not authorize:
 - live or controlled-live deployment; or
 - using paper economics as wallet-realized economics.
 
-Implementation and collection require separate approvals after the unresolved
-choices in Section 18 are frozen.
+Paper-only implementation is approved. Marker creation and collection require
+separate explicit authorization after implementation verification.
 
 ## 2. Primary experimental unit
 
@@ -182,6 +182,12 @@ The primary test is an exact one-sided McNemar test at alpha 0.025. The
 confidence interval is a two-sided 95% paired round bootstrap interval. The
 point estimate must also exceed the minimum relevant improvement of six
 percentage points.
+
+The final economic-threshold amendment calculated a conservative pre-holdout
+SOL break-even improvement of +4.96 percentage points, rounded upward to +5.
+The +6-point predictive gate is therefore retained unchanged. Hit rate alone
+is insufficient: the reward-weighted economic gates in Section 13 remain
+mandatory.
 
 The 0.025 alpha leaves error budget for one confirmatory economic gate. All
 other comparisons are secondary or descriptive.
@@ -405,7 +411,7 @@ in the paper collector or outcome resolver. Optional realized participant
 accounting requires a separately authorized adapter and may not be enabled by
 this RFC alone.
 
-## 18. Human approvals required before implementation or collection
+## 18. Human approval disposition
 
 The ten final proposed decisions, rationale, consequences, and blank
 approve/reject fields are in
@@ -423,6 +429,10 @@ approve/reject fields are in
 10. the separate authorization boundary for realized accounting and live
     action.
 
-Every item remains subject to explicit human approval. Until the checklist is
-approved and a separately authorized implementation is completed, no
-RFC-008 marker or collection may be created.
+All ten items were approved on `2026-07-25`, subject to the economic-threshold
+validation. That validation passed and is frozen in
+`docs/research/RFC-008-ECONOMIC-THRESHOLD-APPROVAL-AMENDMENT.md`.
+
+Paper-only implementation is authorized. No RFC-008 marker or collection may
+be created until implementation is complete, verified, committed, and
+separately authorized.

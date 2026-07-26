@@ -1,6 +1,6 @@
 # RFC-008 Implementation Plan
 
-Status: **Design only; implementation and collection not authorized**
+Status: **Approved for paper-only implementation; collection not authorized**
 
 ## 1. Frozen proposed design inputs
 

@@ -1,0 +1,60 @@
+{
+  "artifact_type": "rfc008_economic_threshold_approval",
+  "schema_version": 1,
+  "status": "approved",
+  "approval_date": "2026-07-25",
+  "training_boundary": {
+    "round_id_min": 342132,
+    "round_id_max": 342570,
+    "independent_rounds": 439,
+    "rfc008_holdout_used": false
+  },
+  "assumptions": {
+    "selected_squares": 4,
+    "deployment_total_lamports": 50000,
+    "allocation_per_square_lamports": 12500,
+    "deploy_fee_lamports": 5000,
+    "claim_fee_after_positive_return_lamports": 5000,
+    "priority_fee_lamports": 0,
+    "failed_transaction_fee_lamports": 0,
+    "random_top4_theoretical_hit_rate": 0.16,
+    "accounting_mode": "historical_price_taking_reconstructed_not_wallet_realized",
+    "ore_value_included": false,
+    "base_ore_available": false
+  },
+  "simple_approximation": {
+    "mean_potential_gross_lamports_per_hit": 267437.3667425968,
+    "formula": "55000/(mean_potential_gross_lamports_per_hit-5000)",
+    "break_even_hit_rate": 0.20957381444062795,
+    "break_even_improvement_over_random": 0.049573814440627945
+  },
+  "reward_weighted": {
+    "candidate_hits": 75,
+    "candidate_rounds": 439,
+    "candidate_gross_return_lamports": 20209943,
+    "mean_gross_lamports_per_candidate_hit": 269465.9066666667,
+    "formula": "55000/(mean_gross_lamports_per_candidate_hit-5000)",
+    "break_even_hit_rate": 0.2079663148011063,
+    "break_even_improvement_over_random": 0.0479663148011063,
+    "bootstrap_seed": 20260725,
+    "bootstrap_samples": 200000,
+    "bootstrap_unit": "independent_round",
+    "bootstrap_break_even_hit_rate_97_5_percentile": 0.2090449567897672,
+    "bootstrap_improvement_97_5_percentile": 0.0490449567897672
+  },
+  "observed_miss_conversion_sensitivity": {
+    "frozen_random_hits": 72,
+    "candidate_hits": 75,
+    "additional_hits_required_lowest_value_first": 18,
+    "break_even_candidate_hit_rate": 0.21184510250569477,
+    "paired_improvement_over_frozen_random": 0.04783599088838269
+  },
+  "decision": {
+    "calculated_conservative_improvement": 0.049573814440627945,
+    "calculated_threshold_rounded_up": 0.05,
+    "final_frozen_minimum_observed_paired_improvement": 0.06,
+    "original_threshold_retained": true,
+    "hit_rate_alone_sufficient_for_economic_viability": false,
+    "reward_weighted_economic_gate_required": true
+  }
+}

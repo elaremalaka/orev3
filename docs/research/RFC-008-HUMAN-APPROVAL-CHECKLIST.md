@@ -1,9 +1,12 @@
 # RFC-008 Human Approval Checklist
 
-Status: **Approval requested; all fields intentionally unresolved**
+Status: **Approved and frozen**
 
-Mark exactly one field for each item. Approval of this package does not
-authorize implementation or collection.
+Approval date: `2026-07-25`
+
+Approval authorizes the paper-only implementation described by RFC-008. It
+does not authorize marker creation, collection, RPC access, wallet access, or
+live action.
 
 ## 1. Candidate and selection rule
 
@@ -14,7 +17,7 @@ authorize implementation or collection.
   pre-boundary rounds.
 - Consequences: it enters a prospective falsification test despite negative
   historical ROI; no retuning is permitted.
-- Approve: `[ ]`
+- Approve: `[x]`
 - Reject: `[ ]`
 
 ## 2. Candidate artifact and training boundary
@@ -27,7 +30,7 @@ authorize implementation or collection.
   reproducible and exclude RFC-007 scoring and all future RFC-008 data.
 - Consequences: any later training or candidate change requires a new
   preregistration and fresh holdout.
-- Approve: `[ ]`
+- Approve: `[x]`
 - Reject: `[ ]`
 
 ## 3. Decision trigger
@@ -38,7 +41,7 @@ authorize implementation or collection.
   all arms use only fields present at that point.
 - Consequences: rounds without a qualifying snapshot are explicitly
   ineligible; no post-outcome substitution is allowed.
-- Approve: `[ ]`
+- Approve: `[x]`
 - Reject: `[ ]`
 
 ## 4. Minimum analyzable rounds
@@ -48,7 +51,7 @@ authorize implementation or collection.
   alpha 0.025 and a +6-point alternative; 600 provides 80.96%.
 - Consequences: the experiment is longer than the draft 400-round plan and
   repeated observations cannot increase the count.
-- Approve: `[ ]`
+- Approve: `[x]`
 - Reject: `[ ]`
 
 ## 5. Stopping caps
@@ -59,7 +62,7 @@ authorize implementation or collection.
   boundary.
 - Consequences: reaching a cap below 600 analyzable rounds is inconclusive
   unless a failure condition already applies.
-- Approve: `[ ]`
+- Approve: `[x]`
 - Reject: `[ ]`
 
 ## 6. Predictive thresholds
@@ -71,7 +74,7 @@ authorize implementation or collection.
   effect without adapting to weak historical results.
 - Consequences: a statistically positive but smaller effect is inconclusive,
   not success.
-- Approve: `[ ]`
+- Approve: `[x]`
 - Reject: `[ ]`
 
 ## 7. Economic threshold
@@ -83,7 +86,7 @@ authorize implementation or collection.
   economics are negative.
 - Consequences: economic failure or uncertainty prevents success even when the
   predictive gate passes.
-- Approve: `[ ]`
+- Approve: `[x]`
 - Reject: `[ ]`
 
 ## 8. Outcome provenance and missingness
@@ -95,7 +98,7 @@ authorize implementation or collection.
 - Rationale: separates prospective capture from post-hoc recovery and makes
   missingness visible.
 - Consequences: recovered rounds cannot fill the primary 600-round target.
-- Approve: `[ ]`
+- Approve: `[x]`
 - Reject: `[ ]`
 
 ## 9. Paper fees and economic accounting
@@ -108,7 +111,7 @@ authorize implementation or collection.
   configured rather than observed.
 - Consequences: report both pre-fee and after-fee ROI; do not call results
   wallet-realized or combine SOL and ORE.
-- Approve: `[ ]`
+- Approve: `[x]`
 - Reject: `[ ]`
 
 ## 10. Realized accounting and live boundary
@@ -119,14 +122,15 @@ authorize implementation or collection.
 - Rationale: RFC-008 is a paper experiment.
 - Consequences: success does not authorize controlled-live or production
   deployment.
-- Approve: `[ ]`
+- Approve: `[x]`
 - Reject: `[ ]`
 
 ## Overall disposition
 
-- Approve the complete design package for a separately authorized
-  implementation phase: `[ ]`
+- Approve the complete design package for the paper-only implementation
+  phase: `[x]`
 - Reject or return for revision: `[ ]`
-- Reviewer:
-- Review date:
-- Notes:
+- Reviewer: human approval supplied in the RFC-008 implementation task
+- Review date: `2026-07-25`
+- Notes: +6 percentage points retained after economic-threshold validation;
+  marker creation and collection remain separately unauthorized.
