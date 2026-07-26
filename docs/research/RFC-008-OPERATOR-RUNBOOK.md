@@ -3,6 +3,8 @@
 Status: **Corrected implementation reference; marker and collection are not
 authorized**
 
+Runbook contract version: `rfc008-operator-runbook-v4`
+
 All commands run from `/Users/anisbaker/Documents/orev3`. Production commands
 below are future procedures and were not executed during implementation.
 
@@ -60,29 +62,54 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli resolver-burn-in \
   --authorization-token RFC008_OPERATIONAL_RESOLVER_BURN_IN_AUTHORIZED
 ```
 
-Operational evidence schema version 2 records complete per-round provenance
-and exact RPC counts by provider and method. Every real round must be read from
-both providers at finalized commitment and must pass owner, PDA, returned
-identity, decoded round, finalized-context, deployment-vector, accounting, and
-canonical-agreement checks. Fewer than five successes, duplicates, missing
-counts, incomplete provenance, or any provider disagreement fail closed.
-The three required process command hashes are captured before any provider
-request and checked again after the isolated exercises; a missing or changed
-observer/collector process fails the burn-in.
+Operational evidence schema version 3 records complete per-round provenance,
+normalized persisted attempt records, normalized operational request records,
+and exact RPC counts by provider, method, response classification, and retry
+status. Every real round must be read from both providers at finalized
+commitment and must pass owner, PDA, returned identity, decoded round,
+finalized-context, deployment-vector, accounting, and canonical-agreement
+checks. Deployment and accounting pass counts are derived from per-round
+evidence and must equal the authoritative success count. Attempt counts,
+provider request references, account reads, genesis reads, retries, successful
+responses, unavailable responses, malformed responses, failed responses, and
+total RPC requests must all reconcile. Fixture calls are structurally excluded
+from operational accounting. Fewer than five successes, duplicates, missing
+attempts or requests, incomplete provenance, or any provider disagreement fail
+closed.
 
-The same isolated ledger also performs four separately reported controlled
-checks. Restart/retry persists a pending fixture attempt, closes and reopens the
-ledger, validates deterministic jitter, and then finalizes it. Conflict injects
-a non-authoritative disagreement and proves terminal overwrite refusal.
-Quarantine creates a different unresolved fixture round, invokes the production
+The durable source boundary is authoritative structured evidence containing
+the boundary round, source path, inode, byte offset, line number, source-record
+SHA-256, source-record timestamp, and the distinct timestamp at which the
+boundary was observed. The five operational rounds must be exactly
+`boundary_round - 5` through `boundary_round - 1`.
+
+The exact protected-process policy is observer PID `48404`, observer
+caffeinate PID `48405`, and RFC-007 collector PID `78317`, each with its
+approved role and sanitized command identity. Command hashes and observation
+timestamps are captured before any provider request and checked again after
+the isolated exercises. A missing, substituted, duplicated, absent, or changed
+process fails the burn-in.
+
+The same isolated ledger also performs separately reported controlled checks.
+Restart/retry persists a pending fixture attempt, closes and reopens the ledger,
+and then finalizes it. Deterministic jitter is a distinct result with tested
+retry numbers, expected and recomputed delays, bounded-delay validation,
+persisted schedule validation, and derivation version. Conflict injects a
+non-authoritative disagreement and proves terminal overwrite refusal.
+Quarantine uses a different controlled round identity, invokes the production
 expiry transition with a controlled clock, reopens the ledger, and proves that
-later resolution cannot silently overwrite quarantine. Fixture calls never
-count as operational RPC calls or authoritative successes.
+later resolution cannot silently overwrite quarantine. Restart/retry, conflict,
+and quarantine identities cannot overlap the five real rounds; conflict and
+quarantine must also be distinct. Fixture calls never count as operational RPC
+calls or authoritative successes.
 
-The command exits nonzero unless every operational, restart, retry/jitter,
-conflict, quarantine, integrity, safety, and isolation gate passes. Even a
-passing burn-in grants neither marker nor collection authorization.
-Operational evidence is valid for 24 hours.
+The CLI reports the real-round summary, RPC request accounting, attempt
+reconciliation, restart, retry, jitter, conflict, quarantine, exact process
+preservation, structured source boundary, and recomputed authoritative
+capability separately. The command exits nonzero unless every operational,
+restart, retry, jitter, conflict, quarantine, integrity, safety, and isolation
+gate passes. Even a passing burn-in grants neither marker nor collection
+authorization. Operational evidence is valid for 24 hours.
 
 ## 4. Read-only release preflight
 
@@ -101,10 +128,13 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli preflight-marker \
 
 `ready: true` requires the approved HEAD policy, completely clean worktree,
 absent production artifacts, valid frozen hashes, recent hash-validated
-schema-v2 operational evidence, at least five distinct authoritative successes,
-internally consistent RPC accounting, complete provider provenance, separate
-passing restart/retry, conflict, and quarantine evidence, and a current runtime
-source boundary. It is not authorization.
+schema-v3 operational evidence, at least five distinct authoritative successes,
+complete deployment and accounting validation, reconciled persisted
+attempt/request history and RPC accounting, complete provider provenance,
+distinct controlled conflict and quarantine identities, separate passing
+restart, retry, jitter, conflict, and quarantine evidence, all three protected
+processes, and a complete structured source boundary consistent with
+deterministic round selection. It is not authorization.
 
 ## 5. Future marker creation
 

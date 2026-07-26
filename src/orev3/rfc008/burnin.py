@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from orev3.collection.outcome_recovery import RpcRecoveryProvider
+from orev3.ledger.identifiers import deterministic_id
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.marker import derive_runtime_source_boundary
 from orev3.rfc008.outcomes import enqueue_pending, quarantine_expired
@@ -22,9 +23,16 @@ from orev3.rfc008.resolver import (
 from orev3.rfc008.resolver_config import ResolverConfig
 from orev3.rfc008.schemas import (
     ConflictTestEvidence,
+    BurnInSourceBoundary,
+    JitterTestEvidence,
     OperationalBurnInSummary,
+    OperationalAttemptEvidence,
+    OperationalRequestEvidence,
     OperationalRoundEvidence,
+    ProtectedProcessEvidence,
     ProviderRoundEvidence,
+    REQUIRED_PROCESS_COMMAND_IDENTITIES,
+    REQUIRED_PROTECTED_PROCESSES,
     QuarantineTestEvidence,
     ResolverBurnInEvidence,
     RestartRetryEvidence,
@@ -140,13 +148,26 @@ class RpcAccounting:
         self.retried_requests = 0
         self._failed_keys: set[tuple[str, str, str]] = set()
 
-    def begin(self, provider_id: str, method: str, identity: str = "") -> None:
+    def begin(
+        self,
+        provider_id: str,
+        method: str,
+        identity: str = "",
+        *,
+        retry_request: bool | None = None,
+    ) -> bool:
         key = (provider_id, method, identity)
-        if key in self._failed_keys:
+        retried = (
+            key in self._failed_keys
+            if retry_request is None
+            else retry_request
+        )
+        if retried:
             self.retried_requests += 1
         self.by_provider[provider_id] += 1
         self.by_method[method] += 1
         self.by_provider_and_method[provider_id][method] += 1
+        return retried
 
     def success(self) -> None:
         self.successful_responses += 1
@@ -181,6 +202,9 @@ class RpcAccounting:
             successful_responses=self.successful_responses,
             unavailable_responses=self.unavailable_responses,
             malformed_responses=self.malformed_responses,
+            failed_responses=(
+                self.unavailable_responses + self.malformed_responses
+            ),
             retried_requests=self.retried_requests,
             finalized_account_reads=by_method["get_account_info_with_context"],
             genesis_hash_reads=by_method["get_genesis_hash"],
@@ -203,38 +227,128 @@ class CountingOutcomeProvider:
         self.address_to_round = address_to_round
         self.genesis_hash: str | None = None
         self.round_traces: dict[int, dict[str, object]] = {}
+        self.requests: list[OperationalRequestEvidence] = []
+        self.active_attempt_id: str | None = None
+        self.active_attempt_number: int | None = None
+
+    def set_attempt(self, attempt_id: str, attempt_number: int) -> None:
+        self.active_attempt_id = attempt_id
+        self.active_attempt_number = attempt_number
+
+    def _record(
+        self,
+        *,
+        method: str,
+        requested_at: datetime,
+        classification: str,
+        identity: str = "",
+        round_id: int | None = None,
+        commitment: str | None = None,
+        retry_request: bool = False,
+    ) -> str:
+        request_id = deterministic_id(
+            "rfc008-operational-request-v1",
+            self.provider_id,
+            method,
+            identity,
+            len(self.requests),
+            requested_at.isoformat(),
+        )
+        self.requests.append(
+            OperationalRequestEvidence(
+                request_id=request_id,
+                attempt_id=(
+                    self.active_attempt_id
+                    if method == "get_account_info_with_context"
+                    else None
+                ),
+                round_id=round_id,
+                round_pda=identity or None,
+                provider_id=self.provider_id,
+                method=method,
+                requested_at=requested_at,
+                classification=classification,
+                retry_request=retry_request,
+                commitment=commitment,
+            )
+        )
+        return request_id
 
     def get_genesis_hash(self) -> str:
         method = "get_genesis_hash"
-        self.accounting.begin(self.provider_id, method)
+        requested_at = datetime.now(timezone.utc)
+        retried = self.accounting.begin(self.provider_id, method)
         try:
             value = self.provider.get_genesis_hash()
         except Exception:
             self.accounting.unavailable(self.provider_id, method)
+            self._record(
+                method=method,
+                requested_at=requested_at,
+                classification="unavailable",
+                retry_request=retried,
+            )
             raise
         if not isinstance(value, str) or not value:
             self.accounting.malformed(self.provider_id, method)
+            self._record(
+                method=method,
+                requested_at=requested_at,
+                classification="malformed",
+                retry_request=retried,
+            )
             raise ValueError("Malformed genesis-hash response")
         self.genesis_hash = value
         self.accounting.success()
+        self._record(
+            method=method,
+            requested_at=requested_at,
+            classification="successful",
+            retry_request=retried,
+        )
         return value
 
     def get_account_info_with_context(
         self, address: str, *, commitment: str
     ) -> dict[str, Any]:
         method = "get_account_info_with_context"
-        self.accounting.begin(self.provider_id, method, address)
+        retried = self.accounting.begin(
+            self.provider_id,
+            method,
+            address,
+            retry_request=bool(
+                self.active_attempt_number
+                and self.active_attempt_number > 1
+            ),
+        )
         requested_at = datetime.now(timezone.utc)
+        round_id = self.address_to_round.get(address)
         try:
             response = self.provider.get_account_info_with_context(
                 address, commitment=commitment
             )
         except Exception:
             self.accounting.unavailable(self.provider_id, method, address)
+            self._record(
+                method=method,
+                requested_at=requested_at,
+                classification="unavailable",
+                identity=address,
+                round_id=round_id,
+                commitment=commitment,
+                retry_request=retried,
+            )
             raise
-        round_id = self.address_to_round.get(address)
         if round_id is None:
             self.accounting.malformed(self.provider_id, method, address)
+            self._record(
+                method=method,
+                requested_at=requested_at,
+                classification="malformed",
+                identity=address,
+                commitment=commitment,
+                retry_request=retried,
+            )
             raise ValueError("RPC response does not match a selected round PDA")
         try:
             decoded = _decode_response(
@@ -249,9 +363,30 @@ class CountingOutcomeProvider:
             account = response.get("value") if isinstance(response, dict) else None
             if account is None:
                 self.accounting.unavailable(self.provider_id, method, address)
+                classification = "unavailable"
             else:
                 self.accounting.malformed(self.provider_id, method, address)
+                classification = "malformed"
+            self._record(
+                method=method,
+                requested_at=requested_at,
+                classification=classification,
+                identity=address,
+                round_id=round_id,
+                commitment=commitment,
+                retry_request=retried,
+            )
             raise
+        request_id = self._record(
+            method=method,
+            requested_at=requested_at,
+            classification="successful",
+            identity=address,
+            round_id=round_id,
+            commitment=commitment,
+            retry_request=retried,
+        )
+        decoded["request_id"] = request_id
         self.round_traces[round_id] = decoded
         self.accounting.success()
         return response
@@ -324,6 +459,7 @@ def _operational_round_evidence(
     canonical = traces[0]["canonical"] if traces else None
     provider_evidence = tuple(
         ProviderRoundEvidence(
+            request_id=str(trace["request_id"]),
             provider_id=str(trace["provider_id"]),
             request_method="get_account_info_with_context",
             requested_at=str(trace["requested_at"]),
@@ -449,6 +585,12 @@ def _summary(
         finalized_validation_pass_count=sum(
             value.finalized_validation_passed for value in rounds
         ),
+        deployment_validation_pass_count=sum(
+            value.deployment_vector_validated for value in rounds
+        ),
+        accounting_validation_pass_count=sum(
+            value.accounting_validated for value in rounds
+        ),
         complete_provenance_count=sum(
             value.provenance_complete for value in rounds
         ),
@@ -508,7 +650,12 @@ def _controlled_exercises(
     base_round_id: int,
     current: datetime,
     fixture_calls: Counter[str],
-) -> tuple[RestartRetryEvidence, ConflictTestEvidence, QuarantineTestEvidence]:
+) -> tuple[
+    RestartRetryEvidence,
+    JitterTestEvidence,
+    ConflictTestEvidence,
+    QuarantineTestEvidence,
+]:
     retry_round = base_round_id
     retry_pda = derive_round_pda(
         retry_round, resolver_config.expected_program_owner
@@ -550,19 +697,29 @@ def _controlled_exercises(
             final_result = resolver.resolve_round(retry_round, now=retry_at)
         final_queue = restarted.queue(retry_round)
         assert final_queue is not None
-        expected_exponential = resolver_config.base_retry_seconds
-        jitter = int.from_bytes(
-            hashlib.sha256(
-                f"rfc008-retry-jitter-v1:{retry_round}:1".encode()
-            ).digest()[:8],
-            "big",
-        ) % resolver_config.jitter_modulus_seconds
-        expected_retry_at = current + timedelta(
-            seconds=min(
-                expected_exponential + jitter,
+        retry_numbers = (1, 2, 3)
+
+        def retry_delay(retry_number: int) -> int:
+            exponential = resolver_config.base_retry_seconds * (
+                2 ** max(retry_number - 1, 0)
+            )
+            jitter_value = int.from_bytes(
+                hashlib.sha256(
+                    (
+                        f"rfc008-retry-jitter-v1:{retry_round}:"
+                        f"{retry_number}"
+                    ).encode()
+                ).digest()[:8],
+                "big",
+            ) % resolver_config.jitter_modulus_seconds
+            return min(
+                exponential + jitter_value,
                 resolver_config.maximum_retry_seconds,
             )
-        )
+
+        expected_delays = tuple(retry_delay(value) for value in retry_numbers)
+        recomputed_delays = tuple(retry_delay(value) for value in retry_numbers)
+        expected_retry_at = current + timedelta(seconds=expected_delays[0])
         restart_retry = RestartRetryEvidence(
             test_type="controlled_restart_retry",
             evidence_mode="fixture",
@@ -586,7 +743,29 @@ def _controlled_exercises(
                 and final_result == "accepted"
                 and final_queue.state == "finalized"
             ),
-            deterministic_jitter_test_passed=retry_at == expected_retry_at,
+        )
+        jitter = JitterTestEvidence(
+            test_type="controlled_jitter",
+            evidence_mode="fixture",
+            round_id=retry_round,
+            retry_numbers_tested=retry_numbers,
+            expected_delays_seconds=expected_delays,
+            recomputed_delays_seconds=recomputed_delays,
+            deterministic_match=expected_delays == recomputed_delays,
+            bounded_delay_result=all(
+                0 < value <= resolver_config.maximum_retry_seconds
+                for value in expected_delays
+            ),
+            persisted_schedule_match=retry_at == expected_retry_at,
+            jitter_derivation_version="rfc008-retry-jitter-v1",
+            jitter_test_passed=(
+                expected_delays == recomputed_delays
+                and retry_at == expected_retry_at
+                and all(
+                    0 < value <= resolver_config.maximum_retry_seconds
+                    for value in expected_delays
+                )
+            ),
         )
 
         conflict_round = base_round_id + 1
@@ -706,7 +885,7 @@ def _controlled_exercises(
                 and primary_ineligible
             ),
         )
-    return restart_retry, conflict, quarantine
+    return restart_retry, jitter, conflict, quarantine
 
 
 def _repository_state(root: Path) -> tuple[str, str]:
@@ -719,8 +898,10 @@ def _repository_state(root: Path) -> tuple[str, str]:
     return commit, branch
 
 
-def _process_snapshot(process_ids: tuple[int, ...]) -> dict[str, str]:
-    snapshot: dict[str, str] = {}
+def _process_snapshot(
+    process_ids: tuple[int, ...],
+) -> dict[int, tuple[str, str, datetime]]:
+    snapshot: dict[int, tuple[str, str, datetime]] = {}
     for process_id in process_ids:
         if process_id <= 0:
             raise ValueError("Preserved process IDs must be positive")
@@ -730,8 +911,82 @@ def _process_snapshot(process_ids: tuple[int, ...]) -> dict[str, str]:
         ).strip()
         if not command:
             raise RuntimeError(f"Required process is not running: {process_id}")
-        snapshot[str(process_id)] = hashlib.sha256(command.encode()).hexdigest()
+        role = REQUIRED_PROTECTED_PROCESSES.get(process_id)
+        if role is None:
+            raise ValueError(f"Unapproved protected process PID: {process_id}")
+        required_fragment = REQUIRED_PROCESS_COMMAND_IDENTITIES[role]
+        if required_fragment not in command:
+            raise RuntimeError(
+                f"Protected process command identity mismatch: {process_id}"
+            )
+        snapshot[process_id] = (
+            hashlib.sha256(command.encode()).hexdigest(),
+            required_fragment,
+            datetime.now(timezone.utc),
+        )
     return snapshot
+
+
+def _process_evidence(
+    *,
+    mode: str,
+    before: dict[int, tuple[str, str, datetime]],
+    after: dict[int, tuple[str, str, datetime]],
+    current: datetime,
+) -> tuple[ProtectedProcessEvidence, ...]:
+    values = []
+    for pid, role in REQUIRED_PROTECTED_PROCESSES.items():
+        if mode == "fixture":
+            command = f"fixture:{role}"
+            digest = hashlib.sha256(command.encode()).hexdigest()
+            values.append(
+                ProtectedProcessEvidence(
+                    pid=pid,
+                    role=role,
+                    sanitized_command_identity=command,
+                    observed_before=True,
+                    observed_after=True,
+                    before_command_sha256=digest,
+                    after_command_sha256=digest,
+                    before_observed_at=current,
+                    after_observed_at=current,
+                    unchanged=True,
+                    evidence_mode="fixture",
+                )
+            )
+            continue
+        before_value = before.get(pid)
+        after_value = after.get(pid)
+        values.append(
+            ProtectedProcessEvidence(
+                pid=pid,
+                role=role,
+                sanitized_command_identity=(
+                    before_value[1] if before_value else f"missing:{role}"
+                ),
+                observed_before=before_value is not None,
+                observed_after=after_value is not None,
+                before_command_sha256=(
+                    before_value[0] if before_value else "0" * 64
+                ),
+                after_command_sha256=(
+                    after_value[0] if after_value else "0" * 64
+                ),
+                before_observed_at=(
+                    before_value[2] if before_value else current
+                ),
+                after_observed_at=(
+                    after_value[2] if after_value else current
+                ),
+                unchanged=(
+                    before_value is not None
+                    and after_value is not None
+                    and before_value[0] == after_value[0]
+                ),
+                evidence_mode="operational",
+            )
+        )
+    return tuple(values)
 
 
 def _safety_inspection(experiment: RFC008Config) -> bool:
@@ -803,6 +1058,14 @@ def run_resolver_burn_in(
             raise ValueError(
                 "Operational burn-in requires preserved-process checks"
             )
+        if (
+            len(preserve_process_ids) != len(set(preserve_process_ids))
+            or set(preserve_process_ids) != set(REQUIRED_PROTECTED_PROCESSES)
+        ):
+            raise ValueError(
+                "Operational burn-in requires exactly the three approved "
+                "protected process PIDs"
+            )
     ledger, output = _safe_burnin_paths(ledger_path, output_path)
     experiment = RFC008Config.from_path(experiment_config_path)
     resolver_config = ResolverConfig.from_path(resolver_config_path)
@@ -822,6 +1085,7 @@ def run_resolver_burn_in(
     selected: tuple[int, ...] = ()
     source = "fixture-only; no operational rounds selected"
     boundary_round_id: int | None = None
+    source_boundary: BurnInSourceBoundary
     if mode == "operational":
         boundary, _ = derive_runtime_source_boundary(experiment.source_glob)
         boundary_round_id = boundary.round_id
@@ -831,12 +1095,51 @@ def run_resolver_burn_in(
             f"record_sha256={boundary.source_record_sha256}"
         )
         selected = select_operational_rounds(boundary.round_id, sample_size)
+        source_boundary = BurnInSourceBoundary(
+            round_id=boundary.round_id,
+            source_path=boundary.source_path,
+            inode=boundary.source_inode,
+            byte_offset=boundary.source_byte_offset,
+            line_number=boundary.source_line_number,
+            record_sha256=boundary.source_record_sha256,
+            record_timestamp=boundary.source_observed_at,
+            observed_at=current,
+        )
     elif control_round_id is None:
         control_round_id = 900_001
+        fixture_hash = hashlib.sha256(
+            f"fixture-boundary:{control_round_id}".encode()
+        ).hexdigest()
+        source_boundary = BurnInSourceBoundary(
+            round_id=control_round_id,
+            source_path="fixture://rfc008-resolver-burn-in",
+            inode=0,
+            byte_offset=0,
+            line_number=1,
+            record_sha256=fixture_hash,
+            record_timestamp=current,
+            observed_at=current,
+        )
+    else:
+        fixture_hash = hashlib.sha256(
+            f"fixture-boundary:{control_round_id}".encode()
+        ).hexdigest()
+        source_boundary = BurnInSourceBoundary(
+            round_id=control_round_id,
+            source_path="fixture://rfc008-resolver-burn-in",
+            inode=0,
+            byte_offset=0,
+            line_number=1,
+            record_sha256=fixture_hash,
+            record_timestamp=current,
+            observed_at=current,
+        )
 
     real_accounting = RpcAccounting(resolver_config.provider_ids)
     provider_genesis_hashes: dict[str, str] = {}
     round_evidence: tuple[OperationalRoundEvidence, ...] = ()
+    operational_attempts: tuple[OperationalAttemptEvidence, ...] = ()
+    operational_requests: tuple[OperationalRequestEvidence, ...] = ()
     operational_providers: tuple[CountingOutcomeProvider, ...] = ()
     with RFC008Store(ledger, config=experiment, create=True) as store:
         if mode == "operational":
@@ -874,11 +1177,49 @@ def run_resolver_burn_in(
                     for provider in operational_providers
                 }
                 values = []
+                attempt_values = []
                 for order, round_id in enumerate(selected, 1):
                     with store.connection:
                         store.start_round(round_id, current)
-                        enqueue_pending(store, round_id, at=current)
+                        queue = enqueue_pending(store, round_id, at=current)
+                        attempt_id = deterministic_id(
+                            "rfc008-outcome-attempt",
+                            round_id,
+                            queue.retry_count,
+                            current.isoformat(),
+                        )
+                        attempt_number = queue.retry_count + 1
+                        for provider in operational_providers:
+                            provider.set_attempt(attempt_id, attempt_number)
                         result = resolver.resolve_round(round_id, now=current)
+                    persisted_attempt = store.connection.execute(
+                        """
+                        SELECT 1 FROM outcome_attempts
+                        WHERE attempt_id=? AND round_id=?
+                        """,
+                        (attempt_id, round_id),
+                    ).fetchone()
+                    provider_request_ids = tuple(
+                        request.request_id
+                        for provider in operational_providers
+                        for request in provider.requests
+                        if request.attempt_id == attempt_id
+                    )
+                    attempt_values.append(
+                        OperationalAttemptEvidence(
+                            attempt_id=attempt_id,
+                            round_id=round_id,
+                            attempt_number=attempt_number,
+                            attempted_at=current,
+                            status=(
+                                result
+                                if result in {"accepted", "retry", "conflict"}
+                                else "failed"
+                            ),
+                            provider_request_ids=provider_request_ids,
+                            persisted=persisted_attempt is not None,
+                        )
+                    )
                     values.append(
                         _operational_round_evidence(
                             store=store,
@@ -890,6 +1231,12 @@ def run_resolver_burn_in(
                         )
                     )
                 round_evidence = tuple(values)
+                operational_attempts = tuple(attempt_values)
+                operational_requests = tuple(
+                    request
+                    for provider in operational_providers
+                    for request in provider.requests
+                )
             finally:
                 for provider in operational_providers:
                     provider.close()
@@ -908,7 +1255,7 @@ def run_resolver_burn_in(
         if selected
         else int(control_round_id or 900_001)
     )
-    restart_retry, conflict, quarantine = _controlled_exercises(
+    restart_retry, jitter, conflict, quarantine = _controlled_exercises(
         ledger=ledger,
         experiment=experiment,
         resolver_config=resolver_config,
@@ -927,12 +1274,14 @@ def run_resolver_burn_in(
         if mode == "operational"
         else {}
     )
-    processes_preserved = (
-        mode == "fixture"
-        or (
-            bool(initial_processes)
-            and initial_processes == final_processes
-        )
+    process_evidence = _process_evidence(
+        mode=mode,
+        before=initial_processes,
+        after=final_processes,
+        current=current,
+    )
+    processes_preserved = all(
+        value.unchanged for value in process_evidence
     )
     safety_passed = _safety_inspection(experiment)
     provider_independence = (
@@ -947,22 +1296,101 @@ def run_resolver_burn_in(
         and next(iter(provider_genesis_hashes.values()))
         == resolver_config.expected_genesis_hash
     )
+    preliminary = ResolverBurnInEvidence.model_construct(
+        evidence_type="rfc008_resolver_burn_in",
+        mode=mode,
+        created_at=current,
+        completed_at=datetime.now(timezone.utc) if now is None else current,
+        repository_commit=repository_commit,
+        repository_branch=repository_branch,
+        release_implementation_approval_sha256=release_hash,
+        resolver_configuration_sha256=resolver_config.fingerprint,
+        experiment_configuration_fingerprint=experiment.configuration_fingerprint,
+        resolver_version=resolver_config.resolver_version,
+        decoder_version=resolver_config.decoder_version,
+        provider_ids=resolver_config.provider_ids,
+        provider_independence_passed=provider_independence,
+        provider_genesis_hashes=provider_genesis_hashes,
+        genesis_agreement_passed=genesis_agreement,
+        source_boundary=source_boundary,
+        operational=operational,
+        operational_attempts=operational_attempts,
+        operational_requests=operational_requests,
+        real_rpc_request_counts=rpc_counts,
+        rpc_attempt_reconciliation_passed=False,
+        rpc_attempt_reconciliation_errors=(),
+        controlled_fixture_call_counts=dict(sorted(fixture_calls.items())),
+        restart_retry=restart_retry,
+        jitter=jitter,
+        conflict=conflict,
+        quarantine=quarantine,
+        sqlite_integrity="ok",
+        safety_inspection_passed=safety_passed,
+        production_artifacts_absent=production_absent,
+        running_processes_preserved=processes_preserved,
+        protected_processes=process_evidence,
+        primary_authoritative_capable=False,
+        fixture_only=mode == "fixture",
+        ledger_sha256=ledger_hash,
+        limitations=(),
+    )
+    reconciliation_errors = preliminary.reconciliation_errors()
+    reconciliation_passed = not reconciliation_errors
     capability = all(
         (
             mode == "operational",
             operational.five_round_criterion_passed,
             provider_independence,
             genesis_agreement,
+            set(provider_genesis_hashes)
+            == set(resolver_config.provider_ids),
+            len(set(provider_genesis_hashes.values())) == 1,
             rpc_counts.finalized_account_reads
             == len(selected) * len(resolver_config.provider_ids),
+            rpc_counts.genesis_hash_reads
+            == len(resolver_config.provider_ids),
+            rpc_counts.total
+            == (
+                len(selected) * len(resolver_config.provider_ids)
+                + len(resolver_config.provider_ids)
+            ),
+            all(
+                rpc_counts.by_provider_and_method.get(provider_id, {}).get(
+                    "get_account_info_with_context", 0
+                )
+                == len(selected)
+                for provider_id in resolver_config.provider_ids
+            ),
+            reconciliation_passed,
+            all(
+                value.deployment_vector_validated
+                and value.accounting_validated
+                and value.attempt_count >= 1
+                for value in round_evidence
+            ),
             restart_retry.restart_test_passed,
             restart_retry.retry_test_passed,
-            restart_retry.deterministic_jitter_test_passed,
+            jitter.jitter_test_passed,
             conflict.conflict_test_passed,
             quarantine.quarantine_test_passed,
+            conflict.round_id != quarantine.quarantine_round_id,
+            not (
+                {
+                    restart_retry.round_id,
+                    conflict.round_id,
+                    quarantine.quarantine_round_id,
+                }
+                & set(selected)
+            ),
             integrity == "ok",
             production_absent,
             processes_preserved,
+            all(
+                value.evidence_mode == "operational"
+                and value.sanitized_command_identity
+                == REQUIRED_PROCESS_COMMAND_IDENTITIES[value.role]
+                for value in process_evidence
+            ),
             safety_passed,
         )
     )
@@ -982,17 +1410,23 @@ def run_resolver_burn_in(
         provider_independence_passed=provider_independence,
         provider_genesis_hashes=provider_genesis_hashes,
         genesis_agreement_passed=genesis_agreement,
+        source_boundary=source_boundary,
         operational=operational,
+        operational_attempts=operational_attempts,
+        operational_requests=operational_requests,
         real_rpc_request_counts=rpc_counts,
+        rpc_attempt_reconciliation_passed=reconciliation_passed,
+        rpc_attempt_reconciliation_errors=reconciliation_errors,
         controlled_fixture_call_counts=dict(sorted(fixture_calls.items())),
         restart_retry=restart_retry,
+        jitter=jitter,
         conflict=conflict,
         quarantine=quarantine,
         sqlite_integrity="ok" if integrity == "ok" else integrity,
         safety_inspection_passed=safety_passed,
         production_artifacts_absent=production_absent,
         running_processes_preserved=processes_preserved,
-        preserved_process_command_sha256=initial_processes,
+        protected_processes=process_evidence,
         primary_authoritative_capable=capability,
         fixture_only=mode == "fixture",
         ledger_sha256=ledger_hash,
@@ -1007,7 +1441,7 @@ def run_resolver_burn_in(
         (
             restart_retry.restart_test_passed,
             restart_retry.retry_test_passed,
-            restart_retry.deterministic_jitter_test_passed,
+            jitter.jitter_test_passed,
             conflict.conflict_test_passed,
             quarantine.quarantine_test_passed,
             integrity == "ok",
@@ -1023,10 +1457,40 @@ def run_resolver_burn_in(
         "primary_authoritative_capable": evidence.primary_authoritative_capable,
         "real_round_count": len(selected),
         "real_rpc_request_counts": rpc_counts.model_dump(mode="json"),
+        "attempt_reconciliation": {
+            "passed": reconciliation_passed,
+            "errors": list(reconciliation_errors),
+            "operational_attempt_count": len(operational_attempts),
+            "operational_request_count": len(operational_requests),
+        },
+        "operational_summary": operational.model_dump(mode="json"),
         "restart_result": restart_retry.restart_test_passed,
         "retry_result": restart_retry.retry_test_passed,
+        "jitter_result": {
+            "passed": jitter.jitter_test_passed,
+            "tested_round_id": jitter.round_id,
+            "retry_numbers_tested": list(jitter.retry_numbers_tested),
+            "expected_delays_seconds": list(
+                jitter.expected_delays_seconds
+            ),
+            "recomputed_delays_seconds": list(
+                jitter.recomputed_delays_seconds
+            ),
+            "deterministic_match": jitter.deterministic_match,
+            "bounded_delay_result": jitter.bounded_delay_result,
+            "persisted_schedule_match": jitter.persisted_schedule_match,
+            "jitter_derivation_version": jitter.jitter_derivation_version,
+        },
         "conflict_result": conflict.conflict_test_passed,
         "quarantine_result": quarantine.quarantine_test_passed,
+        "process_preservation": {
+            "passed": processes_preserved,
+            "processes": [
+                value.model_dump(mode="json") for value in process_evidence
+            ],
+        },
+        "source_boundary": source_boundary.model_dump(mode="json"),
+        "recomputed_primary_authoritative_capable": capability,
         "marker_authorized": False,
         "collection_authorized": False,
     }

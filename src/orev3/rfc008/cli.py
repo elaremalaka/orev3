@@ -27,13 +27,14 @@ from orev3.rfc008.marker import (
 )
 from orev3.rfc008.resolver import FinalizedOutcomeResolver
 from orev3.rfc008.resolver_config import ResolverConfig
+from orev3.rfc008.schemas import RFC008_CLI_VERSION
 from orev3.rfc008.status import status_report
 from orev3.rfc008.storage import RFC008Store
 from orev3.rfc008.writer import RFC008WriterLease
 
 
 ANALYSIS_AUTHORIZATION = "RFC008_FORMAL_ANALYSIS_AUTHORIZED"
-CLI_VERSION = "rfc008-cli-v3"
+CLI_VERSION = RFC008_CLI_VERSION
 
 
 def _print(value: object) -> None:

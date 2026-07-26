@@ -20,7 +20,10 @@ from orev3.rfc008.decisions import build_decisions, snapshot_from_opportunity
 from orev3.rfc008.outcomes import enqueue_pending
 from orev3.rfc008.resolver import FinalizedOutcomeResolver, derive_round_pda
 from orev3.rfc008.resolver_config import ResolverConfig
-from orev3.rfc008.schemas import ResolverBurnInEvidence
+from orev3.rfc008.schemas import (
+    REQUIRED_PROCESS_COMMAND_IDENTITIES,
+    ResolverBurnInEvidence,
+)
 from orev3.rfc008.storage import RFC008Store
 from orev3.rfc008.collector import RFC008Collector
 
@@ -193,12 +196,31 @@ def test_fixture_burn_in_proves_restart_retry_conflict_and_provenance(
     )
     assert result["passed"]
     assert not result["primary_authoritative_capable"]
+    assert {
+        "operational_summary",
+        "real_rpc_request_counts",
+        "attempt_reconciliation",
+        "restart_result",
+        "retry_result",
+        "jitter_result",
+        "conflict_result",
+        "quarantine_result",
+        "process_preservation",
+        "source_boundary",
+        "recomputed_primary_authoritative_capable",
+        "marker_authorized",
+        "collection_authorized",
+    } <= set(result)
+    assert result["retry_result"]
+    assert result["jitter_result"]["passed"]
+    assert result["jitter_result"]["tested_round_id"] == 346250
+    assert result["jitter_result"]["retry_numbers_tested"] == [1, 2, 3]
     assert (tmp_path / "resolver_burn_in.json").exists()
     assert (tmp_path / "resolver_burn_in.json.sha256").exists()
     evidence = ResolverBurnInEvidence.model_validate_json(
         (tmp_path / "resolver_burn_in.json").read_text()
     )
-    assert evidence.schema_version == 2
+    assert evidence.schema_version == 3
     assert evidence.real_rpc_request_counts.total == 0
     assert evidence.conflict.conflict_test_passed
     assert evidence.quarantine.quarantine_test_passed
@@ -208,6 +230,11 @@ def test_fixture_burn_in_proves_restart_retry_conflict_and_provenance(
     )
     assert evidence.quarantine.quarantine_restart_persistence
     assert evidence.quarantine.quarantine_overwrite_refused
+    assert evidence.jitter.jitter_test_passed
+    assert evidence.source_boundary.source_path.startswith("fixture://")
+    assert {
+        value.role for value in evidence.protected_processes
+    } == {"observer", "observer_caffeinate", "rfc007_collector"}
 
 
 def test_operational_selection_is_bounded_distinct_and_deterministic():
@@ -271,6 +298,9 @@ def test_synthetic_operational_five_round_evidence_and_rpc_counts(
                 source_byte_offset=100,
                 source_line_number=5,
                 source_record_sha256="a" * 64,
+                source_observed_at=datetime(
+                    2026, 7, 25, tzinfo=timezone.utc
+                ),
             ),
             (),
         ),
@@ -279,7 +309,18 @@ def test_synthetic_operational_five_round_evidence_and_rpc_counts(
     monkeypatch.setenv("ORE_RECOVERY_SECONDARY_RPC_URL", "mock://secondary")
     monkeypatch.setattr(
         "orev3.rfc008.burnin._process_snapshot",
-        lambda _pids: {"1": "a" * 64},
+        lambda _pids: {
+            pid: (
+                "a" * 64,
+                REQUIRED_PROCESS_COMMAND_IDENTITIES[role],
+                datetime(2026, 7, 25, tzinfo=timezone.utc),
+            )
+            for pid, role in {
+                48404: "observer",
+                48405: "observer_caffeinate",
+                78317: "rfc007_collector",
+            }.items()
+        },
     )
     result = run_resolver_burn_in(
         ledger_path=tmp_path / "operational.sqlite",
@@ -287,7 +328,7 @@ def test_synthetic_operational_five_round_evidence_and_rpc_counts(
         experiment_config_path=CONFIG_PATH,
         resolver_config_path=RESOLVER_CONFIG_PATH,
         mode="operational",
-        preserve_process_ids=(1,),
+        preserve_process_ids=(48404, 48405, 78317),
         authorization_token="RFC008_OPERATIONAL_RESOLVER_BURN_IN_AUTHORIZED",
         now=datetime(2026, 7, 25, tzinfo=timezone.utc),
     )
@@ -347,7 +388,7 @@ def test_evidence_fails_closed_for_small_sample_and_missing_quarantine(
     with pytest.raises(ValidationError):
         ResolverBurnInEvidence.model_validate(raw)
     raw = json.loads((tmp_path / "fixture.json").read_text())
-    raw["schema_version"] = 1
+    raw["schema_version"] = 2
     with pytest.raises(ValidationError):
         ResolverBurnInEvidence.model_validate(raw)
 

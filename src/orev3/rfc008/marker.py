@@ -4,6 +4,7 @@ import glob
 import hashlib
 import json
 import os
+import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,6 +17,12 @@ from orev3.rfc008.migrations import migration_set_hash
 from orev3.rfc008.resolver_config import ResolverConfig
 from orev3.rfc008.schemas import (
     ExperimentMarker,
+    RFC008_BURN_IN_AUDIT_VERSION,
+    RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION,
+    RFC008_CLI_VERSION,
+    RFC008_RUNBOOK_VERSION,
+    REQUIRED_PROCESS_COMMAND_IDENTITIES,
+    REQUIRED_PROTECTED_PROCESSES,
     ResolverBurnInEvidence,
     RuntimeSourceBoundary,
 )
@@ -159,7 +166,8 @@ def marker_preflight(
             raw_burn = json.loads(burn_path.read_text(encoding="utf-8"))
             check(
                 "burnin_schema_supported",
-                raw_burn.get("schema_version") == 2,
+                raw_burn.get("schema_version")
+                == RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION,
                 "Operational burn-in evidence schema version is unsupported",
             )
             check(
@@ -176,6 +184,183 @@ def marker_preflight(
                 "conflict_test_missing",
                 isinstance(raw_burn.get("conflict"), dict),
                 "Separate conflict evidence is absent",
+            )
+            check(
+                "jitter_test_missing",
+                isinstance(raw_burn.get("jitter"), dict),
+                "Separate jitter evidence is absent",
+            )
+            check(
+                "source_boundary_missing",
+                isinstance(raw_burn.get("source_boundary"), dict),
+                "Structured source-boundary evidence is absent",
+            )
+            check(
+                "attempt_history_missing",
+                isinstance(raw_burn.get("operational_attempts"), list),
+                "Operational attempt evidence is absent",
+            )
+            check(
+                "protected_process_evidence_incomplete",
+                isinstance(raw_burn.get("protected_processes"), list),
+                "Protected-process evidence is absent",
+            )
+            raw_operational = raw_burn.get("operational")
+            raw_rounds = (
+                raw_operational.get("rounds", [])
+                if isinstance(raw_operational, dict)
+                else []
+            )
+            check(
+                "deployment_validation_incomplete",
+                bool(raw_rounds)
+                and all(
+                    isinstance(value, dict)
+                    and value.get("deployment_vector_validated") is True
+                    for value in raw_rounds
+                ),
+                "Deployment-vector validation is incomplete",
+            )
+            check(
+                "accounting_validation_incomplete",
+                bool(raw_rounds)
+                and all(
+                    isinstance(value, dict)
+                    and value.get("accounting_validated") is True
+                    for value in raw_rounds
+                ),
+                "Accounting validation is incomplete",
+            )
+            raw_attempts = raw_burn.get("operational_attempts")
+            check(
+                "attempt_history_missing",
+                isinstance(raw_attempts, list) and bool(raw_attempts),
+                "Operational attempt evidence is absent",
+            )
+            check(
+                "rpc_attempt_reconciliation_failed",
+                raw_burn.get("rpc_attempt_reconciliation_passed") is True
+                and raw_burn.get("rpc_attempt_reconciliation_errors") == [],
+                "RPC requests do not reconcile with persisted attempts",
+            )
+            raw_conflict = raw_burn.get("conflict")
+            raw_quarantine = raw_burn.get("quarantine")
+            check(
+                "conflict_quarantine_identity_collision",
+                isinstance(raw_conflict, dict)
+                and isinstance(raw_quarantine, dict)
+                and raw_conflict.get("round_id")
+                != raw_quarantine.get("quarantine_round_id"),
+                "Conflict and quarantine rounds collide",
+            )
+            raw_jitter = raw_burn.get("jitter")
+            check(
+                "jitter_test_failed",
+                isinstance(raw_jitter, dict)
+                and raw_jitter.get("jitter_test_passed") is True,
+                "Controlled deterministic-jitter validation failed",
+            )
+            raw_processes = raw_burn.get("protected_processes")
+            raw_process_map = (
+                {
+                    value.get("pid"): value.get("role")
+                    for value in raw_processes
+                    if isinstance(value, dict)
+                }
+                if isinstance(raw_processes, list)
+                else {}
+            )
+            check(
+                "protected_process_missing",
+                raw_process_map == REQUIRED_PROTECTED_PROCESSES,
+                "One or more required protected processes are absent",
+            )
+            check(
+                "protected_process_role_missing",
+                isinstance(raw_processes, list)
+                and {
+                    value.get("role")
+                    for value in raw_processes
+                    if isinstance(value, dict)
+                }
+                == set(REQUIRED_PROTECTED_PROCESSES.values()),
+                "One or more required protected-process roles are absent",
+            )
+            check(
+                "protected_process_evidence_incomplete",
+                isinstance(raw_processes, list)
+                and len(raw_processes) == 3
+                and all(
+                    value.get("observed_before") is True
+                    and value.get("observed_after") is True
+                    and value.get("unchanged") is True
+                    for value in raw_processes
+                    if isinstance(value, dict)
+                ),
+                "Protected-process before/after evidence is incomplete",
+            )
+            check(
+                "protected_process_identity_mismatch",
+                isinstance(raw_processes, list)
+                and len(raw_processes) == 3
+                and all(
+                    isinstance(value, dict)
+                    and value.get("sanitized_command_identity")
+                    == REQUIRED_PROCESS_COMMAND_IDENTITIES.get(
+                        str(value.get("role"))
+                    )
+                    for value in raw_processes
+                ),
+                "A protected-process command identity is not approved",
+            )
+            raw_boundary = raw_burn.get("source_boundary")
+            required_boundary = {
+                "round_id",
+                "source_path",
+                "inode",
+                "byte_offset",
+                "line_number",
+                "record_sha256",
+                "record_timestamp",
+                "observed_at",
+            }
+            check(
+                "source_boundary_incomplete",
+                isinstance(raw_boundary, dict)
+                and required_boundary <= set(raw_boundary),
+                "Structured source-boundary evidence is incomplete",
+            )
+            check(
+                "source_boundary_hash_invalid",
+                isinstance(raw_boundary, dict)
+                and bool(
+                    re.fullmatch(
+                        r"[0-9a-f]{64}",
+                        str(raw_boundary.get("record_sha256", "")),
+                    )
+                ),
+                "Source-boundary record hash is invalid",
+            )
+            timestamps_valid = False
+            if isinstance(raw_boundary, dict):
+                try:
+                    timestamps = (
+                        datetime.fromisoformat(
+                            str(raw_boundary["record_timestamp"])
+                        ),
+                        datetime.fromisoformat(
+                            str(raw_boundary["observed_at"])
+                        ),
+                    )
+                    timestamps_valid = all(
+                        value.utcoffset() is not None for value in timestamps
+                    )
+                except (KeyError, TypeError, ValueError):
+                    timestamps_valid = False
+            check(
+                "source_boundary_timestamp_invalid",
+                timestamps_valid,
+                "Source-boundary timestamps are invalid or timezone-naive",
             )
             burn = ResolverBurnInEvidence.model_validate(raw_burn)
         except (json.JSONDecodeError, ValidationError, ValueError) as exc:
@@ -212,6 +397,46 @@ def marker_preflight(
         "migration_set_approved",
         release.get("migration_set_sha256") == migration_set_hash(),
         "Release approval does not bind the migration set",
+    )
+    check(
+        "burnin_schema_approved",
+        release.get("burn_in_evidence_schema_version")
+        == RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION,
+        "Release approval does not bind the burn-in evidence schema",
+    )
+    check(
+        "burnin_audit_approved",
+        release.get("audit_version") == RFC008_BURN_IN_AUDIT_VERSION,
+        "Release approval does not bind the current adversarial audit",
+    )
+    check(
+        "minimum_operational_sample_approved",
+        release.get("minimum_operational_sample_size") == 5,
+        "Release approval does not bind the five-round minimum",
+    )
+    check(
+        "protected_process_policy_approved",
+        release.get("protected_process_policy")
+        == {
+            str(pid): {
+                "role": role,
+                "sanitized_command_identity": (
+                    REQUIRED_PROCESS_COMMAND_IDENTITIES[role]
+                ),
+            }
+            for pid, role in REQUIRED_PROTECTED_PROCESSES.items()
+        },
+        "Release approval does not bind the protected-process policy",
+    )
+    check(
+        "cli_version_approved",
+        release.get("cli_version") == RFC008_CLI_VERSION,
+        "Release approval does not bind the CLI contract version",
+    )
+    check(
+        "runbook_version_approved",
+        release.get("runbook_version") == RFC008_RUNBOOK_VERSION,
+        "Release approval does not bind the runbook contract version",
     )
     root = Path(repository_root)
     check(
@@ -372,9 +597,18 @@ def marker_preflight(
         check(
             "restart_test_failed",
             burn.restart_retry.restart_test_passed
-            and burn.restart_retry.retry_test_passed
-            and burn.restart_retry.deterministic_jitter_test_passed,
-            "Controlled restart, retry, or jitter validation failed",
+            and burn.restart_retry.retry_test_passed,
+            "Controlled restart or retry validation failed",
+        )
+        check(
+            "jitter_test_missing",
+            burn.jitter.test_type == "controlled_jitter",
+            "Separate jitter evidence is absent",
+        )
+        check(
+            "jitter_test_failed",
+            burn.jitter.jitter_test_passed,
+            "Controlled deterministic-jitter validation failed",
         )
         check(
             "provider_agreement_incomplete",
@@ -388,6 +622,132 @@ def marker_preflight(
             burn.operational.complete_provenance_count
             == burn.operational.selected_round_count,
             "Operational provider provenance is incomplete",
+        )
+        check(
+            "deployment_validation_incomplete",
+            burn.operational.deployment_validation_pass_count
+            == burn.operational.successful_authoritative_count,
+            "Deployment-vector validation is incomplete",
+        )
+        check(
+            "accounting_validation_incomplete",
+            burn.operational.accounting_validation_pass_count
+            == burn.operational.successful_authoritative_count,
+            "Accounting validation is incomplete",
+        )
+        check(
+            "attempt_history_missing",
+            bool(burn.operational_attempts),
+            "Operational attempt evidence is absent",
+        )
+        check(
+            "attempt_count_mismatch",
+            all(
+                value.attempt_count
+                == sum(
+                    attempt.round_id == value.round_id
+                    for attempt in burn.operational_attempts
+                )
+                and value.attempt_count >= 1
+                for value in burn.operational.rounds
+            ),
+            "Operational attempt counts do not match persisted evidence",
+        )
+        check(
+            "rpc_attempt_reconciliation_failed",
+            burn.rpc_attempt_reconciliation_passed
+            and not burn.rpc_attempt_reconciliation_errors,
+            "RPC requests do not reconcile with persisted attempts",
+        )
+        check(
+            "provider_request_coverage_incomplete",
+            all(
+                {
+                    request.provider_id
+                    for request in burn.operational_requests
+                    if request.round_id == value.round_id
+                    and request.method == "get_account_info_with_context"
+                    and request.classification == "successful"
+                }
+                == set(burn.provider_ids)
+                for value in burn.operational.rounds
+            ),
+            "Both providers did not cover every operational round",
+        )
+        controlled_ids = {
+            burn.restart_retry.round_id,
+            burn.conflict.round_id,
+            burn.quarantine.quarantine_round_id,
+        }
+        check(
+            "conflict_quarantine_identity_collision",
+            burn.conflict.round_id != burn.quarantine.quarantine_round_id,
+            "Conflict and quarantine rounds collide",
+        )
+        check(
+            "controlled_round_overlaps_operational_sample",
+            not (
+                controlled_ids
+                & set(burn.operational.selected_round_ids)
+            ),
+            "A controlled round overlaps the operational sample",
+        )
+        check(
+            "controlled_evidence_not_independent",
+            burn.restart_retry.round_id == burn.jitter.round_id
+            and len(controlled_ids) == 3,
+            "Controlled evidence identities are not independent",
+        )
+        process_map = {
+            value.pid: value.role for value in burn.protected_processes
+        }
+        check(
+            "protected_process_missing",
+            process_map == REQUIRED_PROTECTED_PROCESSES,
+            "One or more required protected processes are absent",
+        )
+        check(
+            "protected_process_role_missing",
+            {value.role for value in burn.protected_processes}
+            == set(REQUIRED_PROTECTED_PROCESSES.values()),
+            "One or more required protected-process roles are absent",
+        )
+        check(
+            "protected_process_identity_mismatch",
+            len(process_map) == len(burn.protected_processes) == 3
+            and all(
+                value.sanitized_command_identity
+                == REQUIRED_PROCESS_COMMAND_IDENTITIES[value.role]
+                for value in burn.protected_processes
+            ),
+            "Protected-process PID, role, or command identity is invalid",
+        )
+        check(
+            "protected_process_command_changed",
+            all(value.unchanged for value in burn.protected_processes),
+            "A protected process command changed during burn-in",
+        )
+        check(
+            "protected_process_evidence_incomplete",
+            all(
+                value.observed_before
+                and value.observed_after
+                and value.evidence_mode == "operational"
+                for value in burn.protected_processes
+            ),
+            "Protected-process before/after evidence is incomplete",
+        )
+        expected_selection = tuple(
+            range(
+                burn.source_boundary.round_id
+                - burn.operational.requested_sample_size,
+                burn.source_boundary.round_id,
+            )
+        )
+        check(
+            "source_boundary_selection_mismatch",
+            expected_selection == burn.operational.selected_round_ids,
+            "Operational sample differs from the structured source boundary",
         )
         passed = all(
             (

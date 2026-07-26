@@ -165,6 +165,27 @@ class ExperimentMarker(StrictModel):
     collection_authorized: Literal[False] = False
 
 
+SHA256_PATTERN = r"^[0-9a-f]{64}$"
+RFC008_CLI_VERSION = "rfc008-cli-v4"
+RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION = 3
+RFC008_BURN_IN_AUDIT_VERSION = "rfc008-release-preflight-v4"
+RFC008_RUNBOOK_VERSION = "rfc008-operator-runbook-v4"
+REQUIRED_PROTECTED_PROCESSES = {
+    48404: "observer",
+    48405: "observer_caffeinate",
+    78317: "rfc007_collector",
+}
+REQUIRED_PROCESS_COMMAND_IDENTITIES = {
+    "observer": "-m orev3.observer.collect",
+    "observer_caffeinate": "caffeinate -i python -m orev3.observer.collect",
+    "rfc007_collector": (
+        "-m orev3.collection.cli run --config "
+        "config/collection/rfc007_burn_in_v1.json --ledger "
+        "data/ledger/rfc007_live_ledger_v1.sqlite"
+    ),
+}
+
+
 class RpcRequestCounts(StrictModel):
     total: int = Field(ge=0)
     by_provider: dict[str, int]
@@ -173,6 +194,7 @@ class RpcRequestCounts(StrictModel):
     successful_responses: int = Field(ge=0)
     unavailable_responses: int = Field(ge=0)
     malformed_responses: int = Field(ge=0)
+    failed_responses: int = Field(ge=0)
     retried_requests: int = Field(ge=0)
     finalized_account_reads: int = Field(ge=0)
     genesis_hash_reads: int = Field(ge=0)
@@ -205,18 +227,23 @@ class RpcRequestCounts(StrictModel):
             != self.total
         ):
             raise ValueError("RPC response classifications do not sum to total")
+        if self.failed_responses != (
+            self.unavailable_responses + self.malformed_responses
+        ):
+            raise ValueError("RPC failed-response count is inconsistent")
         return self
 
 
 class ProviderRoundEvidence(StrictModel):
+    request_id: str
     provider_id: str
     request_method: Literal["get_account_info_with_context"]
     requested_at: datetime
     commitment: Literal["finalized"]
     genesis_hash: str
     response_context_slot: int = Field(ge=1)
-    raw_response_sha256: str
-    canonical_response_sha256: str
+    raw_response_sha256: str = Field(pattern=SHA256_PATTERN)
+    canonical_response_sha256: str = Field(pattern=SHA256_PATTERN)
     account_owner: str
     returned_account_identity: str
     decoded_round_id: int = Field(ge=0)
@@ -262,6 +289,8 @@ class OperationalBurnInSummary(StrictModel):
     owner_validation_pass_count: int = Field(ge=0)
     identity_validation_pass_count: int = Field(ge=0)
     finalized_validation_pass_count: int = Field(ge=0)
+    deployment_validation_pass_count: int = Field(ge=0)
+    accounting_validation_pass_count: int = Field(ge=0)
     complete_provenance_count: int = Field(ge=0)
     five_round_criterion_passed: bool
     rounds: tuple[OperationalRoundEvidence, ...]
@@ -306,6 +335,12 @@ class OperationalBurnInSummary(StrictModel):
             "finalized_validation_pass_count": sum(
                 value.finalized_validation_passed for value in self.rounds
             ),
+            "deployment_validation_pass_count": sum(
+                value.deployment_vector_validated for value in self.rounds
+            ),
+            "accounting_validation_pass_count": sum(
+                value.accounting_validated for value in self.rounds
+            ),
             "complete_provenance_count": sum(
                 value.provenance_complete for value in self.rounds
             ),
@@ -322,6 +357,10 @@ class OperationalBurnInSummary(StrictModel):
             and self.owner_validation_pass_count == self.selected_round_count
             and self.identity_validation_pass_count == self.selected_round_count
             and self.finalized_validation_pass_count == self.selected_round_count
+            and self.deployment_validation_pass_count
+            == self.selected_round_count
+            and self.accounting_validation_pass_count
+            == self.selected_round_count
             and self.complete_provenance_count == self.selected_round_count
             and self.failed_count == 0
             and self.unresolved_count == 0
@@ -347,7 +386,43 @@ class RestartRetryEvidence(StrictModel):
     final_state: str
     restart_test_passed: bool
     retry_test_passed: bool
-    deterministic_jitter_test_passed: bool
+
+
+class JitterTestEvidence(StrictModel):
+    test_type: Literal["controlled_jitter"]
+    evidence_mode: Literal["fixture"]
+    round_id: int = Field(ge=0)
+    retry_numbers_tested: tuple[int, ...]
+    expected_delays_seconds: tuple[int, ...]
+    recomputed_delays_seconds: tuple[int, ...]
+    deterministic_match: bool
+    bounded_delay_result: bool
+    persisted_schedule_match: bool
+    jitter_derivation_version: Literal["rfc008-retry-jitter-v1"]
+    jitter_test_passed: bool
+
+    @model_validator(mode="after")
+    def valid_jitter(self):
+        count = len(self.retry_numbers_tested)
+        if (
+            count == 0
+            or len(self.expected_delays_seconds) != count
+            or len(self.recomputed_delays_seconds) != count
+        ):
+            raise ValueError("Jitter evidence vectors are incomplete")
+        recomputed = (
+            self.expected_delays_seconds == self.recomputed_delays_seconds
+        )
+        if self.deterministic_match != recomputed:
+            raise ValueError("Jitter deterministic-match classification is invalid")
+        expected_pass = (
+            self.deterministic_match
+            and self.bounded_delay_result
+            and self.persisted_schedule_match
+        )
+        if self.jitter_test_passed != expected_pass:
+            raise ValueError("Jitter pass classification is invalid")
+        return self
 
 
 class ConflictTestEvidence(StrictModel):
@@ -375,8 +450,82 @@ class QuarantineTestEvidence(StrictModel):
     quarantine_test_passed: bool
 
 
+class BurnInSourceBoundary(StrictModel):
+    round_id: int = Field(ge=1)
+    source_path: str = Field(min_length=1)
+    inode: int = Field(ge=0)
+    byte_offset: int = Field(ge=0)
+    line_number: int = Field(ge=1)
+    record_sha256: str = Field(pattern=SHA256_PATTERN)
+    record_timestamp: datetime
+    observed_at: datetime
+
+    @model_validator(mode="after")
+    def timezone_aware(self):
+        if (
+            self.record_timestamp.utcoffset() is None
+            or self.observed_at.utcoffset() is None
+        ):
+            raise ValueError("Source-boundary timestamps must include timezone")
+        return self
+
+
+class OperationalRequestEvidence(StrictModel):
+    request_id: str = Field(min_length=1)
+    attempt_id: str | None = None
+    round_id: int | None = Field(default=None, ge=0)
+    round_pda: str | None = None
+    provider_id: str
+    method: Literal["get_genesis_hash", "get_account_info_with_context"]
+    requested_at: datetime
+    classification: Literal["successful", "unavailable", "malformed"]
+    retry_request: bool
+    commitment: Literal["finalized"] | None = None
+    operational: Literal[True] = True
+
+
+class OperationalAttemptEvidence(StrictModel):
+    attempt_id: str = Field(min_length=1)
+    round_id: int = Field(ge=0)
+    attempt_number: int = Field(ge=1)
+    attempted_at: datetime
+    status: Literal["accepted", "retry", "conflict", "failed"]
+    provider_request_ids: tuple[str, ...]
+    persisted: Literal[True] = True
+
+
+class ProtectedProcessEvidence(StrictModel):
+    pid: int = Field(ge=1)
+    role: Literal["observer", "observer_caffeinate", "rfc007_collector"]
+    sanitized_command_identity: str = Field(min_length=1)
+    observed_before: bool
+    observed_after: bool
+    before_command_sha256: str = Field(pattern=SHA256_PATTERN)
+    after_command_sha256: str = Field(pattern=SHA256_PATTERN)
+    before_observed_at: datetime
+    after_observed_at: datetime
+    unchanged: bool
+    evidence_mode: Literal["operational", "fixture"]
+
+    @model_validator(mode="after")
+    def valid_process(self):
+        if (
+            self.before_observed_at.utcoffset() is None
+            or self.after_observed_at.utcoffset() is None
+        ):
+            raise ValueError("Process timestamps must include timezone")
+        expected = (
+            self.observed_before
+            and self.observed_after
+            and self.before_command_sha256 == self.after_command_sha256
+        )
+        if self.unchanged != expected:
+            raise ValueError("Protected-process unchanged result is invalid")
+        return self
+
+
 class ResolverBurnInEvidence(StrictModel):
-    schema_version: Literal[2] = 2
+    schema_version: Literal[3] = RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION
     evidence_type: Literal["rfc008_resolver_burn_in"]
     mode: Literal["fixture", "operational"]
     non_production: Literal[True] = True
@@ -395,21 +544,148 @@ class ResolverBurnInEvidence(StrictModel):
     provider_genesis_hashes: dict[str, str]
     genesis_agreement_passed: bool
     finalized_commitment: Literal[True] = True
+    source_boundary: BurnInSourceBoundary
     operational: OperationalBurnInSummary
+    operational_attempts: tuple[OperationalAttemptEvidence, ...]
+    operational_requests: tuple[OperationalRequestEvidence, ...]
     real_rpc_request_counts: RpcRequestCounts
+    rpc_attempt_reconciliation_passed: bool
+    rpc_attempt_reconciliation_errors: tuple[str, ...]
     controlled_fixture_call_counts: dict[str, int]
     restart_retry: RestartRetryEvidence
+    jitter: JitterTestEvidence
     conflict: ConflictTestEvidence
     quarantine: QuarantineTestEvidence
     sqlite_integrity: Literal["ok"]
     safety_inspection_passed: bool
     production_artifacts_absent: bool
     running_processes_preserved: bool
-    preserved_process_command_sha256: dict[str, str]
+    protected_processes: tuple[ProtectedProcessEvidence, ...]
     primary_authoritative_capable: bool
     fixture_only: bool
     ledger_sha256: str
     limitations: tuple[str, ...]
+
+    def reconciliation_errors(self) -> tuple[str, ...]:
+        errors: list[str] = []
+        attempts = self.operational_attempts
+        requests = self.operational_requests
+        attempt_ids = [value.attempt_id for value in attempts]
+        request_ids = [value.request_id for value in requests]
+        if len(attempt_ids) != len(set(attempt_ids)):
+            errors.append("duplicate_attempt_id")
+        if len(request_ids) != len(set(request_ids)):
+            errors.append("duplicate_request_id")
+        attempt_by_id = {value.attempt_id: value for value in attempts}
+        request_by_id = {value.request_id: value for value in requests}
+        requests_by_attempt: dict[str, list[OperationalRequestEvidence]] = {}
+        for request in requests:
+            if request.method == "get_account_info_with_context":
+                if request.attempt_id not in attempt_by_id:
+                    errors.append("account_request_without_attempt")
+                else:
+                    requests_by_attempt.setdefault(
+                        str(request.attempt_id), []
+                    ).append(request)
+            elif request.attempt_id is not None or request.round_id is not None:
+                errors.append("genesis_request_bound_to_attempt")
+        for attempt in attempts:
+            linked = requests_by_attempt.get(attempt.attempt_id, [])
+            if set(attempt.provider_request_ids) != {
+                value.request_id for value in linked
+            }:
+                errors.append(f"attempt_request_mismatch:{attempt.round_id}")
+            expected_retry = attempt.attempt_number > 1
+            if any(value.retry_request != expected_retry for value in linked):
+                errors.append(f"retry_classification_mismatch:{attempt.round_id}")
+        for round_value in self.operational.rounds:
+            round_attempts = [
+                value for value in attempts if value.round_id == round_value.round_id
+            ]
+            if round_value.attempt_count != len(round_attempts):
+                errors.append(f"attempt_count_mismatch:{round_value.round_id}")
+            if round_value.final_state == "accepted" and not round_attempts:
+                errors.append(f"attempt_history_missing:{round_value.round_id}")
+            if round_attempts and round_attempts[-1].status != round_value.final_state:
+                errors.append(f"attempt_state_mismatch:{round_value.round_id}")
+            successful_providers = {
+                value.provider_id
+                for value in requests
+                if value.round_id == round_value.round_id
+                and value.method == "get_account_info_with_context"
+                and value.classification == "successful"
+            }
+            if (
+                round_value.final_state == "accepted"
+                and successful_providers != set(self.provider_ids)
+            ):
+                errors.append(
+                    f"provider_request_coverage_incomplete:{round_value.round_id}"
+                )
+            for provider_value in round_value.provider_evidence:
+                request = request_by_id.get(provider_value.request_id)
+                if (
+                    request is None
+                    or request.round_id != round_value.round_id
+                    or request.provider_id != provider_value.provider_id
+                    or request.method != provider_value.request_method
+                    or request.classification != "successful"
+                    or request.commitment != provider_value.commitment
+                    or request.round_pda
+                    != provider_value.returned_account_identity
+                ):
+                    errors.append(
+                        "provider_trace_request_mismatch:"
+                        f"{round_value.round_id}:{provider_value.provider_id}"
+                    )
+        derived_provider = {
+            provider_id: sum(
+                value.provider_id == provider_id for value in requests
+            )
+            for provider_id in self.provider_ids
+        }
+        derived_method = {
+            method: sum(value.method == method for value in requests)
+            for method in ("get_genesis_hash", "get_account_info_with_context")
+        }
+        derived_detail = {
+            provider_id: {
+                method: sum(
+                    value.provider_id == provider_id and value.method == method
+                    for value in requests
+                )
+                for method in ("get_genesis_hash", "get_account_info_with_context")
+            }
+            for provider_id in self.provider_ids
+        }
+        counts = self.real_rpc_request_counts
+        if counts.total != len(requests):
+            errors.append("rpc_total_mismatch")
+        if counts.by_provider != derived_provider:
+            errors.append("rpc_provider_total_mismatch")
+        if counts.by_method != derived_method:
+            errors.append("rpc_method_total_mismatch")
+        if counts.by_provider_and_method != derived_detail:
+            errors.append("rpc_provider_method_total_mismatch")
+        classifications = {
+            name: sum(value.classification == name for value in requests)
+            for name in ("successful", "unavailable", "malformed")
+        }
+        if counts.successful_responses != classifications["successful"]:
+            errors.append("rpc_success_total_mismatch")
+        if counts.unavailable_responses != classifications["unavailable"]:
+            errors.append("rpc_unavailable_total_mismatch")
+        if counts.malformed_responses != classifications["malformed"]:
+            errors.append("rpc_malformed_total_mismatch")
+        if counts.failed_responses != (
+            classifications["unavailable"] + classifications["malformed"]
+        ):
+            errors.append("rpc_failed_total_mismatch")
+        if counts.retried_requests != sum(
+            value.retry_request for value in requests
+        ):
+            errors.append("rpc_retry_total_mismatch")
+        return tuple(sorted(set(errors)))
 
     @model_validator(mode="after")
     def capability_is_fail_closed(self):
@@ -436,6 +712,78 @@ class ResolverBurnInEvidence(StrictModel):
             set(self.provider_genesis_hashes) == set(self.provider_ids)
             and len(set(self.provider_genesis_hashes.values())) == 1
         )
+        reconciliation_errors = self.reconciliation_errors()
+        if self.rpc_attempt_reconciliation_errors != reconciliation_errors:
+            raise ValueError("RPC/attempt reconciliation errors are inconsistent")
+        if self.rpc_attempt_reconciliation_passed != (not reconciliation_errors):
+            raise ValueError("RPC/attempt reconciliation result is inconsistent")
+        operational_ids = set(self.operational.selected_round_ids)
+        controlled_ids = {
+            self.restart_retry.round_id,
+            self.jitter.round_id,
+            self.conflict.round_id,
+            self.quarantine.quarantine_round_id,
+        }
+        controlled_independent = (
+            len(controlled_ids) == 3
+            and self.restart_retry.round_id == self.jitter.round_id
+            and not (controlled_ids & operational_ids)
+            and self.conflict.round_id != self.quarantine.quarantine_round_id
+        )
+        expected_selection = tuple(
+            range(
+                self.source_boundary.round_id
+                - self.operational.requested_sample_size,
+                self.source_boundary.round_id,
+            )
+        )
+        boundary_matches = (
+            self.mode == "fixture"
+            or (
+                self.operational.selection_boundary_round_id
+                == self.source_boundary.round_id
+                and expected_selection == self.operational.selected_round_ids
+            )
+        )
+        process_roles = [value.role for value in self.protected_processes]
+        process_pids = [value.pid for value in self.protected_processes]
+        process_evidence_complete = (
+            len(process_roles) == len(set(process_roles)) == 3
+            and len(process_pids) == len(set(process_pids)) == 3
+            and all(value.unchanged for value in self.protected_processes)
+        )
+        if self.mode == "operational":
+            process_evidence_complete = (
+                process_evidence_complete
+                and {
+                    value.pid: value.role for value in self.protected_processes
+                }
+                == REQUIRED_PROTECTED_PROCESSES
+                and all(
+                    value.evidence_mode == "operational"
+                    and value.sanitized_command_identity
+                    == REQUIRED_PROCESS_COMMAND_IDENTITIES[value.role]
+                    for value in self.protected_processes
+                )
+            )
+        else:
+            process_evidence_complete = (
+                process_evidence_complete
+                and all(
+                    value.evidence_mode == "fixture"
+                    for value in self.protected_processes
+                )
+            )
+        if self.running_processes_preserved != process_evidence_complete:
+            raise ValueError(
+                "Protected-process preservation result is inconsistent"
+            )
+        per_round_complete = all(
+            value.deployment_vector_validated
+            and value.accounting_validated
+            and value.attempt_count >= 1
+            for value in real_rounds
+        )
         required = all(
             (
                 self.mode == "operational",
@@ -446,17 +794,21 @@ class ResolverBurnInEvidence(StrictModel):
                 self.genesis_agreement_passed,
                 provider_identity_complete,
                 self.operational.five_round_criterion_passed,
+                per_round_complete,
                 counts_complete,
+                self.rpc_attempt_reconciliation_passed,
                 self.restart_retry.restart_test_passed,
                 self.restart_retry.retry_test_passed,
-                self.restart_retry.deterministic_jitter_test_passed,
+                self.jitter.jitter_test_passed,
                 self.conflict.conflict_test_passed,
                 self.quarantine.quarantine_test_passed,
+                controlled_independent,
+                boundary_matches,
                 self.sqlite_integrity == "ok",
                 self.safety_inspection_passed,
                 self.production_artifacts_absent,
                 self.running_processes_preserved,
-                bool(self.preserved_process_command_sha256),
+                process_evidence_complete,
             )
         )
         if self.primary_authoritative_capable != required:

@@ -10,7 +10,16 @@ import pytest
 from orev3.rfc008.marker import marker_preflight
 from orev3.rfc008.migrations import migration_set_hash
 from orev3.rfc008.resolver_config import ResolverConfig
-from orev3.rfc008.schemas import ResolverBurnInEvidence, RuntimeSourceBoundary
+from orev3.rfc008.schemas import (
+    REQUIRED_PROCESS_COMMAND_IDENTITIES,
+    REQUIRED_PROTECTED_PROCESSES,
+    RFC008_BURN_IN_AUDIT_VERSION,
+    RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION,
+    RFC008_CLI_VERSION,
+    RFC008_RUNBOOK_VERSION,
+    ResolverBurnInEvidence,
+    RuntimeSourceBoundary,
+)
 from orev3.rfc008.storage import strict_json
 from pydantic import ValidationError
 
@@ -37,6 +46,22 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
                 ),
                 "resolver_configuration_sha256": resolver.fingerprint,
                 "migration_set_sha256": migration_set_hash(),
+                "burn_in_evidence_schema_version": (
+                    RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION
+                ),
+                "audit_version": RFC008_BURN_IN_AUDIT_VERSION,
+                "minimum_operational_sample_size": 5,
+                "protected_process_policy": {
+                    str(pid): {
+                        "role": role,
+                        "sanitized_command_identity": (
+                            REQUIRED_PROCESS_COMMAND_IDENTITIES[role]
+                        ),
+                    }
+                    for pid, role in REQUIRED_PROTECTED_PROCESSES.items()
+                },
+                "cli_version": RFC008_CLI_VERSION,
+                "runbook_version": RFC008_RUNBOOK_VERSION,
                 "cli_sha256": hashlib.sha256(
                     (ROOT / "src/orev3/rfc008/cli.py").read_bytes()
                 ).hexdigest(),
@@ -54,10 +79,33 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
     release_sha256 = hashlib.sha256(release.read_bytes()).hexdigest()
     round_ids = tuple(range(346000, 346005))
     rounds = []
+    attempts = []
+    requests = [
+        {
+            "request_id": f"genesis-{provider_id}",
+            "attempt_id": None,
+            "round_id": None,
+            "round_pda": None,
+            "provider_id": provider_id,
+            "method": "get_genesis_hash",
+            "requested_at": created_at,
+            "classification": "successful",
+            "retry_request": False,
+            "commitment": None,
+            "operational": True,
+        }
+        for provider_id in resolver.provider_ids
+    ]
     for order, round_id in enumerate(round_ids, 1):
         pda = f"pda:{round_id}"
+        attempt_id = f"attempt-{round_id}"
+        request_ids = tuple(
+            f"request-{round_id}-{provider_id}"
+            for provider_id in resolver.provider_ids
+        )
         provider_evidence = [
             {
+                "request_id": request_id,
                 "provider_id": provider_id,
                 "request_method": "get_account_info_with_context",
                 "requested_at": created_at,
@@ -70,8 +118,39 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
                 "returned_account_identity": pda,
                 "decoded_round_id": round_id,
             }
-            for provider_id in resolver.provider_ids
+            for provider_id, request_id in zip(
+                resolver.provider_ids, request_ids
+            )
         ]
+        requests.extend(
+            {
+                "request_id": request_id,
+                "attempt_id": attempt_id,
+                "round_id": round_id,
+                "round_pda": pda,
+                "provider_id": provider_id,
+                "method": "get_account_info_with_context",
+                "requested_at": created_at,
+                "classification": "successful",
+                "retry_request": False,
+                "commitment": "finalized",
+                "operational": True,
+            }
+            for provider_id, request_id in zip(
+                resolver.provider_ids, request_ids
+            )
+        )
+        attempts.append(
+            {
+                "attempt_id": attempt_id,
+                "round_id": round_id,
+                "attempt_number": 1,
+                "attempted_at": created_at,
+                "status": "accepted",
+                "provider_request_ids": request_ids,
+                "persisted": True,
+            }
+        )
         rounds.append(
             {
                 "round_id": round_id,
@@ -114,6 +193,16 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
             for provider_id in resolver.provider_ids
         },
         genesis_agreement_passed=True,
+        source_boundary={
+            "round_id": 346005,
+            "source_path": "/tmp/observer.jsonl",
+            "inode": 1,
+            "byte_offset": 100,
+            "line_number": 5,
+            "record_sha256": "d" * 64,
+            "record_timestamp": created_at,
+            "observed_at": created_at,
+        },
         operational={
             "requested_sample_size": 5,
             "minimum_required_sample_size": 5,
@@ -132,10 +221,14 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
             "owner_validation_pass_count": 5,
             "identity_validation_pass_count": 5,
             "finalized_validation_pass_count": 5,
+            "deployment_validation_pass_count": 5,
+            "accounting_validation_pass_count": 5,
             "complete_provenance_count": 5,
             "five_round_criterion_passed": True,
             "rounds": rounds,
         },
+        operational_attempts=attempts,
+        operational_requests=requests,
         real_rpc_request_counts={
             "total": 12,
             "by_provider": {"primary": 6, "secondary": 6},
@@ -156,10 +249,13 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
             "successful_responses": 12,
             "unavailable_responses": 0,
             "malformed_responses": 0,
+            "failed_responses": 0,
             "retried_requests": 0,
             "finalized_account_reads": 10,
             "genesis_hash_reads": 2,
         },
+        rpc_attempt_reconciliation_passed=True,
+        rpc_attempt_reconciliation_errors=(),
         controlled_fixture_call_counts={"get_account_info_with_context": 7},
         restart_retry={
             "test_type": "controlled_restart_retry",
@@ -175,7 +271,19 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
             "final_state": "finalized",
             "restart_test_passed": True,
             "retry_test_passed": True,
-            "deterministic_jitter_test_passed": True,
+        },
+        jitter={
+            "test_type": "controlled_jitter",
+            "evidence_mode": "fixture",
+            "round_id": 446000,
+            "retry_numbers_tested": [1, 2, 3],
+            "expected_delays_seconds": [2, 4, 8],
+            "recomputed_delays_seconds": [2, 4, 8],
+            "deterministic_match": True,
+            "bounded_delay_result": True,
+            "persisted_schedule_match": True,
+            "jitter_derivation_version": "rfc008-retry-jitter-v1",
+            "jitter_test_passed": True,
         },
         conflict={
             "test_type": "controlled_conflict",
@@ -204,11 +312,36 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
         safety_inspection_passed=True,
         production_artifacts_absent=True,
         running_processes_preserved=True,
-        preserved_process_command_sha256={
-            "48404": "d" * 64,
-            "48405": "e" * 64,
-            "78317": "f" * 64,
-        },
+        protected_processes=[
+            {
+                "pid": pid,
+                "role": role,
+                "sanitized_command_identity": {
+                    "observer": "-m orev3.observer.collect",
+                    "observer_caffeinate": (
+                        "caffeinate -i python -m orev3.observer.collect"
+                    ),
+                    "rfc007_collector": (
+                        "-m orev3.collection.cli run --config "
+                        "config/collection/rfc007_burn_in_v1.json --ledger "
+                        "data/ledger/rfc007_live_ledger_v1.sqlite"
+                    ),
+                }[role],
+                "observed_before": True,
+                "observed_after": True,
+                "before_command_sha256": digest,
+                "after_command_sha256": digest,
+                "before_observed_at": created_at,
+                "after_observed_at": created_at,
+                "unchanged": True,
+                "evidence_mode": "operational",
+            }
+            for pid, role, digest in (
+                (48404, "observer", "d" * 64),
+                (48405, "observer_caffeinate", "e" * 64),
+                (78317, "rfc007_collector", "f" * 64),
+            )
+        ],
         primary_authoritative_capable=True,
         fixture_only=False,
         ledger_sha256="b" * 64,
@@ -285,7 +418,7 @@ def test_truthful_preflight_ready_and_structured_failures(
         tmp_path, config, monkeypatch, release, tmp_path / "missing.json"
     )
     assert not missing["ready"]
-    assert {failure["check"] for failure in missing["failures"]} >= {
+    assert {failure["check"] for failure in missing["failures"]} == {
         "burn_in_exists",
         "burn_in_hash_matches",
     }
@@ -386,13 +519,27 @@ def test_preflight_rejects_four_round_operational_evidence(
             "successful_authoritative_count",
             "provider_agreement_count",
             "owner_validation_pass_count",
-            "identity_validation_pass_count",
-            "finalized_validation_pass_count",
-            "complete_provenance_count",
+                "identity_validation_pass_count",
+                "finalized_validation_pass_count",
+                "deployment_validation_pass_count",
+                "accounting_validation_pass_count",
+                "complete_provenance_count",
         ):
             operational[name] = 4
-        operational["requested_sample_size"] = 4
-        operational["five_round_criterion_passed"] = False
+            operational["requested_sample_size"] = 4
+            operational["five_round_criterion_passed"] = False
+            value["source_boundary"]["round_id"] = 346004
+            value["operational_attempts"] = value["operational_attempts"][:4]
+            allowed_attempts = {
+                attempt["attempt_id"]
+                for attempt in value["operational_attempts"]
+            }
+            value["operational_requests"] = [
+                request
+                for request in value["operational_requests"]
+                if request["attempt_id"] is None
+                or request["attempt_id"] in allowed_attempts
+            ]
         counts = value["real_rpc_request_counts"]
         counts["total"] = 10
         counts["by_provider"] = {"primary": 5, "secondary": 5}
@@ -437,3 +584,75 @@ def test_preflight_rejects_missing_required_burnin_section(
     assert not result["ready"]
     assert expected in checks
     assert "burnin_evidence_invalid" in checks
+
+
+@pytest.mark.parametrize(
+    ("mutate", "expected"),
+    (
+        (
+            lambda value: value["operational"]["rounds"][0].__setitem__(
+                "deployment_vector_validated", False
+            ),
+            "deployment_validation_incomplete",
+        ),
+        (
+            lambda value: value["operational"]["rounds"][0].__setitem__(
+                "accounting_validated", False
+            ),
+            "accounting_validation_incomplete",
+        ),
+        (
+            lambda value: value.__setitem__("operational_attempts", []),
+            "attempt_history_missing",
+        ),
+        (
+            lambda value: value.__setitem__(
+                "rpc_attempt_reconciliation_passed", False
+            ),
+            "rpc_attempt_reconciliation_failed",
+        ),
+        (
+            lambda value: value["quarantine"].__setitem__(
+                "quarantine_round_id", value["conflict"]["round_id"]
+            ),
+            "conflict_quarantine_identity_collision",
+        ),
+        (
+            lambda value: value.__setitem__(
+                "protected_processes", value["protected_processes"][:1]
+            ),
+            "protected_process_missing",
+        ),
+        (
+            lambda value: value.pop("jitter"),
+            "jitter_test_missing",
+        ),
+        (
+            lambda value: value["source_boundary"].pop("source_path"),
+            "source_boundary_incomplete",
+        ),
+        (
+            lambda value: value["source_boundary"].__setitem__(
+                "record_sha256", "invalid"
+            ),
+            "source_boundary_hash_invalid",
+        ),
+        (
+            lambda value: value["source_boundary"].__setitem__(
+                "observed_at", "not-a-time"
+            ),
+            "source_boundary_timestamp_invalid",
+        ),
+    ),
+)
+def test_preflight_surfaces_v3_structured_failures(
+    tmp_path, config, monkeypatch, mutate, expected
+):
+    release, burn = write_release_and_burn_in(tmp_path, config)
+    rewrite_burn(burn, mutate)
+    result = run_preflight(
+        tmp_path, config, monkeypatch, release, burn
+    )
+    checks = {failure["check"] for failure in result["failures"]}
+    assert not result["ready"]
+    assert expected in checks
