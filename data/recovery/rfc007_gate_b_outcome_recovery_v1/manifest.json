@@ -1,0 +1,133 @@
+{
+  "accepted_round_list": [
+    345099,
+    345100,
+    345101,
+    345102,
+    345103,
+    345104,
+    345105,
+    345106,
+    345108,
+    345109,
+    345110,
+    345111,
+    345112
+  ],
+  "artifact_content_sha256": "4bb69a4088690fbcc41d0cebff9823a768f28e995023d7bcf7a3fe72db72fbae",
+  "artifact_type": "rfc007_outcome_recovery_evidence",
+  "branch": "research/rfc-007-paper-collection-burn-in",
+  "command_configuration_hash": "6f5d455d1ae6c4b334c29e285e2b32eb0a31f3b6560348d65923569caf699da7",
+  "conflicted_round_list": [],
+  "control_round_id": 345107,
+  "decoder_version": "orev3-round-account-decoder-v1",
+  "economic_analysis_performed": false,
+  "evidence_jsonl_sha256": "0d04f1b7586963612d784982fd1ca7d4213b8a9466680d5a3a0d9c73611eda77",
+  "evidence_record_hashes": [
+    {
+      "recovery_evidence_id": "ea33a003-9867-5dfc-bdca-354ccbd6dd70",
+      "round_id": 345099,
+      "sha256": "67a7aacd3294a7cdd070c792c25c8fa3c0e39a26fb938e3358ccf337909a9d57"
+    },
+    {
+      "recovery_evidence_id": "8273f986-03a5-5a03-be17-4b89c643822f",
+      "round_id": 345100,
+      "sha256": "d428d7bc26a46b2f8e53bb8dfebfb1ae76b9d23927d6fe0fd2dc2df9441c3327"
+    },
+    {
+      "recovery_evidence_id": "047e5e5e-3bd8-5c6a-b54f-8544bdae7155",
+      "round_id": 345101,
+      "sha256": "e595611f82376f292ae71bd8eb8d4bb56c8cfb9622251025b0033ab1046d9982"
+    },
+    {
+      "recovery_evidence_id": "5d3b8f74-335b-5040-91bb-60ba89cae247",
+      "round_id": 345102,
+      "sha256": "fa8b203fb586c6b1505e54074de353d477c291b11a12884197eed5924a0cfd1d"
+    },
+    {
+      "recovery_evidence_id": "81598687-c2b5-5e54-a6d6-a242b5e1cda6",
+      "round_id": 345103,
+      "sha256": "8a351560c4cb8c16ca5d3f1ce081a669971d0e2ce498a6e8f90a9e49a9326010"
+    },
+    {
+      "recovery_evidence_id": "eb1a0e17-73d4-5d96-8be6-134d700d5184",
+      "round_id": 345104,
+      "sha256": "05b7cdf8a64f015ed87358610b8227b3d55327d3b32b17a5de142d4a0f706f5c"
+    },
+    {
+      "recovery_evidence_id": "4e8ae2bb-f3fe-5116-a5d0-b3e448db3321",
+      "round_id": 345105,
+      "sha256": "6978402baa0fa1f7221316f38242ed9b063b322d4255256b76295ca4233efbe6"
+    },
+    {
+      "recovery_evidence_id": "a1fe163d-1cc6-53e1-896f-09bb84c5f036",
+      "round_id": 345106,
+      "sha256": "1ad7895ce809c2323e2c88948f37ad82ff0d522e51c34ffa757f411ebf469ae0"
+    },
+    {
+      "recovery_evidence_id": "5c12694e-2a24-5288-b3cd-c050f4a7ba22",
+      "round_id": 345107,
+      "sha256": "bf41c735d4b8c7c2c05da3280fff394ad0270c39134605264b12543c431379ad"
+    },
+    {
+      "recovery_evidence_id": "65677812-45c8-541b-9c4f-b6e33938b9fe",
+      "round_id": 345108,
+      "sha256": "71ededc26880a20ac437b347ccd6366913de61281c4a8a822427cfcae8c17f78"
+    },
+    {
+      "recovery_evidence_id": "22d5d5b0-3be4-5bfe-9075-7a0787602a19",
+      "round_id": 345109,
+      "sha256": "010b7a7b51b1582db765e9bc2d0f52a05056e8570578322ca1327ecac8bc564e"
+    },
+    {
+      "recovery_evidence_id": "2b5d61b1-9f00-55bc-9089-1dafda839ce7",
+      "round_id": 345110,
+      "sha256": "216b8356982a4365deecdbd80fa3e40467765cc697e23684c79be6cc95c401cd"
+    },
+    {
+      "recovery_evidence_id": "d4938651-c89d-5a2e-b482-c98cde4f7ff5",
+      "round_id": 345111,
+      "sha256": "6ce9e36f4c80710c53a3a6fce865f5657a7f83ac3a93993a8de188fc45c62fc7"
+    },
+    {
+      "recovery_evidence_id": "6ca730f1-dc30-5c57-ae9c-535fbd86e538",
+      "round_id": 345112,
+      "sha256": "0d0d05bfd104f2957052a71da8ad28ad3050afcae19f9a77daf1b3fd3fa7d83c"
+    }
+  ],
+  "failed_round_list": [],
+  "formal_gate_b": true,
+  "generation_timestamp_utc": "2026-07-26T02:47:55.113164Z",
+  "genesis_hash": "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d",
+  "marker_sha256": "660cfa8385a60f338191fe654edde389fc4a585a5bf676aff03bb219a1f8fc51",
+  "network": "solana-mainnet-beta",
+  "original_gate_b_marker_modified": false,
+  "original_live_ledger_modified": false,
+  "program_id": "oreV3EG1i9BEgiAJ8b177Z2S2rMarzak4NMv1kULvWv",
+  "provenance_statement": "Recovered outcomes are post-hoc authoritative labels and were never used as strategy inputs or contemporaneous observations.",
+  "provider_identities": [
+    "rfc007-primary-finalized-rpc-v1",
+    "rfc007-secondary-finalized-rpc-v1"
+  ],
+  "recovery_method_version": "dual-finalized-rpc-account-v1",
+  "recovery_protocol_version": "rfc007-outcome-recovery-v1",
+  "recovery_qualified_readiness": true,
+  "repository_commit": "dde564002ecafd19dc0b270c84a58035f8bbf316",
+  "requested_round_list": [
+    345099,
+    345100,
+    345101,
+    345102,
+    345103,
+    345104,
+    345105,
+    345106,
+    345108,
+    345109,
+    345110,
+    345111,
+    345112
+  ],
+  "sample_id": "09b577bf-23d5-5aeb-8c6b-5d3eab71e42d",
+  "schema_version": 1
+}
