@@ -1,0 +1,37 @@
+{
+  "artifact_type": "rfc008_implementation_release_approval",
+  "schema_version": 1,
+  "status": "implementation_approved_for_release_preflight_only",
+  "approved_implementation_commit": "dd92275749e7b284dc19cb61438b62f91f2c9e31",
+  "approval_commit_policy": "head_must_equal_approved_implementation_or_be_its_approval_artifact_child",
+  "frozen_approval_manifest_sha256": "9fe94099ed3d9e15e015eef72db5543f16c756b1c3c5463f014e18467a44d789",
+  "configuration_fingerprint": "8df457048086076be62e56b94356bae2760920f3285605a4b3959f99e820529b",
+  "candidate_configuration_sha256": "e60722e845d6364c41d28ebc7d1641f8c8726766f87bdb838f3822decf50a372",
+  "resolver_configuration_sha256": "3df0eadaf9e611a0898dd28937b72d75a1288e0f01763f7aaea8500f40236dd3",
+  "audit_version": "rfc008-release-preflight-v2",
+  "resolver_version": "rfc008-finalized-resolver-v1",
+  "decoder_version": "ore-round-decoder-v1",
+  "database_family": "orev3-rfc008",
+  "database_schema_version": 3,
+  "migration_set_sha256": "ece66b7732cdc61af7c549aa8e2161d6f1f305e533e43165cf58e9ad492c2bd5",
+  "cli_version": "rfc008-cli-v2",
+  "cli_sha256": "852ad68d0e247468802ab7b6accc557e8f8038fe8db8c5709c65b2ed921649a2",
+  "runbook_version": "rfc008-operator-runbook-v2",
+  "runbook_sha256": "57feb9d83ee621e4c15cb332333bd354ddc506546b62ad5f503219eaf203351f",
+  "verification": {
+    "rfc008_test_count": 48,
+    "full_test_count": 285,
+    "fixture_resolver_burn_in_required": true,
+    "operational_resolver_burn_in_required_before_marker": true,
+    "external_rpc_burn_in_performed": false
+  },
+  "authorization_boundary": {
+    "implementation_authorized": true,
+    "fixture_burn_in_authorized": true,
+    "operational_rpc_burn_in_authorized": false,
+    "marker_creation_authorized": false,
+    "collection_authorized": false,
+    "wallet_access_authorized": false,
+    "live_action_authorized": false
+  }
+}
