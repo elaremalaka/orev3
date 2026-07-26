@@ -91,3 +91,6 @@ participant_*_v*.json
 # RFC-007 continuous paper collection outputs.
 data/ledger/rfc007_*
 logs/rfc007_*
+
+# RFC-007 generated derived analysis datasets.
+data/analysis/rfc007_*

@@ -19,6 +19,9 @@ from orev3.collection.gate_b import (
     freeze_gate_b_marker,
     gate_b_status,
 )
+from orev3.collection.gate_b_analysis_dataset import (
+    build_gate_b_analysis_dataset,
+)
 from orev3.collection.metrics import evaluate_burn_in
 from orev3.collection.outcome_recovery import (
     DEFAULT_GATE_B_MARKER,
@@ -331,6 +334,32 @@ def command_recover_outcome_evidence_requery(
     print(json.dumps(value, allow_nan=False, sort_keys=True))
 
 
+def command_build_gate_b_analysis_dataset(
+    args: argparse.Namespace,
+) -> None:
+    _reject_live(args)
+    value = build_gate_b_analysis_dataset(
+        output=args.output,
+        ledger_path=args.ledger,
+        marker_path=args.marker,
+        expected_marker_sha256=args.expected_marker_sha256,
+        recovery_artifact=args.recovery_artifact,
+        expected_recovery_evidence_sha256=(
+            args.expected_recovery_evidence_sha256
+        ),
+        expected_recovery_manifest_sha256=(
+            args.expected_recovery_manifest_sha256
+        ),
+        expected_recovery_content_sha256=(
+            args.expected_recovery_content_sha256
+        ),
+        repository_root=args.repository_root,
+        repository_commit=args.repository_commit,
+        branch=args.branch,
+    )
+    print(json.dumps(value, allow_nan=False, sort_keys=True))
+
+
 def _live_tripwires(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--submit", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--sign", action="store_true", help=argparse.SUPPRESS)
@@ -417,6 +446,38 @@ def build_parser() -> argparse.ArgumentParser:
     gate_b.add_argument("--expected-marker-sha256", required=True)
     _live_tripwires(gate_b)
     gate_b.set_defaults(handler=command_gate_b_status)
+
+    dataset = sub.add_parser("build-gate-b-analysis-dataset")
+    dataset.add_argument("--ledger", type=Path, required=True)
+    dataset.add_argument("--marker", type=Path, required=True)
+    dataset.add_argument("--expected-marker-sha256", required=True)
+    dataset.add_argument(
+        "--recovery-artifact",
+        type=Path,
+        required=True,
+    )
+    dataset.add_argument(
+        "--expected-recovery-evidence-sha256",
+        required=True,
+    )
+    dataset.add_argument(
+        "--expected-recovery-manifest-sha256",
+        required=True,
+    )
+    dataset.add_argument(
+        "--expected-recovery-content-sha256",
+        required=True,
+    )
+    dataset.add_argument(
+        "--repository-root",
+        type=Path,
+        default=Path("."),
+    )
+    dataset.add_argument("--repository-commit", required=True)
+    dataset.add_argument("--branch", required=True)
+    dataset.add_argument("--output", type=Path, required=True)
+    _live_tripwires(dataset)
+    dataset.set_defaults(handler=command_build_gate_b_analysis_dataset)
 
     recovery = sub.add_parser("recover-outcome-evidence")
     recovery_modes = recovery.add_subparsers(
