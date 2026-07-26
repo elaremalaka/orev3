@@ -207,6 +207,17 @@ appends and are not required to equal the historical eligibility boundary.
 They cannot redefine the eligible burn-in rounds or move collection seeding
 backward before the historical boundary.
 
+### Release-approval supersession
+
+Post-marker validation accepts only the canonical RFC-008 release approval
+schema. A refreshed approval must bind the exact implementation commit, the
+immediately previous approval hash, the immutable marker pair, and every
+frozen experiment, resolver, schema, CLI, runbook, and approval-manifest
+identity. Historical approvals are retained by content hash so validation can
+walk the ordered chain to the approval embedded in the immutable marker.
+Every link must keep collection, live-action, wallet, and transaction
+authorization false. Copied marker hashes alone never establish approval.
+
 ## 6. Future collection start
 
 Collection requires separate authorization and the same operational provider

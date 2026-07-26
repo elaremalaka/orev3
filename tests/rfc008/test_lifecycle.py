@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+import orev3.rfc008.lifecycle as lifecycle_module
 from orev3.rfc008.lifecycle import (
     capture_marker_pair,
     marker_pair_unchanged,
@@ -38,6 +39,8 @@ def validate(environment, tmp_path, **updates):
         "burn_in_evidence_path": environment["burn"],
         "release_approval_path": environment["release"],
         "approval_manifest_path": race.APPROVAL,
+        "expected_implementation_commit": "a" * 40,
+        "expected_predecessor_sha256": "0" * 64,
     }
     arguments.update(updates)
     return validate_post_marker_pre_collection_state(**arguments)
@@ -57,9 +60,40 @@ def checks(report):
     return {failure["check"] for failure in report["failures"]}
 
 
+def test_approval_only_child_head_resolves_exact_parent(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    release = tmp_path / "docs/research/rfc008/release.json"
+    release.parent.mkdir(parents=True)
+    release.write_text("{}\n")
+    previous = b'{"prior":true}\n'
+
+    def git_output(_root, *arguments):
+        if arguments == ("rev-parse", "HEAD"):
+            return b"2" * 40 + b"\n"
+        if arguments == ("rev-parse", "HEAD^"):
+            return b"1" * 40 + b"\n"
+        if arguments[0] == "diff-tree":
+            return b"docs/research/rfc008/release.json\n"
+        if arguments[0] == "show":
+            return previous
+        raise AssertionError(arguments)
+
+    monkeypatch.setattr(lifecycle_module, "_git_output", git_output)
+    implementation, predecessor = (
+        lifecycle_module._repository_approval_expectations(
+            repository_root=tmp_path,
+            release_path=release,
+        )
+    )
+    assert implementation == "1" * 40
+    assert predecessor == hashlib.sha256(previous).hexdigest()
+
+
 def test_pre_marker_lifecycle_is_explicit(tmp_path) -> None:
     report = validate_pre_marker_state(repository_root=tmp_path)
-    assert report["ready"]
+    assert report["ready"], report
     marker = tmp_path / "data/ledger/rfc008_marker_v1.json"
     marker.parent.mkdir(parents=True)
     marker.write_text("{}\n")
@@ -73,7 +107,7 @@ def test_valid_post_marker_pre_collection_state(
 ) -> None:
     environment, marker, _ = lifecycle_environment(tmp_path, monkeypatch)
     report = validate(environment, tmp_path)
-    assert report["ready"]
+    assert report["ready"], report
     assert report["marker_compatible"]
     assert report["collection_authorized"] is False
     assert report["production_ledger_family_absent"]
@@ -98,7 +132,7 @@ def test_read_only_validation_preserves_marker_pair(
         tmp_path,
         expected_snapshot=before,
     )
-    assert report["ready"]
+    assert report["ready"], report
     assert marker_pair_unchanged(
         before,
         capture_marker_pair(environment["marker"]),

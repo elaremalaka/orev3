@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import stat
+import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+from orev3.rfc008.approval import (
+    CLI_SHA256,
+    RUNBOOK_SHA256,
+    ReleaseApprovalPolicy,
+    validate_release_approval_chain,
+)
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.marker import (
     HistoricalSourceBoundaryError,
@@ -166,36 +172,83 @@ def _read_sidecar(sidecar: Path, marker: Path) -> str:
     return digest
 
 
-def _release_accepts_marker(
-    *,
-    release_path: Path,
-    marker: ExperimentMarker,
-    marker_sha256: str,
-    sidecar_sha256: str,
-    evidence: ResolverBurnInEvidence,
-) -> bool:
-    release_sha256 = sha256_file(release_path)
-    if release_sha256 == marker.release_approval_sha256:
-        return True
-    release = json.loads(release_path.read_text(encoding="utf-8"))
-    return all(
-        (
-            release.get("supersedes_release_implementation_approval_sha256")
-            == marker.release_approval_sha256,
-            release.get("validated_production_marker_sha256")
-            == marker_sha256,
-            release.get("validated_production_marker_sidecar_sha256")
-            == sidecar_sha256,
-            release.get("validated_operational_burn_in_evidence_sha256")
-            == marker.resolver_burn_in_evidence_sha256,
-            release.get("validated_operational_burn_in_ledger_sha256")
-            == evidence.ledger_sha256,
-            release.get("authorization_boundary", {}).get(
-                "collection_authorized"
-            )
-            is False,
-        )
+def _git_output(root: Path, *arguments: str) -> bytes:
+    completed = subprocess.run(
+        ("git", *arguments),
+        cwd=root,
+        check=True,
+        capture_output=True,
     )
+    return completed.stdout
+
+
+def _repository_approval_expectations(
+    *,
+    repository_root: Path,
+    release_path: Path,
+) -> tuple[str, str]:
+    head = _git_output(repository_root, "rev-parse", "HEAD").decode().strip()
+    parent = _git_output(repository_root, "rev-parse", "HEAD^").decode().strip()
+    changed = {
+        value
+        for value in _git_output(
+            repository_root,
+            "diff-tree",
+            "--no-commit-id",
+            "--name-only",
+            "-r",
+            "HEAD",
+        )
+        .decode()
+        .splitlines()
+        if value
+    }
+    release_relative = str(release_path.resolve().relative_to(repository_root))
+    history_relative = str(
+        release_path.parent.resolve().relative_to(repository_root)
+        / "release_approval_history"
+    )
+    approval_only = bool(changed) and all(
+        value == release_relative or value.startswith(f"{history_relative}/")
+        for value in changed
+    )
+    implementation = parent if approval_only else head
+    previous = _git_output(
+        repository_root,
+        "show",
+        f"{implementation}:{release_relative}",
+    )
+    predecessor = hashlib.sha256(previous).hexdigest()
+    return implementation, predecessor
+
+
+def _repository_approval_history(
+    *,
+    repository_root: Path,
+    release_path: Path,
+) -> dict[str, bytes]:
+    release_relative = str(release_path.resolve().relative_to(repository_root))
+    commits = (
+        _git_output(
+            repository_root,
+            "log",
+            "--format=%H",
+            "--all",
+            "--",
+            release_relative,
+        )
+        .decode()
+        .splitlines()
+    )
+    documents: dict[str, bytes] = {}
+    for commit in commits:
+        raw = _git_output(
+            repository_root,
+            "show",
+            f"{commit}:{release_relative}",
+        )
+        documents[hashlib.sha256(raw).hexdigest()] = raw
+    return documents
 
 
 def _historical_boundary_matches(
@@ -246,6 +299,8 @@ def validate_post_marker_pre_collection_state(
     approval_manifest_path: str | Path,
     collector_running: bool = False,
     expected_snapshot: MarkerPairSnapshot | None = None,
+    expected_implementation_commit: str | None = None,
+    expected_predecessor_sha256: str | None = None,
 ) -> dict[str, Any]:
     root = Path(repository_root).resolve()
     marker_path = root / "data/ledger/rfc008_marker_v1.json"
@@ -314,14 +369,71 @@ def validate_post_marker_pre_collection_state(
             approval_path = Path(approval_manifest_path)
             if sha256_file(approval_path) != marker.approval_manifest_sha256:
                 raise ValueError("Frozen approval manifest binding mismatch")
-            if not _release_accepts_marker(
-                release_path=Path(release_approval_path),
-                marker=marker,
-                marker_sha256=marker_sha256,
-                sidecar_sha256=sidecar_sha256,
-                evidence=evidence,
+            release_path = Path(release_approval_path)
+            expected_implementation = expected_implementation_commit
+            expected_predecessor = expected_predecessor_sha256
+            if (
+                expected_implementation is None
+                or expected_predecessor is None
             ):
-                raise ValueError("Release approval does not preserve marker")
+                if sha256_file(release_path) == marker.release_approval_sha256:
+                    expected_implementation = marker.repository_commit
+                    expected_predecessor = marker.release_approval_sha256
+                else:
+                    expected_implementation, expected_predecessor = (
+                        _repository_approval_expectations(
+                            repository_root=root,
+                            release_path=release_path,
+                        )
+                    )
+            chain = validate_release_approval_chain(
+                release_path=release_path,
+                history_directory=(
+                    release_path.parent / "release_approval_history"
+                ),
+                trusted_approval_documents=(
+                    {}
+                    if sha256_file(release_path)
+                    == marker.release_approval_sha256
+                    or not (root / ".git").exists()
+                    else _repository_approval_history(
+                        repository_root=root,
+                        release_path=release_path,
+                    )
+                ),
+                policy=ReleaseApprovalPolicy(
+                    expected_implementation_commit=expected_implementation,
+                    expected_predecessor_sha256=expected_predecessor,
+                    marker_sha256=marker_sha256,
+                    marker_sidecar_sha256=sidecar_sha256,
+                    marker_original_approval_sha256=(
+                        marker.release_approval_sha256
+                    ),
+                    marker_repository_commit=marker.repository_commit,
+                    configuration_fingerprint=(
+                        marker.configuration_fingerprint
+                    ),
+                    candidate_configuration_sha256=(
+                        marker.candidate_configuration_sha256
+                    ),
+                    resolver_configuration_sha256=(
+                        marker.resolver_configuration_sha256
+                    ),
+                    burn_in_evidence_sha256=(
+                        marker.resolver_burn_in_evidence_sha256
+                    ),
+                    burn_in_ledger_sha256=evidence.ledger_sha256,
+                    cli_sha256=CLI_SHA256,
+                    runbook_sha256=RUNBOOK_SHA256,
+                ),
+            )
+            failures.extend(chain["failures"])
+            if not chain["valid"]:
+                _failure(
+                    failures,
+                    "valid_immutable_marker_pair",
+                    "Release approval chain does not preserve the marker",
+                )
             seed_cursors = _collection_seed_cursors(marker)
             historical_seeds = tuple(
                 value

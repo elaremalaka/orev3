@@ -42,6 +42,7 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
         strict_json(
             {
                 "artifact_type": "rfc008_implementation_release_approval",
+                "schema_version": 1,
                 "approved_implementation_commit": "a" * 40,
                 "configuration_fingerprint": config.configuration_fingerprint,
                 "candidate_configuration_sha256": (
@@ -75,6 +76,11 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
                         / "docs/research/RFC-008-OPERATOR-RUNBOOK.md"
                     ).read_bytes()
                 ).hexdigest(),
+                "authorization_boundary": {
+                    "collection_authorized": False,
+                    "live_action_authorized": False,
+                    "wallet_access_authorized": False,
+                },
             }
         )
         + "\n"
