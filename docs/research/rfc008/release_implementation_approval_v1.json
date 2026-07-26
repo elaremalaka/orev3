@@ -2,7 +2,7 @@
   "artifact_type": "rfc008_implementation_release_approval",
   "schema_version": 1,
   "status": "implementation_approved_for_release_preflight_only",
-  "approved_implementation_commit": "ba4c01dd79a567513a634d8700fb120f8a0ac25b",
+  "approved_implementation_commit": "63f057fad0f82592d152b64f449ce8df595d90e9",
   "approval_commit_policy": "head_must_equal_approved_implementation_or_be_its_approval_artifact_child",
   "frozen_approval_manifest_sha256": "9fe94099ed3d9e15e015eef72db5543f16c756b1c3c5463f014e18467a44d789",
   "configuration_fingerprint": "8df457048086076be62e56b94356bae2760920f3285605a4b3959f99e820529b",
@@ -35,8 +35,8 @@
   "runbook_version": "rfc008-operator-runbook-v4",
   "runbook_sha256": "6ecd8e40c28ecdd0d892f223e561ae1cbf59621b61bb817eac46e01fd4509dc5",
   "verification": {
-    "rfc008_test_count": 111,
-    "full_test_count": 348,
+    "rfc008_test_count": 121,
+    "full_test_count": 358,
     "fixture_resolver_burn_in_required": true,
     "operational_resolver_burn_in_required_before_marker": true,
     "external_rpc_burn_in_performed": false
