@@ -1,0 +1,253 @@
+from __future__ import annotations
+
+import glob
+import hashlib
+import os
+import signal
+import time
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+from threading import Event
+
+from orev3.collection.opportunity_builder import (
+    IncompleteOpportunityError,
+    build_opportunity,
+)
+from orev3.collection.outcome_linker import outcome_from_observer_record
+from orev3.collection.schemas import SourceCursor, TailRecord
+from orev3.collection.tailer import SourceChangedError, read_complete_lines
+from orev3.rfc008.config import RFC008Config
+from orev3.rfc008.decisions import (
+    SnapshotUnavailable,
+    build_decisions,
+    snapshot_from_opportunity,
+)
+from orev3.rfc008.marker import verify_marker
+from orev3.rfc008.outcomes import accept_outcome, enqueue_pending
+from orev3.rfc008.schemas import OutcomeEvidence
+from orev3.rfc008.storage import RFC008Store, strict_json
+from orev3.ledger.identifiers import deterministic_id
+
+
+COLLECTION_AUTHORIZATION = "RFC008_HOLDOUT_COLLECTION_AUTHORIZED"
+
+
+class RFC008Collector:
+    def __init__(
+        self,
+        *,
+        store: RFC008Store,
+        config: RFC008Config,
+        marker_path: str | Path,
+        expected_marker_sha256: str,
+    ) -> None:
+        self.store = store
+        self.config = config
+        self.marker = verify_marker(
+            marker_path, config, expected_sha256=expected_marker_sha256
+        )
+        self.stop_requested = Event()
+        self.run_id: str | None = None
+
+    def request_stop(self, *_args) -> None:
+        self.stop_requested.set()
+
+    def install_signal_handlers(self) -> None:
+        signal.signal(signal.SIGINT, self.request_stop)
+        signal.signal(signal.SIGTERM, self.request_stop)
+
+    def begin_run(self) -> str:
+        run_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc)
+        self.store.connection.execute(
+            """
+            INSERT INTO collector_runs
+            (run_id,started_at,process_id,configuration_fingerprint,record_json)
+            VALUES (?,?,?,?,?)
+            """,
+            (
+                run_id,
+                now.isoformat(),
+                os.getpid(),
+                self.config.configuration_fingerprint,
+                strict_json(
+                    {
+                        "run_id": run_id,
+                        "started_at": now.isoformat(),
+                        "process_id": os.getpid(),
+                        "paper_only": True,
+                        "configuration_fingerprint": self.config.configuration_fingerprint,
+                    }
+                ),
+            ),
+        )
+        self.run_id = run_id
+        return run_id
+
+    def finish_run(self) -> None:
+        if self.run_id:
+            self.store.connection.execute(
+                "UPDATE collector_runs SET ended_at=? WHERE run_id=?",
+                (datetime.now(timezone.utc).isoformat(), self.run_id),
+            )
+
+    def _transition(self, prior_round: int, at: datetime) -> None:
+        self.store.transition_round(prior_round, at)
+        enqueue_pending(self.store, prior_round, at=at)
+        if not self.store.has_snapshot(prior_round):
+            self.store.exclude_round(prior_round, "no_timely_complete_snapshot")
+
+    def _direct_finalized_outcome(
+        self, record: TailRecord
+    ) -> OutcomeEvidence | None:
+        # Confirmed observer snapshots are not silently promoted to finalized.
+        commitment = str(record.raw.get("commitment", "")).lower()
+        if commitment != "finalized":
+            return None
+        explicit, outcome = outcome_from_observer_record(record)
+        if not explicit or outcome is None:
+            return None
+        return OutcomeEvidence(
+            outcome_id=deterministic_id(
+                "rfc008-direct-finalized-outcome",
+                outcome.round_id,
+                outcome.winner_square,
+                outcome.final_square_deployments,
+                outcome.total_winnings,
+                record.content_sha256,
+            ),
+            round_id=outcome.round_id,
+            winner_square=outcome.winner_square,
+            finalized_at=outcome.finalized_at,
+            provenance="direct_observed",
+            commitment="finalized",
+            final_square_deployments=tuple(outcome.final_square_deployments),
+            total_winnings_lamports=outcome.total_winnings,
+            motherlode_raw=outcome.motherlode_raw,
+            base_ore_raw=outcome.base_ore_raw,
+            source_reference=outcome.source_reference,
+            source_content_sha256=record.content_sha256,
+        )
+
+    def process_record(self, record: TailRecord) -> None:
+        if not self.store.mark_source_record(
+            record.record_id,
+            record.source_id,
+            record.source_line_number,
+            record.content_sha256,
+        ):
+            return
+        self.store.increment("source_records")
+        try:
+            board_round = int(record.raw["board"]["round_id"])
+        except (KeyError, TypeError, ValueError):
+            self.store.increment("malformed_records")
+            return
+        if board_round <= self.marker.latest_preholdout_round_id:
+            self.store.increment("preboundary_records_ignored")
+            return
+        last_raw = self.store.metadata("last_round_id")
+        last_round = int(last_raw) if last_raw else None
+        if last_round is not None and board_round != last_round:
+            if board_round < last_round:
+                self.store.increment("out_of_order_round_records")
+                return
+            self._transition(last_round, record.observed_at)
+        self.store.set_metadata("last_round_id", str(board_round))
+        self.store.start_round(board_round, record.observed_at)
+        outcome = self._direct_finalized_outcome(record)
+        if outcome is not None:
+            if self.store.queue(outcome.round_id) is None:
+                enqueue_pending(self.store, outcome.round_id, at=record.observed_at)
+            accept_outcome(self.store, outcome, self.config, at=record.observed_at)
+            if not self.store.has_snapshot(board_round):
+                self.store.exclude_round(
+                    board_round, "finalized_before_canonical_decision_snapshot"
+                )
+            # Finalized records are labels only and can never become inputs.
+            return
+        if self.store.has_snapshot(board_round):
+            return
+        try:
+            opportunity = build_opportunity(
+                record,
+                observation_index=self.store.next_observation_index(board_round),
+            )
+            snapshot = snapshot_from_opportunity(
+                opportunity,
+                self.config,
+                source_content_sha256=record.content_sha256,
+            )
+        except SnapshotUnavailable:
+            return
+        except IncompleteOpportunityError:
+            self.store.increment("incomplete_opportunities")
+            return
+        decisions = build_decisions(snapshot, self.config)
+        self.store.insert_snapshot_and_decisions(snapshot, decisions)
+
+    def poll_once(self) -> int:
+        processed = 0
+        for name in sorted(glob.glob(self.config.source_glob)):
+            path = Path(name)
+            cursor = self.store.load_cursor(path)
+            if cursor is None:
+                resolved = str(path.resolve())
+                matches = [
+                    value
+                    for value in self.marker.source_identities
+                    if value.split("|", 1)[0] == resolved
+                ]
+                if len(matches) != 1:
+                    raise ValueError(
+                        f"Marker has no unique frozen cursor for {resolved}"
+                    )
+                _, inode, offset, line = matches[0].split("|")
+                stat = path.stat()
+                if stat.st_ino != int(inode) or stat.st_size < int(offset):
+                    self.store.increment("source_corruption")
+                    raise SourceChangedError("Frozen marker cursor no longer matches source")
+                cursor = SourceCursor(
+                    source_id=deterministic_id("collection-source", resolved),
+                    source_path=str(path),
+                    byte_offset=int(offset),
+                    line_number=int(line),
+                    source_size=stat.st_size,
+                    source_inode=stat.st_ino,
+                )
+            try:
+                batch = read_complete_lines(
+                    path,
+                    cursor,
+                    max_records=self.config.batch_size,
+                    seen_content_hashes=(
+                        self.store.source_hashes(cursor.source_id)
+                        if cursor is not None
+                        else set()
+                    ),
+                    start_at_end=False,
+                )
+            except SourceChangedError:
+                self.store.increment("source_corruption")
+                raise
+            self.store.increment("malformed_records", batch.malformed_records)
+            self.store.increment("duplicate_source_records", batch.duplicate_records)
+            for record in batch.records:
+                self.process_record(record)
+                processed += 1
+            self.store.save_cursor(batch.cursor)
+        return processed
+
+    def run(self) -> None:
+        self.install_signal_handlers()
+        self.begin_run()
+        try:
+            while not self.stop_requested.is_set():
+                with self.store.connection:
+                    processed = self.poll_once()
+                if not processed:
+                    self.stop_requested.wait(self.config.poll_interval_seconds)
+        finally:
+            with self.store.connection:
+                self.finish_run()
