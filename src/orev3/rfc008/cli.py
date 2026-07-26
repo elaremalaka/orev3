@@ -194,6 +194,7 @@ def command_burn_in(args: argparse.Namespace) -> None:
         authorization_token=args.authorization_token,
         release_approval_path=args.release_approval,
         repository_root=args.repository_root,
+        preserve_process_ids=tuple(args.preserve_pid),
     )
     _print(result)
     if not result["passed"]:
@@ -304,6 +305,16 @@ def parser() -> argparse.ArgumentParser:
         default="docs/research/rfc008/release_implementation_approval_v1.json",
     )
     burn_in.add_argument("--repository-root", default=".")
+    burn_in.add_argument(
+        "--preserve-pid",
+        action="append",
+        type=int,
+        default=[],
+        help=(
+            "Process PID whose command hash must remain unchanged; repeat for "
+            "each observer/collector process (required in operational mode)"
+        ),
+    )
     burn_in.set_defaults(func=command_burn_in)
 
     freeze = sub.add_parser("final-freeze")

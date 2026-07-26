@@ -719,6 +719,33 @@ def _repository_state(root: Path) -> tuple[str, str]:
     return commit, branch
 
 
+def _process_snapshot(process_ids: tuple[int, ...]) -> dict[str, str]:
+    snapshot: dict[str, str] = {}
+    for process_id in process_ids:
+        if process_id <= 0:
+            raise ValueError("Preserved process IDs must be positive")
+        command = subprocess.check_output(
+            ["ps", "-p", str(process_id), "-o", "command="],
+            text=True,
+        ).strip()
+        if not command:
+            raise RuntimeError(f"Required process is not running: {process_id}")
+        snapshot[str(process_id)] = hashlib.sha256(command.encode()).hexdigest()
+    return snapshot
+
+
+def _safety_inspection(experiment: RFC008Config) -> bool:
+    return not any(
+        (
+            experiment.allow_transaction_building,
+            experiment.allow_transaction_submission,
+            experiment.allow_signing,
+            experiment.allow_claims,
+            experiment.allow_wallet_access,
+        )
+    )
+
+
 def _production_artifacts_absent(root: Path) -> bool:
     paths = (
         root / "data/ledger/rfc008_marker_v1.json",
@@ -760,6 +787,7 @@ def run_resolver_burn_in(
         "docs/research/rfc008/release_implementation_approval_v1.json"
     ),
     repository_root: str | Path = ".",
+    preserve_process_ids: tuple[int, ...] = (),
     now: datetime | None = None,
 ) -> dict[str, object]:
     if mode not in {"fixture", "operational"}:
@@ -771,6 +799,10 @@ def run_resolver_burn_in(
             raise ValueError("Operational resolver burn-in requires at least 5 rounds")
         if control_round_id is not None:
             raise ValueError("Operational round selection is automatic and bounded")
+        if not preserve_process_ids:
+            raise ValueError(
+                "Operational burn-in requires preserved-process checks"
+            )
     ledger, output = _safe_burnin_paths(ledger_path, output_path)
     experiment = RFC008Config.from_path(experiment_config_path)
     resolver_config = ResolverConfig.from_path(resolver_config_path)
@@ -781,6 +813,11 @@ def run_resolver_burn_in(
         approval_path = root / approval_path
     release_hash = hashlib.sha256(approval_path.read_bytes()).hexdigest()
     repository_commit, repository_branch = _repository_state(root)
+    initial_processes = (
+        _process_snapshot(preserve_process_ids)
+        if mode == "operational"
+        else {}
+    )
 
     selected: tuple[int, ...] = ()
     source = "fixture-only; no operational rounds selected"
@@ -885,6 +922,19 @@ def run_resolver_burn_in(
     ledger_hash = hashlib.sha256(ledger.read_bytes()).hexdigest()
     rpc_counts = real_accounting.evidence()
     production_absent = _production_artifacts_absent(root)
+    final_processes = (
+        _process_snapshot(preserve_process_ids)
+        if mode == "operational"
+        else {}
+    )
+    processes_preserved = (
+        mode == "fixture"
+        or (
+            bool(initial_processes)
+            and initial_processes == final_processes
+        )
+    )
+    safety_passed = _safety_inspection(experiment)
     provider_independence = (
         mode == "operational"
         and len(resolver_config.provider_ids) == 2
@@ -912,6 +962,8 @@ def run_resolver_burn_in(
             quarantine.quarantine_test_passed,
             integrity == "ok",
             production_absent,
+            processes_preserved,
+            safety_passed,
         )
     )
     evidence = ResolverBurnInEvidence(
@@ -937,9 +989,10 @@ def run_resolver_burn_in(
         conflict=conflict,
         quarantine=quarantine,
         sqlite_integrity="ok" if integrity == "ok" else integrity,
-        safety_inspection_passed=True,
+        safety_inspection_passed=safety_passed,
         production_artifacts_absent=production_absent,
-        running_processes_preserved=True,
+        running_processes_preserved=processes_preserved,
+        preserved_process_command_sha256=initial_processes,
         primary_authoritative_capable=capability,
         fixture_only=mode == "fixture",
         ledger_sha256=ledger_hash,

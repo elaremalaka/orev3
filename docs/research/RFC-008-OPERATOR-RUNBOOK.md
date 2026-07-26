@@ -54,6 +54,9 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli resolver-burn-in \
   --sample-size 5 \
   --release-approval docs/research/rfc008/release_implementation_approval_v1.json \
   --repository-root . \
+  --preserve-pid 48404 \
+  --preserve-pid 48405 \
+  --preserve-pid 78317 \
   --authorization-token RFC008_OPERATIONAL_RESOLVER_BURN_IN_AUTHORIZED
 ```
 
@@ -63,6 +66,9 @@ both providers at finalized commitment and must pass owner, PDA, returned
 identity, decoded round, finalized-context, deployment-vector, accounting, and
 canonical-agreement checks. Fewer than five successes, duplicates, missing
 counts, incomplete provenance, or any provider disagreement fail closed.
+The three required process command hashes are captured before any provider
+request and checked again after the isolated exercises; a missing or changed
+observer/collector process fails the burn-in.
 
 The same isolated ledger also performs four separately reported controlled
 checks. Restart/retry persists a pending fixture attempt, closes and reopens the

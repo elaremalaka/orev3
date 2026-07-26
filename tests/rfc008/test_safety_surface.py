@@ -64,6 +64,7 @@ def test_incomplete_burn_in_exits_nonzero_after_reporting(monkeypatch) -> None:
         authorization_token="authorized-for-test",
         release_approval="release.json",
         repository_root=".",
+        preserve_pid=[],
     )
     with pytest.raises(SystemExit) as exc:
         command_burn_in(args)

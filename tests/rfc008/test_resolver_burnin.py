@@ -277,12 +277,17 @@ def test_synthetic_operational_five_round_evidence_and_rpc_counts(
     )
     monkeypatch.setenv("ORE_RECOVERY_PRIMARY_RPC_URL", "mock://primary")
     monkeypatch.setenv("ORE_RECOVERY_SECONDARY_RPC_URL", "mock://secondary")
+    monkeypatch.setattr(
+        "orev3.rfc008.burnin._process_snapshot",
+        lambda _pids: {"1": "a" * 64},
+    )
     result = run_resolver_burn_in(
         ledger_path=tmp_path / "operational.sqlite",
         output_path=tmp_path / "operational.json",
         experiment_config_path=CONFIG_PATH,
         resolver_config_path=RESOLVER_CONFIG_PATH,
         mode="operational",
+        preserve_process_ids=(1,),
         authorization_token="RFC008_OPERATIONAL_RESOLVER_BURN_IN_AUTHORIZED",
         now=datetime(2026, 7, 25, tzinfo=timezone.utc),
     )

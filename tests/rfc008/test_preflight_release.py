@@ -204,6 +204,11 @@ def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
         safety_inspection_passed=True,
         production_artifacts_absent=True,
         running_processes_preserved=True,
+        preserved_process_command_sha256={
+            "48404": "d" * 64,
+            "48405": "e" * 64,
+            "78317": "f" * 64,
+        },
         primary_authoritative_capable=True,
         fixture_only=False,
         ledger_sha256="b" * 64,

@@ -405,6 +405,7 @@ class ResolverBurnInEvidence(StrictModel):
     safety_inspection_passed: bool
     production_artifacts_absent: bool
     running_processes_preserved: bool
+    preserved_process_command_sha256: dict[str, str]
     primary_authoritative_capable: bool
     fixture_only: bool
     ledger_sha256: str
@@ -455,6 +456,7 @@ class ResolverBurnInEvidence(StrictModel):
                 self.safety_inspection_passed,
                 self.production_artifacts_absent,
                 self.running_processes_preserved,
+                bool(self.preserved_process_command_sha256),
             )
         )
         if self.primary_authoritative_capable != required:
