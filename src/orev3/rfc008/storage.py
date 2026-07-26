@@ -289,16 +289,6 @@ class RFC008Store:
         )}
 
     def next_observation_index(self, round_id: int) -> int:
-        row = self.connection.execute(
-            """
-            SELECT COUNT(*) FROM source_records sr
-            WHERE EXISTS (
-              SELECT 1 FROM experiment_rounds er
-              WHERE er.round_id=? AND sr.rowid>=1
-            )
-            """,
-            (round_id,),
-        ).fetchone()
         # The collector keeps a per-round counter in metadata for exact restart.
         key = f"observation_index:{round_id}"
         try:

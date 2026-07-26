@@ -16,7 +16,11 @@ from orev3.collection.opportunity_builder import (
 )
 from orev3.collection.outcome_linker import outcome_from_observer_record
 from orev3.collection.schemas import SourceCursor, TailRecord
-from orev3.collection.tailer import SourceChangedError, read_complete_lines
+from orev3.collection.tailer import (
+    SourceChangedError,
+    new_cursor,
+    read_complete_lines,
+)
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.decisions import (
     SnapshotUnavailable,
@@ -199,23 +203,41 @@ class RFC008Collector:
                     for value in self.marker.source_identities
                     if value.split("|", 1)[0] == resolved
                 ]
-                if len(matches) != 1:
-                    raise ValueError(
-                        f"Marker has no unique frozen cursor for {resolved}"
-                    )
-                _, inode, offset, line = matches[0].split("|")
                 stat = path.stat()
-                if stat.st_ino != int(inode) or stat.st_size < int(offset):
-                    self.store.increment("source_corruption")
-                    raise SourceChangedError("Frozen marker cursor no longer matches source")
-                cursor = SourceCursor(
-                    source_id=deterministic_id("collection-source", resolved),
-                    source_path=str(path),
-                    byte_offset=int(offset),
-                    line_number=int(line),
-                    source_size=stat.st_size,
-                    source_inode=stat.st_ino,
-                )
+                if len(matches) == 1:
+                    _, inode, offset, line = matches[0].split("|")
+                    if stat.st_ino != int(inode) or stat.st_size < int(offset):
+                        self.store.increment("source_corruption")
+                        raise SourceChangedError(
+                            "Frozen marker cursor no longer matches source"
+                        )
+                    cursor = SourceCursor(
+                        source_id=deterministic_id("collection-source", resolved),
+                        source_path=str(path),
+                        byte_offset=int(offset),
+                        line_number=int(line),
+                        source_size=stat.st_size,
+                        source_inode=stat.st_ino,
+                    )
+                elif not matches:
+                    created = getattr(stat, "st_birthtime", stat.st_ctime)
+                    if created < self.marker.created_at.timestamp():
+                        raise ValueError(
+                            f"Pre-marker source lacks a frozen cursor: {resolved}"
+                        )
+                    cursor = new_cursor(path, start_at_end=False)
+                    self.store.audit(
+                        "post_marker_source_discovered",
+                        {
+                            "source_path": resolved,
+                            "source_inode": stat.st_ino,
+                            "paper_only": True,
+                        },
+                    )
+                else:
+                    raise ValueError(
+                        f"Marker has duplicate frozen cursors for {resolved}"
+                    )
             try:
                 batch = read_complete_lines(
                     path,
