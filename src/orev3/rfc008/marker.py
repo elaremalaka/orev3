@@ -1,14 +1,22 @@
 from __future__ import annotations
 
+import glob
 import hashlib
 import json
 import os
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Callable
 
 from orev3.rfc008.config import RFC008Config
-from orev3.rfc008.schemas import ExperimentMarker
+from orev3.rfc008.migrations import migration_set_hash
+from orev3.rfc008.resolver_config import ResolverConfig
+from orev3.rfc008.schemas import (
+    ExperimentMarker,
+    ResolverBurnInEvidence,
+    RuntimeSourceBoundary,
+)
 from orev3.rfc008.storage import strict_json
 
 
@@ -19,7 +27,7 @@ def sha256_file(path: str | Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def repository_state(root: str | Path) -> tuple[str, str, bool]:
+def repository_state(root: str | Path) -> dict[str, object]:
     cwd = str(Path(root))
     commit = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=cwd, text=True
@@ -27,89 +35,308 @@ def repository_state(root: str | Path) -> tuple[str, str, bool]:
     branch = subprocess.check_output(
         ["git", "branch", "--show-current"], cwd=cwd, text=True
     ).strip()
-    status = subprocess.check_output(
+    tracked = subprocess.check_output(
         ["git", "status", "--porcelain", "--untracked-files=no"],
         cwd=cwd,
         text=True,
     )
-    return commit, branch, not bool(status.strip())
+    complete = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=all"],
+        cwd=cwd,
+        text=True,
+    )
+    try:
+        parent = subprocess.check_output(
+            ["git", "rev-parse", "HEAD^"], cwd=cwd, text=True
+        ).strip()
+    except subprocess.CalledProcessError:
+        parent = ""
+    return {
+        "commit": commit,
+        "parent": parent,
+        "branch": branch,
+        "tracked_clean": not bool(tracked.strip()),
+        "untracked_clean": not bool(complete.strip()),
+    }
+
+
+def _last_complete_record(path: Path) -> RuntimeSourceBoundary:
+    raw = path.read_bytes()
+    if not raw:
+        raise ValueError(f"Observer source is empty: {path}")
+    complete = raw if raw.endswith(b"\n") else raw[: raw.rfind(b"\n") + 1]
+    if not complete:
+        raise ValueError(f"Observer source has no complete records: {path}")
+    lines = complete.splitlines(keepends=True)
+    last = lines[-1]
+    payload = last.rstrip(b"\r\n")
+    value = json.loads(payload)
+    observed = value.get("observed_at_utc")
+    round_id = value.get("board", {}).get("round_id")
+    if observed is None or round_id is None:
+        raise ValueError("Latest source record lacks timestamp or round identity")
+    stat = path.stat()
+    return RuntimeSourceBoundary(
+        source_path=str(path.resolve()),
+        source_inode=stat.st_ino,
+        source_byte_offset=len(complete),
+        source_line_number=len(lines),
+        source_record_sha256=hashlib.sha256(payload).hexdigest(),
+        source_observed_at=observed,
+        round_id=int(round_id),
+    )
+
+
+def derive_runtime_source_boundary(
+    source_glob: str,
+) -> tuple[RuntimeSourceBoundary, tuple[str, ...]]:
+    boundaries = [
+        _last_complete_record(Path(name)) for name in sorted(glob.glob(source_glob))
+    ]
+    if not boundaries:
+        raise ValueError("No observer source files match RFC-008 configuration")
+    latest = max(
+        boundaries,
+        key=lambda boundary: (
+            boundary.source_observed_at,
+            boundary.source_path,
+        ),
+    )
+    identities = tuple(
+        "|".join(
+            (
+                boundary.source_path,
+                str(boundary.source_inode),
+                str(boundary.source_byte_offset),
+                str(boundary.source_line_number),
+            )
+        )
+        for boundary in boundaries
+    )
+    return latest, identities
+
+
+def _load_release_approval(path: str | Path) -> dict[str, object]:
+    value = json.loads(Path(path).read_text(encoding="utf-8"))
+    if value.get("artifact_type") != "rfc008_implementation_release_approval":
+        raise ValueError("Invalid RFC-008 release approval artifact")
+    return value
 
 
 def marker_preflight(
     *,
     config_path: str | Path,
+    resolver_config_path: str | Path,
+    burn_in_evidence_path: str | Path,
+    release_approval_path: str | Path,
     marker_path: str | Path,
+    ledger_path: str | Path,
     approval_manifest_path: str | Path,
     repository_root: str | Path,
     expected_branch: str,
+    now: datetime | None = None,
 ) -> dict[str, object]:
+    failures: list[dict[str, str]] = []
+
+    def check(name: str, condition: bool, reason: str) -> bool:
+        if not condition:
+            failures.append({"check": name, "reason": reason})
+        return condition
+
+    current = now or datetime.now(timezone.utc)
     config = RFC008Config.from_path(config_path)
+    resolver = ResolverConfig.from_path(resolver_config_path)
+    repository = repository_state(repository_root)
+    approval_hash = sha256_file(approval_manifest_path)
+    release = _load_release_approval(release_approval_path)
+    release_hash = sha256_file(release_approval_path)
+    burn_path = Path(burn_in_evidence_path)
+    burn: ResolverBurnInEvidence | None = None
+    if burn_path.exists():
+        burn = ResolverBurnInEvidence.model_validate_json(
+            burn_path.read_text(encoding="utf-8")
+        )
+    burn_sidecar = Path(str(burn_path) + ".sha256")
+    check(
+        "approval_manifest_matches",
+        approval_hash == config.approval_manifest_sha256,
+        "Frozen approval manifest SHA-256 mismatch",
+    )
+    check(
+        "configuration_fingerprint_approved",
+        release.get("configuration_fingerprint")
+        == config.configuration_fingerprint,
+        "Release approval does not bind the experiment configuration",
+    )
+    check(
+        "candidate_hash_approved",
+        release.get("candidate_configuration_sha256")
+        == config.candidate_configuration_sha256,
+        "Release approval does not bind the frozen candidate",
+    )
+    check(
+        "resolver_configuration_approved",
+        release.get("resolver_configuration_sha256") == resolver.fingerprint,
+        "Release approval does not bind resolver configuration",
+    )
+    check(
+        "migration_set_approved",
+        release.get("migration_set_sha256") == migration_set_hash(),
+        "Release approval does not bind the migration set",
+    )
+    check(
+        "branch_matches",
+        repository["branch"] == expected_branch,
+        "Repository branch differs from approved branch",
+    )
+    approved_implementation = str(
+        release.get("approved_implementation_commit", "")
+    )
+    check(
+        "head_approved",
+        repository["commit"] == approved_implementation
+        or repository["parent"] == approved_implementation,
+        "HEAD is not the approved implementation or its approval-only child",
+    )
+    check(
+        "tracked_worktree_clean",
+        bool(repository["tracked_clean"]),
+        "Tracked worktree is dirty",
+    )
+    check(
+        "untracked_worktree_clean",
+        bool(repository["untracked_clean"]),
+        "Untracked worktree is dirty",
+    )
     marker = Path(marker_path)
-    approval = Path(approval_manifest_path)
-    commit, branch, clean = repository_state(repository_root)
-    approval_hash = sha256_file(approval)
-    checks = {
-        "configuration_valid": True,
-        "approval_manifest_exists": approval.exists(),
-        "approval_manifest_matches": approval_hash
-        == config.approval_manifest_sha256,
-        "marker_path_available": not marker.exists(),
-        "marker_hash_path_available": not Path(str(marker) + ".sha256").exists(),
-        "branch_matches": branch == expected_branch,
-        "tracked_worktree_clean": clean,
-        "paper_only": True,
-        "rpc_recovery_disabled": not config.allow_rpc_outcome_recovery,
-        "no_live_actions_reachable": True,
-    }
+    ledger = Path(ledger_path)
+    artifacts_absent = not any(
+        (
+            marker.exists(),
+            Path(str(marker) + ".sha256").exists(),
+            ledger.exists(),
+            Path(str(ledger) + "-wal").exists(),
+            Path(str(ledger) + "-shm").exists(),
+            Path(str(ledger) + ".writer.lock").exists(),
+        )
+    )
+    check(
+        "production_artifacts_absent",
+        artifacts_absent,
+        "Unexpected RFC-008 production runtime artifact exists",
+    )
+    check("burn_in_exists", burn is not None, "Resolver burn-in evidence is absent")
+    sidecar_matches = False
+    if burn_path.exists() and burn_sidecar.exists():
+        sidecar_matches = (
+            burn_sidecar.read_text(encoding="utf-8").split()[0]
+            == sha256_file(burn_path)
+        )
+    check(
+        "burn_in_hash_matches",
+        sidecar_matches,
+        "Resolver burn-in checksum is absent or mismatched",
+    )
+    if burn is not None:
+        age = (current - burn.created_at).total_seconds()
+        check(
+            "burn_in_configuration_matches",
+            burn.resolver_configuration_sha256 == resolver.fingerprint
+            and burn.experiment_configuration_fingerprint
+            == config.configuration_fingerprint,
+            "Burn-in evidence configuration mismatch",
+        )
+        check(
+            "burn_in_recent",
+            0 <= age <= resolver.burn_in_maximum_age_seconds,
+            "Burn-in evidence is stale or future-dated",
+        )
+        passed = all(
+            (
+                burn.direct_finalization_passed,
+                burn.owner_identity_passed,
+                burn.round_identity_passed,
+                burn.restart_recovery_passed,
+                burn.retry_passed,
+                burn.deterministic_jitter_passed,
+                burn.provenance_passed,
+                burn.conflict_quarantine_passed,
+                burn.primary_authoritative_capable,
+                not burn.fixture_only,
+                burn.mode == "operational",
+            )
+        )
+        check(
+            "operational_burn_in_passed",
+            passed,
+            "A recent passing operational burn-in is required",
+        )
+    boundary: RuntimeSourceBoundary | None = None
+    identities: tuple[str, ...] = ()
+    try:
+        boundary, identities = derive_runtime_source_boundary(config.source_glob)
+    except Exception as exc:
+        failures.append(
+            {"check": "runtime_source_boundary", "reason": str(exc)}
+        )
     return {
-        "ready": all(checks.values()),
-        "checks": checks,
+        "ready": not failures,
+        "failures": failures,
         "experiment_id": config.experiment_id,
         "configuration_fingerprint": config.configuration_fingerprint,
-        "repository_commit": commit,
-        "branch": branch,
-        "marker_path": str(marker),
+        "resolver_compatible": burn is not None
+        and burn.primary_authoritative_capable,
+        "burn_in_evidence_sha256": (
+            sha256_file(burn_path) if burn_path.exists() else None
+        ),
+        "release_approval_sha256": release_hash,
+        "repository": repository,
+        "source_cursor_boundary": (
+            boundary.model_dump(mode="json") if boundary else None
+        ),
+        "source_identities": list(identities),
+        "production_artifacts_absent": artifacts_absent,
         "marker_created": False,
     }
 
 
-def create_marker(
+def _build_marker(
     *,
-    config_path: str | Path,
-    marker_path: str | Path,
+    preflight: dict[str, object],
+    config: RFC008Config,
+    resolver: ResolverConfig,
     approval_manifest_path: str | Path,
-    repository_root: str | Path,
-    expected_branch: str,
-    latest_preholdout_round_id: int,
-    source_identities: tuple[str, ...],
-    authorization_token: str,
-    created_at: datetime | None = None,
+    repository_commit: str,
+    branch: str,
+    created_at: datetime | None,
 ) -> ExperimentMarker:
-    if authorization_token != MARKER_AUTHORIZATION:
-        raise PermissionError("Explicit RFC-008 marker authorization is required")
-    preflight = marker_preflight(
-        config_path=config_path,
-        marker_path=marker_path,
-        approval_manifest_path=approval_manifest_path,
-        repository_root=repository_root,
-        expected_branch=expected_branch,
+    boundary = RuntimeSourceBoundary.model_validate(
+        preflight["source_cursor_boundary"]
     )
-    if not preflight["ready"]:
-        raise ValueError(f"Marker preflight failed: {preflight['checks']}")
-    config = RFC008Config.from_path(config_path)
-    value = ExperimentMarker(
+    return ExperimentMarker(
         experiment_id=config.experiment_id,
         protocol_version=config.protocol_version,
         created_at=created_at or datetime.now(timezone.utc),
-        repository_commit=str(preflight["repository_commit"]),
-        branch=str(preflight["branch"]),
+        repository_commit=repository_commit,
+        branch=branch,
         approval_manifest_path=str(approval_manifest_path),
         approval_manifest_sha256=config.approval_manifest_sha256,
         candidate_configuration_sha256=config.candidate_configuration_sha256,
         configuration_fingerprint=config.configuration_fingerprint,
-        latest_preholdout_round_id=latest_preholdout_round_id,
-        first_eligible_round_id=latest_preholdout_round_id + 1,
-        source_identities=source_identities,
+        latest_preholdout_round_id=boundary.round_id,
+        first_eligible_round_id=boundary.round_id + 1,
+        source_identities=tuple(preflight["source_identities"]),
+        runtime_source_path=boundary.source_path,
+        runtime_source_inode=boundary.source_inode,
+        runtime_source_byte_offset=boundary.source_byte_offset,
+        runtime_source_line_number=boundary.source_line_number,
+        runtime_source_record_sha256=boundary.source_record_sha256,
+        runtime_source_observed_at=boundary.source_observed_at,
+        resolver_configuration_sha256=resolver.fingerprint,
+        resolver_burn_in_evidence_sha256=str(
+            preflight["burn_in_evidence_sha256"]
+        ),
+        release_approval_sha256=str(preflight["release_approval_sha256"]),
         start_conditions={
             "minimum_analyzable_rounds": 600,
             "maximum_started_rounds": 632,
@@ -118,16 +345,110 @@ def create_marker(
             "paper_only": True,
         },
     )
+
+
+def _atomic_marker_pair(
+    marker: ExperimentMarker,
+    marker_path: str | Path,
+    *,
+    failure_injector: Callable[[str], None] | None = None,
+) -> str:
     target = Path(marker_path)
+    sidecar = Path(str(target) + ".sha256")
+    if target.exists() or sidecar.exists():
+        raise FileExistsError("Marker or checksum destination already exists")
     target.parent.mkdir(parents=True, exist_ok=True)
-    payload = (strict_json(value) + "\n").encode()
-    fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o444)
+    payload = (strict_json(marker) + "\n").encode()
+    digest = hashlib.sha256(payload).hexdigest()
+    sidecar_payload = f"{digest}  {target.name}\n".encode()
+    marker_temp = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+    sidecar_temp = sidecar.with_name(f".{sidecar.name}.{os.getpid()}.tmp")
+    sidecar_visible = False
     try:
-        os.write(fd, payload)
-        os.fsync(fd)
+        for path, content in (
+            (marker_temp, payload),
+            (sidecar_temp, sidecar_payload),
+        ):
+            with path.open("xb") as handle:
+                handle.write(content)
+                handle.flush()
+                os.fsync(handle.fileno())
+        ExperimentMarker.model_validate_json(marker_temp.read_text())
+        if failure_injector:
+            failure_injector("before_publish")
+        os.link(sidecar_temp, sidecar)
+        sidecar_visible = True
+        if failure_injector:
+            failure_injector("between_sidecar_and_marker")
+        os.link(marker_temp, target)
+        directory_fd = os.open(target.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    except Exception:
+        if target.exists():
+            target.unlink()
+        if sidecar_visible and sidecar.exists():
+            sidecar.unlink()
+        raise
     finally:
-        os.close(fd)
-    return value
+        marker_temp.unlink(missing_ok=True)
+        sidecar_temp.unlink(missing_ok=True)
+    return digest
+
+
+def create_marker_pair(
+    *,
+    config_path: str | Path,
+    resolver_config_path: str | Path,
+    burn_in_evidence_path: str | Path,
+    release_approval_path: str | Path,
+    marker_path: str | Path,
+    ledger_path: str | Path,
+    approval_manifest_path: str | Path,
+    repository_root: str | Path,
+    expected_branch: str,
+    authorization_token: str,
+    created_at: datetime | None = None,
+    failure_injector: Callable[[str], None] | None = None,
+) -> tuple[ExperimentMarker, str]:
+    if authorization_token != MARKER_AUTHORIZATION:
+        raise PermissionError("Explicit RFC-008 marker authorization is required")
+    preflight = marker_preflight(
+        config_path=config_path,
+        resolver_config_path=resolver_config_path,
+        burn_in_evidence_path=burn_in_evidence_path,
+        release_approval_path=release_approval_path,
+        marker_path=marker_path,
+        ledger_path=ledger_path,
+        approval_manifest_path=approval_manifest_path,
+        repository_root=repository_root,
+        expected_branch=expected_branch,
+        now=created_at,
+    )
+    if not preflight["ready"]:
+        raise ValueError(f"Marker preflight failed: {preflight['failures']}")
+    # Re-derive immediately before publication to reject cursor races.
+    config = RFC008Config.from_path(config_path)
+    boundary, _ = derive_runtime_source_boundary(config.source_glob)
+    if boundary.model_dump(mode="json") != preflight["source_cursor_boundary"]:
+        raise ValueError("Runtime source cursor changed after preflight")
+    repository = preflight["repository"]
+    assert isinstance(repository, dict)
+    marker = _build_marker(
+        preflight=preflight,
+        config=config,
+        resolver=ResolverConfig.from_path(resolver_config_path),
+        approval_manifest_path=approval_manifest_path,
+        repository_commit=str(repository["commit"]),
+        branch=str(repository["branch"]),
+        created_at=created_at,
+    )
+    digest = _atomic_marker_pair(
+        marker, marker_path, failure_injector=failure_injector
+    )
+    return marker, digest
 
 
 def verify_marker(
@@ -148,4 +469,6 @@ def verify_marker(
         raise ValueError("RFC-008 marker approval mismatch")
     if marker.collection_authorized:
         raise ValueError("Marker must not embed collection authorization")
+    if marker.first_eligible_round_id != marker.latest_preholdout_round_id + 1:
+        raise ValueError("RFC-008 marker boundary is inconsistent")
     return marker
