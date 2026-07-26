@@ -1,0 +1,62 @@
+{
+  "artifact_type": "rfc008_frozen_candidate_specification",
+  "schema_version": 1,
+  "status": "proposed_for_human_approval_not_implemented",
+  "candidate_configuration": {
+    "strategy_name": "highest_reward_top4_v1",
+    "strategy_version": "1.0.0",
+    "decision_trigger": {
+      "canonical_snapshot": "first_complete_25_square_observation_at_or_below_threshold",
+      "seconds_remaining_lte": 30.0,
+      "slots_remaining_lte": 75,
+      "slot_duration_seconds": 0.4,
+      "later_snapshot_substitution": false
+    },
+    "feature_inputs": [
+      "reward_raw"
+    ],
+    "ranking_logic": "sort all 25 square indices by reward_raw descending, then square_index ascending",
+    "tie_breaking": "ascending_square_index",
+    "square_count": 4,
+    "allocation_rule": "equal_integer_lamports_in_ranking_order",
+    "deployment_total_lamports": 50000,
+    "allocation_by_rank_lamports": [
+      12500,
+      12500,
+      12500,
+      12500
+    ],
+    "abstention_behavior": "abstain_for_the_round_and_record_an_explicit_exclusion",
+    "missing_data_behavior": {
+      "no_timely_snapshot": "abstain",
+      "not_exactly_25_unique_squares": "abstain",
+      "missing_non_integer_negative_or_non_finite_reward_raw": "abstain",
+      "round_or_observation_identity_conflict": "abstain",
+      "partial_square_selection": false
+    },
+    "deterministic_seed": null,
+    "outcome_inputs_prohibited": true,
+    "future_inputs_prohibited": true,
+    "live_action_capability": false
+  },
+  "candidate_configuration_sha256": "e60722e845d6364c41d28ebc7d1641f8c8726766f87bdb838f3822decf50a372",
+  "candidate_configuration_hash_method": "sha256_of_utf8_json_with_sorted_keys_and_no_insignificant_whitespace",
+  "training_boundary": {
+    "maximum_eligible_round_id": 342570,
+    "maximum_eligible_observation_time_utc": "2026-07-23T15:48:13.823493Z",
+    "latest_finalized_outcome_evidence_retrieval_utc": "2026-07-24T01:19:48.011670Z",
+    "repository_starting_commit": "1181c32c9296c572697f5bb0c285d2566a2378e7",
+    "eligible_round_range": [
+      342132,
+      342570
+    ],
+    "eligible_independent_round_count": 439,
+    "rfc007_and_rfc008_data_eligible": false
+  },
+  "implementation_reference": {
+    "authoritative_preimplementation_reference": "docs/research/rfc008/rfc008_candidate_v1.json",
+    "planned_strategy_id": "highest_reward_top4_v1",
+    "planned_entry_point": "orev3.collection.paper_strategy.ranking_for",
+    "implementation_status": "not_implemented"
+  }
+}

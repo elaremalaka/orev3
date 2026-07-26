@@ -2,7 +2,29 @@
 
 Status: **Design only; implementation and collection not authorized**
 
-## 1. Current-system findings
+## 1. Frozen proposed design inputs
+
+Implementation, if separately authorized, must consume the approval artifacts
+without reinterpretation:
+
+- candidate: `highest_reward_top4_v1` version `1.0.0`;
+- candidate configuration SHA-256:
+  `e60722e845d6364c41d28ebc7d1641f8c8726766f87bdb838f3822decf50a372`;
+- trigger: first complete 25-square snapshot at or below 30.0 seconds
+  (`slots_remaining <= 75`);
+- sizing: four squares, equal allocation, 50,000 lamports;
+- comparators: frozen random top-four, least-crowded/RFC-007 alias, and
+  no-deploy;
+- minimum: 600 independent primary-analyzable rounds;
+- caps: 632 started rounds or 14 calendar days; and
+- primary outcome provenance: directly and durably observed finalized
+  outcomes only.
+
+The candidate's ranking is descending `reward_raw`, then ascending square
+index. Missing or invalid inputs cause explicit round abstention; no partial
+selection or later snapshot substitution is allowed.
+
+## 2. Current-system findings
 
 The running observer reads the current board, treasury, and current round
 account at confirmed commitment and appends one JSONL snapshot. It emits a
@@ -25,7 +47,7 @@ finalized resolution. RFC-007 therefore required post-hoc recovery for 13 of
 No change to the running observer PID `48404`, caffeinate PID `48405`, or
 collector PID `78317` is required or permitted for RFC-008 design.
 
-## 2. Smallest implementation sequence
+## 3. Smallest implementation sequence
 
 ### Phase 1 — Protocol types and marker
 
@@ -43,6 +65,11 @@ Add an RFC-008 configuration and immutable marker containing:
 
 Validation must fail closed on any hash or configuration drift.
 
+The marker must include the approval-manifest hash, candidate configuration
+hash, random definition and seed material, 600/632/14-day stopping rule, and
+the exact pre-holdout boundary. It may be created only after every approval
+checklist item is resolved.
+
 ### Phase 2 — One-decision-per-round strategy matrix
 
 Add a round decision builder that:
@@ -52,6 +79,13 @@ Add a round decision builder that:
 - creates deterministic IDs keyed by experiment, round, and arm;
 - prevents a second decision snapshot for the round; and
 - records excluded rounds explicitly.
+
+The candidate arm must sort all 25 squares by `reward_raw` descending and
+square index ascending. The random arm must hash the literal material
+`rfc008-random-top4-v1-seed-20260725:round_id:square_index` and order digests
+bytewise ascending, then square index. Alias tests must prove that
+`existing_least_crowded`, `least_miner_count`, and `lowest_miner_share`
+produce the same ordering.
 
 Do not retrofit this into the running RFC-007 ledger.
 
@@ -108,7 +142,7 @@ The command must verify the marker, source hashes, sample count, outcome
 durability, strategy completeness, missingness, and provenance before running
 the locked tests in RFC-008.
 
-## 3. Proposed schema additions
+## 4. Proposed schema additions
 
 Use a new collection schema version and new versioned database. Proposed
 tables:
@@ -141,7 +175,7 @@ Uniqueness requirements:
 Migrations must be additive, idempotent, rollback-tested, and must never target
 the live RFC-007 ledger.
 
-## 4. Required tests
+## 5. Required tests
 
 1. Exact one-decision snapshot per round.
 2. Identical input snapshot across all strategy arms.
@@ -166,8 +200,16 @@ the live RFC-007 ledger.
 21. Strict JSON and non-finite rejection.
 22. No signer, submission, claim, or live-action reachability.
 23. Observer and RFC-007 process noninterference.
+24. Candidate reward ordering and ascending-index tie break.
+25. Candidate abstention on missing, negative, non-integer, or non-finite
+    reward input.
+26. All 25 squares are ranked before the first four are selected.
+27. Frozen candidate configuration hash and approval-manifest hash.
+28. Exact 600 analyzable, 632 started, and 14-day stopping boundaries.
+29. Recovered outcomes never increment the primary-analyzable count.
+30. Decision-table classification is mutually exclusive and exhaustive.
 
-## 5. Pre-collection checkpoint
+## 6. Pre-collection checkpoint
 
 Before any RFC-008 collection is authorized:
 
@@ -175,8 +217,8 @@ Before any RFC-008 collection is authorized:
 2. commit implementation and tests;
 3. run the complete test suite;
 4. complete a fixture and restart burn-in;
-5. calculate paired power using pre-holdout data;
-6. freeze candidate and configuration artifacts;
+5. independently reproduce the committed paired power calculation;
+6. verify the frozen candidate and configuration artifacts;
 7. produce and hash the immutable marker;
 8. confirm new output paths and writer lease;
 9. confirm the existing observer and collector remain untouched; and

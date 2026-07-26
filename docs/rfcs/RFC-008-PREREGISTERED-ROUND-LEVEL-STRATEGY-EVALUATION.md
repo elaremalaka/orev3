@@ -1,6 +1,7 @@
 # RFC-008 — Preregistered Round-Level Strategy Evaluation
 
-Status: **Draft for human approval; collection not authorized**
+Status: **Final proposed approval version; implementation and collection not
+authorized**
 
 ## 1. Purpose
 
@@ -31,9 +32,17 @@ snapshots may be retained for engineering diagnostics but are not additional
 experimental units.
 
 The canonical decision snapshot is the first complete 25-square observation
-at or below 30.0 seconds remaining. If no such snapshot exists before
-finalization, the round is ineligible and is recorded with an exclusion
-reason. No later snapshot may be substituted after the outcome is known.
+at or below 30.0 seconds remaining. This is exactly
+`slots_remaining <= 75` under the repository's fixed 0.4-second slot
+conversion. If no such snapshot exists before finalization, the round is
+ineligible and is recorded with an exclusion reason. No later snapshot may be
+substituted after the outcome is known.
+
+The pre-holdout audit found a complete qualifying snapshot in all 439 eligible
+historical rounds. The selected snapshots contained exactly 25 unique squares
+and ranged from 15.2 to 30.0 seconds remaining. `miner_count`,
+`deployed_lamports`, and `reward_raw` were available to every comparison arm.
+Thirty seconds is therefore retained as the latest common reliable trigger.
 
 ## 3. Locked strategy arms
 
@@ -42,10 +51,10 @@ lamports with equal allocation.
 
 | Arm | Definition | Role |
 |---|---|---|
-| `random_top4_v1` | Four squares selected by a deterministic SHA-256 seed derived from the preregistration hash and round ID | Primary baseline |
+| `random_top4_v1` | Rank each square by SHA-256 of `rfc008-random-top4-v1-seed-20260725:round_id:square_index`, bytewise ascending, then square index | Primary baseline |
 | `least_crowded_v1` | Ascending miner count, then ascending square index | Deterministic baseline |
 | `rfc007_frozen_reference_v1` | Exact RFC-007 `existing_least_crowded` v1.0.0 configuration | Historical reference |
-| `candidate_v1` | One serialized strategy selected and frozen using only pre-holdout data | Candidate |
+| `highest_reward_top4_v1` | Descending `reward_raw`, then ascending square index | Candidate |
 | `no_deploy_v1` | No squares, zero intended deployment, zero paper fees | Economic control |
 
 The current implementation maps `existing_least_crowded`,
@@ -57,28 +66,45 @@ independent confirmations.
 
 ## 4. Candidate selection and leakage boundary
 
-The candidate may be selected only from data whose finalized rounds precede
-the RFC-008 holdout marker.
+The immutable candidate-selection boundary is:
 
-Before the marker is frozen, the following must be committed:
+- rounds `342132` through `342570`, inclusive;
+- latest eligible observation
+  `2026-07-23T15:48:13.823493Z`;
+- latest finalized-outcome evidence retrieval
+  `2026-07-24T01:19:48.011670Z`;
+- 439 independent rounds; and
+- repository starting commit
+  `1181c32c9296c572697f5bb0c285d2566a2378e7`; and
+- content hashes listed in
+  `docs/research/rfc008/preholdout_evidence_v1.json`.
 
-1. candidate implementation and version;
-2. serialized artifact, if applicable;
-3. exact feature and input schema;
-4. candidate-training round IDs and hashes;
-5. candidate-selection procedure and candidate universe;
-6. deterministic inference test vectors;
-7. all strategy and accounting configuration hashes;
-8. this RFC and its final approval amendment; and
-9. the paired power calculation.
+RFC-007 data were not used to score or tune the replacement candidate.
+RFC-007 establishes only that its least-crowded arm is a retired historical
+comparator. All RFC-008 holdout observations are strictly prohibited from
+selection or tuning.
 
-RFC-007 outcomes may be used as historical training or design data only if
-declared before candidate selection. If they are used, RFC-007 cannot be
-reported as candidate validation.
+The predefined selection rule collapses aliases; excludes controls, the
+retired arm, unavailable live model inference, and strategies requiring
+holdout tuning; requires deterministic live-available inputs, documented
+configuration, and at least 300 independent pre-boundary rounds; then ranks
+eligible candidates by reconstructed after-fee ROI, with round hit rate,
+stability, coverage, and reproducibility as secondary checks.
 
-No RFC-008 holdout observation, decision, outcome, or interim aggregate may
-alter the candidate, baselines, sizing, timing rule, exclusions, hypotheses,
-or stopping rule.
+The distinct eligible candidates were `highest_reward_top4_v1` and
+`least_deployed_top4_v1`. `highest_reward_top4_v1` was selected. Its complete
+specification is
+`docs/research/rfc008/rfc008_candidate_v1.json`, with configuration SHA-256
+`e60722e845d6364c41d28ebc7d1641f8c8726766f87bdb838f3822decf50a372`.
+
+This selection does not constitute positive performance evidence. In the
+locked historical scenario its after-fee ROI was -19.64%, and its paired hit
+advantage over random was only +0.68 percentage points.
+
+Before the marker is frozen, the implementation, deterministic test vectors,
+configuration hashes, this approved RFC, and the paired power calculation
+must be committed. No RFC-008 holdout observation, decision, outcome, or
+interim aggregate may alter any frozen choice.
 
 ## 5. Holdout boundary and sample
 
@@ -100,49 +126,51 @@ The marker must include:
 - sample size and stopping rule; and
 - a deterministic preregistration hash.
 
-The minimum analyzable holdout is **400 consecutive eligible, resolved,
+The minimum analyzable holdout is **600 consecutive eligible, resolved,
 independent rounds**.
 
 Collection stops for analysis at the first of:
 
-1. 400 analyzable rounds;
-2. 450 started rounds;
+1. 600 analyzable rounds;
+2. 632 started rounds;
 3. 14 elapsed calendar days; or
 4. a safety, provenance, marker, source-integrity, or configuration failure.
 
 There is no performance-based early stopping and no interim efficacy analysis.
-If fewer than 400 analyzable rounds are available at a terminal boundary, the
+If fewer than 600 analyzable rounds are available at a terminal boundary, the
 result is inconclusive or operationally failed as specified in Section 14.
 
 ## 6. Power and precision
 
-The planning benchmark is a 16% hit probability for four uniformly random
-squares.
+The pre-holdout paired table for `highest_reward_top4_v1` versus
+`random_top4_v1` contains:
 
-Using a conservative one-sample normal approximation, one-sided alpha 0.025:
+- 58 candidate-only hits;
+- 55 random-only hits;
+- 17 joint hits;
+- 309 joint misses; and
+- 113 discordant rounds out of 439, or 25.74%.
 
-- about 317 independent rounds are required for 80% power to distinguish 22%
-  from 16%;
-- 400 rounds provide approximately 88% power under that assumption; and
-- at 16%, 400 rounds provide an approximate 95% half-width of 3.6 percentage
-  points.
+At that frozen discordance rate, exact one-sided McNemar alpha 0.025 and a
++6-percentage-point alternative, 400 rounds provide 62.56% test power. The
+first integer sample size reaching 80% is 586 rounds. The final minimum is
+therefore 600 analyzable rounds, providing 80.96% test power.
 
-These calculations treat rounds as independent and do not treat within-round
-snapshots as new observations. They are planning approximations, not evidence
-from the RFC-008 holdout.
+The separate observed-effect gate of at least +6 points remains in force.
+When the true effect is exactly at the gate, the probability that a noisy
+point estimate also clears the gate is approximately one half; this is
+intentional and is not a reason to weaken the minimum relevant effect.
 
-Because the primary comparison is paired and the discordance rate is not yet
-frozen, the final preregistration amendment must calculate McNemar power using
-only pre-holdout/training rounds. If that calculation requires more than 400
-rounds, the larger number must be approved and frozen before the marker.
-Sample size may not be reduced after holdout collection begins.
+The 632-started-round cap is `ceil(600 / 0.95)`. Sample size may not be
+reduced after holdout collection begins. Repeated snapshots are not
+independent units.
 
 ## 7. Primary hypothesis and metric
 
 Primary metric:
 
 `paired round-level top-four hit-rate difference =
-candidate_v1 hit - random_top4_v1 hit`
+highest_reward_top4_v1 hit - random_top4_v1 hit`
 
 Primary hypothesis:
 
@@ -196,10 +224,15 @@ The locked paper assumptions are:
 - deploy fee: 5,000 lamports;
 - claim fee: 5,000 lamports only after positive reconstructed SOL or
   Motherlode return;
-- priority fee: zero unless changed in the final pre-marker amendment;
+- priority fee: zero;
 - failed-transaction cost: zero in paper mode;
 - no-deploy control: zero deployment, return, and fees; and
 - deployment is treated as cost while total winnings is the gross pool.
+
+`no_deploy_v1` is the confirmatory economic reference and paired economic
+comparison arm. It is not a predictive comparator and contributes no hit-rate
+observation. Its zero return is a protocol definition, not an estimate of
+wallet economics.
 
 Price-taking calculations do not model deployment impact and are classified
 `reconstructed_paper_not_wallet_realized`.
@@ -260,20 +293,31 @@ No round transition may silently remove a pending round.
 
 ## 12. Missing, conflict, and quarantine policy
 
+- A round is **primary-analyzable** only when it has the timely canonical
+  snapshot, deterministic decisions for every required arm, a directly and
+  durably observed finalized outcome, validated round/PDA/owner/finality
+  provenance, and complete fields for the locked primary and economic tests.
 - A round without a directly observed durable final outcome remains pending.
 - Retry uses bounded exponential backoff with jitter derived from the round ID,
   capped at five minutes.
 - A round still unresolved 24 hours after transition is quarantined.
-- Post-hoc dual-provider recovery may be retained as sensitivity evidence but
-  is not part of the primary directly observed outcome analysis.
+- A quarantined round is **recoverable** only when the frozen recovery protocol
+  can obtain deterministic, agreeing, authoritative finalized evidence with a
+  complete provenance record. Post-hoc recovery may be retained as sensitivity
+  evidence but is never primary-analyzable.
 - Provider, owner, round ID, winner, or canonical field disagreement places the
   round in `conflicted` and pauses analysis readiness.
+- A round is **excluded** only for a reason determinable without its outcome,
+  such as no timely complete snapshot or invalid contemporaneous decision
+  inputs. Exclusion reasons are append-only and exclusions never count as
+  analyzable replacements after the outcome is known.
 - Malformed or non-finite evidence is rejected.
-- A quarantined or conflicted round does not count toward the 400 analyzable
+- A quarantined or conflicted round does not count toward the 600 analyzable
   rounds and is never silently dropped; the next eligible round may replace it
   under the fixed stopping rule.
 - More than 5% quarantined, missing, conflicted, or otherwise unanalyzable
-  started rounds is an operational failure.
+  started rounds is an operational failure. The denominator is every started
+  post-marker round.
 - Any marker, strategy, configuration, cursor, source-integrity, or provenance
   failure stops collection and requires human review.
 
@@ -306,9 +350,9 @@ larger than the number of independent rounds.
 
 | Disposition | Exact criteria |
 |---|---|
-| **Success** | At least 400 analyzable rounds; primary McNemar one-sided `p < 0.025`; paired hit-rate difference point estimate at least `+0.06`; lower 95% paired bootstrap bound greater than `0`; candidate reconstructed ROI after fees greater than `0`; lower 95% round-bootstrap ROI bound greater than `0`; no safety failure; no configuration drift; and missing/conflicted/quarantined rate at most 5%. |
+| **Success** | At least 600 analyzable rounds; primary McNemar one-sided `p < 0.025`; paired hit-rate difference point estimate at least `+0.06`; lower 95% paired bootstrap bound greater than `0`; candidate reconstructed ROI after fees greater than `0`; lower 95% round-bootstrap ROI bound greater than `0`; one-sided paired economic randomization `p < 0.025` versus no-deploy; no safety failure; no configuration drift; and missing/conflicted/quarantined rate at most 5%. |
 | **Failure** | Upper 95% paired hit-rate-difference bound is at most `0`, or upper 95% ROI-after-fees bound is at most `0`, or any live-action/safety boundary is violated, or missing/conflicted/quarantined rate exceeds 5%. |
-| **Inconclusive** | Terminal stopping boundary is reached without meeting all success criteria and without meeting a failure criterion; fewer than 400 analyzable rounds; a positive but smaller-than-six-point hit advantage; or incomplete realized accounting. |
+| **Inconclusive** | Terminal stopping boundary is reached without meeting all success criteria and without meeting a failure criterion; fewer than 600 analyzable rounds; a positive but smaller-than-six-point hit advantage; predictive and economic gates disagree; or locked evidence is unavailable. |
 | **Eligible for controlled-live design review** | Paper **Success**, plus separately collected realized accounting completeness of at least 95%, directly observed fees and wallet returns, positive realized ROI with lower 95% bound greater than `0`, and approval of a separate capital-limit, kill-switch, and transaction-safety RFC. |
 
 Success does not itself authorize live deployment.
@@ -363,18 +407,22 @@ this RFC alone.
 
 ## 18. Human approvals required before implementation or collection
 
-1. Candidate strategy universe and deterministic selection rule.
-2. Candidate artifact and training-round boundary.
-3. The 30-second decision snapshot threshold.
-4. Whether 400 rounds remains sufficient after paired McNemar power is
-   calculated from pre-holdout data.
-5. Maximum 450 started rounds and 14-day calendar cap.
-6. The six-percentage-point minimum relevant hit improvement.
-7. Alpha allocation of 0.025 predictive and 0.025 economic.
-8. Whether recovered outcomes are excluded from primary analysis as specified.
-9. Fee assumptions for paper analysis.
-10. Whether any realized participant accounting phase will be proposed under a
-    separate live-safety RFC.
+The ten final proposed decisions, rationale, consequences, and blank
+approve/reject fields are in
+`docs/research/RFC-008-HUMAN-APPROVAL-CHECKLIST.md`. They cover:
 
-Until these choices are approved and committed, no RFC-008 marker or
-collection may be created.
+1. candidate and selection rule;
+2. candidate artifact and immutable training boundary;
+3. the 30-second decision trigger;
+4. 600 minimum analyzable rounds;
+5. 632 started rounds and 14-day cap;
+6. predictive alpha, confidence, and +6-point effect gates;
+7. the economic gate;
+8. primary outcome provenance and 5% missingness limit;
+9. paper fee and accounting assumptions; and
+10. the separate authorization boundary for realized accounting and live
+    action.
+
+Every item remains subject to explicit human approval. Until the checklist is
+approved and a separately authorized implementation is completed, no
+RFC-008 marker or collection may be created.

@@ -1,0 +1,214 @@
+{
+  "artifact_type": "rfc008_preholdout_candidate_selection_evidence",
+  "schema_version": 1,
+  "method_version": "rfc008-preholdout-screen-v1",
+  "training_boundary": {
+    "round_id_min": 342132,
+    "round_id_max": 342570,
+    "first_observation_utc": "2026-07-23T06:18:06.489411Z",
+    "last_observation_utc": "2026-07-23T15:48:13.823493Z",
+    "latest_finalized_outcome_evidence_retrieval_utc": "2026-07-24T01:19:48.011670Z",
+    "repository_starting_commit": "1181c32c9296c572697f5bb0c285d2566a2378e7",
+    "round_count": 439,
+    "rfc007_rounds_used": false,
+    "rfc008_holdout_used": false
+  },
+  "inputs": [
+    {
+      "path": "data/research/observation_dataset_v1.csv",
+      "sha256": "4050084e141c1e6c5f1f415b39c4c2ee39f1037eee57379dabf44945c943c92c"
+    },
+    {
+      "path": "data/derived/round_lifecycles_v1.jsonl",
+      "sha256": "435a73c91b5c525ffc3a339dcb128d2a288b93eb47f1a253bf919d2853f25b02"
+    },
+    {
+      "path": "data/research/economic_simulation_results_v1.json",
+      "sha256": "1191b090ce47904628c3036b24b2936af23a0dcafd84a8ba98a2f4139c7ca780"
+    },
+    {
+      "path": "data/research/economic_strategy_definitions_v1.json",
+      "sha256": "c76de846dcc786c9b57aec6fa25a019ba5df3fd9ce0ccbf4f960d5ae7f4e988c"
+    },
+    {
+      "path": "data/research/economic_assumptions_v1.json",
+      "sha256": "8285041b3d5b6929c2821e2b63f8be995e8f3a3703fcd5d7c165d4d89784381b"
+    },
+    {
+      "path": "data/research/baseline_predictions_v1.csv",
+      "sha256": "51b6964580fc65f6c3f108d808927551f969af841953984e97f3094af4075302"
+    }
+  ],
+  "snapshot_rule": {
+    "seconds_remaining_lte": 30.0,
+    "slots_remaining_lte": 75,
+    "slot_duration_seconds": 0.4,
+    "rounds_with_complete_snapshot": 439,
+    "rounds_without_complete_snapshot": 0,
+    "selected_snapshot_seconds_remaining_min": 15.2,
+    "selected_snapshot_seconds_remaining_max": 30.0,
+    "all_selected_snapshots_have_25_unique_squares": true
+  },
+  "random_baseline": {
+    "strategy": "random_top4_v1",
+    "seed_material_prefix": "rfc008-random-top4-v1-seed-20260725",
+    "per_square_material": "prefix:round_id:square_index",
+    "ordering": "sha256_digest_bytes_ascending_then_square_index_ascending",
+    "selected_square_count": 4
+  },
+  "economic_scenario": {
+    "square_count": 4,
+    "deployment_total_lamports": 50000,
+    "allocation_rule": "equal",
+    "deploy_fee_lamports": 5000,
+    "claim_fee_lamports_after_positive_return": 5000,
+    "priority_fee_lamports": 0,
+    "failed_transaction_cost_lamports": 0,
+    "roi_denominator": "total_intended_deployment_lamports_excluding_fees",
+    "gross_return_formula": "winner_allocation_times_total_winnings_integer_divided_by_final_winning_square_deployment",
+    "accounting_mode": "historical_price_taking_reconstructed_not_wallet_realized"
+  },
+  "overall_round_level_results": [
+    {
+      "strategy": "highest_reward_top4_v1",
+      "rounds": 439,
+      "hits": 75,
+      "hit_rate": 0.17084282460136674,
+      "bootstrap_95_percent_hit_rate": [
+        0.1366742596810934,
+        0.2072892938496583
+      ],
+      "roi_after_fees": -0.19635794988610478,
+      "bootstrap_95_percent_roi_after_fees": [
+        -0.37780863097949885,
+        -0.005823164009111772
+      ]
+    },
+    {
+      "strategy": "least_deployed_top4_v1",
+      "rounds": 439,
+      "hits": 60,
+      "hit_rate": 0.1366742596810934,
+      "bootstrap_95_percent_hit_rate": [
+        0.10478359908883828,
+        0.16856492027334852
+      ],
+      "roi_after_fees": -0.36957189066059226,
+      "bootstrap_95_percent_roi_after_fees": [
+        -0.5391307562642369,
+        -0.19625884738041013
+      ]
+    },
+    {
+      "strategy": "least_crowded_top4_v1",
+      "rounds": 439,
+      "hits": 63,
+      "hit_rate": 0.14350797266514806,
+      "bootstrap_95_percent_hit_rate": [
+        0.11161731207289294,
+        0.1776765375854214
+      ],
+      "roi_after_fees": -0.3400191799544419,
+      "bootstrap_95_percent_roi_after_fees": [
+        -0.508909187927107,
+        -0.1602433564920274
+      ]
+    },
+    {
+      "strategy": "random_top4_v1",
+      "rounds": 439,
+      "hits": 72,
+      "hit_rate": 0.16400911161731208,
+      "bootstrap_95_percent_hit_rate": [
+        0.12984054669703873,
+        0.19817767653758542
+      ],
+      "roi_after_fees": -0.24015225512528474,
+      "bootstrap_95_percent_roi_after_fees": [
+        -0.4178346343963553,
+        -0.055703678815489835
+      ]
+    }
+  ],
+  "chronological_blocks": [
+    {
+      "block": 1,
+      "round_range": [
+        342132,
+        342241
+      ],
+      "rounds": 110,
+      "highest_reward_hit_rate": 0.145455,
+      "highest_reward_roi_after_fees": -0.326969
+    },
+    {
+      "block": 2,
+      "round_range": [
+        342242,
+        342351
+      ],
+      "rounds": 110,
+      "highest_reward_hit_rate": 0.209091,
+      "highest_reward_roi_after_fees": 0.013355
+    },
+    {
+      "block": 3,
+      "round_range": [
+        342352,
+        342461
+      ],
+      "rounds": 110,
+      "highest_reward_hit_rate": 0.172727,
+      "highest_reward_roi_after_fees": -0.197265
+    },
+    {
+      "block": 4,
+      "round_range": [
+        342462,
+        342570
+      ],
+      "rounds": 109,
+      "highest_reward_hit_rate": 0.155963,
+      "highest_reward_roi_after_fees": -0.27527
+    }
+  ],
+  "candidate_vs_random_pairing": {
+    "candidate_only_hit": 58,
+    "random_only_hit": 55,
+    "both_hit": 17,
+    "neither_hit": 309,
+    "discordant_rounds": 113,
+    "discordance_rate": 0.25740318906605925,
+    "paired_hit_rate_difference": 0.00683371298405467,
+    "paired_bootstrap_95_percent_interval": [
+      -0.04100227790432802,
+      0.05466970387243736
+    ],
+    "historical_exact_one_sided_mcnemar_p_value": 0.42543496125672503
+  },
+  "power_plan": {
+    "test": "exact_one_sided_mcnemar",
+    "alpha": 0.025,
+    "planning_effect": 0.06,
+    "planning_discordance_rate": 0.25740318906605925,
+    "power_at_400_rounds": 0.6256020165693084,
+    "minimum_rounds_for_at_least_80_percent_test_power": 586,
+    "power_at_recommended_600_rounds": 0.809646444993471,
+    "recommended_minimum_analyzable_rounds": 600,
+    "maximum_started_rounds": 632,
+    "calendar_cap_days": 14,
+    "note": "The separate point-estimate gate of at least +0.06 makes joint success probability about one half when the true effect is exactly +0.06; power here is for the preregistered exact test, and the effect gate is intentionally not weakened."
+  },
+  "bootstrap": {
+    "seed": 20260725,
+    "round_resamples": 100000,
+    "unit": "independent_round"
+  },
+  "limitations": [
+    "The candidate point estimate versus random is only +0.68 percentage points and its paired interval crosses zero.",
+    "All reconstructed after-fee ROI estimates in the locked top-four 50000-lamport scenario are negative.",
+    "The candidate ROI changes sign across chronological blocks.",
+    "Final outcomes are labels used only after each decision snapshot; 381 are enriched and 58 are contemporaneously observed.",
+    "The historical comparison selects a candidate for prospective testing and is not confirmatory evidence of effectiveness."
+  ]
+}
