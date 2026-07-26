@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 import time
@@ -19,6 +20,14 @@ from orev3.collection.gate_b import (
     gate_b_status,
 )
 from orev3.collection.metrics import evaluate_burn_in
+from orev3.collection.outcome_recovery import (
+    DEFAULT_GATE_B_MARKER,
+    DEFAULT_LIVE_LEDGER,
+    RpcRecoveryProvider,
+    create_recovery_artifact,
+    requery_recovery_artifact,
+    verify_recovery_artifact,
+)
 from orev3.collection.reporting import export_collection
 from orev3.collection.writer_lock import WriterLease
 from orev3.ledger.reporting import write_strict_json
@@ -232,6 +241,96 @@ def command_gate_b_status(args: argparse.Namespace) -> None:
     print(json.dumps(value, allow_nan=False, sort_keys=True))
 
 
+def _recovery_providers(
+    args: argparse.Namespace,
+) -> tuple[RpcRecoveryProvider, RpcRecoveryProvider]:
+    primary_url = os.getenv(args.primary_rpc_env)
+    secondary_url = os.getenv(args.secondary_rpc_env)
+    if not primary_url:
+        raise ValueError(
+            f"Primary RPC environment variable is unset: "
+            f"{args.primary_rpc_env}"
+        )
+    if not secondary_url:
+        raise ValueError(
+            f"Secondary RPC environment variable is unset: "
+            f"{args.secondary_rpc_env}"
+        )
+    primary = RpcRecoveryProvider(
+        args.primary_provider_id,
+        primary_url,
+    )
+    secondary = RpcRecoveryProvider(
+        args.secondary_provider_id,
+        secondary_url,
+    )
+    if primary.endpoint_fingerprint == secondary.endpoint_fingerprint:
+        primary.close()
+        secondary.close()
+        raise ValueError(
+            "Primary and secondary RPC endpoints must be independent"
+        )
+    return primary, secondary
+
+
+def command_recover_outcome_evidence_create(
+    args: argparse.Namespace,
+) -> None:
+    _reject_live(args)
+    primary, secondary = _recovery_providers(args)
+    try:
+        value = create_recovery_artifact(
+            output=args.output,
+            round_ids=args.round_id,
+            primary=primary,
+            secondary=secondary,
+            network=args.network,
+            expected_genesis_hash=args.expected_genesis_hash,
+            expected_program_id=args.expected_program_id,
+            sample_id=args.sample_id,
+            marker_path=args.marker,
+            expected_marker_sha256=args.expected_marker_sha256,
+            repository_commit=args.repository_commit,
+            branch=args.branch,
+            decoder_version=args.decoder_version,
+            recovery_protocol_version=args.recovery_protocol_version,
+            recovery_method_version=args.recovery_method_version,
+            live_ledger_path=args.live_ledger,
+            control_round_id=args.control_round_id,
+            formal_gate_b=args.formal_gate_b,
+            force=args.force,
+        )
+    finally:
+        primary.close()
+        secondary.close()
+    print(json.dumps(value, allow_nan=False, sort_keys=True))
+
+
+def command_recover_outcome_evidence_verify(
+    args: argparse.Namespace,
+) -> None:
+    _reject_live(args)
+    value = verify_recovery_artifact(args.artifact)
+    print(json.dumps(value, allow_nan=False, sort_keys=True))
+
+
+def command_recover_outcome_evidence_requery(
+    args: argparse.Namespace,
+) -> None:
+    _reject_live(args)
+    primary, secondary = _recovery_providers(args)
+    try:
+        value = requery_recovery_artifact(
+            args.artifact,
+            primary=primary,
+            secondary=secondary,
+        )
+    finally:
+        primary.close()
+        secondary.close()
+    print(json.dumps(value, allow_nan=False, sort_keys=True))
+
+
 def _live_tripwires(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--submit", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--sign", action="store_true", help=argparse.SUPPRESS)
@@ -318,6 +417,70 @@ def build_parser() -> argparse.ArgumentParser:
     gate_b.add_argument("--expected-marker-sha256", required=True)
     _live_tripwires(gate_b)
     gate_b.set_defaults(handler=command_gate_b_status)
+
+    recovery = sub.add_parser("recover-outcome-evidence")
+    recovery_modes = recovery.add_subparsers(
+        dest="recovery_mode",
+        required=True,
+    )
+
+    create = recovery_modes.add_parser("create")
+    create.add_argument(
+        "--round-id",
+        action="append",
+        type=int,
+        required=True,
+    )
+    create.add_argument("--primary-provider-id", required=True)
+    create.add_argument("--primary-rpc-env", required=True)
+    create.add_argument("--secondary-provider-id", required=True)
+    create.add_argument("--secondary-rpc-env", required=True)
+    create.add_argument("--network", required=True)
+    create.add_argument("--expected-genesis-hash", required=True)
+    create.add_argument("--expected-program-id", required=True)
+    create.add_argument("--sample-id", required=True)
+    create.add_argument(
+        "--marker",
+        type=Path,
+        default=DEFAULT_GATE_B_MARKER,
+    )
+    create.add_argument("--expected-marker-sha256", required=True)
+    create.add_argument("--repository-commit", required=True)
+    create.add_argument("--branch", required=True)
+    create.add_argument("--decoder-version", required=True)
+    create.add_argument("--recovery-protocol-version", required=True)
+    create.add_argument("--recovery-method-version", required=True)
+    create.add_argument("--output", type=Path, required=True)
+    create.add_argument(
+        "--live-ledger",
+        type=Path,
+        default=DEFAULT_LIVE_LEDGER,
+    )
+    create.add_argument("--control-round-id", type=int)
+    create.add_argument("--formal-gate-b", action="store_true")
+    create.add_argument("--force", action="store_true")
+    _live_tripwires(create)
+    create.set_defaults(
+        handler=command_recover_outcome_evidence_create
+    )
+
+    verify = recovery_modes.add_parser("verify")
+    verify.add_argument("--artifact", type=Path, required=True)
+    _live_tripwires(verify)
+    verify.set_defaults(
+        handler=command_recover_outcome_evidence_verify
+    )
+
+    requery = recovery_modes.add_parser("requery")
+    requery.add_argument("--artifact", type=Path, required=True)
+    requery.add_argument("--primary-provider-id", required=True)
+    requery.add_argument("--primary-rpc-env", required=True)
+    requery.add_argument("--secondary-provider-id", required=True)
+    requery.add_argument("--secondary-rpc-env", required=True)
+    _live_tripwires(requery)
+    requery.set_defaults(
+        handler=command_recover_outcome_evidence_requery
+    )
     return root
 
 

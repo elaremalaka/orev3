@@ -220,5 +220,43 @@ class SolanaRpcClient:
 
         return result["value"]
 
+    def get_genesis_hash(self) -> str:
+        return str(self._rpc("getGenesisHash"))
+
+    def get_account_info_with_context(
+        self,
+        address: str,
+        *,
+        commitment: str = "finalized",
+    ) -> dict[str, Any]:
+        return self._rpc(
+            "getAccountInfo",
+            [
+                address,
+                {
+                    "encoding": "base64",
+                    "commitment": commitment,
+                },
+            ],
+        )
+
+    def get_signatures_for_address(
+        self,
+        address: str,
+        *,
+        commitment: str = "finalized",
+        limit: int = 1,
+    ) -> list[dict[str, Any]]:
+        return self._rpc(
+            "getSignaturesForAddress",
+            [
+                address,
+                {
+                    "commitment": commitment,
+                    "limit": limit,
+                },
+            ],
+        )
+
     def close(self) -> None:
         self._client.close()
