@@ -3,7 +3,7 @@
 Status: **Corrected implementation reference; marker and collection are not
 authorized**
 
-Runbook contract version: `rfc008-operator-runbook-v4`
+Runbook contract version: `rfc008-operator-runbook-v5`
 
 All commands run from `/Users/anisbaker/Documents/orev3`. Production commands
 below are future procedures and were not executed during implementation.
@@ -62,7 +62,7 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli resolver-burn-in \
   --authorization-token RFC008_OPERATIONAL_RESOLVER_BURN_IN_AUTHORIZED
 ```
 
-Operational evidence schema version 3 records complete per-round provenance,
+Operational evidence schema version 4 records complete per-round provenance,
 normalized persisted attempt records, normalized operational request records,
 and exact RPC counts by provider, method, response classification, and retry
 status. Every real round must be read from both providers at finalized
@@ -103,6 +103,23 @@ and quarantine identities cannot overlap the five real rounds; conflict and
 quarantine must also be distinct. Fixture calls never count as operational RPC
 calls or authoritative successes.
 
+Every controlled-test pass flag is derived from its required subchecks and must
+equal the separately serialized recomputed result. Conflict evidence requires
+two retained provider provenance records, retained disagreement details,
+persisted terminal conflict state, an attempted and refused overwrite, proof
+that later success did not replace the conflict, and primary-analysis
+ineligibility. Quarantine evidence requires controlled expiry, invocation of
+the production quarantine transition, persisted terminal quarantine state, an
+attempted and refused overwrite, proof that later success did not replace the
+quarantine, and primary-analysis ineligibility. Marker preflight independently
+checks these subfields; it does not trust the controlled pass flags alone.
+
+Provider-provenance linkage failures are reported as
+`rpc_attempt_reconciliation_failed` and `provider_provenance_invalid`.
+Structurally present jitter evidence with failed deterministic, bounded-delay,
+schedule, version, or retry-coverage checks is reported as
+`jitter_test_failed`.
+
 The CLI reports the real-round summary, RPC request accounting, attempt
 reconciliation, restart, retry, jitter, conflict, quarantine, exact process
 preservation, structured source boundary, and recomputed authoritative
@@ -128,7 +145,7 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli preflight-marker \
 
 `ready: true` requires the approved HEAD policy, completely clean worktree,
 absent production artifacts, valid frozen hashes, recent hash-validated
-schema-v3 operational evidence, at least five distinct authoritative successes,
+schema-v4 operational evidence, at least five distinct authoritative successes,
 complete deployment and accounting validation, reconciled persisted
 attempt/request history and RPC accounting, complete provider provenance,
 distinct controlled conflict and quarantine identities, separate passing
