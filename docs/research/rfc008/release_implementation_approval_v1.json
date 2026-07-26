@@ -2,27 +2,41 @@
   "artifact_type": "rfc008_implementation_release_approval",
   "schema_version": 1,
   "status": "implementation_approved_for_release_preflight_only",
-  "approved_implementation_commit": "992fa302d22a554180144c5d35d1e23c1eb20d3e",
+  "approved_implementation_commit": "ba4c01dd79a567513a634d8700fb120f8a0ac25b",
   "approval_commit_policy": "head_must_equal_approved_implementation_or_be_its_approval_artifact_child",
   "frozen_approval_manifest_sha256": "9fe94099ed3d9e15e015eef72db5543f16c756b1c3c5463f014e18467a44d789",
   "configuration_fingerprint": "8df457048086076be62e56b94356bae2760920f3285605a4b3959f99e820529b",
   "candidate_configuration_sha256": "e60722e845d6364c41d28ebc7d1641f8c8726766f87bdb838f3822decf50a372",
   "resolver_configuration_sha256": "3df0eadaf9e611a0898dd28937b72d75a1288e0f01763f7aaea8500f40236dd3",
-  "audit_version": "rfc008-release-preflight-v3",
+  "audit_version": "rfc008-release-preflight-v4",
   "resolver_version": "rfc008-finalized-resolver-v1",
   "decoder_version": "ore-round-decoder-v1",
   "database_family": "orev3-rfc008",
   "database_schema_version": 3,
   "migration_set_sha256": "ece66b7732cdc61af7c549aa8e2161d6f1f305e533e43165cf58e9ad492c2bd5",
-  "burn_in_evidence_schema_version": 2,
+  "burn_in_evidence_schema_version": 3,
   "minimum_operational_sample_size": 5,
-  "cli_version": "rfc008-cli-v3",
-  "cli_sha256": "ab31c949d234d789965f7cad276e0b1ce83d50f8b928dccba12f6a0d64a97b6d",
-  "runbook_version": "rfc008-operator-runbook-v3",
-  "runbook_sha256": "207711786c24e3c249cd3086613e2d6451a953efa9f92020cfb27f8e272b2db0",
+  "protected_process_policy": {
+    "48404": {
+      "role": "observer",
+      "sanitized_command_identity": "-m orev3.observer.collect"
+    },
+    "48405": {
+      "role": "observer_caffeinate",
+      "sanitized_command_identity": "caffeinate -i python -m orev3.observer.collect"
+    },
+    "78317": {
+      "role": "rfc007_collector",
+      "sanitized_command_identity": "-m orev3.collection.cli run --config config/collection/rfc007_burn_in_v1.json --ledger data/ledger/rfc007_live_ledger_v1.sqlite"
+    }
+  },
+  "cli_version": "rfc008-cli-v4",
+  "cli_sha256": "2fadb7a12ea2b7e3533ce75f5b42f48810561ecbfe841d7112e26c94b50be4d5",
+  "runbook_version": "rfc008-operator-runbook-v4",
+  "runbook_sha256": "6ecd8e40c28ecdd0d892f223e561ae1cbf59621b61bb817eac46e01fd4509dc5",
   "verification": {
-    "rfc008_test_count": 58,
-    "full_test_count": 295,
+    "rfc008_test_count": 111,
+    "full_test_count": 348,
     "fixture_resolver_burn_in_required": true,
     "operational_resolver_burn_in_required_before_marker": true,
     "external_rpc_burn_in_performed": false
