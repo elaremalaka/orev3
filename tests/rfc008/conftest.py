@@ -8,6 +8,7 @@ import pytest
 
 from orev3.collection.schemas import CompleteOpportunity
 from orev3.rfc008.config import RFC008Config
+from orev3.rfc008.authorization import CollectionAuthorizationStore
 from orev3.rfc008.marker import sha256_file
 from orev3.rfc008.schemas import ExperimentMarker, OutcomeEvidence
 from orev3.rfc008.storage import RFC008Store, strict_json
@@ -70,6 +71,14 @@ def store(
 ) -> tuple[RFC008Store, Path]:
     path = tmp_path / "rfc008_fixture.sqlite"
     value = RFC008Store(path, config=config, create=True)
+    authorization_path = path.with_suffix(".authorization.sqlite")
+    CollectionAuthorizationStore.issue(
+        authorization_path,
+        value.collection_contract().immutable_release,
+    )
+    with CollectionAuthorizationStore(authorization_path) as authorization:
+        authorization.consume_initialization()
+        authorization.mark_initialized()
     yield value, path
     value.close()
 

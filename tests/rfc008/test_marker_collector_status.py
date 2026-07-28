@@ -186,6 +186,7 @@ def test_status_is_read_only_and_reports_caps_and_safety(
         ledger_path=path,
         config_path=CONFIG_PATH,
         marker_path=marker,
+        authorization_path=path.with_suffix(".authorization.sqlite"),
         expected_marker_sha256=digest,
         now=datetime(2026, 7, 25, 1, tzinfo=timezone.utc),
     )
@@ -193,11 +194,15 @@ def test_status_is_read_only_and_reports_caps_and_safety(
     assert report["started_rounds"] == 1
     assert report["primary_analyzable_rounds"] == 0
     assert report["collection_ready"]
-    assert not report["collection_authorized"]
+    assert report["collection_authorized"]
+    assert report["authorization_state"] == "initialized"
+    assert report["collection_target"] == 600
+    assert report["committed_opportunity_count"] == 0
     expired = status_report(
         ledger_path=path,
         config_path=CONFIG_PATH,
         marker_path=marker,
+        authorization_path=path.with_suffix(".authorization.sqlite"),
         expected_marker_sha256=digest,
         now=datetime(2026, 8, 9, tzinfo=timezone.utc),
     )
@@ -220,6 +225,8 @@ def test_cli_requires_explicit_commands_and_arguments() -> None:
             "a" * 64,
             "--ledger",
             "ledger.sqlite",
+            "--authorization",
+            "authorization.sqlite",
             "--repository-root",
             ".",
             "--burn-in-evidence",
@@ -228,14 +235,10 @@ def test_cli_requires_explicit_commands_and_arguments() -> None:
             "release.json",
             "--approval-manifest",
             "approval.json",
-            "--authorization-token",
-            "not-authorized",
-            "--ledger-initialization-token",
-            "not-authorized",
         ]
     )
     assert args.command == "run"
-    assert not args.create_new_ledger
+    assert not args.recovery
     burn_in = commands.parse_args(
         [
             "resolver-burn-in",

@@ -105,9 +105,6 @@ def test_deterministic_dataset_and_locked_analysis(
     with value.connection:
         for offset in range(600):
             populate_round(value, config, 347000 + offset, winner=0)
-        populate_round(
-            value, config, 348000, winner=0, provenance="recovered"
-        )
     freeze, freeze_hash = freeze_fixture(path, marker, digest, tmp_path)
     first = build_dataset(
         ledger_path=path,
@@ -128,7 +125,7 @@ def test_deterministic_dataset_and_locked_analysis(
         output_dir=tmp_path / "dataset2",
     )
     assert first["primary_round_count"] == 600
-    assert first["sensitivity_round_count"] == 1
+    assert first["sensitivity_round_count"] == 0
     assert first["primary_sha256"] == second["primary_sha256"]
     rows = (tmp_path / "dataset1/primary_rounds_v1.jsonl").read_text().splitlines()
     assert len(rows) == 600
@@ -144,7 +141,7 @@ def test_deterministic_dataset_and_locked_analysis(
     assert result["candidate_roi_before_fees"] > 0
     assert result["candidate_roi_after_fees"] > 0
     assert result["decision"] == "success"
-    assert result["recovered_sensitivity"]["rounds"] == 1
+    assert result["recovered_sensitivity"]["rounds"] == 0
     assert not result["recovered_sensitivity"]["confirmatory"]
     manifest_path = tmp_path / "dataset1/manifest.json"
     original_manifest = json.loads(manifest_path.read_text())

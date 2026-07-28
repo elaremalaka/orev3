@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
+from orev3.rfc008.authorization import CollectionAuthorizationStore
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.marker import verify_marker
 from orev3.rfc008.storage import RFC008Store
@@ -14,6 +15,7 @@ def status_report(
     ledger_path: str | Path,
     config_path: str | Path,
     marker_path: str | Path,
+    authorization_path: str | Path,
     expected_marker_sha256: str | None = None,
     now: datetime | None = None,
 ) -> dict[str, object]:
@@ -21,7 +23,24 @@ def status_report(
     marker = verify_marker(
         marker_path, config, expected_sha256=expected_marker_sha256
     )
-    with RFC008Store(ledger_path, config=config, read_only=True) as store:
+    writer_lock = Path(str(ledger_path) + ".writer.lock")
+    writer_pid: int | None = None
+    if writer_lock.exists():
+        try:
+            writer_pid = int(writer_lock.read_text(encoding="utf-8").strip())
+        except (OSError, ValueError):
+            writer_pid = None
+    with (
+        CollectionAuthorizationStore(
+            authorization_path, read_only=True
+        ) as authorization_store,
+        RFC008Store(ledger_path, config=config, read_only=True) as store,
+    ):
+        authorization = authorization_store.status()
+        contract = store.validate_collection_contract(
+            config=config,
+            authorization=authorization.record,
+        )
         started = store.count("experiment_rounds")
         primary = store.count(
             "experiment_rounds", "state='finalized_primary'"
@@ -62,6 +81,7 @@ def status_report(
         )
         return {
             "schema_version": SCHEMA_VERSION,
+            "release_validity_required_by_cli": True,
             "experiment_id": config.experiment_id,
             "configuration_fingerprint": config.configuration_fingerprint,
             "marker_verified": True,
@@ -88,9 +108,46 @@ def status_report(
             >= config.criteria.maximum_started_rounds,
             "calendar_cap_reached": elapsed_days
             >= config.criteria.maximum_calendar_days,
-            "collection_complete": primary
+            "collection_complete": contract.completed,
+            "collection_target_complete": contract.completed,
+            "analysis_minimum_outcomes_reached": primary
             >= config.criteria.minimum_analyzable_rounds,
             "collection_ready": ready,
-            "collection_authorized": False,
+            "authorization_identifier": (
+                authorization.record.authorization_identifier
+            ),
+            "authorization_state": authorization.lifecycle_state,
+            "authorization_binding_valid": True,
+            "ledger_instance_identifier": (
+                contract.ledger_instance_identifier
+            ),
+            "ledger_validation_result": "valid",
+            "collection_state": contract.collection_state,
+            "collection_target": contract.collection_target,
+            "committed_opportunity_count": (
+                contract.committed_opportunity_count
+            ),
+            "remaining_opportunity_count": (
+                contract.remaining_opportunity_count
+            ),
+            "current_session": contract.active_session_identity,
+            "writer_lease": {
+                "path": str(writer_lock),
+                "file_present": writer_lock.exists(),
+                "recorded_process_id": writer_pid,
+            },
+            "collector_process_status": (
+                "session_recorded"
+                if contract.active_session_identity is not None
+                else "no_active_session"
+            ),
+            "last_committed_opportunity": (
+                contract.last_committed_opportunity_identity
+            ),
+            "completion_timestamp": contract.completion_timestamp,
+            "collection_authorized": authorization.lifecycle_state
+            in {"initialized", "active", "completed"},
+            "analysis_authorized": False,
+            "deployment_authorized": False,
             "paper_only": True,
         }

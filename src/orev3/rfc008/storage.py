@@ -1,12 +1,21 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
+import uuid
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from orev3.collection.schemas import SourceCursor
+from orev3.rfc008.authorization import (
+    CollectionAuthorizationRecord,
+    build_authorization_record,
+    canonical_path,
+    path_identity,
+)
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.migrations import (
     APPLICATION_ID,
@@ -19,6 +28,7 @@ from orev3.rfc008.schemas import (
     DecisionSnapshot,
     OutcomeEvidence,
     OutcomeQueueRecord,
+    RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION,
     RoundAccounting,
 )
 
@@ -28,6 +38,56 @@ PROTECTED_LEDGER_NAMES = {
     "rfc007_live_ledger_v1.sqlite",
     "participant_ledger_v1.sqlite",
 }
+CANONICAL_PRODUCTION_LEDGER_NAME = "rfc008_paper_ledger_v1.sqlite"
+LEDGER_SCHEMA_VERSION = 1
+
+
+class CollectionTargetReached(RuntimeError):
+    pass
+
+
+class CollectionContractError(ValueError):
+    pass
+
+
+@dataclass(frozen=True)
+class LedgerInitialization:
+    authorization: CollectionAuthorizationRecord
+    collection_seed_cursors: tuple[dict[str, object], ...]
+    publication_cursors: tuple[dict[str, object], ...]
+
+
+@dataclass(frozen=True)
+class CollectionContractStatus:
+    ledger_schema_version: int
+    evidence_schema_version: int
+    rfc_identifier: str
+    ledger_family_identifier: str
+    ledger_instance_identifier: str
+    canonical_ledger_path: str
+    canonical_ledger_path_identity: str
+    authorization_identifier: str
+    authorization_digest: str
+    collection_mode: str
+    collection_target: int
+    committed_opportunity_count: int
+    collection_state: str
+    created_at: str
+    completion_timestamp: str | None
+    active_session_identity: str | None
+    last_committed_opportunity_identity: str | None
+    collection_seed_cursors: tuple[dict[str, object], ...]
+    publication_cursors: tuple[dict[str, object], ...]
+    last_observed_cursors: tuple[dict[str, object], ...]
+    immutable_release: CollectionAuthorizationRecord
+
+    @property
+    def remaining_opportunity_count(self) -> int:
+        return self.collection_target - self.committed_opportunity_count
+
+    @property
+    def completed(self) -> bool:
+        return self.collection_state == "completed"
 
 
 def strict_json(value: Any) -> str:
@@ -59,10 +119,21 @@ class RFC008Store:
         config: RFC008Config | None = None,
         create: bool = False,
         read_only: bool = False,
+        initialization: LedgerInitialization | None = None,
+        identity_path: str | Path | None = None,
     ) -> None:
         self.path = Path(path)
+        self.identity_path = Path(identity_path or path)
         if create:
             assert_safe_new_ledger_path(self.path)
+            if (
+                self.identity_path.name == CANONICAL_PRODUCTION_LEDGER_NAME
+                and initialization is None
+            ):
+                raise PermissionError(
+                    "Canonical RFC-008 production ledger requires a persisted "
+                    "collection authorization"
+                )
             self.path.parent.mkdir(parents=True, exist_ok=True)
         if read_only:
             uri = f"file:{self.path.resolve()}?mode=ro"
@@ -71,7 +142,9 @@ class RFC008Store:
             if not create and not self.path.exists():
                 raise FileNotFoundError(self.path)
             self.connection = sqlite3.connect(self.path)
-            self.connection.execute("PRAGMA journal_mode=WAL")
+            self.connection.execute(
+                f"PRAGMA journal_mode={'DELETE' if create else 'WAL'}"
+            )
             self.connection.execute("PRAGMA synchronous=FULL")
             self.connection.execute(
                 f"PRAGMA busy_timeout={int(config.busy_timeout_ms if config else 5000)}"
@@ -82,14 +155,22 @@ class RFC008Store:
                 raise ValueError("Creating a ledger requires RFC-008 configuration")
             self.connection.execute(f"PRAGMA application_id={APPLICATION_ID}")
             apply_migrations(self.connection)
-            self.initialize(config)
+            self.initialize(
+                config,
+                initialization
+                or self._fixture_initialization(config, self.identity_path),
+            )
         elif not read_only:
             self._verify_application_identity()
+            if (
+                self.identity_path.name == CANONICAL_PRODUCTION_LEDGER_NAME
+                and self._applied_schema_version() != SCHEMA_VERSION
+            ):
+                raise ValueError(
+                    "RFC-008 production ledger migration requires explicit "
+                    "release authorization"
+                )
             apply_migrations(self.connection)
-            self.connection.execute(
-                "UPDATE metadata SET value=? WHERE key='schema_version'",
-                (str(SCHEMA_VERSION),),
-            )
             self.connection.commit()
         self.verify_identity(config)
         if not read_only and self._metadata_or_none("ledger_state") == "frozen":
@@ -104,7 +185,55 @@ class RFC008Store:
     def __exit__(self, exc_type, exc, traceback) -> None:
         self.close()
 
-    def initialize(self, config: RFC008Config) -> None:
+    @staticmethod
+    def _fixture_initialization(
+        config: RFC008Config,
+        path: str | Path,
+    ) -> LedgerInitialization:
+        record = build_authorization_record(
+            authorization_path=Path(path).with_suffix(".authorization.sqlite"),
+            ledger_path=path,
+            branch="fixture",
+            repository_head="0" * 40,
+            implementation_commit="0" * 40,
+            active_approval_sha256="0" * 64,
+            immediate_predecessor_sha256="0" * 64,
+            approval_chain_anchor="0" * 64,
+            marker_sha256="0" * 64,
+            marker_sidecar_sha256="0" * 64,
+            candidate_sha256=config.candidate_configuration_sha256,
+            experiment_id=config.experiment_id,
+            protocol_version=config.protocol_version,
+            configuration_fingerprint=config.configuration_fingerprint,
+            resolver_fingerprint="0" * 64,
+            migration_set_sha256="0" * 64,
+            cli_sha256="0" * 64,
+            runbook_sha256="0" * 64,
+            burn_in_evidence_sha256="0" * 64,
+            burn_in_ledger_sha256="0" * 64,
+            approval_manifest_sha256=config.approval_manifest_sha256,
+            external_rpc_burn_in_performed=True,
+            nonce=f"fixture-{uuid.uuid4()}",
+        )
+        return LedgerInitialization(
+            authorization=record,
+            collection_seed_cursors=(),
+            publication_cursors=(),
+        )
+
+    def initialize(
+        self,
+        config: RFC008Config,
+        initialization: LedgerInitialization,
+    ) -> None:
+        authorization = initialization.authorization
+        if authorization.canonical_ledger_path != canonical_path(
+            self.identity_path
+        ):
+            raise CollectionContractError(
+                "Authorization is bound to another ledger path"
+            )
+        created_at = datetime.now(timezone.utc).isoformat()
         with self.connection:
             values = {
                 "schema_version": str(SCHEMA_VERSION),
@@ -119,14 +248,72 @@ class RFC008Store:
             self.connection.executemany(
                 "INSERT INTO metadata(key,value) VALUES (?,?)", values.items()
             )
+            self.connection.execute(
+                """
+                INSERT INTO collection_contract(
+                  singleton,ledger_schema_version,evidence_schema_version,
+                  rfc_identifier,ledger_family_identifier,
+                  ledger_instance_identifier,canonical_ledger_path,
+                  canonical_ledger_path_identity,authorization_identifier,
+                  authorization_digest,collection_mode,collection_target,
+                  committed_opportunity_count,collection_state,created_at,
+                  completion_timestamp,active_session_identity,
+                  last_committed_opportunity_identity,
+                  collection_seed_cursor_json,publication_cursor_json,
+                  last_observed_cursor_json,immutable_release_json
+                ) VALUES (
+                  1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?
+                )
+                """,
+                (
+                    LEDGER_SCHEMA_VERSION,
+                    RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION,
+                    "RFC-008",
+                    DATABASE_FAMILY,
+                    authorization.ledger_instance_identifier,
+                    authorization.canonical_ledger_path,
+                    authorization.canonical_ledger_path_identity,
+                    authorization.authorization_identifier,
+                    authorization.authorization_digest,
+                    authorization.collection_mode,
+                    authorization.collection_target,
+                    0,
+                    "initialized",
+                    created_at,
+                    None,
+                    None,
+                    None,
+                    strict_json(initialization.collection_seed_cursors),
+                    strict_json(initialization.publication_cursors),
+                    strict_json(()),
+                    strict_json(authorization),
+                ),
+            )
             self.audit(
                 "ledger_initialized",
                 {
                     "schema_version": SCHEMA_VERSION,
+                    "ledger_schema_version": LEDGER_SCHEMA_VERSION,
+                    "authorization_identifier": (
+                        authorization.authorization_identifier
+                    ),
+                    "ledger_instance_identifier": (
+                        authorization.ledger_instance_identifier
+                    ),
+                    "collection_target": authorization.collection_target,
                     "paper_only": True,
                     "live_actions": 0,
                 },
             )
+
+    def _applied_schema_version(self) -> int:
+        try:
+            row = self.connection.execute(
+                "SELECT MAX(version) FROM schema_migrations"
+            ).fetchone()
+        except sqlite3.OperationalError:
+            return 0
+        return int(row[0] or 0)
 
     def _verify_application_identity(self) -> None:
         application_id = int(
@@ -168,6 +355,207 @@ class RFC008Store:
                 raise ValueError("RFC-008 experiment identity mismatch")
             if values.get("configuration_fingerprint") != config.configuration_fingerprint:
                 raise ValueError("RFC-008 configuration fingerprint mismatch")
+        self.validate_collection_contract(config=config)
+
+    def collection_contract(self) -> CollectionContractStatus:
+        row = self.connection.execute(
+            "SELECT * FROM collection_contract WHERE singleton=1"
+        ).fetchone()
+        if row is None:
+            raise CollectionContractError(
+                "RFC-008 collection contract is missing"
+            )
+        try:
+            release = CollectionAuthorizationRecord.model_validate_json(
+                str(row["immutable_release_json"])
+            )
+            seed = tuple(json.loads(str(row["collection_seed_cursor_json"])))
+            publication = tuple(
+                json.loads(str(row["publication_cursor_json"]))
+            )
+            observed_raw = row["last_observed_cursor_json"]
+            observed = tuple(json.loads(str(observed_raw))) if observed_raw else ()
+        except (ValueError, TypeError, json.JSONDecodeError) as exc:
+            raise CollectionContractError(
+                f"RFC-008 collection contract JSON is invalid: {exc}"
+            ) from exc
+        return CollectionContractStatus(
+            ledger_schema_version=int(row["ledger_schema_version"]),
+            evidence_schema_version=int(row["evidence_schema_version"]),
+            rfc_identifier=str(row["rfc_identifier"]),
+            ledger_family_identifier=str(row["ledger_family_identifier"]),
+            ledger_instance_identifier=str(row["ledger_instance_identifier"]),
+            canonical_ledger_path=str(row["canonical_ledger_path"]),
+            canonical_ledger_path_identity=str(
+                row["canonical_ledger_path_identity"]
+            ),
+            authorization_identifier=str(row["authorization_identifier"]),
+            authorization_digest=str(row["authorization_digest"]),
+            collection_mode=str(row["collection_mode"]),
+            collection_target=int(row["collection_target"]),
+            committed_opportunity_count=int(
+                row["committed_opportunity_count"]
+            ),
+            collection_state=str(row["collection_state"]),
+            created_at=str(row["created_at"]),
+            completion_timestamp=row["completion_timestamp"],
+            active_session_identity=row["active_session_identity"],
+            last_committed_opportunity_identity=row[
+                "last_committed_opportunity_identity"
+            ],
+            collection_seed_cursors=seed,
+            publication_cursors=publication,
+            last_observed_cursors=observed,
+            immutable_release=release,
+        )
+
+    def validate_collection_contract(
+        self,
+        *,
+        config: RFC008Config | None = None,
+        authorization: CollectionAuthorizationRecord | None = None,
+    ) -> CollectionContractStatus:
+        contract = self.collection_contract()
+        failures: list[str] = []
+        if contract.ledger_schema_version != LEDGER_SCHEMA_VERSION:
+            failures.append("ledger schema version")
+        if (
+            contract.evidence_schema_version
+            != RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION
+        ):
+            failures.append("evidence schema version")
+        if contract.rfc_identifier != "RFC-008":
+            failures.append("RFC identifier")
+        if contract.ledger_family_identifier != DATABASE_FAMILY:
+            failures.append("ledger family")
+        if contract.canonical_ledger_path != canonical_path(self.identity_path):
+            failures.append("canonical ledger path")
+        if contract.canonical_ledger_path_identity != path_identity(
+            self.identity_path
+        ):
+            failures.append("ledger path identity")
+        release = contract.immutable_release
+        column_matches = {
+            "ledger instance": (
+                contract.ledger_instance_identifier
+                == release.ledger_instance_identifier
+            ),
+            "authorization identifier": (
+                contract.authorization_identifier
+                == release.authorization_identifier
+            ),
+            "authorization digest": (
+                contract.authorization_digest == release.authorization_digest
+            ),
+            "mode": contract.collection_mode == release.collection_mode,
+            "target": (
+                contract.collection_target == release.collection_target == 600
+            ),
+        }
+        failures.extend(
+            name for name, matches in column_matches.items() if not matches
+        )
+        if config is not None:
+            if (
+                release.configuration_fingerprint
+                != config.configuration_fingerprint
+            ):
+                failures.append("configuration fingerprint")
+            if release.experiment_id != config.experiment_id:
+                failures.append("experiment identity")
+            if (
+                release.candidate_sha256
+                != config.candidate_configuration_sha256
+            ):
+                failures.append("candidate identity")
+        if authorization is not None and release != authorization:
+            failures.append("persisted authorization binding")
+        row_count = int(
+            self.connection.execute(
+                "SELECT COUNT(*) FROM decision_snapshots"
+            ).fetchone()[0]
+        )
+        if row_count != contract.committed_opportunity_count:
+            failures.append("canonical opportunity count")
+        if contract.committed_opportunity_count > contract.collection_target:
+            failures.append("opportunity target exceeded")
+        if contract.committed_opportunity_count == contract.collection_target:
+            if (
+                contract.collection_state != "completed"
+                or contract.completion_timestamp is None
+                or contract.last_committed_opportunity_identity is None
+            ):
+                failures.append("completed target state")
+        elif contract.collection_state == "completed":
+            failures.append("premature completed state")
+        if failures:
+            raise CollectionContractError(
+                "RFC-008 collection contract mismatch: "
+                + ", ".join(failures)
+            )
+        return contract
+
+    def begin_collection_session(
+        self,
+        session_identifier: str,
+        *,
+        recovery: bool = False,
+    ) -> None:
+        contract = self.validate_collection_contract()
+        if contract.completed:
+            raise CollectionTargetReached(
+                "RFC-008 collection already completed at target"
+            )
+        if (
+            not recovery
+            and contract.active_session_identity
+            not in (None, session_identifier)
+        ):
+            raise PermissionError("Another RFC-008 collector session is active")
+        if recovery and contract.collection_state not in {
+            "initialized",
+            "active",
+        }:
+            raise PermissionError(
+                "RFC-008 recovery requires an active collection state"
+            )
+        cursor = self.connection.execute(
+            """
+            UPDATE collection_contract
+            SET collection_state='active',active_session_identity=?
+            WHERE singleton=1
+              AND collection_state IN ('initialized','active')
+              AND committed_opportunity_count < collection_target
+              AND (
+                ?=1
+                OR
+                active_session_identity IS NULL
+                OR active_session_identity=?
+              )
+            """,
+            (
+                session_identifier,
+                int(recovery),
+                session_identifier,
+            ),
+        )
+        if cursor.rowcount != 1:
+            raise PermissionError(
+                "RFC-008 collector session activation rejected"
+            )
+
+    def end_collection_session(self, session_identifier: str) -> None:
+        contract = self.validate_collection_contract()
+        if contract.active_session_identity != session_identifier:
+            raise PermissionError("RFC-008 collector session identity mismatch")
+        self.connection.execute(
+            """
+            UPDATE collection_contract
+            SET active_session_identity=NULL
+            WHERE singleton=1 AND active_session_identity=?
+            """,
+            (session_identifier,),
+        )
 
     def metadata(self, key: str) -> str:
         row = self.connection.execute(
@@ -244,6 +632,20 @@ class RFC008Store:
               source_path=excluded.source_path,record_json=excluded.record_json
             """,
             (cursor.source_id, cursor.source_path, strict_json(cursor)),
+        )
+        observed = tuple(
+            json.loads(row[0])
+            for row in self.connection.execute(
+                "SELECT record_json FROM source_cursors ORDER BY source_id"
+            )
+        )
+        self.connection.execute(
+            """
+            UPDATE collection_contract
+            SET last_observed_cursor_json=?
+            WHERE singleton=1
+            """,
+            (strict_json(observed),),
         )
 
     def load_cursor(self, source_path: str | Path) -> SourceCursor | None:
@@ -328,6 +730,17 @@ class RFC008Store:
     def insert_snapshot_and_decisions(
         self, snapshot: DecisionSnapshot, decisions: tuple[ArmDecision, ...]
     ) -> bool:
+        snapshot = DecisionSnapshot.model_validate(
+            snapshot.model_dump(mode="python")
+        )
+        decisions = tuple(
+            ArmDecision.model_validate(
+                decision.model_dump(mode="python")
+            )
+            for decision in decisions
+        )
+        self.validate_collection_contract()
+        self.connection.execute("SAVEPOINT rfc008_opportunity")
         try:
             self.connection.execute(
                 """
@@ -357,11 +770,21 @@ class RFC008Store:
                         strict_json(decision),
                     ),
                 )
-        except sqlite3.IntegrityError:
+            self.connection.execute("RELEASE SAVEPOINT rfc008_opportunity")
+        except sqlite3.IntegrityError as exc:
+            self.connection.execute(
+                "ROLLBACK TO SAVEPOINT rfc008_opportunity"
+            )
+            self.connection.execute("RELEASE SAVEPOINT rfc008_opportunity")
+            if "collection target reached" in str(exc):
+                raise CollectionTargetReached(
+                    "RFC-008 collection target reached; opportunity rejected"
+                ) from exc
             self.increment("duplicate_decisions")
             return False
         self.increment("decision_snapshots")
         self.increment("arm_decisions", len(decisions))
+        self.validate_collection_contract()
         return True
 
     def decisions(self, round_id: int) -> list[ArmDecision]:
@@ -483,3 +906,56 @@ class RFC008Store:
         if where:
             query += " WHERE " + where
         return int(self.connection.execute(query, params).fetchone()[0])
+
+
+def create_authorized_ledger(
+    path: str | Path,
+    *,
+    config: RFC008Config,
+    initialization: LedgerInitialization,
+) -> CollectionContractStatus:
+    target = assert_safe_new_ledger_path(path)
+    if initialization.authorization.canonical_ledger_path != canonical_path(
+        target
+    ):
+        raise CollectionContractError(
+            "Authorization does not bind the requested production ledger"
+        )
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_name(f".{target.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        with RFC008Store(
+            temporary,
+            config=config,
+            create=True,
+            initialization=initialization,
+            identity_path=target,
+        ) as store:
+            contract = store.validate_collection_contract(
+                config=config,
+                authorization=initialization.authorization,
+            )
+            store.connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        descriptor = os.open(temporary, os.O_RDONLY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        os.link(temporary, target)
+        os.chmod(target, 0o600)
+        directory = os.open(target.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+        with RFC008Store(
+            target,
+            config=config,
+            read_only=True,
+        ) as opened:
+            return opened.validate_collection_contract(
+                config=config,
+                authorization=initialization.authorization,
+            )
+    finally:
+        temporary.unlink(missing_ok=True)

@@ -3,7 +3,7 @@
 Status: **Corrected implementation reference; marker and collection are not
 authorized**
 
-Runbook contract version: `rfc008-operator-runbook-v5`
+Runbook contract version: `rfc008-operator-runbook-v6`
 
 All commands run from `/Users/anisbaker/Documents/orev3`. Production commands
 below are future procedures and were not executed during implementation.
@@ -332,6 +332,9 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli preflight-collection \
   --config config/collection/rfc008_paper_v1.json \
   --resolver-config config/collection/rfc008_resolver_v1.json \
   --marker data/ledger/rfc008_marker_v1.json \
+  --ledger data/ledger/rfc008_paper_ledger_v1.sqlite \
+  --authorization data/ledger/rfc008_collection_authorization_v1.sqlite \
+  --action launch \
   --repository-root . \
   --burn-in-evidence data/resolver/rfc008_operational_burn_in_v1.json \
   --release-approval docs/research/rfc008/release_implementation_approval_v1.json \
@@ -340,8 +343,45 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli preflight-collection \
 
 ## 6. Future collection start
 
-Collection requires separate authorization and the same operational provider
-environment:
+Collection requires a separately issued persisted authorization. Issuance is
+itself the separately human-authorized operation; the command-line path merely
+identifies the resulting SQLite evidence and is not a reusable secret:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli issue-collection-authorization \
+  --config config/collection/rfc008_paper_v1.json \
+  --resolver-config config/collection/rfc008_resolver_v1.json \
+  --marker data/ledger/rfc008_marker_v1.json \
+  --expected-marker-sha256-file data/ledger/rfc008_marker_v1.json.sha256 \
+  --ledger data/ledger/rfc008_paper_ledger_v1.sqlite \
+  --authorization data/ledger/rfc008_collection_authorization_v1.sqlite \
+  --repository-root . \
+  --burn-in-evidence data/resolver/rfc008_operational_burn_in_v1.json \
+  --release-approval docs/research/rfc008/release_implementation_approval_v1.json \
+  --approval-manifest docs/research/rfc008/approval_manifest_v1.json
+```
+
+Inspect the authorization read-only, initialize the bound ledger exactly once,
+then rerun the collection preflight with `--action launch`:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli inspect-collection-authorization \
+  --authorization data/ledger/rfc008_collection_authorization_v1.sqlite
+
+PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli initialize-ledger \
+  --config config/collection/rfc008_paper_v1.json \
+  --resolver-config config/collection/rfc008_resolver_v1.json \
+  --marker data/ledger/rfc008_marker_v1.json \
+  --expected-marker-sha256-file data/ledger/rfc008_marker_v1.json.sha256 \
+  --ledger data/ledger/rfc008_paper_ledger_v1.sqlite \
+  --authorization data/ledger/rfc008_collection_authorization_v1.sqlite \
+  --repository-root . \
+  --burn-in-evidence data/resolver/rfc008_operational_burn_in_v1.json \
+  --release-approval docs/research/rfc008/release_implementation_approval_v1.json \
+  --approval-manifest docs/research/rfc008/approval_manifest_v1.json
+```
+
+Launch only after that preflight reports ready:
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli run \
@@ -350,18 +390,22 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli run \
   --marker data/ledger/rfc008_marker_v1.json \
   --expected-marker-sha256-file data/ledger/rfc008_marker_v1.json.sha256 \
   --ledger data/ledger/rfc008_paper_ledger_v1.sqlite \
-  --create-new-ledger \
+  --authorization data/ledger/rfc008_collection_authorization_v1.sqlite \
   --repository-root . \
   --burn-in-evidence data/resolver/rfc008_operational_burn_in_v1.json \
   --release-approval docs/research/rfc008/release_implementation_approval_v1.json \
-  --approval-manifest docs/research/rfc008/approval_manifest_v1.json \
-  --ledger-initialization-token RFC008_PRODUCTION_LEDGER_INITIALIZATION_AUTHORIZED \
-  --authorization-token RFC008_HOLDOUT_COLLECTION_AUTHORIZED
+  --approval-manifest docs/research/rfc008/approval_manifest_v1.json
 ```
 
-Restarts omit `--create-new-ledger`. The writer lease, source cursors,
-pending queue, retry count, next retry time, attempts, conflicts, and accepted
-outcomes persist.
+The authorization is release-, marker-, path-, paper-mode-, and
+600-opportunity-bound. Initialization and launch consumption are
+transactional. A restart uses the same command plus `--recovery`; it is
+accepted only for the same active authorization and ledger after the exclusive
+writer lease is obtained. Source cursors, count, pending queue, retry state,
+attempts, conflicts, and accepted outcomes persist. Opportunity 600
+transactionally completes collection and causes a successful collector exit;
+opportunity 601 cannot be committed. Completion does not invoke freeze,
+dataset generation, analysis, or deployment.
 
 ## 7. Collection monitoring
 
@@ -370,7 +414,8 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli status \
   --config config/collection/rfc008_paper_v1.json \
   --marker data/ledger/rfc008_marker_v1.json \
   --expected-marker-sha256-file data/ledger/rfc008_marker_v1.json.sha256 \
-  --ledger data/ledger/rfc008_paper_ledger_v1.sqlite
+  --ledger data/ledger/rfc008_paper_ledger_v1.sqlite \
+  --authorization data/ledger/rfc008_collection_authorization_v1.sqlite
 ```
 
 Monitor integrity, primary and sensitivity provenance, pending/conflicted/
@@ -381,8 +426,10 @@ counters, and stopping caps. No interim efficacy analysis is allowed.
 
 Send SIGINT only to the RFC-008 collector. Do not signal the observer,
 RFC-007 collector, or caffeinate wrapper. Confirm the RFC-008 writer lease is
-released, run status, and restart with the exact marker, hash, configuration,
-resolver configuration, provider identities, and ledger.
+released, run status, and restart with `--recovery` using the exact
+authorization, marker, hash, configuration, resolver configuration, provider
+identities, and ledger. A completed ledger exits without creating another
+session.
 
 ## 9. Future authorized final freeze
 

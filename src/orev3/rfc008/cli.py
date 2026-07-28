@@ -4,6 +4,8 @@ import argparse
 import glob
 import json
 import os
+import subprocess
+import uuid
 from pathlib import Path
 
 from orev3.collection.tailer import new_cursor
@@ -13,33 +15,38 @@ from orev3.rfc008.burnin import (
     run_resolver_burn_in,
 )
 from orev3.collection.outcome_recovery import RpcRecoveryProvider
-from orev3.rfc008.collector import (
-    COLLECTION_AUTHORIZATION,
-    RFC008Collector,
+from orev3.rfc008.authorization import (
+    CollectionAuthorizationStore,
+    build_authorization_record,
 )
+from orev3.rfc008.collector import RFC008Collector
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.dataset import build_dataset
 from orev3.rfc008.freeze import freeze_experiment
 from orev3.rfc008.marker import (
-    MARKER_AUTHORIZATION,
     create_marker_pair,
     marker_preflight,
+    verify_marker,
 )
 from orev3.rfc008.lifecycle import validate_collection_preflight
 from orev3.rfc008.resolver import FinalizedOutcomeResolver
 from orev3.rfc008.resolver_config import ResolverConfig
-from orev3.rfc008.release_validation import validate_active_release
+from orev3.rfc008.release_validation import (
+    repository_release_authority,
+    validate_active_release,
+)
 from orev3.rfc008.schemas import RFC008_CLI_VERSION
 from orev3.rfc008.status import status_report
-from orev3.rfc008.storage import RFC008Store
+from orev3.rfc008.storage import (
+    LedgerInitialization,
+    RFC008Store,
+    create_authorized_ledger,
+)
 from orev3.rfc008.writer import RFC008WriterLease
 
 
 ANALYSIS_AUTHORIZATION = "RFC008_FORMAL_ANALYSIS_AUTHORIZED"
 CLI_VERSION = RFC008_CLI_VERSION
-LEDGER_INITIALIZATION_AUTHORIZATION = (
-    "RFC008_PRODUCTION_LEDGER_INITIALIZATION_AUTHORIZED"
-)
 
 
 def _print(value: object) -> None:
@@ -64,6 +71,225 @@ def _source_identities(config: RFC008Config) -> tuple[str, ...]:
     if not identities:
         raise ValueError("No observer source files match the RFC-008 configuration")
     return tuple(identities)
+
+
+def _authorization_record_from_release(
+    args: argparse.Namespace,
+):
+    release = validate_active_release(
+        repository_root=args.repository_root,
+        config_path=args.config,
+        resolver_config_path=args.resolver_config,
+        burn_in_evidence_path=args.burn_in_evidence,
+        release_approval_path=args.release_approval,
+        approval_manifest_path=args.approval_manifest,
+        marker_path=args.marker,
+    )
+    if not release.valid or release.parsed_active_approval is None:
+        raise PermissionError(
+            "RFC-008 active release validation rejected authorization issuance"
+        )
+    expected_marker = _expected_marker_hash(args)
+    approval = release.parsed_active_approval
+    if approval["validated_production_marker_sha256"] != expected_marker:
+        raise PermissionError(
+            "RFC-008 expected marker hash differs from active release"
+        )
+    config = RFC008Config.from_path(args.config)
+    verify_marker(args.marker, config, expected_sha256=expected_marker)
+    root = Path(args.repository_root).resolve()
+    authority = repository_release_authority(
+        repository_root=root,
+        release_path=Path(args.release_approval).resolve(),
+    )
+    head = subprocess.run(
+        ("git", "rev-parse", "HEAD"),
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    return build_authorization_record(
+        authorization_path=args.authorization,
+        ledger_path=args.ledger,
+        branch=authority.branch,
+        repository_head=head,
+        implementation_commit=authority.implementation_commit,
+        active_approval_sha256=str(release.active_approval_sha256),
+        immediate_predecessor_sha256=(
+            authority.predecessor_approval_sha256
+        ),
+        approval_chain_anchor=release.approval_hashes[-1],
+        marker_sha256=expected_marker,
+        marker_sidecar_sha256=str(
+            approval["validated_production_marker_sidecar_sha256"]
+        ),
+        candidate_sha256=config.candidate_configuration_sha256,
+        experiment_id=config.experiment_id,
+        protocol_version=config.protocol_version,
+        configuration_fingerprint=config.configuration_fingerprint,
+        resolver_fingerprint=str(
+            approval["resolver_configuration_sha256"]
+        ),
+        migration_set_sha256=str(approval["migration_set_sha256"]),
+        cli_sha256=str(approval["cli_sha256"]),
+        runbook_sha256=str(approval["runbook_sha256"]),
+        burn_in_evidence_sha256=str(
+            approval["validated_operational_burn_in_evidence_sha256"]
+        ),
+        burn_in_ledger_sha256=str(
+            approval["validated_operational_burn_in_ledger_sha256"]
+        ),
+        approval_manifest_sha256=str(
+            approval["frozen_approval_manifest_sha256"]
+        ),
+        external_rpc_burn_in_performed=bool(
+            approval["verification"]["external_rpc_burn_in_performed"]
+        ),
+    )
+
+
+def _cursor_records(
+    identities: tuple[str, ...],
+) -> tuple[dict[str, object], ...]:
+    values: list[dict[str, object]] = []
+    for identity in identities:
+        parts = identity.rsplit("|", 3)
+        if len(parts) != 4:
+            raise ValueError("RFC-008 marker cursor identity is invalid")
+        path, inode, offset, line = parts
+        values.append(
+            {
+                "source_path": path,
+                "source_inode": int(inode),
+                "source_byte_offset": int(offset),
+                "source_line_number": int(line),
+            }
+        )
+    return tuple(values)
+
+
+def command_issue_collection_authorization(
+    args: argparse.Namespace,
+) -> None:
+    record = _authorization_record_from_release(args)
+    CollectionAuthorizationStore.issue(args.authorization, record)
+    _print(
+        {
+            "authorization_identifier": record.authorization_identifier,
+            "authorization_digest": record.authorization_digest,
+            "authorization_path": record.authorization_storage_path,
+            "ledger_path": record.canonical_ledger_path,
+            "state": "issued",
+            "mode": record.collection_mode,
+            "target": record.collection_target,
+            "analysis_authorized": False,
+            "freeze_authorized": False,
+            "live_actions_authorized": False,
+        }
+    )
+
+
+def command_inspect_collection_authorization(
+    args: argparse.Namespace,
+) -> None:
+    with CollectionAuthorizationStore(
+        args.authorization, read_only=True
+    ) as store:
+        _print(store.status().model_dump(mode="json"))
+
+
+def command_initialize_ledger(args: argparse.Namespace) -> None:
+    readiness = validate_collection_preflight(
+        repository_root=args.repository_root,
+        config_path=args.config,
+        resolver_config_path=args.resolver_config,
+        burn_in_evidence_path=args.burn_in_evidence,
+        release_approval_path=args.release_approval,
+        approval_manifest_path=args.approval_manifest,
+        marker_path=args.marker,
+        authorization_path=args.authorization,
+        ledger_path=args.ledger,
+        action="initialize",
+        collector_running=False,
+    )
+    if not readiness.ready:
+        raise PermissionError(
+            "RFC-008 ledger initialization preflight rejected: "
+            + ", ".join(readiness.gate_reasons)
+        )
+    config = RFC008Config.from_path(args.config)
+    expected_hash = _expected_marker_hash(args)
+    marker = verify_marker(
+        args.marker, config, expected_sha256=expected_hash
+    )
+    with CollectionAuthorizationStore(args.authorization) as authorization:
+        status = authorization.status()
+        if status.lifecycle_state == "issued":
+            status = authorization.consume_initialization()
+        elif status.lifecycle_state != "initialization_consumed":
+            raise PermissionError(
+                "RFC-008 initialization authorization is already consumed"
+            )
+        initialization = LedgerInitialization(
+            authorization=status.record,
+            collection_seed_cursors=_cursor_records(
+                marker.source_identities
+            ),
+            publication_cursors=_cursor_records(
+                marker.source_identities
+            ),
+        )
+        if Path(args.ledger).exists():
+            with RFC008Store(
+                args.ledger, config=config, read_only=True
+            ) as ledger:
+                contract = ledger.validate_collection_contract(
+                    config=config,
+                    authorization=status.record,
+                )
+        else:
+            contract = create_authorized_ledger(
+                args.ledger,
+                config=config,
+                initialization=initialization,
+            )
+        authorization.mark_initialized()
+    _print(
+        {
+            "ledger_path": contract.canonical_ledger_path,
+            "ledger_instance_identifier": (
+                contract.ledger_instance_identifier
+            ),
+            "authorization_identifier": (
+                contract.authorization_identifier
+            ),
+            "collection_state": contract.collection_state,
+            "target": contract.collection_target,
+            "committed_opportunity_count": (
+                contract.committed_opportunity_count
+            ),
+        }
+    )
+
+
+def command_inspect_ledger(args: argparse.Namespace) -> None:
+    config = RFC008Config.from_path(args.config)
+    with RFC008Store(
+        args.ledger, config=config, read_only=True
+    ) as store:
+        contract = store.validate_collection_contract(config=config)
+        _print(
+            {
+                **contract.__dict__,
+                "immutable_release": contract.immutable_release.model_dump(
+                    mode="json"
+                ),
+                "remaining_opportunity_count": (
+                    contract.remaining_opportunity_count
+                ),
+            }
+        )
 
 
 def command_preflight_marker(args: argparse.Namespace) -> None:
@@ -106,6 +332,7 @@ def command_create_marker(args: argparse.Namespace) -> None:
 
 
 def command_run(args: argparse.Namespace) -> None:
+    action = "recovery" if args.recovery else "launch"
     readiness = validate_collection_preflight(
         repository_root=getattr(args, "repository_root", "."),
         config_path=args.config,
@@ -130,14 +357,9 @@ def command_run(args: argparse.Namespace) -> None:
             "docs/research/rfc008/approval_manifest_v1.json",
         ),
         marker_path=args.marker,
-        collection_authorization_valid=(
-            args.authorization_token == COLLECTION_AUTHORIZATION
-        ),
-        ledger_initialization_authorized=(
-            args.create_new_ledger
-            and getattr(args, "ledger_initialization_token", None)
-            == LEDGER_INITIALIZATION_AUTHORIZATION
-        ),
+        authorization_path=args.authorization,
+        ledger_path=args.ledger,
+        action=action,
         collector_running=False,
     )
     if not readiness.ready:
@@ -157,18 +379,65 @@ def command_run(args: argparse.Namespace) -> None:
         )
     config = RFC008Config.from_path(args.config)
     resolver_config = ResolverConfig.from_path(args.resolver_config)
-    provider_urls = tuple(
-        _provider_url(variable)
-        for variable in resolver_config.provider_url_environment_variables
-    )
-    if len(set(provider_urls)) != len(provider_urls):
-        raise ValueError("Outcome-provider endpoints must be independent")
     with RFC008WriterLease(args.ledger):
-        with RFC008Store(
-            args.ledger,
-            config=config,
-            create=args.create_new_ledger,
-        ) as store:
+        second = validate_collection_preflight(
+            repository_root=args.repository_root,
+            config_path=args.config,
+            resolver_config_path=args.resolver_config,
+            burn_in_evidence_path=args.burn_in_evidence,
+            release_approval_path=args.release_approval,
+            approval_manifest_path=args.approval_manifest,
+            marker_path=args.marker,
+            authorization_path=args.authorization,
+            ledger_path=args.ledger,
+            action=action,
+            collector_running=False,
+        )
+        if not second.ready:
+            raise PermissionError(
+                "RFC-008 collection preflight changed before launch: "
+                + ", ".join(second.gate_reasons)
+            )
+        with (
+            CollectionAuthorizationStore(args.authorization) as authorization,
+            RFC008Store(args.ledger, config=config) as store,
+        ):
+            contract = store.validate_collection_contract(
+                config=config,
+                authorization=authorization.status().record,
+            )
+            if contract.completed:
+                if not args.recovery:
+                    raise PermissionError(
+                        "RFC-008 completed collection cannot be relaunched"
+                    )
+                completed = authorization.reconcile_completed_ledger(
+                    contract.ledger_instance_identifier
+                )
+                _print(
+                    {
+                        "collection_state": "completed",
+                        "committed_opportunity_count": (
+                            contract.committed_opportunity_count
+                        ),
+                        "target": contract.collection_target,
+                        "authorization_state": (
+                            completed.lifecycle_state
+                        ),
+                        "collector_started": False,
+                    }
+                )
+                return
+            provider_urls = tuple(
+                _provider_url(variable)
+                for variable in (
+                    resolver_config.provider_url_environment_variables
+                )
+            )
+            if len(set(provider_urls)) != len(provider_urls):
+                raise ValueError(
+                    "Outcome-provider endpoints must be independent"
+                )
             providers = tuple(
                 RpcRecoveryProvider(provider_id, url)
                 for provider_id, url in zip(
@@ -188,6 +457,9 @@ def command_run(args: argparse.Namespace) -> None:
                 marker_path=args.marker,
                 expected_marker_sha256=expected_hash,
                 resolver=resolver,
+                authorization_store=authorization,
+                recovery=args.recovery,
+                session_identifier=str(uuid.uuid4()),
             )
             try:
                 collector.run()
@@ -205,8 +477,9 @@ def command_preflight_collection(args: argparse.Namespace) -> None:
         release_approval_path=args.release_approval,
         approval_manifest_path=args.approval_manifest,
         marker_path=args.marker,
-        collection_authorization_valid=False,
-        ledger_initialization_authorized=False,
+        authorization_path=args.authorization,
+        ledger_path=args.ledger,
+        action=args.action,
         collector_running=False,
     )
     _print(value.as_dict())
@@ -230,6 +503,7 @@ def command_status(args: argparse.Namespace) -> None:
             config_path=args.config,
             marker_path=args.marker,
             expected_marker_sha256=_expected_marker_hash(args),
+            authorization_path=args.authorization,
         )
     )
 
@@ -323,25 +597,70 @@ def parser() -> argparse.ArgumentParser:
     marker.add_argument("--authorization-token", required=True)
     marker.set_defaults(func=command_create_marker)
 
+    issue = sub.add_parser("issue-collection-authorization")
+    issue.add_argument("--config", required=True)
+    issue.add_argument("--resolver-config", required=True)
+    issue.add_argument("--marker", required=True)
+    _marker_hash_arguments(issue)
+    issue.add_argument("--ledger", required=True)
+    issue.add_argument("--authorization", required=True)
+    issue.add_argument("--repository-root", required=True)
+    issue.add_argument("--burn-in-evidence", required=True)
+    issue.add_argument("--release-approval", required=True)
+    issue.add_argument("--approval-manifest", required=True)
+    issue.set_defaults(func=command_issue_collection_authorization)
+
+    inspect_authorization = sub.add_parser(
+        "inspect-collection-authorization"
+    )
+    inspect_authorization.add_argument("--authorization", required=True)
+    inspect_authorization.set_defaults(
+        func=command_inspect_collection_authorization
+    )
+
+    initialize = sub.add_parser("initialize-ledger")
+    initialize.add_argument("--config", required=True)
+    initialize.add_argument("--resolver-config", required=True)
+    initialize.add_argument("--marker", required=True)
+    _marker_hash_arguments(initialize)
+    initialize.add_argument("--ledger", required=True)
+    initialize.add_argument("--authorization", required=True)
+    initialize.add_argument("--repository-root", required=True)
+    initialize.add_argument("--burn-in-evidence", required=True)
+    initialize.add_argument("--release-approval", required=True)
+    initialize.add_argument("--approval-manifest", required=True)
+    initialize.set_defaults(func=command_initialize_ledger)
+
+    inspect_ledger = sub.add_parser("inspect-ledger")
+    inspect_ledger.add_argument("--config", required=True)
+    inspect_ledger.add_argument("--ledger", required=True)
+    inspect_ledger.set_defaults(func=command_inspect_ledger)
+
     run = sub.add_parser("run")
     run.add_argument("--config", required=True)
     run.add_argument("--resolver-config", required=True)
     run.add_argument("--marker", required=True)
     _marker_hash_arguments(run)
     run.add_argument("--ledger", required=True)
-    run.add_argument("--create-new-ledger", action="store_true")
+    run.add_argument("--authorization", required=True)
+    run.add_argument("--recovery", action="store_true")
     run.add_argument("--repository-root", required=True)
     run.add_argument("--burn-in-evidence", required=True)
     run.add_argument("--release-approval", required=True)
     run.add_argument("--approval-manifest", required=True)
-    run.add_argument("--authorization-token", required=True)
-    run.add_argument("--ledger-initialization-token", required=True)
     run.set_defaults(func=command_run)
 
     collection_preflight = sub.add_parser("preflight-collection")
     collection_preflight.add_argument("--config", required=True)
     collection_preflight.add_argument("--resolver-config", required=True)
     collection_preflight.add_argument("--marker", required=True)
+    collection_preflight.add_argument("--ledger", required=True)
+    collection_preflight.add_argument("--authorization", required=True)
+    collection_preflight.add_argument(
+        "--action",
+        choices=("initialize", "launch", "recovery"),
+        default="launch",
+    )
     collection_preflight.add_argument("--repository-root", required=True)
     collection_preflight.add_argument("--burn-in-evidence", required=True)
     collection_preflight.add_argument("--release-approval", required=True)
@@ -353,6 +672,7 @@ def parser() -> argparse.ArgumentParser:
     status.add_argument("--marker", required=True)
     _marker_hash_arguments(status)
     status.add_argument("--ledger", required=True)
+    status.add_argument("--authorization", required=True)
     status.add_argument("--repository-root", default=".")
     status.add_argument(
         "--resolver-config",

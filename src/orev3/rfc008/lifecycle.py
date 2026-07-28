@@ -1,12 +1,17 @@
 from __future__ import annotations
 
-import hashlib
+import subprocess
 import stat
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
 from orev3.rfc008.config import RFC008Config
+from orev3.rfc008.authorization import (
+    CollectionAuthorizationRecord,
+    CollectionAuthorizationStore,
+    canonical_path,
+)
 from orev3.rfc008.marker import (
     HistoricalSourceBoundaryError,
     sha256_file,
@@ -20,8 +25,10 @@ from orev3.rfc008.schemas import (
 )
 from orev3.rfc008.release_validation import (
     ActiveReleaseValidationResult,
+    repository_release_authority,
     validate_active_release,
 )
+from orev3.rfc008.storage import RFC008Store
 
 
 @dataclass(frozen=True)
@@ -45,8 +52,12 @@ class MarkerPairSnapshot:
 class CollectionPreflightResult:
     active_release_validation: ActiveReleaseValidationResult
     lifecycle_report: dict[str, Any]
-    collection_authorization_valid: bool
-    ledger_initialization_authorized: bool
+    authorization_present: bool
+    authorization_valid: bool
+    authorization_state: str | None
+    ledger_present: bool
+    ledger_valid: bool
+    recovery_permitted: bool
     collector_absent: bool
     gate_reasons: tuple[str, ...]
     ready: bool
@@ -57,12 +68,12 @@ class CollectionPreflightResult:
                 self.active_release_validation.as_dict()
             ),
             "lifecycle": self.lifecycle_report,
-            "collection_authorization_valid": (
-                self.collection_authorization_valid
-            ),
-            "ledger_initialization_authorized": (
-                self.ledger_initialization_authorized
-            ),
+            "authorization_present": self.authorization_present,
+            "authorization_valid": self.authorization_valid,
+            "authorization_state": self.authorization_state,
+            "ledger_present": self.ledger_present,
+            "ledger_valid": self.ledger_valid,
+            "recovery_permitted": self.recovery_permitted,
             "collector_absent": self.collector_absent,
             "gate_reasons": list(self.gate_reasons),
             "ready": self.ready,
@@ -246,6 +257,7 @@ def validate_post_marker_pre_collection_state(
     resolver_config_path: str | Path | None = None,
     collector_running: bool = False,
     expected_snapshot: MarkerPairSnapshot | None = None,
+    allow_production_ledger: bool = False,
 ) -> dict[str, Any]:
     root = Path(repository_root).resolve()
     marker_path = root / "data/ledger/rfc008_marker_v1.json"
@@ -392,6 +404,12 @@ def validate_post_marker_pre_collection_state(
             )
 
     downstream = _check_downstream_absence(root, failures)
+    if allow_production_ledger:
+        failures[:] = [
+            value
+            for value in failures
+            if value["check"] != "production_ledger_family_absent"
+        ]
     if collector_running:
         _failure(
             failures,
@@ -511,10 +529,17 @@ def validate_collection_preflight(
     release_approval_path: str | Path,
     approval_manifest_path: str | Path,
     marker_path: str | Path,
-    collection_authorization_valid: bool,
-    ledger_initialization_authorized: bool,
+    authorization_path: str | Path,
+    ledger_path: str | Path,
+    action: str = "launch",
     collector_running: bool = False,
 ) -> CollectionPreflightResult:
+    if action not in {"initialize", "launch", "recovery"}:
+        raise ValueError("Unsupported RFC-008 collection preflight action")
+    authorization_file = Path(authorization_path)
+    ledger_file = Path(ledger_path)
+    authorization_present = authorization_file.exists()
+    ledger_present = ledger_file.exists()
     active = validate_active_release(
         repository_root=repository_root,
         config_path=config_path,
@@ -532,6 +557,7 @@ def validate_collection_preflight(
         release_approval_path=release_approval_path,
         approval_manifest_path=approval_manifest_path,
         collector_running=collector_running,
+        allow_production_ledger=ledger_present,
     )
     reasons: list[str] = []
     canonical_marker = (
@@ -548,25 +574,187 @@ def validate_collection_preflight(
         reasons.extend(
             str(value["check"]) for value in lifecycle["failures"]
         )
-    if not collection_authorization_valid:
-        reasons.append("separate_collection_authorization_required")
-    if not ledger_initialization_authorized:
+    authorization_valid = False
+    authorization_state: str | None = None
+    authorization: CollectionAuthorizationRecord | None = None
+    if not authorization_present:
+        reasons.append("collection_authorization_absent")
+    else:
+        try:
+            with CollectionAuthorizationStore(
+                authorization_file, read_only=True
+            ) as authorization_store:
+                status = authorization_store.status()
+            authorization = status.record
+            authorization_state = status.lifecycle_state
+            config = RFC008Config.from_path(config_path)
+            approval = active.parsed_active_approval or {}
+            authority = repository_release_authority(
+                repository_root=Path(repository_root).resolve(),
+                release_path=Path(release_approval_path).resolve(),
+            )
+            head = subprocess.run(
+                ("git", "rev-parse", "HEAD"),
+                cwd=Path(repository_root).resolve(),
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            expected = {
+                "branch": authority.branch,
+                "repository_head": head,
+                "implementation_commit": authority.implementation_commit,
+                "active_approval_sha256": active.active_approval_sha256,
+                "immediate_predecessor_sha256": (
+                    authority.predecessor_approval_sha256
+                ),
+                "approval_chain_anchor": (
+                    active.approval_hashes[-1]
+                    if active.approval_hashes
+                    else None
+                ),
+                "marker_sha256": approval.get(
+                    "validated_production_marker_sha256"
+                ),
+                "marker_sidecar_sha256": approval.get(
+                    "validated_production_marker_sidecar_sha256"
+                ),
+                "candidate_sha256": config.candidate_configuration_sha256,
+                "experiment_id": config.experiment_id,
+                "configuration_fingerprint": (
+                    config.configuration_fingerprint
+                ),
+                "resolver_fingerprint": approval.get(
+                    "resolver_configuration_sha256"
+                ),
+                "migration_set_sha256": approval.get(
+                    "migration_set_sha256"
+                ),
+                "cli_sha256": approval.get("cli_sha256"),
+                "runbook_sha256": approval.get("runbook_sha256"),
+                "burn_in_evidence_sha256": approval.get(
+                    "validated_operational_burn_in_evidence_sha256"
+                ),
+                "burn_in_ledger_sha256": approval.get(
+                    "validated_operational_burn_in_ledger_sha256"
+                ),
+                "approval_manifest_sha256": approval.get(
+                    "frozen_approval_manifest_sha256"
+                ),
+                "external_rpc_burn_in_performed": approval.get(
+                    "verification", {}
+                ).get("external_rpc_burn_in_performed"),
+                "canonical_ledger_path": canonical_path(ledger_file),
+            }
+            mismatches = [
+                name
+                for name, expected_value in expected.items()
+                if getattr(authorization, name) != expected_value
+            ]
+            if mismatches:
+                reasons.append(
+                    "authorization_release_mismatch:"
+                    + ",".join(mismatches)
+                )
+            elif (
+                authorization.collection_target != 600
+                or authorization.collection_mode != "paper"
+            ):
+                reasons.append("authorization_target_or_mode_mismatch")
+            else:
+                authorization_valid = True
+        except (OSError, ValueError, PermissionError, subprocess.CalledProcessError):
+            reasons.append("collection_authorization_malformed")
+
+    ledger_valid = False
+    collection_completed = False
+    if not ledger_present:
+        reasons.append("production_ledger_absent")
+    elif authorization is None:
+        reasons.append("ledger_authorization_unverifiable")
+    else:
+        try:
+            config = RFC008Config.from_path(config_path)
+            with RFC008Store(
+                ledger_file,
+                config=config,
+                read_only=True,
+            ) as store:
+                contract = store.validate_collection_contract(
+                    config=config,
+                    authorization=authorization,
+                )
+            ledger_valid = True
+            if contract.completed:
+                collection_completed = True
+                reasons.append("collection_completed")
+            if contract.collection_target != 600:
+                reasons.append("collection_target_mismatch")
+        except (OSError, ValueError):
+            reasons.append("ledger_metadata_mismatch")
+
+    allowed_states = {
+        "initialize": {"issued", "initialization_consumed"},
+        "launch": {"initialized"},
+        "recovery": {"active"},
+    }
+    if authorization_state is not None and (
+        authorization_state not in allowed_states[action]
+    ):
         reasons.append(
-            "production_ledger_initialization_requires_separately_authorized_run"
+            f"authorization_state_rejected:{authorization_state}"
         )
+    if (
+        action == "initialize"
+        and ledger_present
+        and not (
+            authorization_state == "initialization_consumed"
+            and ledger_valid
+        )
+    ):
+        reasons.append("production_ledger_already_exists")
+    if action in {"launch", "recovery"} and not ledger_present:
+        reasons.append("production_ledger_required")
     if not collector_running:
         reasons.append("collector_absent_by_design")
+    else:
+        reasons.append("collector_already_running")
     blocking = tuple(
         reason
         for reason in reasons
         if reason != "collector_absent_by_design"
     )
+    if action == "initialize":
+        blocking = tuple(
+            value
+            for value in blocking
+            if value != "production_ledger_absent"
+        )
+    if (
+        action == "recovery"
+        and collection_completed
+        and authorization_state == "active"
+    ):
+        blocking = tuple(
+            value for value in blocking if value != "collection_completed"
+        )
     return CollectionPreflightResult(
         active_release_validation=active,
         lifecycle_report=lifecycle,
-        collection_authorization_valid=collection_authorization_valid,
-        ledger_initialization_authorized=ledger_initialization_authorized,
+        authorization_present=authorization_present,
+        authorization_valid=authorization_valid,
+        authorization_state=authorization_state,
+        ledger_present=ledger_present,
+        ledger_valid=ledger_valid,
+        recovery_permitted=authorization_state == "active" and not collector_running,
         collector_absent=not collector_running,
         gate_reasons=tuple(dict.fromkeys(reasons)),
-        ready=not blocking and not collector_running,
+        ready=not blocking and not collector_running and (
+            (action == "initialize" and authorization_valid)
+            or (
+                action in {"launch", "recovery"}
+                and authorization_valid
+                and ledger_valid
+            )
+        ),
     )

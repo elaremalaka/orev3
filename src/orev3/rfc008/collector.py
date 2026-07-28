@@ -3,7 +3,6 @@ from __future__ import annotations
 import glob
 import os
 import signal
-import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,6 +19,7 @@ from orev3.collection.tailer import (
     read_complete_lines,
 )
 from orev3.rfc008.config import RFC008Config
+from orev3.rfc008.authorization import CollectionAuthorizationStore
 from orev3.rfc008.decisions import (
     SnapshotUnavailable,
     build_decisions,
@@ -28,11 +28,12 @@ from orev3.rfc008.decisions import (
 from orev3.rfc008.marker import verify_marker
 from orev3.rfc008.outcomes import enqueue_pending
 from orev3.rfc008.resolver import FinalizedOutcomeResolver
-from orev3.rfc008.storage import RFC008Store, strict_json
+from orev3.rfc008.storage import (
+    CollectionTargetReached,
+    RFC008Store,
+    strict_json,
+)
 from orev3.ledger.identifiers import deterministic_id
-
-
-COLLECTION_AUTHORIZATION = "RFC008_HOLDOUT_COLLECTION_AUTHORIZED"
 
 
 class RFC008Collector:
@@ -44,6 +45,9 @@ class RFC008Collector:
         marker_path: str | Path,
         expected_marker_sha256: str,
         resolver: FinalizedOutcomeResolver | None = None,
+        authorization_store: CollectionAuthorizationStore | None = None,
+        recovery: bool = False,
+        session_identifier: str | None = None,
     ) -> None:
         self.store = store
         self.config = config
@@ -53,6 +57,20 @@ class RFC008Collector:
         self.stop_requested = Event()
         self.run_id: str | None = None
         self.resolver = resolver
+        self.authorization_store = authorization_store
+        self.recovery = recovery
+        self.session_identifier = session_identifier
+        contract = self.store.validate_collection_contract(config=config)
+        if authorization_store is not None:
+            authorization = authorization_store.status().record
+            self.store.validate_collection_contract(
+                config=config,
+                authorization=authorization,
+            )
+            if authorization.marker_sha256 != expected_marker_sha256:
+                raise ValueError("Authorization marker binding mismatch")
+        if contract.completed:
+            self.stop_requested.set()
         if (
             resolver is not None
             and self.marker.resolver_configuration_sha256
@@ -68,8 +86,22 @@ class RFC008Collector:
         signal.signal(signal.SIGTERM, self.request_stop)
 
     def begin_run(self) -> str:
-        run_id = str(uuid.uuid4())
+        if self.store.validate_collection_contract().completed:
+            raise CollectionTargetReached(
+                "RFC-008 collection already completed"
+            )
+        run_id = self.session_identifier or str(uuid.uuid4())
         now = datetime.now(timezone.utc)
+        if self.authorization_store is not None:
+            self.authorization_store.consume_launch(
+                run_id,
+                recovery=self.recovery,
+            )
+        self.store.begin_collection_session(
+            run_id,
+            recovery=self.recovery,
+        )
+        contract = self.store.validate_collection_contract()
         self.store.connection.execute(
             """
             INSERT INTO collector_runs
@@ -88,6 +120,16 @@ class RFC008Collector:
                         "process_id": os.getpid(),
                         "paper_only": True,
                         "configuration_fingerprint": self.config.configuration_fingerprint,
+                        "authorization_identifier": (
+                            contract.authorization_identifier
+                        ),
+                        "authorization_digest": contract.authorization_digest,
+                        "ledger_instance_identifier": (
+                            contract.ledger_instance_identifier
+                        ),
+                        "collection_target": contract.collection_target,
+                        "collection_mode": contract.collection_mode,
+                        "recovery": self.recovery,
                     }
                 ),
             ),
@@ -97,10 +139,19 @@ class RFC008Collector:
 
     def finish_run(self) -> None:
         if self.run_id:
+            contract = self.store.validate_collection_contract()
             self.store.connection.execute(
                 "UPDATE collector_runs SET ended_at=? WHERE run_id=?",
                 (datetime.now(timezone.utc).isoformat(), self.run_id),
             )
+            self.store.end_collection_session(self.run_id)
+            if (
+                contract.completed
+                and self.authorization_store is not None
+                and self.authorization_store.status().lifecycle_state
+                == "active"
+            ):
+                self.authorization_store.complete(self.run_id)
 
     def _transition(self, prior_round: int, at: datetime) -> None:
         self.store.transition_round(prior_round, at)
@@ -109,6 +160,9 @@ class RFC008Collector:
             self.store.exclude_round(prior_round, "no_timely_complete_snapshot")
 
     def process_record(self, record: TailRecord) -> None:
+        if self.store.validate_collection_contract().completed:
+            self.stop_requested.set()
+            return
         if not self.store.mark_source_record(
             record.record_id,
             record.source_id,
@@ -159,7 +213,9 @@ class RFC008Collector:
             self.store.increment("incomplete_opportunities")
             return
         decisions = build_decisions(snapshot, self.config)
-        self.store.insert_snapshot_and_decisions(snapshot, decisions)
+        inserted = self.store.insert_snapshot_and_decisions(snapshot, decisions)
+        if inserted and self.store.validate_collection_contract().completed:
+            self.stop_requested.set()
 
     def poll_once(self) -> int:
         processed = 0
@@ -226,20 +282,40 @@ class RFC008Collector:
             self.store.increment("malformed_records", batch.malformed_records)
             self.store.increment("duplicate_source_records", batch.duplicate_records)
             for record in batch.records:
-                self.process_record(record)
+                try:
+                    self.process_record(record)
+                except CollectionTargetReached:
+                    self.stop_requested.set()
+                    break
                 processed += 1
-            self.store.save_cursor(batch.cursor)
-        if self.resolver is not None:
+                if self.stop_requested.is_set():
+                    cursor = batch.cursor.model_copy(
+                        update={
+                            "byte_offset": record.end_offset,
+                            "line_number": record.source_line_number,
+                        }
+                    )
+                    break
+            self.store.save_cursor(
+                cursor if self.stop_requested.is_set() else batch.cursor
+            )
+            if self.stop_requested.is_set():
+                break
+        if self.resolver is not None and not self.stop_requested.is_set():
             self.resolver.process_due()
         return processed
 
     def run(self) -> None:
+        if self.store.validate_collection_contract().completed:
+            return
         self.install_signal_handlers()
         self.begin_run()
         try:
             while not self.stop_requested.is_set():
                 with self.store.connection:
                     processed = self.poll_once()
+                    if self.store.validate_collection_contract().completed:
+                        self.stop_requested.set()
                 if not processed:
                     self.stop_requested.wait(self.config.poll_interval_seconds)
         finally:

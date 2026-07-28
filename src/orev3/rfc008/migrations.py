@@ -90,6 +90,154 @@ MIGRATIONS = (
             )
         ),
     ),
+    Migration(
+        4,
+        "paper_holdout_collection_contract",
+        (
+            """
+            CREATE TABLE collection_contract (
+                singleton INTEGER PRIMARY KEY CHECK(singleton=1),
+                ledger_schema_version INTEGER NOT NULL CHECK(
+                  typeof(ledger_schema_version)='integer'
+                  AND ledger_schema_version=1
+                ),
+                evidence_schema_version INTEGER NOT NULL CHECK(
+                  typeof(evidence_schema_version)='integer'
+                ),
+                rfc_identifier TEXT NOT NULL CHECK(rfc_identifier='RFC-008'),
+                ledger_family_identifier TEXT NOT NULL CHECK(
+                  ledger_family_identifier='orev3-rfc008'
+                ),
+                ledger_instance_identifier TEXT NOT NULL UNIQUE,
+                canonical_ledger_path TEXT NOT NULL,
+                canonical_ledger_path_identity TEXT NOT NULL UNIQUE,
+                authorization_identifier TEXT NOT NULL UNIQUE,
+                authorization_digest TEXT NOT NULL UNIQUE,
+                collection_mode TEXT NOT NULL CHECK(collection_mode='paper'),
+                collection_target INTEGER NOT NULL CHECK(
+                  typeof(collection_target)='integer'
+                  AND collection_target=600
+                ),
+                committed_opportunity_count INTEGER NOT NULL DEFAULT 0 CHECK(
+                  typeof(committed_opportunity_count)='integer'
+                  AND committed_opportunity_count BETWEEN 0 AND collection_target
+                ),
+                collection_state TEXT NOT NULL CHECK(
+                  collection_state IN ('initialized','active','completed','failed')
+                ),
+                created_at TEXT NOT NULL,
+                completion_timestamp TEXT,
+                active_session_identity TEXT,
+                last_committed_opportunity_identity TEXT,
+                collection_seed_cursor_json TEXT NOT NULL,
+                publication_cursor_json TEXT NOT NULL,
+                last_observed_cursor_json TEXT,
+                immutable_release_json TEXT NOT NULL
+            )
+            """,
+            "UPDATE metadata SET value='4' WHERE key='schema_version'",
+            """
+            CREATE TRIGGER immutable_ledger_metadata_update
+            BEFORE UPDATE ON metadata
+            WHEN OLD.key IN (
+              'schema_version','database_family','experiment_id',
+              'configuration_fingerprint','candidate_configuration_sha256',
+              'approval_manifest_sha256'
+            )
+            BEGIN
+              SELECT RAISE(ABORT,'RFC-008 immutable ledger metadata');
+            END
+            """,
+            """
+            CREATE TRIGGER immutable_ledger_metadata_delete
+            BEFORE DELETE ON metadata
+            WHEN OLD.key IN (
+              'schema_version','database_family','experiment_id',
+              'configuration_fingerprint','candidate_configuration_sha256',
+              'approval_manifest_sha256'
+            )
+            BEGIN
+              SELECT RAISE(ABORT,'RFC-008 immutable ledger metadata');
+            END
+            """,
+            """
+            CREATE TRIGGER collection_contract_immutable_update
+            BEFORE UPDATE ON collection_contract
+            WHEN
+              OLD.ledger_schema_version != NEW.ledger_schema_version
+              OR OLD.evidence_schema_version != NEW.evidence_schema_version
+              OR OLD.rfc_identifier != NEW.rfc_identifier
+              OR OLD.ledger_family_identifier != NEW.ledger_family_identifier
+              OR OLD.ledger_instance_identifier != NEW.ledger_instance_identifier
+              OR OLD.canonical_ledger_path != NEW.canonical_ledger_path
+              OR OLD.canonical_ledger_path_identity != NEW.canonical_ledger_path_identity
+              OR OLD.authorization_identifier != NEW.authorization_identifier
+              OR OLD.authorization_digest != NEW.authorization_digest
+              OR OLD.collection_mode != NEW.collection_mode
+              OR OLD.collection_target != NEW.collection_target
+              OR OLD.created_at != NEW.created_at
+              OR OLD.collection_seed_cursor_json != NEW.collection_seed_cursor_json
+              OR OLD.publication_cursor_json != NEW.publication_cursor_json
+              OR OLD.immutable_release_json != NEW.immutable_release_json
+            BEGIN
+              SELECT RAISE(ABORT,'RFC-008 immutable collection contract');
+            END
+            """,
+            """
+            CREATE TRIGGER collection_contract_no_delete
+            BEFORE DELETE ON collection_contract
+            BEGIN
+              SELECT RAISE(ABORT,'RFC-008 collection contract cannot be deleted');
+            END
+            """,
+            """
+            CREATE TRIGGER decision_snapshot_target_guard
+            BEFORE INSERT ON decision_snapshots
+            WHEN
+              (SELECT COUNT(*) FROM collection_contract WHERE singleton=1) != 1
+              OR (SELECT collection_state FROM collection_contract WHERE singleton=1)
+                   NOT IN ('initialized','active')
+              OR (SELECT committed_opportunity_count
+                  FROM collection_contract WHERE singleton=1)
+                   >= (SELECT collection_target
+                       FROM collection_contract WHERE singleton=1)
+            BEGIN
+              SELECT RAISE(ABORT,'RFC-008 collection target reached');
+            END
+            """,
+            """
+            CREATE TRIGGER decision_snapshot_count_after_insert
+            AFTER INSERT ON decision_snapshots
+            BEGIN
+              UPDATE collection_contract
+              SET committed_opportunity_count=committed_opportunity_count+1,
+                  last_committed_opportunity_identity=NEW.snapshot_id,
+                  collection_state=CASE
+                    WHEN committed_opportunity_count+1=collection_target
+                    THEN 'completed' ELSE collection_state END,
+                  completion_timestamp=CASE
+                    WHEN committed_opportunity_count+1=collection_target
+                    THEN strftime('%Y-%m-%dT%H:%M:%fZ','now')
+                    ELSE completion_timestamp END
+              WHERE singleton=1;
+            END
+            """,
+            """
+            CREATE TRIGGER decision_snapshot_no_update
+            BEFORE UPDATE ON decision_snapshots
+            BEGIN
+              SELECT RAISE(ABORT,'RFC-008 canonical opportunity is immutable');
+            END
+            """,
+            """
+            CREATE TRIGGER decision_snapshot_no_delete
+            BEFORE DELETE ON decision_snapshots
+            BEGIN
+              SELECT RAISE(ABORT,'RFC-008 canonical opportunity cannot be deleted');
+            END
+            """,
+        ),
+    ),
 )
 
 

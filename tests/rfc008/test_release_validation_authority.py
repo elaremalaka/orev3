@@ -55,6 +55,9 @@ def _paths(root: Path) -> dict[str, Path]:
         "manifest": root / "docs/research/rfc008/approval_manifest_v1.json",
         "marker": root / "data/ledger/rfc008_marker_v1.json",
         "ledger": root / "data/ledger/rfc008_paper_ledger_v1.sqlite",
+        "authorization": (
+            root / "data/ledger/rfc008_paper_authorization_v1.sqlite"
+        ),
     }
 
 
@@ -93,8 +96,9 @@ def _collection(root: Path):
         release_approval_path=path["release"],
         approval_manifest_path=path["manifest"],
         marker_path=path["marker"],
-        collection_authorization_valid=False,
-        ledger_initialization_authorized=False,
+        authorization_path=path["authorization"],
+        ledger_path=path["ledger"],
+        action="launch",
         collector_running=False,
     )
 
@@ -110,13 +114,13 @@ def _args(root: Path) -> argparse.Namespace:
         approval_manifest=str(path["manifest"]),
         marker=str(path["marker"]),
         ledger=str(path["ledger"]),
+        authorization=str(path["authorization"]),
+        action="launch",
+        recovery=False,
         expected_marker_sha256=hashlib.sha256(
             path["marker"].read_bytes()
         ).hexdigest(),
         expected_marker_sha256_file=None,
-        create_new_ledger=True,
-        authorization_token=None,
-        ledger_initialization_token=None,
     )
 
 

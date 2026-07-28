@@ -11,13 +11,13 @@ from orev3.rfc008.writer import DuplicateRFC008Writer, RFC008WriterLease
 
 def test_collection_command_fails_before_io_without_authorization() -> None:
     args = argparse.Namespace(
-        authorization_token="not-authorized",
+        authorization="/does/not/exist.authorization",
         config="/does/not/exist",
         marker="/does/not/exist",
         expected_marker_sha256="0" * 64,
         expected_marker_sha256_file=None,
         ledger="/does/not/exist",
-        create_new_ledger=True,
+        recovery=False,
     )
     with pytest.raises(PermissionError, match="collection preflight"):
         command_run(args)
