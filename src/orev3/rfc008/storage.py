@@ -492,13 +492,66 @@ class RFC008Store:
                 failures.append("candidate identity")
         if authorization is not None and release != authorization:
             failures.append("persisted authorization binding")
-        row_count = int(
-            self.connection.execute(
-                "SELECT COUNT(*) FROM decision_snapshots"
-            ).fetchone()[0]
+        sequence = self.connection.execute(
+            """
+            SELECT
+              COUNT(*) AS row_count,
+              MIN(committed_opportunity_sequence) AS first_sequence,
+              MAX(committed_opportunity_sequence) AS last_sequence,
+              SUM(
+                CASE WHEN committed_opportunity_sequence IS NULL
+                THEN 1 ELSE 0 END
+              ) AS missing_sequence_count
+            FROM decision_snapshots
+            """
+        ).fetchone()
+        row_count = int(sequence["row_count"])
+        canonical_last = None
+        canonical_last_valid = False
+        if contract.committed_opportunity_count > 0:
+            canonical_last_row = self.connection.execute(
+                """
+                SELECT snapshot_id
+                FROM decision_snapshots
+                WHERE committed_opportunity_sequence=?
+                """,
+                (contract.committed_opportunity_count,),
+            ).fetchone()
+            if canonical_last_row is not None:
+                canonical_last = str(canonical_last_row["snapshot_id"])
+                try:
+                    canonical_last_valid = (
+                        str(uuid.UUID(canonical_last)) == canonical_last
+                    )
+                except ValueError:
+                    canonical_last_valid = False
+        sequence_valid = (
+            (
+                row_count == 0
+                and sequence["first_sequence"] is None
+                and sequence["last_sequence"] is None
+                and int(sequence["missing_sequence_count"] or 0) == 0
+            )
+            or (
+                row_count > 0
+                and int(sequence["first_sequence"] or 0) == 1
+                and int(sequence["last_sequence"] or 0) == row_count
+                and int(sequence["missing_sequence_count"] or 0) == 0
+            )
         )
         if row_count != contract.committed_opportunity_count:
             failures.append("canonical opportunity count")
+        if not sequence_valid:
+            failures.append("committed opportunity sequence")
+        if contract.committed_opportunity_count == 0:
+            if contract.last_committed_opportunity_identity is not None:
+                failures.append("unexpected last opportunity identity")
+        elif canonical_last is None:
+            failures.append("canonical last opportunity")
+        elif not canonical_last_valid:
+            failures.append("canonical last opportunity identity")
+        elif contract.last_committed_opportunity_identity != canonical_last:
+            failures.append("last opportunity identity")
         if contract.committed_opportunity_count > contract.collection_target:
             failures.append("opportunity target exceeded")
         if contract.committed_opportunity_count == contract.collection_target:
@@ -761,20 +814,25 @@ class RFC008Store:
             )
             for decision in decisions
         )
-        self.validate_collection_contract()
+        contract = self.validate_collection_contract()
+        committed_sequence = contract.committed_opportunity_count + 1
         self.connection.execute("SAVEPOINT rfc008_opportunity")
         try:
             self.connection.execute(
                 """
                 INSERT INTO decision_snapshots
-                (snapshot_id,round_id,source_content_sha256,record_json)
-                VALUES (?,?,?,?)
+                (
+                  snapshot_id,round_id,source_content_sha256,record_json,
+                  committed_opportunity_sequence
+                )
+                VALUES (?,?,?,?,?)
                 """,
                 (
                     snapshot.snapshot_id,
                     snapshot.round_id,
                     snapshot.source_content_sha256,
                     strict_json(snapshot),
+                    committed_sequence,
                 ),
             )
             for decision in decisions:

@@ -55,7 +55,7 @@ def test_new_schema_is_isolated_and_identity_checked(
     path = tmp_path / "new.sqlite"
     with RFC008Store(path, config=config, create=True) as store:
         assert store.integrity() == "ok"
-        assert store.metadata("schema_version") == "4"
+        assert store.metadata("schema_version") == "5"
     with pytest.raises(FileExistsError):
         RFC008Store(path, config=config, create=True)
     raw = config.model_dump(mode="json")

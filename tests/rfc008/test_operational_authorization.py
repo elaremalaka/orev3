@@ -193,6 +193,24 @@ def process_final_opportunity(
         results.put(f"unexpected:{type(exc).__name__}:{exc}")
 
 
+def force_last_opportunity_identity(
+    ledger_path: Path,
+    identity: str | None,
+) -> None:
+    connection = sqlite3.connect(ledger_path)
+    connection.execute("DROP TRIGGER collection_contract_last_identity_guard")
+    connection.execute(
+        """
+        UPDATE collection_contract
+        SET last_committed_opportunity_identity=?
+        WHERE singleton=1
+        """,
+        (identity,),
+    )
+    connection.commit()
+    connection.close()
+
+
 def test_authorization_is_single_use_and_transition_history_is_tamper_evident(
     tmp_path: Path,
     config: RFC008Config,
@@ -439,6 +457,63 @@ def test_partial_production_schema_fails_closed_without_migration(
     connection.close()
 
 
+def test_empty_schema_four_migrates_additively_to_sequence_contract() -> None:
+    connection = sqlite3.connect(":memory:")
+    apply_migrations(connection, MIGRATIONS[:4])
+    apply_migrations(connection)
+    columns = {
+        row[1]
+        for row in connection.execute(
+            "PRAGMA table_info(decision_snapshots)"
+        )
+    }
+    triggers = {
+        row[0]
+        for row in connection.execute(
+            "SELECT name FROM sqlite_master WHERE type='trigger'"
+        )
+    }
+    assert (
+        connection.execute(
+            "SELECT MAX(version) FROM schema_migrations"
+        ).fetchone()[0]
+        == 5
+    )
+    assert "committed_opportunity_sequence" in columns
+    assert "collection_contract_last_identity_guard" in triggers
+    connection.close()
+
+
+def test_populated_schema_four_refuses_ambiguous_sequence_migration() -> None:
+    connection = sqlite3.connect(":memory:")
+    apply_migrations(connection, MIGRATIONS[:4])
+    connection.execute("DROP TRIGGER decision_snapshot_target_guard")
+    connection.execute(
+        """
+        INSERT INTO decision_snapshots(
+          snapshot_id,round_id,source_content_sha256,record_json
+        ) VALUES ('legacy',1,?, '{}')
+        """,
+        ("a" * 64,),
+    )
+    connection.commit()
+    with pytest.raises(sqlite3.IntegrityError):
+        apply_migrations(connection)
+    assert (
+        connection.execute(
+            "SELECT MAX(version) FROM schema_migrations"
+        ).fetchone()[0]
+        == 4
+    )
+    assert "committed_opportunity_sequence" not in {
+        row[1]
+        for row in connection.execute(
+            "PRAGMA table_info(decision_snapshots)"
+        )
+    }
+    connection.close()
+
+
 def test_counter_duplicate_crash_and_restart_semantics(
     tmp_path: Path,
     config: RFC008Config,
@@ -477,19 +552,32 @@ def test_counter_duplicate_crash_and_restart_semantics(
         store.connection.execute(
             """
             INSERT INTO decision_snapshots(
-              snapshot_id,round_id,source_content_sha256,record_json
-            ) VALUES (?,?,?,?)
+              snapshot_id,round_id,source_content_sha256,record_json,
+              committed_opportunity_sequence
+            ) VALUES (?,?,?,?,?)
             """,
             (
                 snapshot.snapshot_id,
                 snapshot.round_id,
                 snapshot.source_content_sha256,
                 snapshot.model_dump_json(),
+                2,
             ),
         )
         store.connection.execute("ROLLBACK TO SAVEPOINT crash_before_commit")
         store.connection.execute("RELEASE SAVEPOINT crash_before_commit")
-        assert store.collection_contract().committed_opportunity_count == 1
+        contract = store.collection_contract()
+        assert contract.committed_opportunity_count == 1
+        assert (
+            contract.last_committed_opportunity_identity
+            == store.connection.execute(
+                """
+                SELECT snapshot_id FROM decision_snapshots
+                WHERE committed_opportunity_sequence=1
+                """
+            ).fetchone()[0]
+        )
+        assert store.count("decision_snapshots") == 1
     with RFC008Store(
         ledger_path, config=config, read_only=True
     ) as reopened:
@@ -679,6 +767,209 @@ def test_target_600_process_race_has_one_winner(
         assert contract.committed_opportunity_count == 600
         assert contract.collection_state == "completed"
         assert store.count("decision_snapshots") == 600
+
+
+def test_last_identity_uses_formal_commit_sequence_not_round_order(
+    tmp_path: Path,
+    config: RFC008Config,
+) -> None:
+    _, ledger_path = issue_and_initialize(tmp_path, config)
+    with RFC008Store(ledger_path, config=config) as store:
+        with store.connection:
+            store.begin_collection_session("ordering-session")
+            assert commit_opportunity(store, config, 390100)
+            assert commit_opportunity(store, config, 390000)
+        rows = store.connection.execute(
+            """
+            SELECT committed_opportunity_sequence,round_id,snapshot_id
+            FROM decision_snapshots
+            ORDER BY committed_opportunity_sequence
+            """
+        ).fetchall()
+        contract = store.validate_collection_contract(config=config)
+
+    assert [(row[0], row[1]) for row in rows] == [
+        (1, 390100),
+        (2, 390000),
+    ]
+    assert contract.committed_opportunity_count == 2
+    assert contract.collection_state == "active"
+    assert contract.last_committed_opportunity_identity == rows[-1][2]
+
+
+@pytest.mark.parametrize(
+    "corruption",
+    (
+        "wrong_below_target",
+        "missing_below_target",
+        "unexpected_at_zero",
+        "wrong_at_completion",
+    ),
+)
+def test_last_identity_corruption_fails_closed(
+    tmp_path: Path,
+    config: RFC008Config,
+    corruption: str,
+) -> None:
+    if corruption == "unexpected_at_zero":
+        _, ledger_path = issue_and_initialize(tmp_path, config)
+        replacement = "wrong-identity"
+    elif corruption == "wrong_at_completion":
+        _, ledger_path = seed_active_collection_at_599(
+            tmp_path,
+            config,
+            first_round_id=391000,
+        )
+        with RFC008Store(ledger_path, config=config) as store:
+            with store.connection:
+                assert commit_opportunity(store, config, 391599)
+        replacement = "wrong-identity"
+    else:
+        _, ledger_path = issue_and_initialize(tmp_path, config)
+        with RFC008Store(ledger_path, config=config) as store:
+            with store.connection:
+                store.begin_collection_session("corruption-session")
+                assert commit_opportunity(store, config, 392000)
+                assert commit_opportunity(store, config, 391999)
+            prior = store.connection.execute(
+                """
+                SELECT snapshot_id FROM decision_snapshots
+                WHERE committed_opportunity_sequence=1
+                """
+            ).fetchone()[0]
+        replacement = (
+            None if corruption == "missing_below_target" else str(prior)
+        )
+
+    force_last_opportunity_identity(ledger_path, replacement)
+    with pytest.raises(CollectionContractError):
+        RFC008Store(ledger_path, config=config, read_only=True)
+
+
+def test_missing_canonical_last_row_fails_closed(
+    tmp_path: Path,
+    config: RFC008Config,
+) -> None:
+    _, ledger_path = issue_and_initialize(tmp_path, config)
+    with RFC008Store(ledger_path, config=config) as store:
+        with store.connection:
+            assert commit_opportunity(store, config, 393000)
+            assert commit_opportunity(store, config, 393001)
+    connection = sqlite3.connect(ledger_path)
+    connection.execute("DROP TRIGGER decision_snapshot_no_delete")
+    connection.execute(
+        """
+        DELETE FROM decision_snapshots
+        WHERE committed_opportunity_sequence=2
+        """
+    )
+    connection.commit()
+    connection.close()
+    with pytest.raises(CollectionContractError):
+        RFC008Store(ledger_path, config=config, read_only=True)
+
+
+def test_correct_last_identity_at_completion_passes(
+    tmp_path: Path,
+    config: RFC008Config,
+) -> None:
+    _, ledger_path = seed_active_collection_at_599(
+        tmp_path,
+        config,
+        first_round_id=394000,
+    )
+    with RFC008Store(ledger_path, config=config) as store:
+        with store.connection:
+            assert commit_opportunity(store, config, 394599)
+        contract = store.validate_collection_contract(config=config)
+        final = store.connection.execute(
+            """
+            SELECT snapshot_id FROM decision_snapshots
+            WHERE committed_opportunity_sequence=600
+            """
+        ).fetchone()[0]
+        arm_count = store.connection.execute(
+            "SELECT COUNT(*) FROM arm_decisions WHERE round_id=394599"
+        ).fetchone()[0]
+
+    assert contract.completed
+    assert contract.committed_opportunity_count == 600
+    assert contract.last_committed_opportunity_identity == final
+    assert contract.completion_timestamp is not None
+    assert arm_count == 5
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "wrong_text_below_target",
+        "prior_identity_below_target",
+        "null_below_target",
+        "wrong_text_after_completion",
+        "prior_identity_after_completion",
+        "null_after_completion",
+        "unexpected_at_zero",
+    ),
+)
+def test_direct_sql_last_identity_mutation_is_rejected(
+    tmp_path: Path,
+    config: RFC008Config,
+    mutation: str,
+) -> None:
+    completed = mutation.endswith("after_completion")
+    if completed:
+        _, ledger_path = seed_active_collection_at_599(
+            tmp_path,
+            config,
+            first_round_id=395000,
+        )
+        with RFC008Store(ledger_path, config=config) as store:
+            with store.connection:
+                assert commit_opportunity(store, config, 395599)
+            prior = store.connection.execute(
+                """
+                SELECT snapshot_id FROM decision_snapshots
+                WHERE committed_opportunity_sequence=599
+                """
+            ).fetchone()[0]
+    else:
+        _, ledger_path = issue_and_initialize(tmp_path, config)
+        prior = "unused"
+        if mutation != "unexpected_at_zero":
+            with RFC008Store(ledger_path, config=config) as store:
+                with store.connection:
+                    assert commit_opportunity(store, config, 396000)
+                    assert commit_opportunity(store, config, 396001)
+                prior = store.connection.execute(
+                    """
+                    SELECT snapshot_id FROM decision_snapshots
+                    WHERE committed_opportunity_sequence=1
+                    """
+                ).fetchone()[0]
+    replacement = (
+        None
+        if mutation.startswith("null")
+        else prior
+        if mutation.startswith("prior_identity")
+        else "wrong-identity"
+    )
+    connection = sqlite3.connect(ledger_path)
+    with pytest.raises(sqlite3.IntegrityError):
+        connection.execute(
+            """
+            UPDATE collection_contract
+            SET last_committed_opportunity_identity=?
+            WHERE singleton=1
+            """,
+            (replacement,),
+        )
+    connection.close()
+    with RFC008Store(
+        ledger_path,
+        config=config,
+        read_only=True,
+    ) as store:
+        store.validate_collection_contract(config=config)
 
 
 def test_collector_requests_its_own_shutdown_at_600_without_downstream_work(

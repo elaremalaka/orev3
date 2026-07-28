@@ -238,6 +238,103 @@ MIGRATIONS = (
             """,
         ),
     ),
+    Migration(
+        5,
+        "committed_opportunity_sequence",
+        (
+            """
+            CREATE TABLE migration_v5_empty_snapshot_guard (
+                snapshot_count INTEGER NOT NULL CHECK(snapshot_count=0)
+            )
+            """,
+            """
+            INSERT INTO migration_v5_empty_snapshot_guard(snapshot_count)
+            SELECT COUNT(*) FROM decision_snapshots
+            """,
+            "DROP TABLE migration_v5_empty_snapshot_guard",
+            """
+            ALTER TABLE decision_snapshots
+            ADD COLUMN committed_opportunity_sequence INTEGER
+            """,
+            """
+            CREATE UNIQUE INDEX decision_snapshot_committed_sequence
+            ON decision_snapshots(committed_opportunity_sequence)
+            """,
+            "DROP TRIGGER decision_snapshot_target_guard",
+            """
+            CREATE TRIGGER decision_snapshot_target_guard
+            BEFORE INSERT ON decision_snapshots
+            BEGIN
+              SELECT CASE
+                WHEN
+                  (SELECT COUNT(*) FROM collection_contract
+                   WHERE singleton=1) != 1
+                  OR (SELECT collection_state FROM collection_contract
+                      WHERE singleton=1) NOT IN ('initialized','active')
+                  OR (SELECT committed_opportunity_count
+                      FROM collection_contract WHERE singleton=1)
+                       >= (SELECT collection_target
+                           FROM collection_contract WHERE singleton=1)
+                THEN RAISE(ABORT,'RFC-008 collection target reached')
+                WHEN
+                  NEW.committed_opportunity_sequence IS NULL
+                  OR typeof(NEW.committed_opportunity_sequence) != 'integer'
+                  OR NEW.committed_opportunity_sequence
+                       != (SELECT committed_opportunity_count+1
+                           FROM collection_contract WHERE singleton=1)
+                THEN RAISE(
+                  ABORT,
+                  'RFC-008 committed opportunity sequence mismatch'
+                )
+              END;
+            END
+            """,
+            """
+            CREATE TRIGGER collection_contract_last_identity_guard
+            BEFORE UPDATE OF last_committed_opportunity_identity
+            ON collection_contract
+            WHEN OLD.last_committed_opportunity_identity
+                 IS NOT NEW.last_committed_opportunity_identity
+            BEGIN
+              SELECT CASE
+                WHEN
+                  NEW.committed_opportunity_count=0
+                  AND NEW.last_committed_opportunity_identity IS NOT NULL
+                THEN RAISE(
+                  ABORT,
+                  'RFC-008 unexpected last opportunity identity'
+                )
+                WHEN
+                  NEW.committed_opportunity_count>0
+                  AND NOT EXISTS (
+                    SELECT 1 FROM decision_snapshots
+                    WHERE snapshot_id=NEW.last_committed_opportunity_identity
+                      AND committed_opportunity_sequence
+                           =NEW.committed_opportunity_count
+                  )
+                THEN RAISE(
+                  ABORT,
+                  'RFC-008 last opportunity identity mismatch'
+                )
+              END;
+            END
+            """,
+            "DROP TRIGGER immutable_ledger_metadata_update",
+            "UPDATE metadata SET value='5' WHERE key='schema_version'",
+            """
+            CREATE TRIGGER immutable_ledger_metadata_update
+            BEFORE UPDATE ON metadata
+            WHEN OLD.key IN (
+              'schema_version','database_family','experiment_id',
+              'configuration_fingerprint','candidate_configuration_sha256',
+              'approval_manifest_sha256'
+            )
+            BEGIN
+              SELECT RAISE(ABORT,'RFC-008 immutable ledger metadata');
+            END
+            """,
+        ),
+    ),
 )
 
 
