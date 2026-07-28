@@ -632,6 +632,28 @@ class RFC008Store:
             (session_identifier,),
         )
 
+    def reconcile_completed_session(self) -> CollectionContractStatus:
+        """Idempotently clear session metadata after durable ledger completion."""
+        contract = self.validate_collection_contract()
+        if not contract.completed:
+            raise PermissionError(
+                "RFC-008 session reconciliation requires a completed ledger"
+            )
+        session_identifier = contract.active_session_identity
+        if session_identifier is None:
+            return contract
+        now = datetime.now(timezone.utc).isoformat()
+        self.connection.execute(
+            """
+            UPDATE collector_runs
+            SET ended_at=COALESCE(ended_at,?)
+            WHERE run_id=?
+            """,
+            (now, session_identifier),
+        )
+        self.end_collection_session(session_identifier)
+        return self.validate_collection_contract()
+
     def metadata(self, key: str) -> str:
         row = self.connection.execute(
             "SELECT value FROM metadata WHERE key=?", (key,)

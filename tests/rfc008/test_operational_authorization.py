@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import multiprocessing
 import shutil
@@ -7,10 +8,13 @@ import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from threading import Event
+from types import SimpleNamespace
 
 import pytest
 from pydantic import ValidationError
 
+import orev3.rfc008.cli as rfc008_cli
+import orev3.rfc008.lifecycle as rfc008_lifecycle
 from orev3.rfc008.authorization import (
     CollectionAuthorizationRecord,
     CollectionAuthorizationStore,
@@ -46,6 +50,33 @@ def test_static_collection_authorization_literals_are_not_active_source() -> Non
     assert "RFC008_PRODUCTION_LEDGER_INITIALIZATION_AUTHORIZED" not in source
     assert "collection_authorization_valid" not in source
     assert "ledger_initialization_authorized" not in source
+
+
+def test_cross_database_completion_contract_is_explicit() -> None:
+    root = Path(__file__).parents[2]
+    rfc = (
+        root
+        / "docs/rfcs/RFC-008-PREREGISTERED-ROUND-LEVEL-STRATEGY-EVALUATION.md"
+    ).read_text(encoding="utf-8")
+    runbook = (
+        root / "docs/research/RFC-008-OPERATOR-RUNBOOK.md"
+    ).read_text(encoding="utf-8")
+    normalized_runbook = " ".join(runbook.split())
+    normalized_rfc = " ".join(rfc.split())
+    for document in (rfc, runbook):
+        assert "separate SQLite databases" in document
+        assert "Opportunity 600" in document
+        assert "opportunity 601" in document
+        assert "mandatory" in document
+        assert "idempotent" in document
+    assert (
+        "Cross-database same-transaction completion is deliberately not "
+        "part of the RFC-008 contract"
+    ) in normalized_runbook
+    assert (
+        "The temporary combination `ledger=completed` and "
+        "`authorization=active` is recoverable metadata lag"
+    ) in normalized_rfc
 
 
 def test_authorization_path_is_separate_and_sqlite_backed(
@@ -1020,6 +1051,325 @@ def test_collector_requests_its_own_shutdown_at_600_without_downstream_work(
     assert marker_path.read_bytes() == marker_before
     assert not (tmp_path / "data/freeze").exists()
     assert not (tmp_path / "data/analysis").exists()
+
+
+def test_crash_after_600_reconciliation_is_fail_closed_and_idempotent(
+    config: RFC008Config,
+    marker_file,
+    tmp_path: Path,
+) -> None:
+    marker_path, marker_digest = marker_file
+    authorization_path, ledger_path = seed_active_collection_at_599(
+        tmp_path,
+        config,
+        first_round_id=397000,
+    )
+    with RFC008Store(ledger_path, config=config) as store:
+        with store.connection:
+            assert commit_opportunity(store, config, 397599)
+        crashed = store.validate_collection_contract(config=config)
+        canonical = store.connection.execute(
+            """
+            SELECT
+              COUNT(*) AS row_count,
+              MIN(committed_opportunity_sequence) AS minimum_sequence,
+              MAX(committed_opportunity_sequence) AS maximum_sequence,
+              MAX(
+                CASE WHEN committed_opportunity_sequence=600
+                THEN snapshot_id END
+              ) AS final_identity
+            FROM decision_snapshots
+            """
+        ).fetchone()
+        assert crashed.completed
+        assert crashed.committed_opportunity_count == 600
+        assert canonical["row_count"] == 600
+        assert canonical["minimum_sequence"] == 1
+        assert canonical["maximum_sequence"] == 600
+        assert (
+            crashed.last_committed_opportunity_identity
+            == canonical["final_identity"]
+        )
+        assert crashed.active_session_identity == "crashed-session"
+        with pytest.raises(CollectionTargetReached):
+            commit_opportunity(store, config, 397600)
+        with pytest.raises(CollectionTargetReached):
+            store.begin_collection_session("new-session", recovery=True)
+        collector = RFC008Collector(
+            store=store,
+            config=config,
+            marker_path=marker_path,
+            expected_marker_sha256=marker_digest,
+        )
+        with store.connection:
+            collector.process_record(raw_record(397600, 1))
+        assert store.count("decision_snapshots") == 600
+        with store.connection:
+            reconciled = store.reconcile_completed_session()
+        assert reconciled.active_session_identity is None
+        with store.connection:
+            repeated = store.reconcile_completed_session()
+        assert repeated.active_session_identity is None
+
+    with CollectionAuthorizationStore(authorization_path) as authorization:
+        active = authorization.status()
+        assert active.lifecycle_state == "active"
+        with pytest.raises(
+            PermissionError,
+            match="reconciliation identity mismatch",
+        ):
+            authorization.reconcile_completed_ledger("wrong-ledger")
+        completed = authorization.reconcile_completed_ledger(
+            crashed.ledger_instance_identifier
+        )
+        repeated = authorization.reconcile_completed_ledger(
+            crashed.ledger_instance_identifier
+        )
+        assert completed.lifecycle_state == "completed"
+        assert repeated.lifecycle_state == "completed"
+        assert repeated.completed_at == completed.completed_at
+        assert (
+            authorization.connection.execute(
+                """
+                SELECT COUNT(*) FROM authorization_events
+                WHERE action='completed'
+                """
+            ).fetchone()[0]
+            == 1
+        )
+
+    copied = tmp_path / "copied-ledger.sqlite"
+    shutil.copy2(ledger_path, copied)
+    with pytest.raises(CollectionContractError):
+        with RFC008Store(
+            copied,
+            config=config,
+            read_only=True,
+        ) as copied_store:
+            copied_store.validate_collection_contract(config=config)
+
+
+def test_completed_recovery_command_reconciles_without_starting_collector(
+    config: RFC008Config,
+    marker_file,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    marker_path, marker_digest = marker_file
+    authorization_path, ledger_path = seed_active_collection_at_599(
+        tmp_path,
+        config,
+        first_round_id=398000,
+    )
+    with RFC008Store(ledger_path, config=config) as store:
+        with store.connection:
+            assert commit_opportunity(store, config, 398599)
+        assert store.collection_contract().active_session_identity
+
+    readiness = SimpleNamespace(
+        ready=True,
+        gate_reasons=(),
+        active_release_validation=SimpleNamespace(
+            parsed_active_approval={
+                "validated_production_marker_sha256": marker_digest,
+            },
+        ),
+    )
+    monkeypatch.setattr(
+        rfc008_cli,
+        "validate_collection_preflight",
+        lambda **_kwargs: readiness,
+    )
+
+    def provider_forbidden(*_args, **_kwargs):
+        raise AssertionError("completed recovery reached outcome providers")
+
+    monkeypatch.setattr(rfc008_cli, "RpcRecoveryProvider", provider_forbidden)
+    args = argparse.Namespace(
+        recovery=True,
+        repository_root=str(tmp_path),
+        config=str(Path("config/collection/rfc008_paper_v1.json")),
+        resolver_config=str(Path("config/collection/rfc008_resolver_v1.json")),
+        burn_in_evidence=str(tmp_path / "unused-burn.json"),
+        release_approval=str(tmp_path / "unused-approval.json"),
+        approval_manifest=str(tmp_path / "unused-manifest.json"),
+        marker=str(marker_path),
+        expected_marker_sha256=marker_digest,
+        expected_marker_sha256_file=None,
+        ledger=str(ledger_path),
+        authorization=str(authorization_path),
+    )
+
+    rfc008_cli.command_run(args)
+    first = json.loads(capsys.readouterr().out)
+    assert first["collection_state"] == "completed"
+    assert first["committed_opportunity_count"] == 600
+    assert first["authorization_state"] == "completed"
+    assert first["collector_started"] is False
+    with RFC008Store(ledger_path, config=config, read_only=True) as store:
+        assert store.collection_contract().active_session_identity is None
+        assert (
+            store.connection.execute(
+                "SELECT COUNT(*) FROM collector_runs"
+            ).fetchone()[0]
+            == 0
+        )
+
+    rfc008_cli.command_run(args)
+    second = json.loads(capsys.readouterr().out)
+    assert second == first
+    with CollectionAuthorizationStore(
+        authorization_path,
+        read_only=True,
+    ) as authorization:
+        assert authorization.status().lifecycle_state == "completed"
+
+
+def test_preflight_classifies_completed_active_authorization_as_reconciliation(
+    config: RFC008Config,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "repository"
+    ledger_relative = "data/ledger/rfc008_paper_ledger_v1.sqlite"
+    authorization_relative = (
+        "data/ledger/rfc008_collection_authorization_v1.sqlite"
+    )
+    (root / "data/ledger").mkdir(parents=True)
+    record = record_for(
+        root,
+        config,
+        ledger_name=ledger_relative,
+        authorization_name=authorization_relative,
+    )
+    authorization_path = Path(record.authorization_storage_path)
+    ledger_path = Path(record.canonical_ledger_path)
+    CollectionAuthorizationStore.issue(authorization_path, record)
+    with CollectionAuthorizationStore(authorization_path) as authorization:
+        authorization.consume_initialization()
+        create_authorized_ledger(
+            ledger_path,
+            config=config,
+            initialization=LedgerInitialization(
+                authorization=record,
+                collection_seed_cursors=(
+                    {"source_path": "/tmp/source", "source_byte_offset": 10},
+                ),
+                publication_cursors=(
+                    {"source_path": "/tmp/source", "source_byte_offset": 10},
+                ),
+            ),
+        )
+        authorization.mark_initialized()
+        authorization.consume_launch("crashed-session")
+    with RFC008Store(ledger_path, config=config) as store:
+        with store.connection:
+            store.begin_collection_session("crashed-session")
+            for round_id in range(399000, 399600):
+                assert commit_opportunity(store, config, round_id)
+
+    approval = {
+        "validated_production_marker_sha256": record.marker_sha256,
+        "validated_production_marker_sidecar_sha256": (
+            record.marker_sidecar_sha256
+        ),
+        "candidate_configuration_sha256": record.candidate_sha256,
+        "resolver_configuration_sha256": record.resolver_fingerprint,
+        "migration_set_sha256": record.migration_set_sha256,
+        "cli_sha256": record.cli_sha256,
+        "runbook_sha256": record.runbook_sha256,
+        "validated_operational_burn_in_evidence_sha256": (
+            record.burn_in_evidence_sha256
+        ),
+        "validated_operational_burn_in_ledger_sha256": (
+            record.burn_in_ledger_sha256
+        ),
+        "frozen_approval_manifest_sha256": (
+            record.approval_manifest_sha256
+        ),
+        "verification": {"external_rpc_burn_in_performed": True},
+    }
+    release = SimpleNamespace(
+        valid=True,
+        checks=(),
+        parsed_active_approval=approval,
+        active_approval_sha256=record.active_approval_sha256,
+        approval_hashes=(
+            record.active_approval_sha256,
+            record.approval_chain_anchor,
+        ),
+    )
+    monkeypatch.setattr(
+        rfc008_lifecycle,
+        "validate_active_release",
+        lambda **_kwargs: release,
+    )
+    monkeypatch.setattr(
+        rfc008_lifecycle,
+        "validate_post_marker_pre_collection_state",
+        lambda **_kwargs: {"ready": True, "failures": []},
+    )
+    monkeypatch.setattr(
+        rfc008_lifecycle,
+        "repository_release_authority",
+        lambda **_kwargs: SimpleNamespace(
+            branch=record.branch,
+            implementation_commit=record.implementation_commit,
+            predecessor_approval_sha256=(
+                record.immediate_predecessor_sha256
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        rfc008_lifecycle.subprocess,
+        "run",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            stdout=record.repository_head + "\n"
+        ),
+    )
+    paths = {
+        "repository_root": root,
+        "config_path": Path("config/collection/rfc008_paper_v1.json"),
+        "resolver_config_path": Path("unused-resolver.json"),
+        "burn_in_evidence_path": Path("unused-burn.json"),
+        "release_approval_path": Path("unused-approval.json"),
+        "approval_manifest_path": Path("unused-manifest.json"),
+        "marker_path": root / "data/ledger/rfc008_marker_v1.json",
+        "authorization_path": authorization_path,
+        "ledger_path": ledger_path,
+        "collector_running": False,
+    }
+    recovery = rfc008_lifecycle.validate_collection_preflight(
+        **paths,
+        action="recovery",
+    )
+    launch = rfc008_lifecycle.validate_collection_preflight(
+        **paths,
+        action="launch",
+    )
+    assert recovery.collection_completed
+    assert recovery.reconciliation_required
+    assert recovery.recovery_permitted
+    assert recovery.ready
+    assert "collection_completed" in recovery.gate_reasons
+    assert not launch.ready
+
+    with RFC008Store(ledger_path, config=config) as store:
+        with store.connection:
+            contract = store.reconcile_completed_session()
+    with CollectionAuthorizationStore(authorization_path) as authorization:
+        authorization.reconcile_completed_ledger(
+            contract.ledger_instance_identifier
+        )
+    repeated = rfc008_lifecycle.validate_collection_preflight(
+        **paths,
+        action="recovery",
+    )
+    assert repeated.collection_completed
+    assert not repeated.reconciliation_required
+    assert repeated.recovery_permitted
+    assert repeated.ready
 
 
 @pytest.mark.parametrize(

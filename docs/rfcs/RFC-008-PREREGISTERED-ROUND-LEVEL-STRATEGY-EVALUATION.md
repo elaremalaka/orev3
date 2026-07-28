@@ -140,6 +140,35 @@ There is no performance-based early stopping and no interim efficacy analysis.
 If fewer than 600 analyzable rounds are available at a terminal boundary, the
 result is inconclusive or operationally failed as specified in Section 14.
 
+### Cross-database completion contract
+
+The authorization record and paper ledger are intentionally stored in
+separate SQLite databases. RFC-008 does not require, and must not simulate, a
+distributed or `ATTACH DATABASE` transaction across them.
+
+Opportunity 600, its canonical decision snapshot, five arm decisions,
+committed sequence, count, last-opportunity identity, completed state, and
+completion timestamp commit atomically in the ledger database. From that
+commit onward the completed ledger is authoritative: database constraints and
+entry-point validation reject opportunity 601 and prevent a new collection
+session even if the separate authorization database still says `active`.
+
+Authorization completion and stale-session cleanup are mandatory,
+idempotent, fail-closed reconciliation. Normal `finish_run()` performs them.
+After a crash between ledger completion and normal cleanup, recovery preflight
+must report the completed ledger as requiring reconciliation; recovery must
+validate the exact ledger, release, marker, path, instance, and authorization
+bindings, clear or finalize the stale session, transition the matching
+authorization to `completed`, create no collector session, and exit completed.
+Repeated reconciliation and subsequent recovery remain completed. A copied or
+mismatched ledger cannot reconcile an authorization.
+
+The temporary combination `ledger=completed` and `authorization=active` is
+recoverable metadata lag, never permission to collect. No initialization,
+launch, recovery, collector, record-processing, or storage entry point may
+depend on authorization state alone or mutate collection state before checking
+the authoritative ledger target.
+
 ## 6. Power and precision
 
 The pre-holdout paired table for `highest_reward_top4_v1` versus

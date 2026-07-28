@@ -3,7 +3,7 @@
 Status: **Corrected implementation reference; marker and collection are not
 authorized**
 
-Runbook contract version: `rfc008-operator-runbook-v6`
+Runbook contract version: `rfc008-operator-runbook-v7`
 
 All commands run from `/Users/anisbaker/Documents/orev3`. Production commands
 below are future procedures and were not executed during implementation.
@@ -407,6 +407,25 @@ transactionally completes collection and causes a successful collector exit;
 opportunity 601 cannot be committed. Completion does not invoke freeze,
 dataset generation, analysis, or deployment.
 
+The authorization database and paper ledger are separate SQLite databases.
+Cross-database same-transaction completion is deliberately not part of the
+RFC-008 contract. Opportunity 600, the canonical snapshot and arm decisions,
+sequence, count, last identity, completed state, and completion timestamp are
+atomic within the ledger. That completed ledger immediately prevents
+opportunity 601 and is authoritative over temporarily stale `active`
+authorization metadata.
+
+Authorization completion and session cleanup are mandatory and idempotent.
+Normal `finish_run()` completes both. If a process stops after the ledger
+commit but before cleanup, `preflight-collection --action recovery` reports
+`collection_completed: true` and `reconciliation_required: true`. Running the
+same bound collection command with `--recovery` acquires the writer lease,
+revalidates the ledger and authorization binding, clears or finalizes the
+stale session, reconciles authorization to `completed`, starts no collector,
+and exits completed. Repeating recovery remains an idempotent completed exit.
+A copied, path-mismatched, instance-mismatched, release-mismatched, or
+authorization-mismatched ledger is rejected before reconciliation.
+
 ## 7. Collection monitoring
 
 ```bash
@@ -429,7 +448,11 @@ RFC-007 collector, or caffeinate wrapper. Confirm the RFC-008 writer lease is
 released, run status, and restart with `--recovery` using the exact
 authorization, marker, hash, configuration, resolver configuration, provider
 identities, and ledger. A completed ledger exits without creating another
-session.
+session. If authorization remains `active` because the process stopped after
+the opportunity-600 ledger commit, this recovery invocation performs mandatory
+completion reconciliation and stale-session cleanup before exiting. It never
+reopens the completed collection. Repeating the same recovery is safe and
+remains completed.
 
 ## 9. Future authorized final freeze
 

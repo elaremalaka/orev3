@@ -766,6 +766,8 @@ class CollectionAuthorizationStore:
             raise PermissionError(
                 "RFC-008 completed-ledger reconciliation identity mismatch"
             )
+        if current.lifecycle_state == "completed":
+            return current
         return self._transition(
             expected_state="active",
             next_state="completed",

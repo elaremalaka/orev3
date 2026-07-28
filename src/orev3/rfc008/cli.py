@@ -411,6 +411,8 @@ def command_run(args: argparse.Namespace) -> None:
                     raise PermissionError(
                         "RFC-008 completed collection cannot be relaunched"
                     )
+                with store.connection:
+                    contract = store.reconcile_completed_session()
                 completed = authorization.reconcile_completed_ledger(
                     contract.ledger_instance_identifier
                 )

@@ -57,6 +57,8 @@ class CollectionPreflightResult:
     authorization_state: str | None
     ledger_present: bool
     ledger_valid: bool
+    collection_completed: bool
+    reconciliation_required: bool
     recovery_permitted: bool
     collector_absent: bool
     gate_reasons: tuple[str, ...]
@@ -73,6 +75,8 @@ class CollectionPreflightResult:
             "authorization_state": self.authorization_state,
             "ledger_present": self.ledger_present,
             "ledger_valid": self.ledger_valid,
+            "collection_completed": self.collection_completed,
+            "reconciliation_required": self.reconciliation_required,
             "recovery_permitted": self.recovery_permitted,
             "collector_absent": self.collector_absent,
             "gate_reasons": list(self.gate_reasons),
@@ -696,7 +700,11 @@ def validate_collection_preflight(
     allowed_states = {
         "initialize": {"issued", "initialization_consumed"},
         "launch": {"initialized"},
-        "recovery": {"active"},
+        "recovery": (
+            {"active", "completed"}
+            if collection_completed
+            else {"active"}
+        ),
     }
     if authorization_state is not None and (
         authorization_state not in allowed_states[action]
@@ -733,11 +741,14 @@ def validate_collection_preflight(
     if (
         action == "recovery"
         and collection_completed
-        and authorization_state == "active"
+        and authorization_state in {"active", "completed"}
     ):
         blocking = tuple(
             value for value in blocking if value != "collection_completed"
         )
+    reconciliation_required = (
+        collection_completed and authorization_state == "active"
+    )
     return CollectionPreflightResult(
         active_release_validation=active,
         lifecycle_report=lifecycle,
@@ -746,7 +757,13 @@ def validate_collection_preflight(
         authorization_state=authorization_state,
         ledger_present=ledger_present,
         ledger_valid=ledger_valid,
-        recovery_permitted=authorization_state == "active" and not collector_running,
+        collection_completed=collection_completed,
+        reconciliation_required=reconciliation_required,
+        recovery_permitted=(
+            action == "recovery"
+            and authorization_state in {"active", "completed"}
+            and not collector_running
+        ),
         collector_absent=not collector_running,
         gate_reasons=tuple(dict.fromkeys(reasons)),
         ready=not blocking and not collector_running and (
