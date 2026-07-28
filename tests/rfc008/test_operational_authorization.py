@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import multiprocessing
 import shutil
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Event
 
 import pytest
 from pydantic import ValidationError
@@ -144,6 +146,51 @@ def commit_opportunity(
     return store.insert_snapshot_and_decisions(
         snapshot, build_decisions(snapshot, config)
     )
+
+
+def seed_active_collection_at_599(
+    tmp_path: Path,
+    config: RFC008Config,
+    *,
+    first_round_id: int,
+) -> tuple[Path, Path]:
+    authorization_path, ledger_path = issue_and_initialize(tmp_path, config)
+    with CollectionAuthorizationStore(authorization_path) as authorization:
+        authorization.consume_launch("crashed-session")
+    with RFC008Store(ledger_path, config=config) as store:
+        with store.connection:
+            store.begin_collection_session("crashed-session")
+            for round_id in range(first_round_id, first_round_id + 599):
+                assert commit_opportunity(store, config, round_id)
+        assert store.collection_contract().committed_opportunity_count == 599
+    return authorization_path, ledger_path
+
+
+def process_final_opportunity(
+    ledger_path: str,
+    config_path: str,
+    round_id: int,
+    start: multiprocessing.synchronize.Event,
+    ready: multiprocessing.queues.Queue,
+    results: multiprocessing.queues.Queue,
+) -> None:
+    try:
+        config = RFC008Config.from_path(config_path)
+        with RFC008Store(ledger_path, config=config) as store:
+            ready.put("ready")
+            if not start.wait(timeout=10):
+                results.put("start_timeout")
+                return
+            try:
+                with store.connection:
+                    commit_opportunity(store, config, round_id)
+                results.put("committed")
+            except CollectionTargetReached:
+                results.put("target_reached")
+            except CollectionContractError:
+                results.put("contract_mismatch")
+    except Exception as exc:
+        results.put(f"unexpected:{type(exc).__name__}:{exc}")
 
 
 def test_authorization_is_single_use_and_transition_history_is_tamper_evident(
@@ -479,33 +526,89 @@ def test_recovery_preserves_target_count_and_replaces_only_stale_session(
         assert contract.active_session_identity == "recovery-session"
 
 
-def test_target_600_is_atomic_concurrent_and_restart_safe(
+def test_validator_uses_one_snapshot_across_final_commit(
     tmp_path: Path,
     config: RFC008Config,
 ) -> None:
-    authorization_path, ledger_path = issue_and_initialize(tmp_path, config)
-    with CollectionAuthorizationStore(authorization_path) as authorization:
-        authorization.consume_launch("crashed-session")
-    with RFC008Store(ledger_path, config=config) as store:
-        with store.connection:
-            store.begin_collection_session("crashed-session")
-            for round_id in range(351000, 351599):
-                assert commit_opportunity(store, config, round_id)
-        assert store.collection_contract().committed_opportunity_count == 599
+    _, ledger_path = seed_active_collection_at_599(
+        tmp_path,
+        config,
+        first_round_id=350500,
+    )
+    contract_read = Event()
+    writer_finished = Event()
+
+    def commit_final_opportunity() -> None:
+        assert contract_read.wait(timeout=10)
+        try:
+            with RFC008Store(ledger_path, config=config) as writer:
+                with writer.connection:
+                    assert commit_opportunity(writer, config, 351099)
+        finally:
+            writer_finished.set()
+
+    with (
+        RFC008Store(ledger_path, config=config) as validator,
+        ThreadPoolExecutor(max_workers=1) as executor,
+    ):
+        original = validator.collection_contract
+
+        def pause_after_contract_read():
+            contract = original()
+            contract_read.set()
+            assert writer_finished.wait(timeout=10)
+            return contract
+
+        validator.collection_contract = pause_after_contract_read
+        future = executor.submit(commit_final_opportunity)
+        before_commit = validator.validate_collection_contract(config=config)
+        future.result(timeout=10)
+        validator.collection_contract = original
+        after_commit = validator.validate_collection_contract(config=config)
+
+    assert before_commit.committed_opportunity_count == 599
+    assert before_commit.collection_state == "active"
+    assert after_commit.committed_opportunity_count == 600
+    assert after_commit.collection_state == "completed"
+    assert after_commit.completion_timestamp is not None
+    assert after_commit.last_committed_opportunity_identity is not None
+
+
+@pytest.mark.parametrize("stress_iteration", range(5))
+def test_target_600_thread_race_is_atomic_and_restart_safe(
+    tmp_path: Path,
+    config: RFC008Config,
+    stress_iteration: int,
+) -> None:
+    authorization_path, ledger_path = seed_active_collection_at_599(
+        tmp_path,
+        config,
+        first_round_id=352000 + stress_iteration * 1000,
+    )
+    start = Event()
 
     def attempt(round_id: int) -> str:
-        try:
-            with RFC008Store(ledger_path, config=config) as store:
+        with RFC008Store(ledger_path, config=config) as store:
+            assert start.wait(timeout=10)
+            try:
                 with store.connection:
                     commit_opportunity(store, config, round_id)
                 return "committed"
-        except CollectionTargetReached:
-            return "target_rejected"
+            except CollectionTargetReached:
+                return "target_reached"
+            except CollectionContractError:
+                return "contract_mismatch"
 
     with ThreadPoolExecutor(max_workers=2) as executor:
-        results = list(executor.map(attempt, (352000, 352001)))
+        futures = (
+            executor.submit(attempt, 360000),
+            executor.submit(attempt, 360001),
+        )
+        start.set()
+        results = [future.result(timeout=10) for future in futures]
     assert results.count("committed") == 1
-    assert results.count("target_rejected") == 1
+    assert results.count("target_reached") == 1
+    assert results.count("contract_mismatch") == 0
     with RFC008Store(
         ledger_path, config=config, read_only=True
     ) as store:
@@ -523,6 +626,59 @@ def test_target_600_is_atomic_concurrent_and_restart_safe(
         with pytest.raises(CollectionTargetReached):
             commit_opportunity(store, config, 352002)
         assert store.collection_contract().committed_opportunity_count == 600
+
+
+@pytest.mark.parametrize("stress_iteration", range(3))
+def test_target_600_process_race_has_one_winner(
+    tmp_path: Path,
+    config: RFC008Config,
+    stress_iteration: int,
+) -> None:
+    _, ledger_path = seed_active_collection_at_599(
+        tmp_path,
+        config,
+        first_round_id=370000 + stress_iteration * 1000,
+    )
+    context = multiprocessing.get_context("fork")
+    start = context.Event()
+    ready = context.Queue()
+    results = context.Queue()
+    config_path = str(
+        Path(__file__).parents[2] / "config/collection/rfc008_paper_v1.json"
+    )
+    processes = tuple(
+        context.Process(
+            target=process_final_opportunity,
+            args=(
+                str(ledger_path),
+                config_path,
+                round_id,
+                start,
+                ready,
+                results,
+            ),
+        )
+        for round_id in (380000, 380001)
+    )
+    for process in processes:
+        process.start()
+    assert [ready.get(timeout=10) for _ in processes] == ["ready", "ready"]
+    start.set()
+    outcomes = [results.get(timeout=10) for _ in processes]
+    for process in processes:
+        process.join(timeout=10)
+        assert process.exitcode == 0
+
+    assert outcomes.count("committed") == 1
+    assert outcomes.count("target_reached") == 1
+    assert outcomes.count("contract_mismatch") == 0
+    with RFC008Store(
+        ledger_path, config=config, read_only=True
+    ) as store:
+        contract = store.validate_collection_contract(config=config)
+        assert contract.committed_opportunity_count == 600
+        assert contract.collection_state == "completed"
+        assert store.count("decision_snapshots") == 600
 
 
 def test_collector_requests_its_own_shutdown_at_600_without_downstream_work(

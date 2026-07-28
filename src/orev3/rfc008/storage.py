@@ -415,6 +415,28 @@ class RFC008Store:
         config: RFC008Config | None = None,
         authorization: CollectionAuthorizationRecord | None = None,
     ) -> CollectionContractStatus:
+        owns_transaction = not self.connection.in_transaction
+        if owns_transaction:
+            self.connection.execute("BEGIN")
+        try:
+            contract = self._validate_collection_contract_snapshot(
+                config=config,
+                authorization=authorization,
+            )
+            if owns_transaction:
+                self.connection.commit()
+            return contract
+        except Exception:
+            if owns_transaction:
+                self.connection.rollback()
+            raise
+
+    def _validate_collection_contract_snapshot(
+        self,
+        *,
+        config: RFC008Config | None,
+        authorization: CollectionAuthorizationRecord | None,
+    ) -> CollectionContractStatus:
         contract = self.collection_contract()
         failures: list[str] = []
         if contract.ledger_schema_version != LEDGER_SCHEMA_VERSION:
