@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pytest
 
-import orev3.rfc008.lifecycle as lifecycle_module
 from orev3.rfc008.lifecycle import (
     capture_marker_pair,
     marker_pair_unchanged,
@@ -18,10 +17,15 @@ from orev3.rfc008.lifecycle import (
 from orev3.rfc008.storage import strict_json
 
 from . import test_marker_publication_race as race
+from .test_preflight_release import fixture_release_validation
 
 
 def lifecycle_environment(tmp_path: Path, monkeypatch):
     environment = race.build_environment(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        "orev3.rfc008.lifecycle.validate_active_release",
+        lambda **kwargs: fixture_release_validation(environment["release"]),
+    )
     environment["marker"] = (
         tmp_path / "data/ledger/rfc008_marker_v1.json"
     )
@@ -39,6 +43,7 @@ def validate(environment, tmp_path, **updates):
         "burn_in_evidence_path": environment["burn"],
         "release_approval_path": environment["release"],
         "approval_manifest_path": race.APPROVAL,
+        "resolver_config_path": environment["resolver_path"],
         "expected_implementation_commit": "a" * 40,
         "expected_predecessor_sha256": "0" * 64,
     }
@@ -58,37 +63,6 @@ def rewrite_marker(environment, mutate):
 
 def checks(report):
     return {failure["check"] for failure in report["failures"]}
-
-
-def test_approval_only_child_head_resolves_exact_parent(
-    tmp_path,
-    monkeypatch,
-) -> None:
-    release = tmp_path / "docs/research/rfc008/release.json"
-    release.parent.mkdir(parents=True)
-    release.write_text("{}\n")
-    previous = b'{"prior":true}\n'
-
-    def git_output(_root, *arguments):
-        if arguments == ("rev-parse", "HEAD"):
-            return b"2" * 40 + b"\n"
-        if arguments == ("rev-parse", "HEAD^"):
-            return b"1" * 40 + b"\n"
-        if arguments[0] == "diff-tree":
-            return b"docs/research/rfc008/release.json\n"
-        if arguments[0] == "show":
-            return previous
-        raise AssertionError(arguments)
-
-    monkeypatch.setattr(lifecycle_module, "_git_output", git_output)
-    implementation, predecessor = (
-        lifecycle_module._repository_approval_expectations(
-            repository_root=tmp_path,
-            release_path=release,
-        )
-    )
-    assert implementation == "1" * 40
-    assert predecessor == hashlib.sha256(previous).hexdigest()
 
 
 def test_pre_marker_lifecycle_is_explicit(tmp_path) -> None:
@@ -196,7 +170,12 @@ def test_marker_corruption_fails_closed(
         )
     report = validate(environment, tmp_path)
     assert not report["ready"]
-    assert "valid_immutable_marker_pair" in checks(report)
+    expected = (
+        "marker_binding_valid"
+        if corruption == "approval_binding"
+        else "valid_immutable_marker_pair"
+    )
+    assert expected in checks(report)
 
 
 def test_unexpected_second_marker_fails(tmp_path, monkeypatch) -> None:

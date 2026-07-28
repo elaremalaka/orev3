@@ -220,7 +220,17 @@ def test_cli_requires_explicit_commands_and_arguments() -> None:
             "a" * 64,
             "--ledger",
             "ledger.sqlite",
+            "--repository-root",
+            ".",
+            "--burn-in-evidence",
+            "burn-in.json",
+            "--release-approval",
+            "release.json",
+            "--approval-manifest",
+            "approval.json",
             "--authorization-token",
+            "not-authorized",
+            "--ledger-initialization-token",
             "not-authorized",
         ]
     )

@@ -30,6 +30,7 @@ from .test_preflight_release import (
     NOW,
     RESOLVER_CONFIG,
     rewrite_burn,
+    fixture_release_validation,
     write_release_and_burn_in,
 )
 
@@ -117,6 +118,10 @@ def build_environment(directory: Path, monkeypatch):
     monkeypatch.setattr(
         "orev3.rfc008.marker.repository_state",
         lambda root: fixed_repository(),
+    )
+    monkeypatch.setattr(
+        "orev3.rfc008.marker.validate_active_release",
+        lambda **kwargs: fixture_release_validation(release),
     )
     return {
         "source": source,

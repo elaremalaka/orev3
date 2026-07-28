@@ -184,7 +184,12 @@ def test_provider_disagreement_conflicts_and_malformed_retries(store, config):
 
 def test_fixture_burn_in_proves_restart_retry_conflict_and_provenance(
     tmp_path,
+    monkeypatch,
 ):
+    monkeypatch.setattr(
+        "orev3.rfc008.burnin.validate_production_isolation",
+        lambda **kwargs: {"ready": True},
+    )
     result = run_resolver_burn_in(
         ledger_path=tmp_path / "resolver_burn_in.sqlite",
         output_path=tmp_path / "resolver_burn_in.json",
@@ -271,6 +276,10 @@ def test_rpc_accounting_counts_failures_retries_and_reconciles():
 def test_synthetic_operational_five_round_evidence_and_rpc_counts(
     tmp_path, monkeypatch
 ):
+    monkeypatch.setattr(
+        "orev3.rfc008.burnin.validate_production_isolation",
+        lambda **kwargs: {"ready": True},
+    )
     resolver_config = ResolverConfig.from_path(RESOLVER_CONFIG_PATH)
     boundary_round = 346300
     selected = select_operational_rounds(boundary_round)

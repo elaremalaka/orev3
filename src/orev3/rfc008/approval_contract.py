@@ -41,6 +41,7 @@ class ApprovalField:
     generation_behavior: str
     duplicate_keys_possible_in_raw_json: bool
     participates_in_approval_hash: bool
+    historical_invariant: bool = False
     generated: bool = True
     documented: bool = True
 
@@ -157,6 +158,58 @@ SCHEMA2_APPROVAL_FIELDS: tuple[ApprovalField, ...] = (
     _field("authorization_boundary.wallet_access_authorized", "authorization", "boolean", "explicit_false", "release_wallet_authorization_false"),
     _field("authorization_boundary.live_action_authorized", "authorization", "boolean", "explicit_false", "release_live_authorization_false"),
     _field("authorization_boundary.transaction_authorized", "authorization", "boolean", "explicit_false", "release_transaction_authorization_false", applicability="active"),
+)
+
+# These are the only schema-2 values that remain invariant while traversing an
+# immutable, hash-addressed historical approval chain.  Keeping this metadata
+# beside the field registry prevents historical compatibility code from
+# defining a second active field policy.
+_HISTORICAL_INVARIANT_PATHS = {
+    "rfc_identifier",
+    "repository_branch",
+    "approval_commit_policy",
+    "validated_production_marker_sha256",
+    "validated_production_marker_sidecar_sha256",
+    "validated_production_marker_repository_commit",
+    "validated_production_marker_release_approval_sha256",
+    "validated_production_marker_collection_authorized",
+    "validated_operational_burn_in_evidence_sha256",
+    "validated_operational_burn_in_ledger_sha256",
+    "validated_operational_burn_in_repository_commit",
+    "frozen_approval_manifest_sha256",
+    "configuration_fingerprint",
+    "candidate_configuration_sha256",
+    "resolver_configuration_sha256",
+    "resolver_version",
+    "decoder_version",
+    "minimum_operational_sample_size",
+    "verification.fixture_resolver_burn_in_required",
+    "verification.operational_resolver_burn_in_required_before_marker",
+    "verification.external_rpc_burn_in_performed",
+    "authorization_boundary.implementation_authorized",
+    "authorization_boundary.fixture_burn_in_authorized",
+    "authorization_boundary.operational_rpc_burn_in_authorized",
+    "authorization_boundary.marker_creation_authorized",
+    "authorization_boundary.collection_authorized",
+    "authorization_boundary.wallet_access_authorized",
+    "authorization_boundary.live_action_authorized",
+    "authorization_boundary.transaction_authorized",
+}
+_HISTORICAL_INVARIANT_PATHS.update(
+    field.path
+    for field in SCHEMA2_APPROVAL_FIELDS
+    if field.path.startswith("protected_process_policy.")
+)
+SCHEMA2_APPROVAL_FIELDS = tuple(
+    ApprovalField(
+        **{
+            **asdict(field),
+            "historical_invariant": (
+                field.path in _HISTORICAL_INVARIANT_PATHS
+            ),
+        }
+    )
+    for field in SCHEMA2_APPROVAL_FIELDS
 )
 
 
@@ -284,6 +337,9 @@ def authority_manifest() -> dict[str, Any]:
     fields = []
     for field in SCHEMA2_APPROVAL_FIELDS:
         entry = asdict(field)
+        # Historical traversal metadata is executable compatibility policy,
+        # not a new schema-2 field-contract dimension.
+        entry.pop("historical_invariant")
         entry["allowed_schema_versions"] = list(
             entry["allowed_schema_versions"]
         )

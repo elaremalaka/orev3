@@ -19,7 +19,7 @@ def test_collection_command_fails_before_io_without_authorization() -> None:
         ledger="/does/not/exist",
         create_new_ledger=True,
     )
-    with pytest.raises(PermissionError, match="collection authorization"):
+    with pytest.raises(PermissionError, match="collection preflight"):
         command_run(args)
 
 

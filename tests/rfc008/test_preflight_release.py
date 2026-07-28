@@ -13,6 +13,10 @@ from orev3.rfc008.marker import (
 )
 from orev3.rfc008.migrations import migration_set_hash
 from orev3.rfc008.resolver_config import ResolverConfig
+from orev3.rfc008.release_validation import (
+    ActiveReleaseValidationResult,
+    ReleaseValidationCheck,
+)
 from orev3.rfc008.schemas import (
     REQUIRED_PROCESS_COMMAND_IDENTITIES,
     REQUIRED_PROTECTED_PROCESSES,
@@ -33,6 +37,31 @@ ROOT = CONFIG_PATH.parents[2]
 APPROVAL = ROOT / "docs/research/rfc008/approval_manifest_v1.json"
 RESOLVER_CONFIG = CONFIG_PATH.parent / "rfc008_resolver_v1.json"
 NOW = datetime(2026, 7, 25, 12, tzinfo=timezone.utc)
+
+
+def fixture_release_validation(path: Path) -> ActiveReleaseValidationResult:
+    value = json.loads(path.read_text())
+    return ActiveReleaseValidationResult(
+        parsed_active_approval=value,
+        active_approval_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+        schema_valid=True,
+        artifact_identity_valid=True,
+        field_contract_valid=True,
+        derived_field_valid=True,
+        policy_field_valid=True,
+        authorization_field_valid=True,
+        approval_chain_valid=True,
+        marker_binding_valid=True,
+        checks=(
+            ReleaseValidationCheck(
+                "fixture_marker_mechanics_release_validation",
+                True,
+                "Trusted fixture result isolates marker mechanics",
+            ),
+        ),
+        approval_hashes=(hashlib.sha256(path.read_bytes()).hexdigest(),),
+        valid=True,
+    )
 
 
 def write_release_and_burn_in(tmp_path, config, *, created_at=NOW):
@@ -425,6 +454,10 @@ def run_preflight(tmp_path, config, monkeypatch, release, burn, **updates):
             append_bytes_after_boundary=0,
         ),
     )
+    monkeypatch.setattr(
+        "orev3.rfc008.marker.validate_active_release",
+        lambda **kwargs: fixture_release_validation(release),
+    )
     return marker_preflight(
         config_path=CONFIG_PATH,
         resolver_config_path=RESOLVER_CONFIG,
@@ -475,7 +508,6 @@ def test_truthful_preflight_ready_and_structured_failures(
     ("repository_update", "expected_check"),
     (
         ({"branch": "wrong"}, "branch_matches"),
-        ({"commit": "8" * 40, "parent": "7" * 40}, "head_approved"),
         ({"tracked_clean": False}, "tracked_worktree_clean"),
         ({"untracked_clean": False}, "untracked_worktree_clean"),
     ),

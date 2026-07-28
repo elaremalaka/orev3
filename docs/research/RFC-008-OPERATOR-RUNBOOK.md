@@ -304,8 +304,39 @@ closed.
 Schema-1 approvals are legacy compatibility records only. They are accepted
 solely when reached by immutable SHA-256 links while walking a schema-2
 approval chain to the approval embedded in the production marker. A schema-1
-document cannot be used as the active release approval unless it is that
-marker-anchored terminal document.
+document is never accepted as the active release approval.
+
+### Shared active release validation
+
+`validate_active_release` is the single active acceptance entry point used by
+marker preflight, lifecycle validation, collection preflight, collection
+startup, and the CLI. Its immutable result includes the parsed approval and
+hash plus schema, artifact, field-contract, derived-field, policy,
+authorization, chain, and marker-binding verdicts. Callers may add lifecycle
+or launch checks, but cannot suppress an active-release check.
+
+All 17 derived fields are recomputed: implementation and predecessor from the
+Git approval relationship; marker, sidecar, burn-in evidence, burn-in ledger,
+approval manifest, CLI, and runbook from bytes; marker repository, marker
+approval, candidate identity, and burn-in repository from their validated
+documents; experiment and resolver identities from parsed configuration;
+migrations from the ordered canonical migration registry with source bytes
+also matched to the implementation commit; and operational RPC performance
+from the validated burn-in evidence. A same-name substituted ledger, a
+same-checkout CLI or runbook edit, or any migration-source edit fails closed.
+
+Before any separately authorized collection start, run the read-only gate:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli preflight-collection \
+  --config config/collection/rfc008_paper_v1.json \
+  --resolver-config config/collection/rfc008_resolver_v1.json \
+  --marker data/ledger/rfc008_marker_v1.json \
+  --repository-root . \
+  --burn-in-evidence data/resolver/rfc008_operational_burn_in_v1.json \
+  --release-approval docs/research/rfc008/release_implementation_approval_v1.json \
+  --approval-manifest docs/research/rfc008/approval_manifest_v1.json
+```
 
 ## 6. Future collection start
 
@@ -320,6 +351,11 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli run \
   --expected-marker-sha256-file data/ledger/rfc008_marker_v1.json.sha256 \
   --ledger data/ledger/rfc008_paper_ledger_v1.sqlite \
   --create-new-ledger \
+  --repository-root . \
+  --burn-in-evidence data/resolver/rfc008_operational_burn_in_v1.json \
+  --release-approval docs/research/rfc008/release_implementation_approval_v1.json \
+  --approval-manifest docs/research/rfc008/approval_manifest_v1.json \
+  --ledger-initialization-token RFC008_PRODUCTION_LEDGER_INITIALIZATION_AUTHORIZED \
   --authorization-token RFC008_HOLDOUT_COLLECTION_AUTHORIZED
 ```
 

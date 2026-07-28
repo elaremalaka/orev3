@@ -2,17 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import stat
-import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from orev3.rfc008.approval import (
-    CLI_SHA256,
-    RUNBOOK_SHA256,
-    ReleaseApprovalPolicy,
-    validate_release_approval_chain,
-)
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.marker import (
     HistoricalSourceBoundaryError,
@@ -24,6 +17,10 @@ from orev3.rfc008.schemas import (
     BurnInSourceBoundary,
     ExperimentMarker,
     ResolverBurnInEvidence,
+)
+from orev3.rfc008.release_validation import (
+    ActiveReleaseValidationResult,
+    validate_active_release,
 )
 
 
@@ -42,6 +39,34 @@ class FileSnapshot:
 class MarkerPairSnapshot:
     marker: FileSnapshot
     sidecar: FileSnapshot
+
+
+@dataclass(frozen=True)
+class CollectionPreflightResult:
+    active_release_validation: ActiveReleaseValidationResult
+    lifecycle_report: dict[str, Any]
+    collection_authorization_valid: bool
+    ledger_initialization_authorized: bool
+    collector_absent: bool
+    gate_reasons: tuple[str, ...]
+    ready: bool
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "active_release_validation": (
+                self.active_release_validation.as_dict()
+            ),
+            "lifecycle": self.lifecycle_report,
+            "collection_authorization_valid": (
+                self.collection_authorization_valid
+            ),
+            "ledger_initialization_authorized": (
+                self.ledger_initialization_authorized
+            ),
+            "collector_absent": self.collector_absent,
+            "gate_reasons": list(self.gate_reasons),
+            "ready": self.ready,
+        }
 
 
 def _file_snapshot(path: Path) -> FileSnapshot:
@@ -172,85 +197,6 @@ def _read_sidecar(sidecar: Path, marker: Path) -> str:
     return digest
 
 
-def _git_output(root: Path, *arguments: str) -> bytes:
-    completed = subprocess.run(
-        ("git", *arguments),
-        cwd=root,
-        check=True,
-        capture_output=True,
-    )
-    return completed.stdout
-
-
-def _repository_approval_expectations(
-    *,
-    repository_root: Path,
-    release_path: Path,
-) -> tuple[str, str]:
-    head = _git_output(repository_root, "rev-parse", "HEAD").decode().strip()
-    parent = _git_output(repository_root, "rev-parse", "HEAD^").decode().strip()
-    changed = {
-        value
-        for value in _git_output(
-            repository_root,
-            "diff-tree",
-            "--no-commit-id",
-            "--name-only",
-            "-r",
-            "HEAD",
-        )
-        .decode()
-        .splitlines()
-        if value
-    }
-    release_relative = str(release_path.resolve().relative_to(repository_root))
-    history_relative = str(
-        release_path.parent.resolve().relative_to(repository_root)
-        / "release_approval_history"
-    )
-    approval_only = bool(changed) and all(
-        value == release_relative or value.startswith(f"{history_relative}/")
-        for value in changed
-    )
-    implementation = parent if approval_only else head
-    previous = _git_output(
-        repository_root,
-        "show",
-        f"{implementation}:{release_relative}",
-    )
-    predecessor = hashlib.sha256(previous).hexdigest()
-    return implementation, predecessor
-
-
-def _repository_approval_history(
-    *,
-    repository_root: Path,
-    release_path: Path,
-) -> dict[str, bytes]:
-    release_relative = str(release_path.resolve().relative_to(repository_root))
-    commits = (
-        _git_output(
-            repository_root,
-            "log",
-            "--format=%H",
-            "--all",
-            "--",
-            release_relative,
-        )
-        .decode()
-        .splitlines()
-    )
-    documents: dict[str, bytes] = {}
-    for commit in commits:
-        raw = _git_output(
-            repository_root,
-            "show",
-            f"{commit}:{release_relative}",
-        )
-        documents[hashlib.sha256(raw).hexdigest()] = raw
-    return documents
-
-
 def _historical_boundary_matches(
     marker: ExperimentMarker,
     boundary: BurnInSourceBoundary,
@@ -297,6 +243,7 @@ def validate_post_marker_pre_collection_state(
     burn_in_evidence_path: str | Path,
     release_approval_path: str | Path,
     approval_manifest_path: str | Path,
+    resolver_config_path: str | Path | None = None,
     collector_running: bool = False,
     expected_snapshot: MarkerPairSnapshot | None = None,
     expected_implementation_commit: str | None = None,
@@ -312,6 +259,7 @@ def validate_post_marker_pre_collection_state(
     sidecar_sha256: str | None = None
     historical: dict[str, object] | None = None
     seed_cursors: tuple[dict[str, object], ...] = ()
+    release_validation = None
 
     candidates = tuple(marker_path.parent.glob("rfc008_marker*.json"))
     if candidates != (marker_path,):
@@ -370,76 +318,46 @@ def validate_post_marker_pre_collection_state(
             if sha256_file(approval_path) != marker.approval_manifest_sha256:
                 raise ValueError("Frozen approval manifest binding mismatch")
             release_path = Path(release_approval_path)
-            expected_implementation = expected_implementation_commit
-            expected_predecessor = expected_predecessor_sha256
-            if (
-                expected_implementation is None
-                or expected_predecessor is None
-            ):
-                if sha256_file(release_path) == marker.release_approval_sha256:
-                    expected_implementation = marker.repository_commit
-                    expected_predecessor = marker.release_approval_sha256
-                else:
-                    expected_implementation, expected_predecessor = (
-                        _repository_approval_expectations(
-                            repository_root=root,
-                            release_path=release_path,
-                        )
-                    )
-            chain = validate_release_approval_chain(
-                release_path=release_path,
-                history_directory=(
-                    release_path.parent / "release_approval_history"
+            release_validation = validate_active_release(
+                repository_root=root,
+                config_path=config_path,
+                resolver_config_path=(
+                    resolver_config_path
+                    or root / "config/collection/rfc008_resolver_v1.json"
                 ),
-                trusted_approval_documents=(
-                    {}
-                    if sha256_file(release_path)
-                    == marker.release_approval_sha256
-                    or not (root / ".git").exists()
-                    else _repository_approval_history(
-                        repository_root=root,
-                        release_path=release_path,
-                    )
+                burn_in_evidence_path=evidence_path,
+                release_approval_path=release_path,
+                approval_manifest_path=approval_path,
+                marker_path=marker_path,
+                expected_implementation_commit=(
+                    expected_implementation_commit
                 ),
-                policy=ReleaseApprovalPolicy(
-                    expected_implementation_commit=expected_implementation,
-                    expected_predecessor_sha256=expected_predecessor,
-                    marker_sha256=marker_sha256,
-                    marker_sidecar_sha256=sidecar_sha256,
-                    marker_original_approval_sha256=(
-                        marker.release_approval_sha256
-                    ),
-                    marker_repository_commit=marker.repository_commit,
-                    configuration_fingerprint=(
-                        marker.configuration_fingerprint
-                    ),
-                    candidate_configuration_sha256=(
-                        marker.candidate_configuration_sha256
-                    ),
-                    resolver_configuration_sha256=(
-                        marker.resolver_configuration_sha256
-                    ),
-                    burn_in_evidence_sha256=(
-                        marker.resolver_burn_in_evidence_sha256
-                    ),
-                    burn_in_ledger_sha256=evidence.ledger_sha256,
-                    cli_sha256=CLI_SHA256,
-                    runbook_sha256=RUNBOOK_SHA256,
-                    burn_in_repository_commit=evidence.repository_commit,
-                    resolver_version=evidence.resolver_version,
-                    decoder_version=evidence.decoder_version,
-                    external_rpc_burn_in_performed=(
-                        evidence.mode == "operational"
-                        and evidence.real_rpc_request_counts.total > 0
-                    ),
+                expected_predecessor_sha256=(
+                    expected_predecessor_sha256
                 ),
             )
-            failures.extend(chain["failures"])
-            if not chain["valid"]:
+            failures.extend(
+                {
+                    "check": value.check,
+                    "reason": value.reason,
+                }
+                for value in release_validation.checks
+                if not value.passed
+            )
+            if not release_validation.valid:
                 _failure(
                     failures,
-                    "valid_immutable_marker_pair",
-                    "Release approval chain does not preserve the marker",
+                    "active_release_validation_valid",
+                    "Shared active release validation failed",
+                )
+            if (
+                marker.release_approval_sha256
+                not in release_validation.approval_hashes
+            ):
+                _failure(
+                    failures,
+                    "marker_binding_valid",
+                    "Marker release approval is not in the validated chain",
                 )
             seed_cursors = _collection_seed_cursors(marker)
             historical_seeds = tuple(
@@ -524,6 +442,32 @@ def validate_post_marker_pre_collection_state(
         "marker_publication_source_cursors": list(seed_cursors),
         "collection_seed_cursors": list(seed_cursors),
         "cursor_identities_required_equal": False,
+        "active_release_validation": (
+            release_validation.as_dict()
+            if release_validation is not None
+            else None
+        ),
+        "active_release_validation_valid": (
+            release_validation.valid
+            if release_validation is not None
+            else False
+        ),
+        "derived_sources_current": (
+            release_validation.derived_field_valid
+            if release_validation is not None
+            else False
+        ),
+        "approval_chain_valid": (
+            release_validation.approval_chain_valid
+            if release_validation is not None
+            else False
+        ),
+        "marker_binding_valid": (
+            release_validation.marker_binding_valid
+            if release_validation is not None
+            else False
+        ),
+        "post_marker_state_valid": not failures,
         "marker_pair_snapshot": asdict(current_snapshot),
         **downstream,
     }
@@ -563,4 +507,74 @@ def validate_production_isolation(
             root / "docs/research/rfc008/approval_manifest_v1.json"
         ),
         expected_snapshot=expected_snapshot,
+    )
+
+
+def validate_collection_preflight(
+    *,
+    repository_root: str | Path,
+    config_path: str | Path,
+    resolver_config_path: str | Path,
+    burn_in_evidence_path: str | Path,
+    release_approval_path: str | Path,
+    approval_manifest_path: str | Path,
+    marker_path: str | Path,
+    collection_authorization_valid: bool,
+    ledger_initialization_authorized: bool,
+    collector_running: bool = False,
+) -> CollectionPreflightResult:
+    active = validate_active_release(
+        repository_root=repository_root,
+        config_path=config_path,
+        resolver_config_path=resolver_config_path,
+        burn_in_evidence_path=burn_in_evidence_path,
+        release_approval_path=release_approval_path,
+        approval_manifest_path=approval_manifest_path,
+        marker_path=marker_path,
+    )
+    lifecycle = validate_post_marker_pre_collection_state(
+        repository_root=repository_root,
+        config_path=config_path,
+        resolver_config_path=resolver_config_path,
+        burn_in_evidence_path=burn_in_evidence_path,
+        release_approval_path=release_approval_path,
+        approval_manifest_path=approval_manifest_path,
+        collector_running=collector_running,
+    )
+    reasons: list[str] = []
+    canonical_marker = (
+        Path(repository_root).resolve()
+        / "data/ledger/rfc008_marker_v1.json"
+    )
+    if Path(marker_path).resolve() != canonical_marker:
+        reasons.append("canonical_production_marker_path_required")
+    if not active.valid:
+        reasons.extend(
+            value.check for value in active.checks if not value.passed
+        )
+    if not lifecycle["ready"]:
+        reasons.extend(
+            str(value["check"]) for value in lifecycle["failures"]
+        )
+    if not collection_authorization_valid:
+        reasons.append("separate_collection_authorization_required")
+    if not ledger_initialization_authorized:
+        reasons.append(
+            "production_ledger_initialization_requires_separately_authorized_run"
+        )
+    if not collector_running:
+        reasons.append("collector_absent_by_design")
+    blocking = tuple(
+        reason
+        for reason in reasons
+        if reason != "collector_absent_by_design"
+    )
+    return CollectionPreflightResult(
+        active_release_validation=active,
+        lifecycle_report=lifecycle,
+        collection_authorization_valid=collection_authorization_valid,
+        ledger_initialization_authorized=ledger_initialization_authorized,
+        collector_absent=not collector_running,
+        gate_reasons=tuple(dict.fromkeys(reasons)),
+        ready=not blocking and not collector_running,
     )

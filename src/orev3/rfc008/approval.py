@@ -14,7 +14,6 @@ from orev3.rfc008.approval_contract import (
     get_path,
     leaf_paths,
 )
-from orev3.rfc008.marker import sha256_file
 
 
 RELEASE_ARTIFACT_TYPE = "rfc008_implementation_release_approval"
@@ -30,11 +29,7 @@ DATABASE_SCHEMA_VERSION = 3
 MARKER_SCHEMA_VERSION = 2
 BURN_IN_EVIDENCE_SCHEMA_VERSION = 4
 CLI_VERSION = "rfc008-cli-v4"
-CLI_SHA256 = "2fadb7a12ea2b7e3533ce75f5b42f48810561ecbfe841d7112e26c94b50be4d5"
 RUNBOOK_VERSION = "rfc008-operator-runbook-v5"
-RUNBOOK_SHA256 = (
-    "68686e76e7cc14e6afa3d5db740bef17f4c9be52a6b91bb5a794793ba4b4bd87"
-)
 MIGRATION_SET_SHA256 = (
     "ece66b7732cdc61af7c549aa8e2161d6f1f305e533e43165cf58e9ad492c2bd5"
 )
@@ -43,6 +38,10 @@ APPROVAL_MANIFEST_SHA256 = (
 )
 HEX_40 = re.compile(r"^[0-9a-f]{40}$")
 HEX_64 = re.compile(r"^[0-9a-f]{64}$")
+
+
+def sha256_file(path: str | Path) -> str:
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -64,6 +63,8 @@ class ReleaseApprovalPolicy:
     external_rpc_burn_in_performed: bool
     cli_sha256: str
     runbook_sha256: str
+    approval_manifest_sha256: str = APPROVAL_MANIFEST_SHA256
+    migration_set_sha256: str = MIGRATION_SET_SHA256
     repository_branch: str = RELEASE_BRANCH
     audit_version: str = "rfc008-release-preflight-v5"
     minimum_operational_sample_size: int = 5
@@ -91,7 +92,7 @@ class ReleaseApprovalPolicy:
     )
 
 
-def _authoritative_release_values(
+def registry_authoritative_values(
     policy: ReleaseApprovalPolicy,
 ) -> dict[str, Any]:
     values: dict[str, Any] = {
@@ -125,7 +126,7 @@ def _authoritative_release_values(
         "validated_operational_burn_in_repository_commit": (
             policy.burn_in_repository_commit
         ),
-        "frozen_approval_manifest_sha256": APPROVAL_MANIFEST_SHA256,
+        "frozen_approval_manifest_sha256": policy.approval_manifest_sha256,
         "configuration_fingerprint": policy.configuration_fingerprint,
         "candidate_configuration_sha256": (
             policy.candidate_configuration_sha256
@@ -138,7 +139,7 @@ def _authoritative_release_values(
         "decoder_version": policy.decoder_version,
         "database_family": DATABASE_FAMILY,
         "database_schema_version": DATABASE_SCHEMA_VERSION,
-        "migration_set_sha256": MIGRATION_SET_SHA256,
+        "migration_set_sha256": policy.migration_set_sha256,
         "burn_in_evidence_schema_version": BURN_IN_EVIDENCE_SCHEMA_VERSION,
         "marker_schema_version": MARKER_SCHEMA_VERSION,
         "minimum_operational_sample_size": (
@@ -165,7 +166,22 @@ def _authoritative_release_values(
     for pid, process in policy.protected_process_policy.items():
         for key, item in process.items():
             values[f"protected_process_policy.{pid}.{key}"] = item
-    return values
+    authoritative_paths = {
+        field.path
+        for field in SCHEMA2_APPROVAL_FIELDS
+        if field.authority != "informational"
+    }
+    if set(values) != authoritative_paths:
+        raise RuntimeError(
+            "Registry authority source coverage mismatch; "
+            f"missing={sorted(authoritative_paths - set(values))}, "
+            f"unknown={sorted(set(values) - authoritative_paths)}"
+        )
+    return {
+        field.path: values[field.path]
+        for field in SCHEMA2_APPROVAL_FIELDS
+        if field.authority != "informational"
+    }
 
 
 def generate_release_approval(
@@ -176,7 +192,7 @@ def generate_release_approval(
     rfc008_test_count: int,
     full_test_count: int,
 ) -> dict[str, Any]:
-    values = _authoritative_release_values(policy)
+    values = registry_authoritative_values(policy)
     values.update(
         {
             "audit_correction_identifier": audit_correction_identifier,
@@ -356,47 +372,11 @@ def _validate_historical_schema2_identity(
                 item.failure_reason,
                 f"Historical commit is not canonical: {item.path}",
             )
-    expected = _authoritative_release_values(policy)
-    invariant_paths = {
-        "rfc_identifier",
-        "repository_branch",
-        "approval_commit_policy",
-        "validated_production_marker_sha256",
-        "validated_production_marker_sidecar_sha256",
-        "validated_production_marker_repository_commit",
-        "validated_production_marker_release_approval_sha256",
-        "validated_production_marker_collection_authorized",
-        "validated_operational_burn_in_evidence_sha256",
-        "validated_operational_burn_in_ledger_sha256",
-        "validated_operational_burn_in_repository_commit",
-        "frozen_approval_manifest_sha256",
-        "configuration_fingerprint",
-        "candidate_configuration_sha256",
-        "resolver_configuration_sha256",
-        "resolver_version",
-        "decoder_version",
-        "minimum_operational_sample_size",
-        "verification.fixture_resolver_burn_in_required",
-        "verification.operational_resolver_burn_in_required_before_marker",
-        "verification.external_rpc_burn_in_performed",
-        "authorization_boundary.implementation_authorized",
-        "authorization_boundary.fixture_burn_in_authorized",
-        "authorization_boundary.operational_rpc_burn_in_authorized",
-        "authorization_boundary.marker_creation_authorized",
-        "authorization_boundary.collection_authorized",
-        "authorization_boundary.wallet_access_authorized",
-        "authorization_boundary.live_action_authorized",
-        "authorization_boundary.transaction_authorized",
-    }
-    invariant_paths.update(
-        item.path
-        for item in SCHEMA2_APPROVAL_FIELDS
-        if item.path.startswith("protected_process_policy.")
-    )
-    for path in sorted(invariant_paths):
-        item = next(
-            field for field in SCHEMA2_APPROVAL_FIELDS if field.path == path
-        )
+    expected = registry_authoritative_values(policy)
+    for item in SCHEMA2_APPROVAL_FIELDS:
+        if not item.historical_invariant:
+            continue
+        path = item.path
         if path in present and get_path(value, path) != expected[path]:
             _failure(
                 failures,
@@ -455,7 +435,7 @@ def _validate_current_release(
     for check, reason in active_schema2_structure_failures(value):
         _failure(failures, check, reason)
     present = leaf_paths(value)
-    expected_values = _authoritative_release_values(policy)
+    expected_values = registry_authoritative_values(policy)
 
     for item in SCHEMA2_APPROVAL_FIELDS:
         if item.path not in present:

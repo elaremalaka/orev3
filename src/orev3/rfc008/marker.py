@@ -14,20 +14,13 @@ from typing import Callable
 
 from pydantic import ValidationError
 
-from orev3.rfc008.approval_contract import (
-    active_schema2_structure_failures,
-    decode_approval_json,
-)
 from orev3.rfc008.config import RFC008Config
-from orev3.rfc008.migrations import migration_set_hash
 from orev3.rfc008.resolver_config import ResolverConfig
+from orev3.rfc008.release_validation import validate_active_release
 from orev3.rfc008.schemas import (
     BurnInSourceBoundary,
     ExperimentMarker,
-    RFC008_BURN_IN_AUDIT_VERSION,
     RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION,
-    RFC008_CLI_VERSION,
-    RFC008_RUNBOOK_VERSION,
     REQUIRED_PROCESS_COMMAND_IDENTITIES,
     REQUIRED_PROTECTED_PROCESSES,
     ResolverBurnInEvidence,
@@ -252,44 +245,10 @@ def validate_historical_source_boundary(
     )
 
 
-def _load_release_approval(path: str | Path) -> dict[str, object]:
-    value = decode_approval_json(Path(path).read_bytes())
-    if value.get("artifact_type") != "rfc008_implementation_release_approval":
-        raise ValueError("Invalid RFC-008 release approval artifact")
-    if value.get("schema_version") == 2:
-        failures = active_schema2_structure_failures(value)
-        if failures:
-            raise ValueError(
-                "Invalid RFC-008 schema-2 approval structure: "
-                + "; ".join(reason for _, reason in failures)
-            )
-    return value
-
-
 def _burn_in_ledger_path(evidence_path: Path) -> Path:
     if evidence_path.suffix != ".json":
         raise ValueError("Burn-in evidence path must end in .json")
     return evidence_path.with_suffix(".sqlite")
-
-
-def _release_preserves_burn_in(
-    *,
-    release: dict[str, object],
-    burn: ResolverBurnInEvidence,
-    evidence_sha256: str,
-) -> bool:
-    return all(
-        (
-            release.get("supersedes_release_implementation_approval_sha256")
-            == burn.release_implementation_approval_sha256,
-            release.get("validated_operational_burn_in_evidence_sha256")
-            == evidence_sha256,
-            release.get("validated_operational_burn_in_ledger_sha256")
-            == burn.ledger_sha256,
-            release.get("validated_operational_burn_in_repository_commit")
-            == burn.repository_commit,
-        )
-    )
 
 
 def marker_preflight(
@@ -317,7 +276,24 @@ def marker_preflight(
     resolver = ResolverConfig.from_path(resolver_config_path)
     repository = repository_state(repository_root)
     approval_hash = sha256_file(approval_manifest_path)
-    release = _load_release_approval(release_approval_path)
+    release_validation = validate_active_release(
+        repository_root=repository_root,
+        config_path=config_path,
+        resolver_config_path=resolver_config_path,
+        burn_in_evidence_path=burn_in_evidence_path,
+        release_approval_path=release_approval_path,
+        approval_manifest_path=approval_manifest_path,
+        marker_path=marker_path,
+        expected_branch=expected_branch,
+    )
+    failures.extend(
+        {
+            "check": value.check,
+            "reason": value.reason,
+        }
+        for value in release_validation.checks
+        if not value.passed
+    )
     release_hash = sha256_file(release_approval_path)
     burn_path = Path(burn_in_evidence_path)
     burn_ledger_path = _burn_in_ledger_path(burn_path)
@@ -1052,98 +1028,9 @@ def marker_preflight(
         "Frozen approval manifest SHA-256 mismatch",
     )
     check(
-        "configuration_fingerprint_approved",
-        release.get("configuration_fingerprint")
-        == config.configuration_fingerprint,
-        "Release approval does not bind the experiment configuration",
-    )
-    check(
-        "candidate_hash_approved",
-        release.get("candidate_configuration_sha256")
-        == config.candidate_configuration_sha256,
-        "Release approval does not bind the frozen candidate",
-    )
-    check(
-        "resolver_configuration_approved",
-        release.get("resolver_configuration_sha256") == resolver.fingerprint,
-        "Release approval does not bind resolver configuration",
-    )
-    check(
-        "migration_set_approved",
-        release.get("migration_set_sha256") == migration_set_hash(),
-        "Release approval does not bind the migration set",
-    )
-    check(
-        "burnin_schema_approved",
-        release.get("burn_in_evidence_schema_version")
-        == RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION,
-        "Release approval does not bind the burn-in evidence schema",
-    )
-    check(
-        "marker_schema_approved",
-        release.get("marker_schema_version") == 2,
-        "Release approval does not bind the marker schema",
-    )
-    check(
-        "burnin_audit_approved",
-        release.get("audit_version") == RFC008_BURN_IN_AUDIT_VERSION,
-        "Release approval does not bind the current adversarial audit",
-    )
-    check(
-        "minimum_operational_sample_approved",
-        release.get("minimum_operational_sample_size") == 5,
-        "Release approval does not bind the five-round minimum",
-    )
-    check(
-        "protected_process_policy_approved",
-        release.get("protected_process_policy")
-        == {
-            str(pid): {
-                "role": role,
-                "sanitized_command_identity": (
-                    REQUIRED_PROCESS_COMMAND_IDENTITIES[role]
-                ),
-            }
-            for pid, role in REQUIRED_PROTECTED_PROCESSES.items()
-        },
-        "Release approval does not bind the protected-process policy",
-    )
-    check(
-        "cli_version_approved",
-        release.get("cli_version") == RFC008_CLI_VERSION,
-        "Release approval does not bind the CLI contract version",
-    )
-    check(
-        "runbook_version_approved",
-        release.get("runbook_version") == RFC008_RUNBOOK_VERSION,
-        "Release approval does not bind the runbook contract version",
-    )
-    root = Path(repository_root)
-    check(
-        "cli_implementation_approved",
-        release.get("cli_sha256")
-        == sha256_file(root / "src/orev3/rfc008/cli.py"),
-        "Release approval does not bind the CLI implementation",
-    )
-    check(
-        "runbook_approved",
-        release.get("runbook_sha256")
-        == sha256_file(root / "docs/research/RFC-008-OPERATOR-RUNBOOK.md"),
-        "Release approval does not bind the operator runbook",
-    )
-    check(
         "branch_matches",
         repository["branch"] == expected_branch,
         "Repository branch differs from approved branch",
-    )
-    approved_implementation = str(
-        release.get("approved_implementation_commit", "")
-    )
-    check(
-        "head_approved",
-        repository["commit"] == approved_implementation
-        or repository["parent"] == approved_implementation,
-        "HEAD is not the approved implementation or its approval-only child",
     )
     check(
         "tracked_worktree_clean",
@@ -1228,31 +1115,13 @@ def marker_preflight(
         )
         check(
             "burnin_release_approval_matches",
-            burn.release_implementation_approval_sha256 == release_hash
-            or (
-                burn_evidence_sha256 is not None
-                and _release_preserves_burn_in(
-                    release=release,
-                    burn=burn,
-                    evidence_sha256=burn_evidence_sha256,
-                )
-            ),
+            release_validation.valid,
             "Burn-in evidence does not bind the current release approval",
         )
         check(
             "burnin_repository_matches",
             burn.repository_branch == repository["branch"]
-            and (
-                burn.repository_commit == repository["commit"]
-                or (
-                    burn_evidence_sha256 is not None
-                    and _release_preserves_burn_in(
-                        release=release,
-                        burn=burn,
-                        evidence_sha256=burn_evidence_sha256,
-                    )
-                )
-            ),
+            and release_validation.valid,
             "Burn-in evidence repository identity differs from preflight",
         )
         check(
@@ -1539,6 +1408,8 @@ def marker_preflight(
         "burn_in_ledger_path": str(burn_ledger_path),
         "burn_in_ledger_sha256": burn_ledger_sha256,
         "release_approval_sha256": release_hash,
+        "active_release_validation": release_validation.as_dict(),
+        "active_release_validation_valid": release_validation.valid,
         "repository": repository,
         "burn_in_source_boundary": (
             burn.source_boundary.model_dump(mode="json") if burn else None
