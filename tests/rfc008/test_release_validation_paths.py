@@ -296,11 +296,16 @@ def test_derived_source_drift_rejected_by_all_launch_paths(
         command_run(_command_args(release_root))
 
 
+@pytest.mark.parametrize(
+    "mutation",
+    ("active_schema_1", "wrong_implementation", "wrong_predecessor"),
+)
 def test_invalid_release_stops_before_side_effect_boundaries(
     release_root: Path,
     monkeypatch,
+    mutation: str,
 ) -> None:
-    _mutate_release(release_root, "active_schema_1")
+    _mutate_release(release_root, mutation)
     reached = {
         "provider": 0,
         "writer": 0,

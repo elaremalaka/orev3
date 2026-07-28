@@ -85,6 +85,16 @@ class ActiveReleaseValidationResult:
         }
 
 
+@dataclass(frozen=True)
+class GitReleaseAuthority:
+    branch: str
+    approval_commit: str
+    implementation_commit: str
+    predecessor_approval_sha256: str
+    approval_committed_at_head: bool
+    approval_commit_is_approval_only: bool
+
+
 def _freeze(value: Any) -> Any:
     if isinstance(value, dict):
         return MappingProxyType(
@@ -112,13 +122,16 @@ def _git(root: Path, *arguments: str) -> bytes:
     ).stdout
 
 
-def repository_approval_expectations(
+def repository_release_authority(
     *,
     repository_root: Path,
     release_path: Path,
-) -> tuple[str, str]:
+) -> GitReleaseAuthority:
     head = _git(repository_root, "rev-parse", "HEAD").decode().strip()
     parent = _git(repository_root, "rev-parse", "HEAD^").decode().strip()
+    branch = (
+        _git(repository_root, "branch", "--show-current").decode().strip()
+    )
     changed = {
         value
         for value in _git(
@@ -134,21 +147,35 @@ def repository_approval_expectations(
         if value
     }
     release_relative = str(release_path.resolve().relative_to(repository_root))
-    history_relative = str(
-        release_path.parent.resolve().relative_to(repository_root)
-        / "release_approval_history"
+    approval_only = changed == {release_relative}
+    committed_release = _git(
+        repository_root,
+        "show",
+        f"{head}:{release_relative}",
     )
-    approval_only = bool(changed) and all(
-        value == release_relative or value.startswith(f"{history_relative}/")
-        for value in changed
-    )
-    implementation = parent if approval_only else head
+    approval_committed_at_head = release_path.read_bytes() == committed_release
+    if approval_committed_at_head and not approval_only:
+        raise ValueError(
+            "Committed active approval must be an approval-only commit"
+        )
+    if not approval_committed_at_head and approval_only:
+        raise ValueError(
+            "Pending approval cannot approve an approval-only commit"
+        )
+    implementation = parent if approval_committed_at_head else head
     previous = _git(
         repository_root,
         "show",
         f"{implementation}:{release_relative}",
     )
-    return implementation, hashlib.sha256(previous).hexdigest()
+    return GitReleaseAuthority(
+        branch=branch,
+        approval_commit=head,
+        implementation_commit=implementation,
+        predecessor_approval_sha256=hashlib.sha256(previous).hexdigest(),
+        approval_committed_at_head=approval_committed_at_head,
+        approval_commit_is_approval_only=approval_only,
+    )
 
 
 def repository_approval_history(
@@ -236,9 +263,6 @@ def validate_active_release(
     release_approval_path: str | Path,
     approval_manifest_path: str | Path,
     marker_path: str | Path | None = None,
-    expected_branch: str = RELEASE_BRANCH,
-    expected_implementation_commit: str | None = None,
-    expected_predecessor_sha256: str | None = None,
 ) -> ActiveReleaseValidationResult:
     root = Path(repository_root).resolve()
     release_path = Path(release_approval_path).resolve()
@@ -327,21 +351,47 @@ def validate_active_release(
         source_failures = True
         record("active_release_authoritative_sources_available", False, str(exc))
 
-    implementation = expected_implementation_commit
-    predecessor = expected_predecessor_sha256
-    if implementation is None or predecessor is None:
-        try:
-            implementation, predecessor = repository_approval_expectations(
-                repository_root=root,
-                release_path=release_path,
-            )
-        except (OSError, ValueError, subprocess.CalledProcessError) as exc:
+    git_authority: GitReleaseAuthority | None = None
+    implementation: str | None = None
+    predecessor: str | None = None
+    try:
+        git_authority = repository_release_authority(
+            repository_root=root,
+            release_path=release_path,
+        )
+        implementation = git_authority.implementation_commit
+        predecessor = git_authority.predecessor_approval_sha256
+        record(
+            "active_release_repository_branch_matches",
+            git_authority.branch == RELEASE_BRANCH,
+            "Active release repository branch does not match RFC-008",
+        )
+        if git_authority.branch != RELEASE_BRANCH:
             source_failures = True
-            record(
-                "active_release_git_authority_available",
-                False,
-                f"Cannot derive active approval Git relationship: {exc}",
-            )
+        record(
+            "approval_commit_is_approval_only",
+            (
+                not git_authority.approval_committed_at_head
+                or git_authority.approval_commit_is_approval_only
+            ),
+            "Committed active approval is not an approval-only child",
+        )
+        record(
+            "approval_commit_is_direct_child_of_implementation",
+            (
+                not git_authority.approval_committed_at_head
+                or _git(root, "rev-parse", "HEAD^").decode().strip()
+                == implementation
+            ),
+            "Active approval commit is not the direct child of implementation",
+        )
+    except (OSError, ValueError, subprocess.CalledProcessError) as exc:
+        source_failures = True
+        record(
+            "active_release_git_authority_available",
+            False,
+            f"Cannot derive active approval Git relationship: {exc}",
+        )
 
     policy: ReleaseApprovalPolicy | None = None
     if (
@@ -387,7 +437,7 @@ def validate_active_release(
                 runbook_sha256=actual_runbook_hash,
                 approval_manifest_sha256=actual_manifest_hash,
                 migration_set_sha256=actual_migration_hash,
-                repository_branch=expected_branch,
+                repository_branch=RELEASE_BRANCH,
             )
             record(
                 "burn_in_ledger_bytes_hashed",
@@ -453,6 +503,23 @@ def validate_active_release(
         policy_valid = authority_matches("policy_bound")
         exact_valid = authority_matches("release_bound_exact")
         authorization_valid = authority_matches("authorization")
+    record(
+        "approved_implementation_commit_matches_git_parent",
+        approval is not None
+        and implementation is not None
+        and approval.get("approved_implementation_commit") == implementation,
+        "Approved implementation does not match Git-derived implementation",
+    )
+    record(
+        "predecessor_matches_immediate_chain_entry",
+        approval is not None
+        and predecessor is not None
+        and approval.get(
+            "supersedes_release_implementation_approval_sha256"
+        )
+        == predecessor,
+        "Approval predecessor does not match immediate Git-derived entry",
+    )
     record(
         "active_release_derived_fields_valid",
         derived_valid and not source_failures,

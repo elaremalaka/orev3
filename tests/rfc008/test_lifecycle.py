@@ -44,8 +44,6 @@ def validate(environment, tmp_path, **updates):
         "release_approval_path": environment["release"],
         "approval_manifest_path": race.APPROVAL,
         "resolver_config_path": environment["resolver_path"],
-        "expected_implementation_commit": "a" * 40,
-        "expected_predecessor_sha256": "0" * 64,
     }
     arguments.update(updates)
     return validate_post_marker_pre_collection_state(**arguments)

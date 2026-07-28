@@ -284,7 +284,6 @@ def marker_preflight(
         release_approval_path=release_approval_path,
         approval_manifest_path=approval_manifest_path,
         marker_path=marker_path,
-        expected_branch=expected_branch,
     )
     failures.extend(
         {

@@ -246,8 +246,6 @@ def validate_post_marker_pre_collection_state(
     resolver_config_path: str | Path | None = None,
     collector_running: bool = False,
     expected_snapshot: MarkerPairSnapshot | None = None,
-    expected_implementation_commit: str | None = None,
-    expected_predecessor_sha256: str | None = None,
 ) -> dict[str, Any]:
     root = Path(repository_root).resolve()
     marker_path = root / "data/ledger/rfc008_marker_v1.json"
@@ -329,12 +327,6 @@ def validate_post_marker_pre_collection_state(
                 release_approval_path=release_path,
                 approval_manifest_path=approval_path,
                 marker_path=marker_path,
-                expected_implementation_commit=(
-                    expected_implementation_commit
-                ),
-                expected_predecessor_sha256=(
-                    expected_predecessor_sha256
-                ),
             )
             failures.extend(
                 {
