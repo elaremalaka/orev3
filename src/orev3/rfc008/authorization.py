@@ -285,8 +285,15 @@ def build_authorization_record(
 
 
 class CollectionAuthorizationStore:
-    def __init__(self, path: str | Path, *, read_only: bool = False) -> None:
+    def __init__(
+        self,
+        path: str | Path,
+        *,
+        read_only: bool = False,
+        identity_path: str | Path | None = None,
+    ) -> None:
         self.path = Path(path)
+        self.identity_path = Path(identity_path or path)
         mode = "ro" if read_only else "rw"
         uri = f"file:{self.path.resolve()}?mode={mode}"
         self.connection = sqlite3.connect(
@@ -311,13 +318,16 @@ class CollectionAuthorizationStore:
         cls,
         path: str | Path,
         record: CollectionAuthorizationRecord,
+        *,
+        identity_path: str | Path | None = None,
     ) -> None:
         target = Path(path)
+        identity = Path(identity_path or target)
         if target.exists():
             raise FileExistsError(
                 f"RFC-008 collection authorization already exists: {target}"
             )
-        if record.authorization_storage_path != canonical_path(target):
+        if record.authorization_storage_path != canonical_path(identity):
             raise ValueError("Authorization record is bound to another path")
         target.parent.mkdir(parents=True, exist_ok=True)
         temporary = target.with_name(
@@ -468,7 +478,9 @@ class CollectionAuthorizationStore:
                 raise ValueError("Authorization identifier column mismatch")
             if record.authorization_digest != row["authorization_digest"]:
                 raise ValueError("Authorization digest column mismatch")
-            if record.authorization_storage_path != canonical_path(self.path):
+            if record.authorization_storage_path != canonical_path(
+                self.identity_path
+            ):
                 raise ValueError("Copied RFC-008 authorization is rejected")
             status = AuthorizationStatus(
                 record=record,

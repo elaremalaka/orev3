@@ -564,6 +564,10 @@ def validate_collection_preflight(
         allow_production_ledger=ledger_present,
     )
     reasons: list[str] = []
+    from orev3.rfc008.rotation import rotation_status
+
+    if rotation_status(repository_root)["recovery_required"]:
+        reasons.append("artifact_rotation_recovery_required")
     canonical_marker = (
         Path(repository_root).resolve()
         / "data/ledger/rfc008_marker_v1.json"

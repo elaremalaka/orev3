@@ -15,6 +15,13 @@ class RFC008WriterLease:
         self.fd: int | None = None
 
     def acquire(self) -> None:
+        rotation_manifest = self.path.parent / (
+            "rfc008_artifact_rotation_v1.json"
+        )
+        if rotation_manifest.exists():
+            raise DuplicateRFC008Writer(
+                "RFC-008 artifact rotation recovery is required"
+            )
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.fd = os.open(self.path, os.O_CREAT | os.O_RDWR, 0o600)
         try:

@@ -1015,10 +1015,12 @@ def create_authorized_ledger(
     *,
     config: RFC008Config,
     initialization: LedgerInitialization,
+    identity_path: str | Path | None = None,
 ) -> CollectionContractStatus:
     target = assert_safe_new_ledger_path(path)
+    identity = Path(identity_path or target)
     if initialization.authorization.canonical_ledger_path != canonical_path(
-        target
+        identity
     ):
         raise CollectionContractError(
             "Authorization does not bind the requested production ledger"
@@ -1031,7 +1033,7 @@ def create_authorized_ledger(
             config=config,
             create=True,
             initialization=initialization,
-            identity_path=target,
+            identity_path=identity,
         ) as store:
             contract = store.validate_collection_contract(
                 config=config,
@@ -1054,6 +1056,7 @@ def create_authorized_ledger(
             target,
             config=config,
             read_only=True,
+            identity_path=identity,
         ) as opened:
             return opened.validate_collection_contract(
                 config=config,

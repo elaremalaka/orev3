@@ -472,7 +472,59 @@ and exits completed. Repeating recovery remains an idempotent completed exit.
 A copied, path-mismatched, instance-mismatched, release-mismatched, or
 authorization-mismatched ledger is rejected before reconciliation.
 
-## 7. Collection monitoring
+## 7. Unused production artifact rotation
+
+When a newly approved release supersedes the immutable bindings of an
+initialized but never-launched authorization and its empty initialized ledger,
+operators must use the official rotation workflow. Manual copying, renaming,
+deletion, or database editing is prohibited.
+
+The read-only eligibility check is:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli rotate-production-artifacts \
+  --repository-root . \
+  --expected-marker-sha256-file data/ledger/rfc008_marker_v1.json.sha256 \
+  --dry-run
+```
+
+After separate operational authorization, omit `--dry-run` to archive the
+complete old artifact set, stage a fresh authorization and schema-current
+ledger through the official issuance authorities, validate their canonical
+production identities, and activate them. The command accepts only the
+canonical production paths and only target 600 paper artifacts. It refuses
+any authorization launch history, consuming session, non-empty ledger,
+collector-run history, active session, active writer, supervised collector,
+integrity failure, target drift, or non-release-binding inconsistency.
+
+The command serializes with both a dedicated rotation lock and the supervised
+launch mutex. A durable transaction manifest is published before archival or
+activation. While that manifest is active, status reports recovery required,
+collection preflight fails closed, and writer acquisition is rejected. This
+prevents either half of a two-file replacement from being used as an active
+pair. WAL files are checkpointed before archival; existing WAL, SHM, inactive
+writer-lock, supervision, and log artifacts are retained as evidence when
+present.
+
+If interrupted, resume deterministically with:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli rotate-production-artifacts \
+  --repository-root . \
+  --expected-marker-sha256-file data/ledger/rfc008_marker_v1.json.sha256 \
+  --recover
+```
+
+Recovery uses the recorded phase, hashes, identities, release bindings, and
+staged validation. Before activation it restores the exact archived old pair;
+after activation begins it completes the exact validated new pair. It never
+selects artifacts by filename alone. Completed archives live under
+`data/ledger/archive/rfc008/`; they are evidence and cannot be replayed as
+active authorizations because their embedded canonical storage identity
+remains the production path. Repeating rotation against an already current,
+healthy, unused, empty pair is a byte-preserving no-op.
+
+## 8. Collection monitoring
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli status \
@@ -487,7 +539,7 @@ Monitor integrity, primary and sensitivity provenance, pending/conflicted/
 quarantined outcomes, unusable denominator and rate, duplicates, safety
 counters, and stopping caps. No interim efficacy analysis is allowed.
 
-## 8. Safe stop and restart
+## 9. Safe stop and restart
 
 Send SIGINT only to the RFC-008 collector. Do not signal the observer,
 RFC-007 collector, or caffeinate wrapper. Confirm the RFC-008 writer lease is
@@ -523,7 +575,7 @@ diagnostic evidence only and cannot consume authorization, establish a
 session, authorize recovery, or override authoritative database, Git, process,
 or lease state.
 
-## 9. Future authorized final freeze
+## 10. Future authorized final freeze
 
 After the stopping rule is reached and the writer is stopped:
 
@@ -542,7 +594,7 @@ Freeze refuses an active writer, pending outcomes, integrity failure, marker
 or configuration drift, and an existing different freeze. Persistent write
 guards make the ledger immutable after the freeze.
 
-## 10. Dataset generation from the freeze
+## 11. Dataset generation from the freeze
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli build-dataset \
@@ -558,7 +610,7 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli build-dataset \
 The dataset manifest carries the complete frozen experiment summary. Recovered
 outcomes remain sensitivity-only.
 
-## 11. Formal analysis authorization
+## 12. Formal analysis authorization
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli analyze \

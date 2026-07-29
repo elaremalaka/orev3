@@ -39,6 +39,13 @@ from orev3.rfc008.lifecycle import (
 )
 from orev3.rfc008.resolver import FinalizedOutcomeResolver
 from orev3.rfc008.resolver_config import ResolverConfig
+from orev3.rfc008.rotation import (
+    OFFICIAL_AUTHORIZATION,
+    OFFICIAL_LEDGER,
+    production_rotation_paths,
+    rotate_production_artifacts,
+    rotation_status,
+)
 from orev3.rfc008.release_validation import (
     repository_release_authority,
     validate_active_release,
@@ -336,6 +343,76 @@ def command_initialize_ledger(args: argparse.Namespace) -> None:
             ),
         }
     )
+
+
+@_sanitize_public_command_errors
+def command_rotate_production_artifacts(
+    args: argparse.Namespace,
+) -> None:
+    root = Path(args.repository_root).resolve()
+    paths = production_rotation_paths(root)
+    supplied_authorization = Path(args.authorization)
+    if not supplied_authorization.is_absolute():
+        supplied_authorization = root / supplied_authorization
+    supplied_ledger = Path(args.ledger)
+    if not supplied_ledger.is_absolute():
+        supplied_ledger = root / supplied_ledger
+    if supplied_authorization.resolve() != paths.authorization:
+        raise PermissionError(
+            "RFC-008 production rotation requires the official authorization path"
+        )
+    if supplied_ledger.resolve() != paths.ledger:
+        raise PermissionError(
+            "RFC-008 production rotation requires the official ledger path"
+        )
+    args.authorization = str(paths.authorization)
+    args.ledger = str(paths.ledger)
+    config = RFC008Config.from_path(args.config)
+    release = validate_active_release(
+        repository_root=root,
+        config_path=args.config,
+        resolver_config_path=args.resolver_config,
+        burn_in_evidence_path=args.burn_in_evidence,
+        release_approval_path=args.release_approval,
+        approval_manifest_path=args.approval_manifest,
+        marker_path=args.marker,
+    )
+    if not release.valid or release.parsed_active_approval is None:
+        raise PermissionError(
+            "RFC-008 active release validation rejected artifact rotation"
+        )
+    if args.recover:
+        mismatches: tuple[str, ...] = ()
+    else:
+        with CollectionAuthorizationStore(
+            paths.authorization, read_only=True
+        ) as authorization_store:
+            old_authorization = authorization_store.status().record
+        mismatches = authorization_release_mismatches(
+            repository_root=root,
+            release_approval_path=args.release_approval,
+            ledger_path=paths.ledger,
+            config=config,
+            active_release=release,
+            authorization=old_authorization,
+        )
+    marker = verify_marker(
+        args.marker,
+        config,
+        expected_sha256=_expected_marker_hash(args),
+    )
+    result = rotate_production_artifacts(
+        repository_root=root,
+        config=config,
+        release_mismatches=mismatches,
+        new_authorization_factory=lambda: _authorization_record_from_release(
+            args
+        ),
+        initialization_cursors=_cursor_records(marker.source_identities),
+        dry_run=args.dry_run,
+        recover=args.recover,
+    )
+    _print(result)
 
 
 def command_inspect_ledger(args: argparse.Namespace) -> None:
@@ -1241,6 +1318,34 @@ def command_status(args: argparse.Namespace) -> None:
     )
     if not release.valid:
         raise PermissionError("RFC-008 active release validation failed")
+    rotation = rotation_status(args.repository_root)
+    if rotation["recovery_required"]:
+        root = Path(args.repository_root).resolve()
+        branch, head = _git_branch_and_head(root)
+        _print(
+            {
+                "collection_ready": False,
+                "artifact_rotation_recovery_required": True,
+                "artifact_rotation": rotation,
+                "current_branch": branch,
+                "current_head": head,
+                "worktree_clean": not bool(
+                    subprocess.run(
+                        (
+                            "git",
+                            "status",
+                            "--porcelain",
+                            "--untracked-files=all",
+                        ),
+                        cwd=root,
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                    ).stdout
+                ),
+            }
+        )
+        return
     preflight = validate_collection_preflight(
         repository_root=args.repository_root,
         config_path=args.config,
@@ -1424,6 +1529,60 @@ def parser() -> argparse.ArgumentParser:
     initialize.add_argument("--release-approval", required=True)
     initialize.add_argument("--approval-manifest", required=True)
     initialize.set_defaults(func=command_initialize_ledger)
+
+    rotate = sub.add_parser(
+        "rotate-production-artifacts",
+        description=(
+            "Crash-safely rotate only an unused RFC-008 production "
+            "authorization and empty initialized ledger to the active release."
+        ),
+    )
+    rotate.add_argument(
+        "--config",
+        default="config/collection/rfc008_paper_v1.json",
+    )
+    rotate.add_argument(
+        "--resolver-config",
+        default="config/collection/rfc008_resolver_v1.json",
+    )
+    rotate.add_argument(
+        "--marker",
+        default="data/ledger/rfc008_marker_v1.json",
+    )
+    _marker_hash_arguments(rotate)
+    rotate.add_argument(
+        "--repository-root",
+        default=".",
+    )
+    rotate.add_argument(
+        "--burn-in-evidence",
+        default="data/resolver/rfc008_operational_burn_in_v1.json",
+    )
+    rotate.add_argument(
+        "--release-approval",
+        default=(
+            "docs/research/rfc008/"
+            "release_implementation_approval_v1.json"
+        ),
+    )
+    rotate.add_argument(
+        "--approval-manifest",
+        default="docs/research/rfc008/approval_manifest_v1.json",
+    )
+    rotate.add_argument(
+        "--authorization",
+        default=OFFICIAL_AUTHORIZATION,
+        help=argparse.SUPPRESS,
+    )
+    rotate.add_argument(
+        "--ledger",
+        default=OFFICIAL_LEDGER,
+        help=argparse.SUPPRESS,
+    )
+    mode = rotate.add_mutually_exclusive_group()
+    mode.add_argument("--dry-run", action="store_true")
+    mode.add_argument("--recover", action="store_true")
+    rotate.set_defaults(func=command_rotate_production_artifacts)
 
     inspect_ledger = sub.add_parser("inspect-ledger")
     inspect_ledger.add_argument("--config", required=True)
