@@ -9,10 +9,16 @@ from pydantic import ValidationError
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.storage import RFC008Store
 from orev3.rfc009.continuation import (
+    CANONICAL_APPROVAL,
     ContinuationApproval,
+    _continuation_identifier,
+    _strict_json,
+    build_continuation_approval,
     continuity_state_sha256,
+    issue_continuation_approval,
     semantic_compatibility_sha256,
 )
+import orev3.rfc009.continuation as continuation_module
 
 
 def _approval(**changes):
@@ -34,6 +40,8 @@ def _approval(**changes):
         "semantic_compatibility_sha256": "6" * 64,
     }
     value.update(changes)
+    if "continuation_identifier" not in changes:
+        value["continuation_identifier"] = _continuation_identifier(value)
     return value
 
 
@@ -88,3 +96,87 @@ def test_continuity_and_semantic_hashes_are_stable(tmp_path: Path) -> None:
         assert semantic_compatibility_sha256(
             contract.immutable_release
         ) == semantic_compatibility_sha256(contract.immutable_release)
+
+
+def _built_approval(tmp_path: Path) -> ContinuationApproval:
+    config = RFC008Config.from_path(
+        "config/collection/rfc008_paper_v1.json"
+    )
+    with RFC008Store(
+        tmp_path / "fixture.sqlite", config=config, create=True
+    ) as store:
+        authorization = store.collection_contract().immutable_release
+    return build_continuation_approval(
+        created_at="2026-07-29T00:00:00+00:00",
+        authorization=authorization,
+        starting_committed_count=100,
+        starting_last_opportunity_identity="snapshot-100",
+        continuity_sha256="3" * 64,
+        successor_release_approval_sha256="4" * 64,
+        implementation_diff_sha256_value="5" * 64,
+    )
+
+
+def test_issuance_is_deterministic_valid_and_refuses_overwrite(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    approval = _built_approval(tmp_path)
+    root = tmp_path / "repository"
+    output = root / CANONICAL_APPROVAL
+    monkeypatch.setattr(
+        continuation_module,
+        "derive_continuation_approval",
+        lambda **kwargs: approval,
+    )
+    first, first_digest = issue_continuation_approval(
+        repository_root=root,
+        continuation_approval_path=output,
+    )
+    first_bytes = output.read_bytes()
+    parsed, parsed_digest = _strict_json(output)
+    assert first == parsed == approval
+    assert first_digest == parsed_digest
+    with pytest.raises(FileExistsError):
+        issue_continuation_approval(
+            repository_root=root,
+            continuation_approval_path=output,
+        )
+    output.unlink()
+    second, second_digest = issue_continuation_approval(
+        repository_root=root,
+        continuation_approval_path=output,
+    )
+    assert output.read_bytes() == first_bytes
+    assert second == first
+    assert second_digest == first_digest
+
+
+@pytest.mark.parametrize(
+    ("exception", "message"),
+    (
+        (PermissionError, "authorization invalid"),
+        (ValueError, "ledger invalid"),
+        (PermissionError, "successor release invalid"),
+    ),
+)
+def test_issuance_fails_closed_on_invalid_inputs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    exception: type[Exception],
+    message: str,
+) -> None:
+    root = tmp_path / "repository"
+    output = root / CANONICAL_APPROVAL
+
+    def reject(**kwargs):
+        raise exception(message)
+
+    monkeypatch.setattr(
+        continuation_module, "derive_continuation_approval", reject
+    )
+    with pytest.raises(exception, match=message):
+        issue_continuation_approval(
+            repository_root=root,
+            continuation_approval_path=output,
+        )
+    assert not output.exists()

@@ -88,6 +88,7 @@ from orev3.rfc008.supervision import (
 )
 from orev3.rfc009.continuation import (
     activate_continuation,
+    issue_continuation_approval,
     preflight_continuation,
 )
 
@@ -829,6 +830,24 @@ def _supervised_child_command(
 
 def command_preflight_continuation(args: argparse.Namespace) -> None:
     _print(preflight_continuation(**_continuation_kwargs(args)).as_dict())
+
+
+def command_issue_continuation(args: argparse.Namespace) -> None:
+    approval, digest = issue_continuation_approval(
+        **_continuation_kwargs(args)
+    )
+    _print(
+        {
+            "continuation_approval": approval.model_dump(mode="json"),
+            "continuation_approval_sha256": digest,
+            "continuation_approval_path": str(
+                Path(args.continuation_approval).resolve()
+            ),
+            "activated": False,
+            "ledger_modified": False,
+            "authorization_modified": False,
+        }
+    )
 
 
 def command_activate_continuation(args: argparse.Namespace) -> None:
@@ -1751,6 +1770,7 @@ def parser() -> argparse.ArgumentParser:
     status.set_defaults(func=command_status)
 
     for name, function in (
+        ("issue-continuation-approval", command_issue_continuation),
         ("preflight-continuation", command_preflight_continuation),
         ("activate-continuation", command_activate_continuation),
     ):
