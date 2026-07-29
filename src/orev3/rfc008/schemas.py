@@ -171,10 +171,10 @@ class ExperimentMarker(StrictModel):
 
 
 SHA256_PATTERN = r"^[0-9a-f]{64}$"
-RFC008_CLI_VERSION = "rfc008-cli-v7"
+RFC008_CLI_VERSION = "rfc008-cli-v8"
 RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION = 4
 RFC008_BURN_IN_AUDIT_VERSION = "rfc008-release-preflight-v5"
-RFC008_RUNBOOK_VERSION = "rfc008-operator-runbook-v8"
+RFC008_RUNBOOK_VERSION = "rfc008-operator-runbook-v9"
 REQUIRED_PROTECTED_PROCESSES = {
     48404: "observer",
     48405: "observer_caffeinate",

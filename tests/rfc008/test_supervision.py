@@ -13,6 +13,7 @@ import pytest
 import orev3.rfc008.cli as cli
 from orev3.rfc008.cli import parser
 from orev3.rfc008.supervision import (
+    INTERNAL_CHILD_COMMAND,
     DuplicateSupervisedLaunch,
     SupervisionError,
     atomic_write_metadata,
@@ -22,6 +23,7 @@ from orev3.rfc008.supervision import (
     process_matches_metadata,
     read_metadata,
     redact_exception,
+    safe_open_log,
     spawn_detached,
     supervision_paths,
     update_metadata,
@@ -32,18 +34,31 @@ from orev3.rfc008.writer import RFC008WriterLease
 
 def metadata_for(tmp_path: Path) -> dict[str, object]:
     path = supervision_paths(tmp_path / "ledger.sqlite")["metadata"]
+    log = supervision_paths(tmp_path / "ledger.sqlite")["log"]
+    log.touch(mode=0o600)
+    log_stat = log.stat()
     return {
-        "schema_version": 1,
-        "launch_identifier": "launch-id",
+        "schema_version": 2,
+        "launch_identifier": "10000000-0000-4000-8000-000000000001",
+        "launch_authority_sha256": "c" * 64,
+        "launch_authority_consumed_at": None,
         "launcher_pid": 1,
         "collector_pid": None,
         "collector_start_timestamp": None,
         "collector_process_start_identity": None,
-        "command_identity": ["python", "-m", "orev3.rfc008.cli", "run"],
-        "log_path": str(supervision_paths(tmp_path / "ledger.sqlite")["log"]),
+        "command_identity": [
+            "python",
+            "-m",
+            "orev3.rfc008.cli",
+            INTERNAL_CHILD_COMMAND,
+        ],
+        "log_path": str(log),
+        "log_device": log_stat.st_dev,
+        "log_inode": log_stat.st_ino,
         "metadata_path": str(path),
         "branch": "research/rfc-007-paper-collection-burn-in",
         "head": "a" * 40,
+        "cli_sha256": "d" * 64,
         "authorization_identifier": "authorization-id",
         "authorization_digest": "b" * 64,
         "ledger_instance_identifier": "ledger-id",
@@ -103,13 +118,21 @@ def mock_start_preflight(
     monkeypatch.setattr(
         cli,
         "validate_collection_preflight",
-        lambda **kwargs: SimpleNamespace(ready=True, gate_reasons=[]),
+        lambda **kwargs: SimpleNamespace(
+            ready=True,
+            gate_reasons=[],
+            active_release_validation=SimpleNamespace(
+                parsed_active_approval={"cli_sha256": "d" * 64}
+            ),
+        ),
     )
     monkeypatch.setattr(
         cli,
         "_git_branch_and_head",
         lambda root: ("research/rfc-007-paper-collection-burn-in", "a" * 40),
     )
+    monkeypatch.setattr(cli, "validate_import_identity", lambda *a, **k: None)
+    monkeypatch.setattr(cli, "approved_python_command", lambda root: sys.executable)
 
 
 def test_supervision_paths_are_deterministic_and_ledger_local(
@@ -167,7 +190,7 @@ def test_secret_values_are_not_serialized_in_identity_or_errors() -> None:
     assert identity[-1] == "<redacted>"
     message = redact_exception(RuntimeError(f"request failed at {secret}"))
     assert secret not in message
-    assert "<redacted-rpc-url>" in message
+    assert "<redacted-url>" in message
 
 
 def test_controlled_environment_is_an_allowlist(
@@ -175,32 +198,39 @@ def test_controlled_environment_is_an_allowlist(
 ) -> None:
     monkeypatch.setenv("UNRELATED_SECRET", "do-not-inherit")
     monkeypatch.setenv("ORE_RECOVERY_PRIMARY_RPC_URL", "primary-secret")
-    value = controlled_environment()
+    value = controlled_environment(Path.cwd())
     assert "UNRELATED_SECRET" not in value
     assert value["ORE_RECOVERY_PRIMARY_RPC_URL"] == "primary-secret"
     assert value["PYTHONUNBUFFERED"] == "1"
+    assert value["PYTHONPATH"] == str(Path.cwd() / "src")
+    assert "PYTHONHOME" not in value
 
 
 def test_detached_child_survives_spawn_return_and_logs(tmp_path: Path) -> None:
-    log = tmp_path / "child.log"
+    ready = tmp_path / "ready"
+    log_descriptor, _ = safe_open_log(tmp_path / "child.log")
+    authority_read, authority_write = os.pipe()
+    os.write(authority_write, b"x")
+    os.close(authority_write)
     child = spawn_detached(
         (
             sys.executable,
             "-c",
-            "import time; print('ready', flush=True); time.sleep(5)",
+            f"import pathlib,time; pathlib.Path({str(ready)!r}).touch(); time.sleep(5)",
         ),
         cwd=tmp_path,
-        log_path=log,
+        log_descriptor=log_descriptor,
+        authority_descriptor=authority_read,
         environment=dict(os.environ),
     )
+    os.close(log_descriptor)
+    os.close(authority_read)
     try:
         deadline = time.monotonic() + 2
-        while time.monotonic() < deadline and "ready" not in (
-            log.read_text() if log.exists() else ""
-        ):
+        while time.monotonic() < deadline and not ready.exists():
             time.sleep(0.02)
         assert child.poll() is None
-        assert log.read_text().strip() == "ready"
+        assert ready.exists()
     finally:
         child.terminate()
         child.wait(timeout=5)
@@ -214,9 +244,19 @@ def test_writer_lease_status_distinguishes_stale_and_active(
     stale.write_text("999999\n")
     assert not writer_lease_status(ledger)["active"]
     with RFC008WriterLease(ledger):
-        state = writer_lease_status(ledger)
-        assert state["active"]
-        assert state["recorded_process_id"] == os.getpid()
+        with pytest.MonkeyPatch.context() as monkeypatch:
+            monkeypatch.setattr(
+                "orev3.rfc008.supervision.process_snapshot",
+                lambda pid: {
+                    "pid": pid,
+                    "alive": pid == os.getpid(),
+                    "start_identity": "a" * 64,
+                    "command": "pytest",
+                },
+            )
+            state = writer_lease_status(ledger)
+            assert state["active"]
+            assert state["recorded_process_id"] == os.getpid()
     assert not writer_lease_status(ledger)["active"]
 
 
@@ -241,7 +281,7 @@ def test_process_identity_rejects_pid_reuse(
             "pid": pid,
             "alive": True,
             "start_identity": "reused",
-            "command": "python -m orev3.rfc008.cli run",
+            "command": f"python -m orev3.rfc008.cli {INTERNAL_CHILD_COMMAND}",
         },
     )
     assert not process_matches_metadata(value)
@@ -291,12 +331,15 @@ def test_supervised_child_command_contains_no_rpc_values(
     command = cli._supervised_child_command(
         args,
         metadata_path=tmp_path / "metadata.json",
-        launch_identifier="launch-id",
+        launch_identifier="10000000-0000-4000-8000-000000000001",
+        authority_descriptor=7,
+        log_descriptor=8,
     )
     text = " ".join(command)
     assert "ORE_RECOVERY_PRIMARY_RPC_URL" not in text
     assert "ORE_RECOVERY_SECONDARY_RPC_URL" not in text
     assert "--supervision-metadata" in command
+    assert INTERNAL_CHILD_COMMAND in command
 
 
 def test_supervised_run_rejects_wrong_launch_binding(
@@ -308,6 +351,8 @@ def test_supervised_run_rejects_wrong_launch_binding(
     args = SimpleNamespace(
         supervision_metadata=str(path),
         supervision_launch_identifier="wrong",
+        supervision_authority_fd=0,
+        supervision_log_fd=0,
         ledger=value["ledger_path"],
     )
     with pytest.raises(SupervisionError, match="binding"):
@@ -320,7 +365,7 @@ def test_supervised_run_records_redacted_early_failure(
 ) -> None:
     value = metadata_for(tmp_path)
     value["collector_pid"] = os.getpid()
-    value["collector_process_start_identity"] = "identity"
+    value["collector_process_start_identity"] = "e" * 64
     path = Path(value["metadata_path"])
     atomic_write_metadata(path, value)
     monkeypatch.setattr(
@@ -329,8 +374,8 @@ def test_supervised_run_records_redacted_early_failure(
         lambda pid: {
             "pid": pid,
             "alive": True,
-            "start_identity": "identity",
-            "command": "python -m orev3.rfc008.cli run",
+            "start_identity": "e" * 64,
+            "command": f"python -m orev3.rfc008.cli {INTERNAL_CHILD_COMMAND}",
         },
     )
     secret = "https://provider.invalid/?token=secret"
@@ -340,10 +385,16 @@ def test_supervised_run_records_redacted_early_failure(
         lambda args: (_ for _ in ()).throw(RuntimeError(secret)),
     )
     monkeypatch.setattr(cli, "_supervision_exit_state", lambda args: "failed")
+    monkeypatch.setattr(cli, "consume_child_authority", lambda *a, **k: None)
+    monkeypatch.setattr(cli, "validate_import_identity", lambda *a, **k: None)
+    monkeypatch.setattr(cli, "install_sanitized_streams", lambda *a, **k: None)
     args = SimpleNamespace(
         supervision_metadata=str(path),
-        supervision_launch_identifier="launch-id",
+        supervision_launch_identifier=value["launch_identifier"],
+        supervision_authority_fd=0,
+        supervision_log_fd=0,
         ledger=value["ledger_path"],
+        repository_root=tmp_path,
     )
     with pytest.raises(RuntimeError):
         cli.command_run(args)
@@ -360,13 +411,21 @@ def test_start_rejects_active_authoritative_session(
     monkeypatch.setattr(
         cli,
         "validate_collection_preflight",
-        lambda **kwargs: SimpleNamespace(ready=True, gate_reasons=[]),
+        lambda **kwargs: SimpleNamespace(
+            ready=True,
+            gate_reasons=[],
+            active_release_validation=SimpleNamespace(
+                parsed_active_approval={"cli_sha256": "d" * 64}
+            ),
+        ),
     )
     monkeypatch.setattr(
         cli,
         "_git_branch_and_head",
         lambda root: ("research/rfc-007-paper-collection-burn-in", "a" * 40),
     )
+    monkeypatch.setattr(cli, "validate_import_identity", lambda *a, **k: None)
+    monkeypatch.setattr(cli, "approved_python_command", lambda root: sys.executable)
     authorization = SimpleNamespace(
         lifecycle_state="active",
         consuming_session_identity="session",
@@ -423,7 +482,7 @@ def test_start_rejects_live_stale_metadata_before_spawn(
     )
     value = metadata_for(tmp_path)
     value["collector_pid"] = 123
-    value["collector_process_start_identity"] = "identity"
+    value["collector_process_start_identity"] = "e" * 64
     atomic_write_metadata(value["metadata_path"], value)
     monkeypatch.setattr(cli, "process_matches_metadata", lambda value: True)
     monkeypatch.setattr(
@@ -456,6 +515,12 @@ def test_start_reports_child_exit_before_session(
     class Child:
         pid = 4321
 
+        def poll(self):
+            return 1
+
+        def wait(self, timeout):
+            return 1
+
     monkeypatch.setattr(cli, "spawn_detached", lambda *a, **k: Child())
     monkeypatch.setattr(
         cli,
@@ -463,8 +528,8 @@ def test_start_reports_child_exit_before_session(
         lambda pid: {
             "pid": pid,
             "alive": True,
-            "start_identity": "identity",
-            "command": "python -m orev3.rfc008.cli run",
+            "start_identity": "e" * 64,
+            "command": f"python -m orev3.rfc008.cli {INTERNAL_CHILD_COMMAND}",
         },
     )
     monkeypatch.setattr(
@@ -518,16 +583,22 @@ def test_start_timeout_terminates_unestablished_child(
         def kill(self):
             self.returncode = -9
 
+        def poll(self):
+            return self.returncode
+
     child = Child()
     monkeypatch.setattr(cli, "spawn_detached", lambda *a, **k: child)
     snapshot = {
         "pid": 4321,
         "alive": True,
-        "start_identity": "identity",
-        "command": "python -m orev3.rfc008.cli run",
+        "start_identity": "e" * 64,
+        "command": f"python -m orev3.rfc008.cli {INTERNAL_CHILD_COMMAND}",
     }
     monkeypatch.setattr(cli, "wait_for_process_identity", lambda pid: snapshot)
     monkeypatch.setattr(cli, "process_snapshot", lambda pid: snapshot)
+    monkeypatch.setattr(
+        "orev3.rfc008.supervision.process_snapshot", lambda pid: snapshot
+    )
     with pytest.raises(SupervisionError, match="timed out"):
         cli.command_start(start_args(tmp_path))
     assert child.terminated
@@ -546,13 +617,21 @@ def test_start_reports_success_only_after_authoritative_handshake(
     monkeypatch.setattr(
         cli,
         "validate_collection_preflight",
-        lambda **kwargs: SimpleNamespace(ready=True, gate_reasons=[]),
+        lambda **kwargs: SimpleNamespace(
+            ready=True,
+            gate_reasons=[],
+            active_release_validation=SimpleNamespace(
+                parsed_active_approval={"cli_sha256": "d" * 64}
+            ),
+        ),
     )
     monkeypatch.setattr(
         cli,
         "_git_branch_and_head",
         lambda root: ("research/rfc-007-paper-collection-burn-in", "a" * 40),
     )
+    monkeypatch.setattr(cli, "validate_import_identity", lambda *a, **k: None)
+    monkeypatch.setattr(cli, "approved_python_command", lambda root: sys.executable)
     record = SimpleNamespace(
         authorization_identifier="authorization",
         authorization_digest="a" * 64,
@@ -618,12 +697,25 @@ def test_start_reports_success_only_after_authoritative_handshake(
         def terminate(self):
             raise AssertionError("successful child must not be terminated")
 
-    monkeypatch.setattr(cli, "spawn_detached", lambda *a, **k: Child())
+        def poll(self):
+            return None
+
+    def spawn(*_args, **_kwargs):
+        update_metadata(
+            supervision_paths(args.ledger)["metadata"],
+            collector_pid=4321,
+            collector_start_timestamp="2026-07-29T00:00:00+00:00",
+            collector_process_start_identity="f" * 64,
+            launch_authority_consumed_at="2026-07-29T00:00:00+00:00",
+        )
+        return Child()
+
+    monkeypatch.setattr(cli, "spawn_detached", spawn)
     snapshot = {
         "pid": 4321,
         "alive": True,
-        "start_identity": "process-identity",
-        "command": "python -m orev3.rfc008.cli run",
+        "start_identity": "f" * 64,
+        "command": f"python -m orev3.rfc008.cli {INTERNAL_CHILD_COMMAND}",
     }
     monkeypatch.setattr(cli, "wait_for_process_identity", lambda pid: snapshot)
     monkeypatch.setattr(cli, "process_snapshot", lambda pid: snapshot)

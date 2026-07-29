@@ -396,15 +396,29 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli start \
 
 `start` performs the release and collection preflights, takes an exclusive
 launch mutex, rejects authoritative active-session or writer-lease state, and
-launches the existing `run` command with `start_new_session=True`, detached
-stdin, deliberately closed file descriptors, a controlled environment, and
-combined stdout/stderr at:
+launches a private `_supervised-child` command with `start_new_session=True`,
+detached stdin, deliberately closed file descriptors, and a controlled
+environment. The former public `run` interface is removed. The private child
+requires a one-shot inherited authority pipe that is neither persisted nor
+reproducible from a copied command line; recovery uses the same supervised
+authority.
+
+The child uses this repository's `.venv/bin/python`, an internally constructed
+`PYTHONPATH` containing only the approved `src` directory, and verifies the
+imported package origin and approved CLI hash. Caller `PYTHONPATH`,
+`PYTHONHOME`, alternate interpreters, and substituted package origins fail
+closed.
+
+The deterministic log must be a single-link regular file in the resolved
+ledger runtime directory and is opened without following symlinks. Child
+stdout, stderr, exceptions, URLs, credentials, and known provider secrets pass
+through a sanitizing stream before durable output at:
 
 ```text
 data/ledger/rfc008_paper_ledger_v1.collector.log
 ```
 
-It atomically publishes schema-1 supervision metadata at:
+It atomically publishes strict schema-2 supervision metadata at:
 
 ```text
 data/ledger/rfc008_paper_ledger_v1.supervision.json
@@ -413,10 +427,13 @@ data/ledger/rfc008_paper_ledger_v1.supervision.json
 Launch success is reported only after the child remains alive, the exact
 process-start identity matches, the writer lease is held by that PID, the
 authorization and ledger name the same session, and the corresponding open
-`collector_runs` row exists. The metadata contains no RPC URL or environment
-value. A child that exits before the handshake, a timeout, PID reuse, an
-active writer, a duplicate session, or inconsistent authorization/ledger
-state fails closed.
+`collector_runs` row exists. Process identity and lease ownership are checked
+again after all authoritative reads and through a final stabilization
+interval. Every exception after spawn and before final success terminates and
+reaps only the exact unestablished child. The metadata contains no RPC URL or
+environment value. A child that exits before or during the final handshake, a
+timeout, PID reuse, an active writer, a duplicate session, or inconsistent
+authorization/ledger state fails closed.
 
 An inactive supervision record is recoverable as stale only when the process,
 authorization, ledger session, open run, and advisory writer lease all agree
@@ -483,7 +500,7 @@ completion reconciliation and stale-session cleanup before exiting. It never
 reopens the completed collection. Repeating the same recovery is safe and
 remains completed.
 
-The status command remains read-only and reports the recorded and current Git
+The status command remains strictly observational and reports the recorded and current Git
 identities, metadata and log paths, process liveness and process-start
 identity, authorization/session binding, canonical and stored counts, arm
 decisions, open and latest run records, advisory writer-lease state,
@@ -493,6 +510,18 @@ reaches exactly 600, the session and authorization close, and the lease is
 released. On an unexpected post-session exit it records `interrupted`;
 operators must inspect status and use the existing separately authorized
 recovery path. Supervision never automatically restarts a failed collector.
+
+Status never probes the writer lock by acquiring a shared or exclusive flock.
+It passively compares the recorded owner with live process identity and
+requires exact agreement among metadata, authorization, ledger, open run,
+lease owner, branch, HEAD, target, and deterministic log path. Ambiguous or
+disagreeing state is reported as inconsistent rather than normalized.
+
+Supervision metadata uses duplicate-safe parsing and strict UUID, hash,
+timestamp, PID, path, target, field, and transition validation. It remains
+diagnostic evidence only and cannot consume authorization, establish a
+session, authorize recovery, or override authoritative database, Git, process,
+or lease state.
 
 ## 9. Future authorized final freeze
 

@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from orev3.rfc008.cli import command_burn_in, command_run
+from orev3.rfc008.supervision import SupervisionError
 from orev3.rfc008.writer import DuplicateRFC008Writer, RFC008WriterLease
 
 
@@ -19,7 +20,7 @@ def test_collection_command_fails_before_io_without_authorization() -> None:
         ledger="/does/not/exist",
         recovery=False,
     )
-    with pytest.raises(PermissionError, match="collection preflight"):
+    with pytest.raises(SupervisionError, match="supervised"):
         command_run(args)
 
 

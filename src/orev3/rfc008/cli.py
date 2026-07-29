@@ -45,20 +45,29 @@ from orev3.rfc008.storage import (
     create_authorized_ledger,
 )
 from orev3.rfc008.supervision import (
+    INTERNAL_CHILD_COMMAND,
+    STARTUP_POLL_SECONDS,
     STARTUP_TIMEOUT_SECONDS,
     SupervisionError,
+    approved_python_command,
     atomic_write_metadata,
     command_identity,
+    consume_child_authority,
+    controlled_environment,
+    create_child_authority,
+    install_sanitized_streams,
     launch_mutex,
     process_matches_metadata,
     process_snapshot,
-    python_command,
     read_metadata,
     redact_exception,
+    safe_open_log,
     spawn_detached,
     supervision_paths,
+    terminate_unestablished_child,
     update_metadata,
     utc_now,
+    validate_import_identity,
     wait_for_process_identity,
     writer_lease_status,
 )
@@ -512,9 +521,17 @@ def command_run(args: argparse.Namespace) -> None:
     launch_identifier = getattr(
         args, "supervision_launch_identifier", None
     )
-    if metadata_path is None:
-        _command_run(args)
-        return
+    authority_fd = getattr(args, "supervision_authority_fd", None)
+    log_fd = getattr(args, "supervision_log_fd", None)
+    if (
+        metadata_path is None
+        or launch_identifier is None
+        or authority_fd is None
+        or log_fd is None
+    ):
+        raise SupervisionError(
+            "RFC-008 collection requires supervised single-launch authority"
+        )
     metadata = read_metadata(metadata_path)
     if (
         metadata is None
@@ -525,12 +542,36 @@ def command_run(args: argparse.Namespace) -> None:
         raise SupervisionError(
             "RFC-008 supervised child metadata binding mismatch"
         )
+    known_secrets = tuple(
+        os.environ.get(name, "")
+        for name in (
+            "ORE_RECOVERY_PRIMARY_RPC_URL",
+            "ORE_RECOVERY_SECONDARY_RPC_URL",
+        )
+    )
+    install_sanitized_streams(log_fd, known_secrets=known_secrets)
+    os.close(log_fd)
+    consume_child_authority(
+        authority_fd,
+        expected_sha256=metadata["launch_authority_sha256"],
+    )
+    validate_import_identity(
+        args.repository_root,
+        expected_cli_sha256=metadata["cli_sha256"],
+    )
     own_process = process_snapshot(os.getpid())
+    if (
+        not own_process["alive"]
+        or f"-m orev3.rfc008.cli {INTERNAL_CHILD_COMMAND}"
+        not in str(own_process["command"])
+    ):
+        raise SupervisionError("RFC-008 internal child process identity mismatch")
     update_metadata(
         metadata_path,
         collector_pid=os.getpid(),
         collector_start_timestamp=utc_now(),
         collector_process_start_identity=own_process["start_identity"],
+        launch_authority_consumed_at=utc_now(),
     )
     try:
         _command_run(args)
@@ -591,12 +632,14 @@ def _supervised_child_command(
     *,
     metadata_path: Path,
     launch_identifier: str,
+    authority_descriptor: int,
+    log_descriptor: int,
 ) -> list[str]:
     command = [
-        python_command(),
+        approved_python_command(args.repository_root),
         "-m",
         "orev3.rfc008.cli",
-        "run",
+        INTERNAL_CHILD_COMMAND,
         "--config",
         str(args.config),
         "--resolver-config",
@@ -619,6 +662,10 @@ def _supervised_child_command(
         str(metadata_path),
         "--supervision-launch-identifier",
         launch_identifier,
+        "--supervision-authority-fd",
+        str(authority_descriptor),
+        "--supervision-log-fd",
+        str(log_descriptor),
     ]
     if args.expected_marker_sha256:
         command.extend(
@@ -707,12 +754,18 @@ def command_start(args: argparse.Namespace) -> None:
             + ", ".join(readiness.gate_reasons)
         )
     branch, head = _git_branch_and_head(args.repository_root)
+    approval = readiness.active_release_validation.parsed_active_approval
+    cli_sha256 = str(approval["cli_sha256"])
+    validate_import_identity(
+        args.repository_root,
+        expected_cli_sha256=cli_sha256,
+    )
     paths = supervision_paths(args.ledger)
     with launch_mutex(args.ledger):
         state = _startup_authoritative_state(args)
         authorization = state["authorization"]
         contract = state["contract"]
-        if contract.completed:
+        if contract.completed and not args.recovery:
             raise PermissionError(
                 "RFC-008 completed collection cannot be relaunched"
             )
@@ -733,8 +786,12 @@ def command_start(args: argparse.Namespace) -> None:
             raise PermissionError(
                 "RFC-008 authorization is already bound to a session"
             )
-        expected_authorization_state = "active" if args.recovery else "initialized"
-        if authorization.lifecycle_state != expected_authorization_state:
+        expected_authorization_states = (
+            {"active", "completed"}
+            if args.recovery and contract.completed
+            else ({"active"} if args.recovery else {"initialized"})
+        )
+        if authorization.lifecycle_state not in expected_authorization_states:
             raise PermissionError(
                 "RFC-008 authorization state rejects supervised launch"
             )
@@ -754,23 +811,32 @@ def command_start(args: argparse.Namespace) -> None:
                 "recovered_at": utc_now(),
             }
         launch_identifier = str(uuid.uuid4())
+        authority_descriptor, authority_sha256 = create_child_authority()
+        log_descriptor, log_stat = safe_open_log(paths["log"])
         child_command = _supervised_child_command(
             args,
             metadata_path=paths["metadata"],
             launch_identifier=launch_identifier,
+            authority_descriptor=authority_descriptor,
+            log_descriptor=log_descriptor,
         )
         metadata = {
-            "schema_version": 1,
+            "schema_version": 2,
             "launch_identifier": launch_identifier,
+            "launch_authority_sha256": authority_sha256,
+            "launch_authority_consumed_at": None,
             "launcher_pid": os.getpid(),
             "collector_pid": None,
             "collector_start_timestamp": None,
             "collector_process_start_identity": None,
             "command_identity": command_identity(child_command),
             "log_path": str(paths["log"]),
+            "log_device": int(log_stat.st_dev),
+            "log_inode": int(log_stat.st_ino),
             "metadata_path": str(paths["metadata"]),
             "branch": branch,
             "head": head,
+            "cli_sha256": cli_sha256,
             "authorization_identifier": (
                 authorization.record.authorization_identifier
             ),
@@ -787,113 +853,215 @@ def command_start(args: argparse.Namespace) -> None:
             "failure_reason": None,
             "stale_recovery": stale_recovery,
         }
-        atomic_write_metadata(paths["metadata"], metadata)
-        child = spawn_detached(
-            child_command,
-            cwd=args.repository_root,
-            log_path=paths["log"],
-        )
-        child_snapshot = wait_for_process_identity(child.pid)
-        update_metadata(
-            paths["metadata"],
-            collector_pid=child.pid,
-            collector_start_timestamp=datetime.now(
-                timezone.utc
-            ).isoformat(),
-            collector_process_start_identity=child_snapshot[
-                "start_identity"
-            ],
-        )
-        deadline = time.monotonic() + args.startup_timeout_seconds
-        while time.monotonic() < deadline:
-            current_metadata = read_metadata(paths["metadata"])
-            current_process = process_snapshot(child.pid)
-            if not current_process["alive"]:
-                reason = (
-                    current_metadata["failure_reason"]
-                    if current_metadata is not None
-                    else None
+        child = None
+        child_identity = None
+        established = False
+        try:
+            atomic_write_metadata(paths["metadata"], metadata)
+            child = spawn_detached(
+                child_command,
+                cwd=args.repository_root,
+                log_descriptor=log_descriptor,
+                authority_descriptor=authority_descriptor,
+                environment=controlled_environment(args.repository_root),
+            )
+            os.close(log_descriptor)
+            log_descriptor = -1
+            os.close(authority_descriptor)
+            authority_descriptor = -1
+            try:
+                child_snapshot = wait_for_process_identity(child.pid)
+            except SupervisionError:
+                if args.recovery and contract.completed:
+                    recovered = _startup_authoritative_state(
+                        args, process_id=child.pid
+                    )
+                    recovered_metadata = read_metadata(paths["metadata"])
+                    if (
+                        recovered["contract"].completed
+                        and recovered["contract"].active_session_identity is None
+                        and recovered["authorization"].lifecycle_state
+                        == "completed"
+                        and not recovered["open_runs"]
+                        and recovered_metadata is not None
+                        and recovered_metadata["supervision_state"]
+                        == "completed"
+                        and child.poll() is not None
+                    ):
+                        established = True
+                        _print(
+                            {
+                                "supervised_launch": "completed_reconciliation",
+                                "collector_pid": child.pid,
+                                "session_identity": None,
+                                "authorization_identifier": recovered_metadata[
+                                    "authorization_identifier"
+                                ],
+                                "ledger_instance_identifier": recovered_metadata[
+                                    "ledger_instance_identifier"
+                                ],
+                                "target": recovered_metadata["target_count"],
+                                "metadata_path": recovered_metadata["metadata_path"],
+                                "log_path": recovered_metadata["log_path"],
+                                "writer_lease_active": False,
+                            }
+                        )
+                        return
+                raise
+            child_identity = child_snapshot["start_identity"]
+            deadline = time.monotonic() + args.startup_timeout_seconds
+            while time.monotonic() < deadline:
+                before = process_snapshot(child.pid)
+                current_metadata = read_metadata(paths["metadata"])
+                current = _startup_authoritative_state(
+                    args, process_id=child.pid
                 )
+                lease = writer_lease_status(args.ledger)
+                after = process_snapshot(child.pid)
+                current_authorization = current["authorization"]
+                current_contract = current["contract"]
+
+                if args.recovery and current_contract.completed:
+                    completed_ready = (
+                        current_authorization.lifecycle_state == "completed"
+                        and current_contract.active_session_identity is None
+                        and not current["open_runs"]
+                        and current_metadata is not None
+                        and current_metadata["supervision_state"] == "completed"
+                    )
+                    if completed_ready and not after["alive"]:
+                        established = True
+                        _print(
+                            {
+                                "supervised_launch": "completed_reconciliation",
+                                "collector_pid": child.pid,
+                                "session_identity": None,
+                                "authorization_identifier": current_metadata[
+                                    "authorization_identifier"
+                                ],
+                                "ledger_instance_identifier": current_metadata[
+                                    "ledger_instance_identifier"
+                                ],
+                                "target": current_metadata["target_count"],
+                                "metadata_path": current_metadata["metadata_path"],
+                                "log_path": current_metadata["log_path"],
+                                "writer_lease_active": False,
+                            }
+                        )
+                        return
+                    time.sleep(STARTUP_POLL_SECONDS)
+                    continue
+
+                if not before["alive"]:
+                    reason = (
+                        current_metadata["failure_reason"]
+                        if current_metadata is not None
+                        else None
+                    )
+                    raise SupervisionError(
+                        "RFC-008 supervised child exited before startup "
+                        f"completed: {reason or 'no failure detail'}"
+                    )
+                run = current["matching_run"]
+                session = current_contract.active_session_identity
+                metadata_agrees = (
+                    current_metadata is not None
+                    and current_metadata["collector_pid"] == child.pid
+                    and current_metadata["collector_process_start_identity"]
+                    == child_identity
+                    and current_metadata["launch_authority_consumed_at"]
+                    is not None
+                )
+                authoritative_agrees = (
+                    current_authorization.lifecycle_state == "active"
+                    and session is not None
+                    and current_authorization.consuming_session_identity
+                    == session
+                    and run is not None
+                    and str(run["run_id"]) == session
+                    and int(run["process_id"]) == child.pid
+                    and lease["active"]
+                    and lease["recorded_process_id"] == child.pid
+                )
+                process_agrees = (
+                    before["alive"]
+                    and after["alive"]
+                    and before["start_identity"] == child_identity
+                    and after["start_identity"] == child_identity
+                )
+                if metadata_agrees and authoritative_agrees and process_agrees:
+                    time.sleep(STARTUP_POLL_SECONDS)
+                    final_process = process_snapshot(child.pid)
+                    final_lease = writer_lease_status(args.ledger)
+                    if (
+                        not final_process["alive"]
+                        or final_process["start_identity"] != child_identity
+                        or not final_lease["active"]
+                        or final_lease["recorded_process_id"] != child.pid
+                    ):
+                        raise SupervisionError(
+                            "RFC-008 child exited during final startup verification"
+                        )
+                    value = update_metadata(
+                        paths["metadata"],
+                        session_identity=session,
+                        supervision_state="active",
+                        failure_reason=None,
+                    )
+                    established = True
+                    _print(
+                        {
+                            "supervised_launch": "active",
+                            "collector_pid": child.pid,
+                            "collector_start_timestamp": value[
+                                "collector_start_timestamp"
+                            ],
+                            "session_identity": session,
+                            "authorization_identifier": value[
+                                "authorization_identifier"
+                            ],
+                            "ledger_instance_identifier": value[
+                                "ledger_instance_identifier"
+                            ],
+                            "target": value["target_count"],
+                            "metadata_path": value["metadata_path"],
+                            "log_path": value["log_path"],
+                            "writer_lease_active": True,
+                        }
+                    )
+                    return
+                time.sleep(STARTUP_POLL_SECONDS)
+            raise SupervisionError("RFC-008 supervised startup timed out")
+        except BaseException as exc:
+            if child is not None and not established:
+                terminate_unestablished_child(child, child_identity)
+            try:
+                current_metadata = read_metadata(paths["metadata"])
                 if (
                     current_metadata is not None
-                    and current_metadata["supervision_state"] == "starting"
+                    and current_metadata["supervision_state"]
+                    in {"starting", "active"}
                 ):
-                    poll = getattr(child, "poll", None)
-                    exit_code = poll() if callable(poll) else None
                     update_metadata(
                         paths["metadata"],
-                        supervision_state="failed",
-                        exit_code=exit_code,
-                        failure_reason=(
-                            reason
-                            or "SupervisionError: child exited before session"
+                        supervision_state=(
+                            "interrupted"
+                            if current_metadata["session_identity"] is not None
+                            else "failed"
                         ),
+                        exit_code=(
+                            child.poll() if child is not None else None
+                        ),
+                        failure_reason=redact_exception(exc),
                     )
-                raise SupervisionError(
-                    "RFC-008 supervised child exited before startup "
-                    f"completed: {reason or 'no failure detail'}"
-                )
-            current = _startup_authoritative_state(
-                args, process_id=child.pid
-            )
-            current_authorization = current["authorization"]
-            current_contract = current["contract"]
-            run = current["matching_run"]
-            lease = writer_lease_status(args.ledger)
-            session = current_contract.active_session_identity
-            if (
-                current_authorization.lifecycle_state == "active"
-                and session is not None
-                and current_authorization.consuming_session_identity
-                == session
-                and run is not None
-                and str(run["run_id"]) == session
-                and lease["active"]
-                and lease["recorded_process_id"] == child.pid
-                and current_process["start_identity"]
-                == child_snapshot["start_identity"]
-            ):
-                value = update_metadata(
-                    paths["metadata"],
-                    session_identity=session,
-                    supervision_state="active",
-                    failure_reason=None,
-                )
-                _print(
-                    {
-                        "supervised_launch": "active",
-                        "collector_pid": child.pid,
-                        "collector_start_timestamp": value[
-                            "collector_start_timestamp"
-                        ],
-                        "session_identity": session,
-                        "authorization_identifier": value[
-                            "authorization_identifier"
-                        ],
-                        "ledger_instance_identifier": value[
-                            "ledger_instance_identifier"
-                        ],
-                        "target": value["target_count"],
-                        "metadata_path": value["metadata_path"],
-                        "log_path": value["log_path"],
-                        "writer_lease_active": True,
-                    }
-                )
-                return
-            time.sleep(0.1)
-        child.terminate()
-        try:
-            child.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            child.kill()
-            child.wait(timeout=5)
-        update_metadata(
-            paths["metadata"],
-            supervision_state="failed",
-            exit_code=child.returncode,
-            failure_reason="SupervisionError: startup timeout",
-        )
-        raise SupervisionError("RFC-008 supervised startup timed out")
+            except Exception:
+                pass
+            raise
+        finally:
+            if log_descriptor >= 0:
+                os.close(log_descriptor)
+            if authority_descriptor >= 0:
+                os.close(authority_descriptor)
 
 
 def command_preflight_collection(args: argparse.Namespace) -> None:
@@ -1087,23 +1255,25 @@ def parser() -> argparse.ArgumentParser:
     inspect_ledger.add_argument("--ledger", required=True)
     inspect_ledger.set_defaults(func=command_inspect_ledger)
 
-    run = sub.add_parser("run")
-    run.add_argument("--config", required=True)
-    run.add_argument("--resolver-config", required=True)
-    run.add_argument("--marker", required=True)
-    _marker_hash_arguments(run)
-    run.add_argument("--ledger", required=True)
-    run.add_argument("--authorization", required=True)
-    run.add_argument("--recovery", action="store_true")
-    run.add_argument("--repository-root", required=True)
-    run.add_argument("--burn-in-evidence", required=True)
-    run.add_argument("--release-approval", required=True)
-    run.add_argument("--approval-manifest", required=True)
-    run.add_argument("--supervision-metadata", help=argparse.SUPPRESS)
-    run.add_argument(
-        "--supervision-launch-identifier", help=argparse.SUPPRESS
+    internal = sub.add_parser(INTERNAL_CHILD_COMMAND, help=argparse.SUPPRESS)
+    internal.add_argument("--config", required=True)
+    internal.add_argument("--resolver-config", required=True)
+    internal.add_argument("--marker", required=True)
+    _marker_hash_arguments(internal)
+    internal.add_argument("--ledger", required=True)
+    internal.add_argument("--authorization", required=True)
+    internal.add_argument("--recovery", action="store_true")
+    internal.add_argument("--repository-root", required=True)
+    internal.add_argument("--burn-in-evidence", required=True)
+    internal.add_argument("--release-approval", required=True)
+    internal.add_argument("--approval-manifest", required=True)
+    internal.add_argument("--supervision-metadata", required=True)
+    internal.add_argument("--supervision-launch-identifier", required=True)
+    internal.add_argument(
+        "--supervision-authority-fd", required=True, type=int
     )
-    run.set_defaults(func=command_run)
+    internal.add_argument("--supervision-log-fd", required=True, type=int)
+    internal.set_defaults(func=command_run)
 
     start = sub.add_parser(
         "start",

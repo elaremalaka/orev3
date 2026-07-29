@@ -16,7 +16,7 @@ import orev3.rfc008.cli as cli_module
 from orev3.rfc008.approval_contract import (
     active_schema2_structure_failures,
 )
-from orev3.rfc008.cli import command_preflight_collection, command_run
+from orev3.rfc008.cli import _command_run, command_preflight_collection
 from orev3.rfc008.lifecycle import (
     validate_collection_preflight,
     validate_post_marker_pre_collection_state,
@@ -240,7 +240,7 @@ def test_invalid_active_release_rejected_by_every_path(
     assert not lifecycle["active_release_validation_valid"]
     assert not collection.active_release_validation.valid
     with pytest.raises(PermissionError, match="collection preflight"):
-        command_run(_command_args(release_root))
+        _command_run(_command_args(release_root))
     command_preflight_collection(_preflight_args(release_root))
     cli_report = json.loads(capsys.readouterr().out)
     assert not cli_report["active_release_validation"]["valid"]
@@ -265,7 +265,7 @@ def test_duplicate_key_rejected_by_every_path(
     assert not _lifecycle(release_root)["active_release_validation_valid"]
     assert not _collection(release_root).active_release_validation.valid
     with pytest.raises(PermissionError, match="collection preflight"):
-        command_run(_command_args(release_root))
+        _command_run(_command_args(release_root))
     command_preflight_collection(_preflight_args(release_root))
     assert not json.loads(capsys.readouterr().out)[
         "active_release_validation"
@@ -300,7 +300,7 @@ def test_derived_source_drift_rejected_by_all_launch_paths(
     assert not _lifecycle(release_root)["ready"]
     assert not _collection(release_root).ready
     with pytest.raises(PermissionError, match="collection preflight"):
-        command_run(_command_args(release_root))
+        _command_run(_command_args(release_root))
 
 
 @pytest.mark.parametrize(
@@ -342,7 +342,7 @@ def test_invalid_release_stops_before_side_effect_boundaries(
     )
     monkeypatch.setattr(threading.Thread, "start", boundary("thread"))
     with pytest.raises(PermissionError, match="collection preflight"):
-        command_run(_command_args(release_root))
+        _command_run(_command_args(release_root))
     assert reached == {
         "provider": 0,
         "writer": 0,

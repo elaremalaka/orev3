@@ -11,8 +11,8 @@ from pathlib import Path
 import pytest
 
 from orev3.rfc008.cli import (
+    _command_run,
     command_preflight_collection,
-    command_run,
     command_status,
 )
 from orev3.rfc008.lifecycle import (
@@ -186,7 +186,7 @@ def _assert_rejected_everywhere(
     assert not collection.active_release_validation.valid
     assert not marker["active_release_validation_valid"]
     with pytest.raises(PermissionError, match="collection preflight"):
-        command_run(_args(root))
+        _command_run(_args(root))
     with pytest.raises(PermissionError, match="active release"):
         command_status(_args(root))
     command_preflight_collection(_args(root))

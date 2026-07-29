@@ -221,33 +221,8 @@ def test_status_is_read_only_and_reports_caps_and_safety(
 
 def test_cli_requires_explicit_commands_and_arguments() -> None:
     commands = parser()
-    args = commands.parse_args(
-        [
-            "run",
-            "--config",
-            "config.json",
-            "--resolver-config",
-            "resolver.json",
-            "--marker",
-            "marker.json",
-            "--expected-marker-sha256",
-            "a" * 64,
-            "--ledger",
-            "ledger.sqlite",
-            "--authorization",
-            "authorization.sqlite",
-            "--repository-root",
-            ".",
-            "--burn-in-evidence",
-            "burn-in.json",
-            "--release-approval",
-            "release.json",
-            "--approval-manifest",
-            "approval.json",
-        ]
-    )
-    assert args.command == "run"
-    assert not args.recovery
+    with pytest.raises(SystemExit):
+        commands.parse_args(["run"])
     burn_in = commands.parse_args(
         [
             "resolver-burn-in",

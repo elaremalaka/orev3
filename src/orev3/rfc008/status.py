@@ -17,6 +17,41 @@ from orev3.rfc008.supervision import (
 )
 
 
+def active_identity_agrees(
+    *,
+    supervision: dict[str, object] | None,
+    process: dict[str, object],
+    lease: dict[str, object],
+    open_run: object | None,
+    authorization: object,
+    contract: object,
+    runtime_log_path: Path,
+) -> bool:
+    if supervision is None or open_run is None:
+        return False
+    return bool(
+        supervision["collector_pid"] == process["pid"]
+        and supervision["collector_process_start_identity"]
+        == process["start_identity"]
+        and supervision["authorization_identifier"]
+        == authorization.record.authorization_identifier
+        and supervision["authorization_digest"]
+        == authorization.record.authorization_digest
+        and supervision["ledger_instance_identifier"]
+        == contract.ledger_instance_identifier
+        and supervision["session_identity"] == contract.active_session_identity
+        and str(open_run["run_id"]) == contract.active_session_identity
+        and int(open_run["process_id"]) == process["pid"]
+        and lease["recorded_process_id"] == process["pid"]
+        and lease["recorded_process_start_identity"] == process["start_identity"]
+        and supervision["branch"] == authorization.record.repository_branch
+        and supervision["head"] == authorization.record.repository_head
+        and supervision["target_count"] == contract.collection_target
+        and Path(str(supervision["log_path"])).resolve()
+        == runtime_log_path.resolve()
+    )
+
+
 def status_report(
     *,
     ledger_path: str | Path,
@@ -102,6 +137,16 @@ def status_report(
             if supervision is not None
             else False
         )
+        open_run = open_runs[0] if len(open_runs) == 1 else None
+        active_identity_agreement = active_identity_agrees(
+            supervision=supervision,
+            process=process,
+            lease=lease,
+            open_run=open_run,
+            authorization=authorization,
+            contract=contract,
+            runtime_log_path=runtime_paths["log"],
+        )
         process_ledger_agree = (
             (
                 contract.collection_state == "initialized"
@@ -119,6 +164,7 @@ def status_report(
                 and len(open_runs) == 1
                 and process_identity_matches
                 and lease["active"]
+                and active_identity_agreement
             )
             or (
                 contract.completed
@@ -267,6 +313,7 @@ def status_report(
                     else None
                 ),
                 "process_and_ledger_agree": process_ledger_agree,
+                "cross_source_identity_agreement": active_identity_agreement,
             },
             "collector_runs": {
                 "total": int(

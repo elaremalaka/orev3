@@ -1298,7 +1298,7 @@ def test_completed_recovery_command_reconciles_without_starting_collector(
         authorization=str(authorization_path),
     )
 
-    rfc008_cli.command_run(args)
+    rfc008_cli._command_run(args)
     first = json.loads(capsys.readouterr().out)
     assert first["collection_state"] == "completed"
     assert first["committed_opportunity_count"] == 600
@@ -1313,7 +1313,7 @@ def test_completed_recovery_command_reconciles_without_starting_collector(
             == 0
         )
 
-    rfc008_cli.command_run(args)
+    rfc008_cli._command_run(args)
     second = json.loads(capsys.readouterr().out)
     assert second == first
     with CollectionAuthorizationStore(
