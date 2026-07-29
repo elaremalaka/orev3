@@ -7,7 +7,7 @@ import shutil
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from threading import Event
+from threading import Event, Thread
 from types import SimpleNamespace
 
 import pytest
@@ -306,6 +306,157 @@ def test_begin_run_fails_authorization_closed_if_session_creation_fails(
         assert store.collection_contract().collection_state == "initialized"
         assert store.collection_contract().active_session_identity is None
         assert store.count("decision_snapshots") == 0
+
+
+def test_begin_run_commits_supervisor_visible_startup_handshake(
+    tmp_path: Path,
+    config: RFC008Config,
+    marker_file,
+) -> None:
+    marker, digest = marker_file
+    authorization_path, ledger_path = issue_and_initialize(
+        tmp_path,
+        config,
+        marker_sha256=digest,
+    )
+    with (
+        CollectionAuthorizationStore(authorization_path) as authorization,
+        RFC008Store(ledger_path, config=config) as store,
+    ):
+        collector = RFC008Collector(
+            store=store,
+            config=config,
+            marker_path=marker,
+            expected_marker_sha256=digest,
+            authorization_store=authorization,
+            session_identifier="startup-session",
+        )
+        assert collector.begin_run() == "startup-session"
+        assert not store.connection.in_transaction
+
+        with (
+            CollectionAuthorizationStore(
+                authorization_path, read_only=True
+            ) as observer_authorization,
+            RFC008Store(
+                ledger_path, config=config, read_only=True
+            ) as observer_store,
+        ):
+            contract = observer_store.validate_collection_contract(
+                config=config,
+                authorization=observer_authorization.status().record,
+            )
+            run = observer_store.connection.execute(
+                """
+                SELECT run_id,ended_at
+                FROM collector_runs
+                WHERE run_id=?
+                """,
+                ("startup-session",),
+            ).fetchone()
+
+        assert contract.active_session_identity == "startup-session"
+        assert run is not None
+        assert run["run_id"] == "startup-session"
+        assert run["ended_at"] is None
+        assert authorization.status().lifecycle_state == "active"
+        with store.connection:
+            collector.finish_run()
+
+
+def test_startup_is_visible_while_first_poll_is_blocked(
+    tmp_path: Path,
+    config: RFC008Config,
+    marker_file,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    marker, digest = marker_file
+    authorization_path, ledger_path = issue_and_initialize(
+        tmp_path,
+        config,
+        marker_sha256=digest,
+    )
+    poll_started = Event()
+    release_poll = Event()
+    worker_finished = Event()
+    errors: list[BaseException] = []
+
+    def worker() -> None:
+        try:
+            with (
+                CollectionAuthorizationStore(
+                    authorization_path
+                ) as authorization,
+                RFC008Store(ledger_path, config=config) as store,
+            ):
+                collector = RFC008Collector(
+                    store=store,
+                    config=config,
+                    marker_path=marker,
+                    expected_marker_sha256=digest,
+                    authorization_store=authorization,
+                    session_identifier="blocked-poll-session",
+                )
+                monkeypatch.setattr(
+                    collector, "install_signal_handlers", lambda: None
+                )
+
+                def blocked_poll() -> int:
+                    poll_started.set()
+                    assert release_poll.wait(timeout=5.0)
+                    collector.stop_requested.set()
+                    return 0
+
+                monkeypatch.setattr(collector, "poll_once", blocked_poll)
+                collector.run()
+        except BaseException as exc:  # pragma: no cover - asserted below
+            errors.append(exc)
+        finally:
+            worker_finished.set()
+
+    thread = Thread(target=worker)
+    thread.start()
+    assert poll_started.wait(timeout=5.0)
+
+    with (
+        CollectionAuthorizationStore(
+            authorization_path, read_only=True
+        ) as observer_authorization,
+        RFC008Store(
+            ledger_path, config=config, read_only=True
+        ) as observer_store,
+    ):
+        contract = observer_store.validate_collection_contract(
+            config=config,
+            authorization=observer_authorization.status().record,
+        )
+        run = observer_store.connection.execute(
+            """
+            SELECT run_id,ended_at
+            FROM collector_runs
+            WHERE run_id=?
+            """,
+            ("blocked-poll-session",),
+        ).fetchone()
+
+    assert contract.active_session_identity == "blocked-poll-session"
+    assert run is not None
+    assert run["ended_at"] is None
+    assert not worker_finished.is_set()
+
+    release_poll.set()
+    thread.join(timeout=5.0)
+    assert not thread.is_alive()
+    assert not errors
+    with RFC008Store(
+        ledger_path, config=config, read_only=True
+    ) as observer_store:
+        assert (
+            observer_store.validate_collection_contract(
+                config=config
+            ).active_session_identity
+            is None
+        )
 
 
 def test_authorization_rejects_copy_digest_tamper_and_timestamp_tamper(

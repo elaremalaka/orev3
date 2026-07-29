@@ -146,6 +146,10 @@ class RFC008Collector:
                     ),
                 ),
             )
+            # Supervision reads the ledger through a separate connection.
+            # Publish the complete startup handshake before the first poll can
+            # perform a potentially long batch inside its own transaction.
+            self.store.connection.commit()
         except Exception:
             self.store.connection.rollback()
             if authorization_consumed and self.authorization_store is not None:
