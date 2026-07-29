@@ -335,6 +335,98 @@ MIGRATIONS = (
             """,
         ),
     ),
+    Migration(
+        6,
+        "collection_release_epochs",
+        (
+            """
+            CREATE TABLE collection_release_epochs (
+              epoch_number INTEGER PRIMARY KEY CHECK(
+                typeof(epoch_number)='integer' AND epoch_number IN (1,2)
+              ),
+              start_sequence INTEGER NOT NULL UNIQUE CHECK(
+                typeof(start_sequence)='integer' AND start_sequence>=1
+              ),
+              release_approval_sha256 TEXT NOT NULL UNIQUE CHECK(
+                length(release_approval_sha256)=64
+              ),
+              authority_type TEXT NOT NULL CHECK(
+                authority_type IN ('rfc008_original','rfc009_continuation')
+              ),
+              authority_identifier TEXT NOT NULL UNIQUE,
+              authority_digest TEXT NOT NULL UNIQUE CHECK(
+                length(authority_digest)=64
+              ),
+              activated_at TEXT NOT NULL
+            )
+            """,
+            """
+            CREATE TRIGGER collection_release_epoch_order
+            BEFORE INSERT ON collection_release_epochs
+            BEGIN
+              SELECT CASE WHEN NEW.epoch_number !=
+                COALESCE((SELECT MAX(epoch_number)+1
+                          FROM collection_release_epochs),1)
+                THEN RAISE(ABORT,'RFC-009 release epoch order mismatch')
+              END;
+              SELECT CASE WHEN NEW.start_sequence !=
+                CASE WHEN NEW.epoch_number=1 THEN 1
+                     ELSE (SELECT committed_opportunity_count+1
+                           FROM collection_contract WHERE singleton=1) END
+                THEN RAISE(ABORT,'RFC-009 release epoch boundary mismatch')
+              END;
+              SELECT CASE WHEN
+                (NEW.epoch_number=1 AND
+                 NEW.authority_type!='rfc008_original')
+                OR (NEW.epoch_number=2 AND
+                    NEW.authority_type!='rfc009_continuation')
+                THEN RAISE(ABORT,'RFC-009 release epoch authority mismatch')
+              END;
+              SELECT CASE WHEN NEW.epoch_number=2 AND
+                ((SELECT collection_state FROM collection_contract
+                  WHERE singleton=1)='completed'
+                 OR (SELECT active_session_identity FROM collection_contract
+                     WHERE singleton=1) IS NOT NULL)
+                THEN RAISE(ABORT,'RFC-009 ledger is not continuable')
+              END;
+            END
+            """,
+            """
+            CREATE TRIGGER collection_release_epochs_no_update
+            BEFORE UPDATE ON collection_release_epochs
+            BEGIN
+              SELECT RAISE(ABORT,'RFC-009 release epochs are immutable');
+            END
+            """,
+            """
+            CREATE TRIGGER collection_release_epochs_no_delete
+            BEFORE DELETE ON collection_release_epochs
+            BEGIN
+              SELECT RAISE(ABORT,'RFC-009 release epochs are immutable');
+            END
+            """,
+            """
+            CREATE TRIGGER freeze_collection_release_epochs_insert
+            BEFORE INSERT ON collection_release_epochs
+            WHEN (SELECT value FROM metadata WHERE key='ledger_state')='frozen'
+            BEGIN SELECT RAISE(ABORT,'RFC-008 ledger is frozen'); END
+            """,
+            "DROP TRIGGER immutable_ledger_metadata_update",
+            "UPDATE metadata SET value='6' WHERE key='schema_version'",
+            """
+            CREATE TRIGGER immutable_ledger_metadata_update
+            BEFORE UPDATE ON metadata
+            WHEN OLD.key IN (
+              'schema_version','database_family','experiment_id',
+              'configuration_fingerprint','candidate_configuration_sha256',
+              'approval_manifest_sha256'
+            )
+            BEGIN
+              SELECT RAISE(ABORT,'RFC-008 immutable ledger metadata');
+            END
+            """,
+        ),
+    ),
 )
 
 

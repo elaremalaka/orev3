@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from functools import wraps
 from pathlib import Path
 from typing import ParamSpec, TypeVar
+from types import SimpleNamespace
 
 from orev3.collection.tailer import new_cursor
 from orev3.rfc008.analysis import analyze_dataset
@@ -85,6 +86,72 @@ from orev3.rfc008.supervision import (
     wait_for_process_identity,
     writer_lease_status,
 )
+from orev3.rfc009.continuation import (
+    activate_continuation,
+    preflight_continuation,
+)
+
+
+def _continuation_kwargs(args: argparse.Namespace) -> dict[str, object]:
+    return {
+        "repository_root": args.repository_root,
+        "config_path": args.config,
+        "resolver_config_path": args.resolver_config,
+        "burn_in_evidence_path": args.burn_in_evidence,
+        "release_approval_path": args.release_approval,
+        "approval_manifest_path": args.approval_manifest,
+        "marker_path": args.marker,
+        "authorization_path": args.authorization,
+        "ledger_path": args.ledger,
+        "continuation_approval_path": args.continuation_approval,
+    }
+
+
+def _runtime_preflight(args: argparse.Namespace):
+    continuation = getattr(args, "continuation_approval", None)
+    if continuation is None:
+        return validate_collection_preflight(
+            repository_root=args.repository_root,
+            config_path=args.config,
+            resolver_config_path=args.resolver_config,
+            burn_in_evidence_path=args.burn_in_evidence,
+            release_approval_path=args.release_approval,
+            approval_manifest_path=args.approval_manifest,
+            marker_path=args.marker,
+            authorization_path=args.authorization,
+            ledger_path=args.ledger,
+            action="recovery" if args.recovery else "launch",
+            collector_running=False,
+        )
+    if not args.recovery:
+        raise PermissionError(
+            "RFC-009 continuation is valid only for supervised recovery"
+        )
+    value = preflight_continuation(
+        require_activated=True, **_continuation_kwargs(args)
+    )
+    release_commit = subprocess.run(
+        ("git", "rev-parse", "HEAD^"),
+        cwd=args.repository_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    release = validate_active_release(
+        repository_root=args.repository_root,
+        config_path=args.config,
+        resolver_config_path=args.resolver_config,
+        burn_in_evidence_path=args.burn_in_evidence,
+        release_approval_path=args.release_approval,
+        approval_manifest_path=args.approval_manifest,
+        marker_path=args.marker,
+        approval_commit=release_commit,
+    )
+    return SimpleNamespace(
+        ready=value.ready and release.valid,
+        gate_reasons=value.gate_reasons,
+        active_release_validation=release,
+    )
 from orev3.rfc008.writer import RFC008WriterLease
 
 
@@ -475,35 +542,7 @@ def command_create_marker(args: argparse.Namespace) -> None:
 
 def _command_run(args: argparse.Namespace) -> None:
     action = "recovery" if args.recovery else "launch"
-    readiness = validate_collection_preflight(
-        repository_root=getattr(args, "repository_root", "."),
-        config_path=args.config,
-        resolver_config_path=getattr(
-            args,
-            "resolver_config",
-            "config/collection/rfc008_resolver_v1.json",
-        ),
-        burn_in_evidence_path=getattr(
-            args,
-            "burn_in_evidence",
-            "data/resolver/rfc008_operational_burn_in_v1.json",
-        ),
-        release_approval_path=getattr(
-            args,
-            "release_approval",
-            "docs/research/rfc008/release_implementation_approval_v1.json",
-        ),
-        approval_manifest_path=getattr(
-            args,
-            "approval_manifest",
-            "docs/research/rfc008/approval_manifest_v1.json",
-        ),
-        marker_path=args.marker,
-        authorization_path=args.authorization,
-        ledger_path=args.ledger,
-        action=action,
-        collector_running=False,
-    )
+    readiness = _runtime_preflight(args)
     if not readiness.ready:
         raise PermissionError(
             "RFC-008 collection preflight rejected launch: "
@@ -522,19 +561,7 @@ def _command_run(args: argparse.Namespace) -> None:
     config = RFC008Config.from_path(args.config)
     resolver_config = ResolverConfig.from_path(args.resolver_config)
     with RFC008WriterLease(args.ledger):
-        second = validate_collection_preflight(
-            repository_root=args.repository_root,
-            config_path=args.config,
-            resolver_config_path=args.resolver_config,
-            burn_in_evidence_path=args.burn_in_evidence,
-            release_approval_path=args.release_approval,
-            approval_manifest_path=args.approval_manifest,
-            marker_path=args.marker,
-            authorization_path=args.authorization,
-            ledger_path=args.ledger,
-            action=action,
-            collector_running=False,
-        )
+        second = _runtime_preflight(args)
         if not second.ready:
             raise PermissionError(
                 "RFC-008 collection preflight changed before launch: "
@@ -793,7 +820,24 @@ def _supervised_child_command(
         )
     if args.recovery:
         command.append("--recovery")
+    if getattr(args, "continuation_approval", None):
+        command.extend(
+            ("--continuation-approval", str(args.continuation_approval))
+        )
     return command
+
+
+def command_preflight_continuation(args: argparse.Namespace) -> None:
+    _print(preflight_continuation(**_continuation_kwargs(args)).as_dict())
+
+
+def command_activate_continuation(args: argparse.Namespace) -> None:
+    _print(
+        activate_continuation(
+            authorization_token=args.authorization_token,
+            **_continuation_kwargs(args),
+        ).as_dict()
+    )
 
 
 def _startup_authoritative_state(
@@ -922,19 +966,7 @@ def _active_authorization_release_mismatches(
 @_sanitize_public_command_errors
 def command_start(args: argparse.Namespace) -> None:
     known_secrets = configured_secret_values()
-    readiness = validate_collection_preflight(
-        repository_root=args.repository_root,
-        config_path=args.config,
-        resolver_config_path=args.resolver_config,
-        burn_in_evidence_path=args.burn_in_evidence,
-        release_approval_path=args.release_approval,
-        approval_manifest_path=args.approval_manifest,
-        marker_path=args.marker,
-        authorization_path=args.authorization,
-        ledger_path=args.ledger,
-        action="recovery" if args.recovery else "launch",
-        collector_running=False,
-    )
+    readiness = _runtime_preflight(args)
     if not readiness.ready:
         raise PermissionError(
             "RFC-008 supervised preflight rejected launch: "
@@ -1188,25 +1220,11 @@ def command_start(args: argparse.Namespace) -> None:
                         process_id=child.pid,
                     )
                     final_lease = writer_lease_status(args.ledger)
-                    final_release = validate_active_release(
-                        repository_root=args.repository_root,
-                        config_path=args.config,
-                        resolver_config_path=args.resolver_config,
-                        burn_in_evidence_path=args.burn_in_evidence,
-                        release_approval_path=args.release_approval,
-                        approval_manifest_path=args.approval_manifest,
-                        marker_path=args.marker,
-                    )
+                    final_release = _runtime_preflight(args)
                     final_mismatches = (
-                        _active_authorization_release_mismatches(
-                            args,
-                            active_release=final_release,
-                            authorization=final_state[
-                                "authorization"
-                            ].record,
-                        )
-                        if final_release.valid
-                        else ("active_release_validation_failed",)
+                        ()
+                        if final_release.ready
+                        else tuple(final_release.gate_reasons)
                     )
                     if final_mismatches or not _startup_handshake_agrees(
                         state=final_state,
@@ -1307,15 +1325,42 @@ def command_preflight_collection(args: argparse.Namespace) -> None:
 
 @_sanitize_public_command_errors
 def command_status(args: argparse.Namespace) -> None:
-    release = validate_active_release(
-        repository_root=args.repository_root,
-        config_path=args.config,
-        resolver_config_path=args.resolver_config,
-        burn_in_evidence_path=args.burn_in_evidence,
-        release_approval_path=args.release_approval,
-        approval_manifest_path=args.approval_manifest,
-        marker_path=args.marker,
-    )
+    continuation_path = getattr(args, "continuation_approval", None)
+    if continuation_path:
+        continuation = preflight_continuation(
+            require_activated=True, **_continuation_kwargs(args)
+        )
+        release_commit = subprocess.run(
+            ("git", "rev-parse", "HEAD^"),
+            cwd=args.repository_root,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        release = validate_active_release(
+            repository_root=args.repository_root,
+            config_path=args.config,
+            resolver_config_path=args.resolver_config,
+            burn_in_evidence_path=args.burn_in_evidence,
+            release_approval_path=args.release_approval,
+            approval_manifest_path=args.approval_manifest,
+            marker_path=args.marker,
+            approval_commit=release_commit,
+        )
+        if not continuation.ready:
+            raise PermissionError(
+                "RFC-009 continuation status validation failed"
+            )
+    else:
+        release = validate_active_release(
+            repository_root=args.repository_root,
+            config_path=args.config,
+            resolver_config_path=args.resolver_config,
+            burn_in_evidence_path=args.burn_in_evidence,
+            release_approval_path=args.release_approval,
+            approval_manifest_path=args.approval_manifest,
+            marker_path=args.marker,
+        )
     if not release.valid:
         raise PermissionError("RFC-008 active release validation failed")
     rotation = rotation_status(args.repository_root)
@@ -1346,18 +1391,25 @@ def command_status(args: argparse.Namespace) -> None:
             }
         )
         return
-    preflight = validate_collection_preflight(
-        repository_root=args.repository_root,
-        config_path=args.config,
-        resolver_config_path=args.resolver_config,
-        burn_in_evidence_path=args.burn_in_evidence,
-        release_approval_path=args.release_approval,
-        approval_manifest_path=args.approval_manifest,
-        marker_path=args.marker,
-        authorization_path=args.authorization,
-        ledger_path=args.ledger,
-        action="launch",
-        collector_running=False,
+    preflight = (
+        SimpleNamespace(
+            authorization_valid=True,
+            gate_reasons=(),
+        )
+        if continuation_path
+        else validate_collection_preflight(
+            repository_root=args.repository_root,
+            config_path=args.config,
+            resolver_config_path=args.resolver_config,
+            burn_in_evidence_path=args.burn_in_evidence,
+            release_approval_path=args.release_approval,
+            approval_manifest_path=args.approval_manifest,
+            marker_path=args.marker,
+            authorization_path=args.authorization,
+            ledger_path=args.ledger,
+            action="launch",
+            collector_running=False,
+        )
     )
     release_mismatches: tuple[str, ...] = ()
     for reason in preflight.gate_reasons:
@@ -1597,6 +1649,7 @@ def parser() -> argparse.ArgumentParser:
     internal.add_argument("--ledger", required=True)
     internal.add_argument("--authorization", required=True)
     internal.add_argument("--recovery", action="store_true")
+    internal.add_argument("--continuation-approval")
     internal.add_argument("--repository-root", required=True)
     internal.add_argument("--burn-in-evidence", required=True)
     internal.add_argument("--release-approval", required=True)
@@ -1626,6 +1679,7 @@ def parser() -> argparse.ArgumentParser:
     start.add_argument("--ledger", required=True)
     start.add_argument("--authorization", required=True)
     start.add_argument("--recovery", action="store_true")
+    start.add_argument("--continuation-approval")
     start.add_argument("--repository-root", default=".")
     start.add_argument(
         "--burn-in-evidence",
@@ -1673,6 +1727,7 @@ def parser() -> argparse.ArgumentParser:
     _marker_hash_arguments(status)
     status.add_argument("--ledger", required=True)
     status.add_argument("--authorization", required=True)
+    status.add_argument("--continuation-approval")
     status.add_argument("--repository-root", default=".")
     status.add_argument(
         "--resolver-config",
@@ -1694,6 +1749,27 @@ def parser() -> argparse.ArgumentParser:
         default="docs/research/rfc008/approval_manifest_v1.json",
     )
     status.set_defaults(func=command_status)
+
+    for name, function in (
+        ("preflight-continuation", command_preflight_continuation),
+        ("activate-continuation", command_activate_continuation),
+    ):
+        continuation = sub.add_parser(name)
+        continuation.add_argument("--config", required=True)
+        continuation.add_argument("--resolver-config", required=True)
+        continuation.add_argument("--marker", required=True)
+        continuation.add_argument("--ledger", required=True)
+        continuation.add_argument("--authorization", required=True)
+        continuation.add_argument("--repository-root", required=True)
+        continuation.add_argument("--burn-in-evidence", required=True)
+        continuation.add_argument("--release-approval", required=True)
+        continuation.add_argument("--approval-manifest", required=True)
+        continuation.add_argument("--continuation-approval", required=True)
+        if name == "activate-continuation":
+            continuation.add_argument(
+                "--authorization-token", required=True
+            )
+        continuation.set_defaults(func=function)
 
     dataset = sub.add_parser("build-dataset")
     dataset.add_argument("--config", required=True)

@@ -104,6 +104,7 @@ def status_report(
         integrity = store.integrity()
         canonical_count = store.count("decision_snapshots")
         arm_decision_count = store.count("arm_decisions")
+        release_epochs = store.release_epochs()
         open_runs = store.connection.execute(
             """
             SELECT run_id,started_at,ended_at,process_id
@@ -245,6 +246,10 @@ def status_report(
                 contract.ledger_instance_identifier
             ),
             "ledger_validation_result": "valid",
+            "release_epochs": list(release_epochs),
+            "active_release_epoch": (
+                release_epochs[-1] if release_epochs else None
+            ),
             "collection_state": contract.collection_state,
             "collection_target": contract.collection_target,
             "committed_opportunity_count": (

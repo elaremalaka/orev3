@@ -126,9 +126,13 @@ def repository_release_authority(
     *,
     repository_root: Path,
     release_path: Path,
+    approval_commit: str | None = None,
 ) -> GitReleaseAuthority:
     head = _git(repository_root, "rev-parse", "HEAD").decode().strip()
-    parent = _git(repository_root, "rev-parse", "HEAD^").decode().strip()
+    authority_commit = approval_commit or head
+    parent = _git(
+        repository_root, "rev-parse", f"{authority_commit}^"
+    ).decode().strip()
     branch = (
         _git(repository_root, "branch", "--show-current").decode().strip()
     )
@@ -140,7 +144,7 @@ def repository_release_authority(
             "--no-commit-id",
             "--name-only",
             "-r",
-            "HEAD",
+            authority_commit,
         )
         .decode()
         .splitlines()
@@ -151,7 +155,7 @@ def repository_release_authority(
     committed_release = _git(
         repository_root,
         "show",
-        f"{head}:{release_relative}",
+        f"{authority_commit}:{release_relative}",
     )
     approval_committed_at_head = release_path.read_bytes() == committed_release
     if approval_committed_at_head and not approval_only:
@@ -170,7 +174,7 @@ def repository_release_authority(
     )
     return GitReleaseAuthority(
         branch=branch,
-        approval_commit=head,
+        approval_commit=authority_commit,
         implementation_commit=implementation,
         predecessor_approval_sha256=hashlib.sha256(previous).hexdigest(),
         approval_committed_at_head=approval_committed_at_head,
@@ -263,6 +267,7 @@ def validate_active_release(
     release_approval_path: str | Path,
     approval_manifest_path: str | Path,
     marker_path: str | Path | None = None,
+    approval_commit: str | None = None,
 ) -> ActiveReleaseValidationResult:
     root = Path(repository_root).resolve()
     release_path = Path(release_approval_path).resolve()
@@ -358,6 +363,7 @@ def validate_active_release(
         git_authority = repository_release_authority(
             repository_root=root,
             release_path=release_path,
+            approval_commit=approval_commit,
         )
         implementation = git_authority.implementation_commit
         predecessor = git_authority.predecessor_approval_sha256

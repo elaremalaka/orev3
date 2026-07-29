@@ -121,6 +121,7 @@ class RFC008Store:
         read_only: bool = False,
         initialization: LedgerInitialization | None = None,
         identity_path: str | Path | None = None,
+        explicit_continuation_migration: bool = False,
     ) -> None:
         self.path = Path(path)
         self.identity_path = Path(identity_path or path)
@@ -165,6 +166,7 @@ class RFC008Store:
             if (
                 self.identity_path.name == CANONICAL_PRODUCTION_LEDGER_NAME
                 and self._applied_schema_version() != SCHEMA_VERSION
+                and not explicit_continuation_migration
             ):
                 raise ValueError(
                     "RFC-008 production ledger migration requires explicit "
@@ -287,6 +289,21 @@ class RFC008Store:
                     strict_json(initialization.publication_cursors),
                     strict_json(()),
                     strict_json(authorization),
+                ),
+            )
+            self.connection.execute(
+                """
+                INSERT INTO collection_release_epochs(
+                  epoch_number,start_sequence,release_approval_sha256,
+                  authority_type,authority_identifier,authority_digest,
+                  activated_at
+                ) VALUES (1,1,?,'rfc008_original',?,?,?)
+                """,
+                (
+                    authorization.active_approval_sha256,
+                    authorization.authorization_identifier,
+                    authorization.authorization_digest,
+                    created_at,
                 ),
             )
             self.audit(
@@ -430,6 +447,20 @@ class RFC008Store:
             if owns_transaction:
                 self.connection.rollback()
             raise
+
+    def release_epochs(self) -> tuple[dict[str, object], ...]:
+        return tuple(
+            dict(row)
+            for row in self.connection.execute(
+                """
+                SELECT epoch_number,start_sequence,release_approval_sha256,
+                       authority_type,authority_identifier,authority_digest,
+                       activated_at
+                FROM collection_release_epochs
+                ORDER BY epoch_number
+                """
+            )
+        )
 
     def _validate_collection_contract_snapshot(
         self,
