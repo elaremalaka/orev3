@@ -58,6 +58,8 @@ def status_report(
     config_path: str | Path,
     marker_path: str | Path,
     authorization_path: str | Path,
+    authorization_binding_valid: bool,
+    authorization_release_mismatches: tuple[str, ...],
     expected_marker_sha256: str | None = None,
     now: datetime | None = None,
 ) -> dict[str, object]:
@@ -194,6 +196,7 @@ def status_report(
             and no_safety_failure
             and unusable_rate <= config.criteria.maximum_unusable_rate
             and not cap_reached
+            and authorization_binding_valid
         )
         return {
             "schema_version": SCHEMA_VERSION,
@@ -233,7 +236,11 @@ def status_report(
                 authorization.record.authorization_identifier
             ),
             "authorization_state": authorization.lifecycle_state,
-            "authorization_binding_valid": True,
+            "authorization_binding_valid": authorization_binding_valid,
+            "authorization_release_mismatches": list(
+                authorization_release_mismatches
+            ),
+            "active_release_compatible": authorization_binding_valid,
             "ledger_instance_identifier": (
                 contract.ledger_instance_identifier
             ),

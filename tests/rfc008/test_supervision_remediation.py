@@ -358,6 +358,7 @@ def test_final_liveness_race_cannot_report_success(
             record=record,
         ),
         "contract": SimpleNamespace(
+            collection_state="initialized",
             completed=False,
             active_session_identity=None,
             ledger_instance_identifier="ledger",
@@ -373,6 +374,7 @@ def test_final_liveness_race_cannot_report_success(
             record=record,
         ),
         "contract": SimpleNamespace(
+            collection_state="active",
             completed=False,
             active_session_identity="session",
             ledger_instance_identifier="ledger",
@@ -381,7 +383,7 @@ def test_final_liveness_race_cannot_report_success(
         "open_runs": [{"run_id": "session", "process_id": 4321}],
         "matching_run": {"run_id": "session", "process_id": 4321},
     }
-    states = iter((initialized, active))
+    states = iter((initialized, active, active))
     monkeypatch.setattr(
         cli, "_startup_authoritative_state", lambda *a, **k: next(states)
     )
@@ -393,6 +395,9 @@ def test_final_liveness_race_cannot_report_success(
             "active": lease_calls["count"] > 1,
             "recorded_process_id": (
                 4321 if lease_calls["count"] > 1 else None
+            ),
+            "recorded_process_start_identity": (
+                "f" * 64 if lease_calls["count"] > 1 else None
             ),
         }
 

@@ -30,7 +30,10 @@ from orev3.rfc008.marker import (
     marker_preflight,
     verify_marker,
 )
-from orev3.rfc008.lifecycle import validate_collection_preflight
+from orev3.rfc008.lifecycle import (
+    authorization_release_mismatches,
+    validate_collection_preflight,
+)
 from orev3.rfc008.resolver import FinalizedOutcomeResolver
 from orev3.rfc008.resolver_config import ResolverConfig
 from orev3.rfc008.release_validation import (
@@ -52,6 +55,7 @@ from orev3.rfc008.supervision import (
     approved_python_command,
     atomic_write_metadata,
     command_identity,
+    configured_secret_values,
     consume_child_authority,
     controlled_environment,
     create_child_authority,
@@ -542,13 +546,7 @@ def command_run(args: argparse.Namespace) -> None:
         raise SupervisionError(
             "RFC-008 supervised child metadata binding mismatch"
         )
-    known_secrets = tuple(
-        os.environ.get(name, "")
-        for name in (
-            "ORE_RECOVERY_PRIMARY_RPC_URL",
-            "ORE_RECOVERY_SECONDARY_RPC_URL",
-        )
-    )
+    known_secrets = configured_secret_values()
     install_sanitized_streams(log_fd, known_secrets=known_secrets)
     os.close(log_fd)
     consume_child_authority(
@@ -584,7 +582,10 @@ def command_run(args: argparse.Namespace) -> None:
             metadata_path,
             supervision_state=state,
             exit_code=1,
-            failure_reason=redact_exception(exc),
+            failure_reason=redact_exception(
+                exc,
+                known_secrets=known_secrets,
+            ),
         )
         raise
     else:
@@ -734,7 +735,83 @@ def _startup_authoritative_state(
     }
 
 
+def _startup_handshake_agrees(
+    *,
+    state: dict[str, object],
+    metadata: dict[str, object] | None,
+    lease: dict[str, object],
+    process: dict[str, object],
+    child_pid: int,
+    child_identity: str,
+    session_identity: str,
+    initial_state: dict[str, object],
+    initial_metadata: dict[str, object],
+) -> bool:
+    authorization = state["authorization"]
+    contract = state["contract"]
+    run = state["matching_run"]
+    initial_authorization = initial_state["authorization"]
+    initial_contract = initial_state["contract"]
+    initial_run = initial_state["matching_run"]
+    return bool(
+        metadata is not None
+        and process["alive"]
+        and process["pid"] == child_pid
+        and process["start_identity"] == child_identity
+        and f"-m orev3.rfc008.cli {INTERNAL_CHILD_COMMAND}"
+        in str(process["command"])
+        and authorization.lifecycle_state == "active"
+        and authorization.consuming_session_identity == session_identity
+        and authorization.record == initial_authorization.record
+        and contract.collection_state == "active"
+        and not contract.completed
+        and contract.active_session_identity == session_identity
+        and contract.ledger_instance_identifier
+        == initial_contract.ledger_instance_identifier
+        and contract.collection_target == 600
+        and contract.collection_target == initial_contract.collection_target
+        and run is not None
+        and initial_run is not None
+        and str(run["run_id"]) == session_identity
+        and str(run["run_id"]) == str(initial_run["run_id"])
+        and int(run["process_id"]) == child_pid
+        and int(run["process_id"]) == int(initial_run["process_id"])
+        and lease["active"]
+        and lease["recorded_process_id"] == child_pid
+        and lease["recorded_process_start_identity"] == child_identity
+        and metadata["launch_identifier"]
+        == initial_metadata["launch_identifier"]
+        and metadata["collector_pid"] == child_pid
+        and metadata["collector_process_start_identity"] == child_identity
+        and metadata["authorization_identifier"]
+        == authorization.record.authorization_identifier
+        and metadata["authorization_digest"]
+        == authorization.record.authorization_digest
+        and metadata["ledger_instance_identifier"]
+        == contract.ledger_instance_identifier
+        and metadata["target_count"] == 600
+        and metadata["session_identity"] in {None, session_identity}
+    )
+
+
+def _active_authorization_release_mismatches(
+    args: argparse.Namespace,
+    *,
+    active_release: object,
+    authorization: object,
+) -> tuple[str, ...]:
+    return authorization_release_mismatches(
+        repository_root=args.repository_root,
+        release_approval_path=args.release_approval,
+        ledger_path=args.ledger,
+        config=RFC008Config.from_path(args.config),
+        active_release=active_release,
+        authorization=authorization,
+    )
+
+
 def command_start(args: argparse.Namespace) -> None:
+    known_secrets = configured_secret_values()
     readiness = validate_collection_preflight(
         repository_root=args.repository_root,
         config_path=args.config,
@@ -964,43 +1041,77 @@ def command_start(args: argparse.Namespace) -> None:
                     )
                 run = current["matching_run"]
                 session = current_contract.active_session_identity
-                metadata_agrees = (
-                    current_metadata is not None
-                    and current_metadata["collector_pid"] == child.pid
-                    and current_metadata["collector_process_start_identity"]
-                    == child_identity
-                    and current_metadata["launch_authority_consumed_at"]
-                    is not None
-                )
-                authoritative_agrees = (
-                    current_authorization.lifecycle_state == "active"
-                    and session is not None
-                    and current_authorization.consuming_session_identity
-                    == session
-                    and run is not None
-                    and str(run["run_id"]) == session
-                    and int(run["process_id"]) == child.pid
-                    and lease["active"]
-                    and lease["recorded_process_id"] == child.pid
-                )
                 process_agrees = (
                     before["alive"]
                     and after["alive"]
                     and before["start_identity"] == child_identity
                     and after["start_identity"] == child_identity
+                    and f"-m orev3.rfc008.cli {INTERNAL_CHILD_COMMAND}"
+                    in str(before["command"])
+                    and f"-m orev3.rfc008.cli {INTERNAL_CHILD_COMMAND}"
+                    in str(after["command"])
                 )
-                if metadata_agrees and authoritative_agrees and process_agrees:
+                startup_agrees = bool(
+                    session is not None
+                    and run is not None
+                    and current_metadata is not None
+                    and current_metadata["launch_authority_consumed_at"]
+                    is not None
+                    and _startup_handshake_agrees(
+                        state=current,
+                        metadata=current_metadata,
+                        lease=lease,
+                        process=after,
+                        child_pid=child.pid,
+                        child_identity=child_identity,
+                        session_identity=session,
+                        initial_state=current,
+                        initial_metadata=current_metadata,
+                    )
+                )
+                if startup_agrees and process_agrees:
                     time.sleep(STARTUP_POLL_SECONDS)
                     final_process = process_snapshot(child.pid)
+                    final_metadata = read_metadata(paths["metadata"])
+                    final_state = _startup_authoritative_state(
+                        args,
+                        process_id=child.pid,
+                    )
                     final_lease = writer_lease_status(args.ledger)
-                    if (
-                        not final_process["alive"]
-                        or final_process["start_identity"] != child_identity
-                        or not final_lease["active"]
-                        or final_lease["recorded_process_id"] != child.pid
+                    final_release = validate_active_release(
+                        repository_root=args.repository_root,
+                        config_path=args.config,
+                        resolver_config_path=args.resolver_config,
+                        burn_in_evidence_path=args.burn_in_evidence,
+                        release_approval_path=args.release_approval,
+                        approval_manifest_path=args.approval_manifest,
+                        marker_path=args.marker,
+                    )
+                    final_mismatches = (
+                        _active_authorization_release_mismatches(
+                            args,
+                            active_release=final_release,
+                            authorization=final_state[
+                                "authorization"
+                            ].record,
+                        )
+                        if final_release.valid
+                        else ("active_release_validation_failed",)
+                    )
+                    if final_mismatches or not _startup_handshake_agrees(
+                        state=final_state,
+                        metadata=final_metadata,
+                        lease=final_lease,
+                        process=final_process,
+                        child_pid=child.pid,
+                        child_identity=child_identity,
+                        session_identity=session,
+                        initial_state=current,
+                        initial_metadata=current_metadata,
                     ):
                         raise SupervisionError(
-                            "RFC-008 child exited during final startup verification"
+                            "RFC-008 final startup authoritative state "
+                            "changed during verification"
                         )
                     value = update_metadata(
                         paths["metadata"],
@@ -1052,7 +1163,10 @@ def command_start(args: argparse.Namespace) -> None:
                         exit_code=(
                             child.poll() if child is not None else None
                         ),
-                        failure_reason=redact_exception(exc),
+                        failure_reason=redact_exception(
+                            exc,
+                            known_secrets=known_secrets,
+                        ),
                     )
             except Exception:
                 pass
@@ -1093,12 +1207,39 @@ def command_status(args: argparse.Namespace) -> None:
     )
     if not release.valid:
         raise PermissionError("RFC-008 active release validation failed")
+    preflight = validate_collection_preflight(
+        repository_root=args.repository_root,
+        config_path=args.config,
+        resolver_config_path=args.resolver_config,
+        burn_in_evidence_path=args.burn_in_evidence,
+        release_approval_path=args.release_approval,
+        approval_manifest_path=args.approval_manifest,
+        marker_path=args.marker,
+        authorization_path=args.authorization,
+        ledger_path=args.ledger,
+        action="launch",
+        collector_running=False,
+    )
+    release_mismatches: tuple[str, ...] = ()
+    for reason in preflight.gate_reasons:
+        prefix = "authorization_release_mismatch:"
+        if reason.startswith(prefix):
+            release_mismatches = tuple(
+                value
+                for value in reason[len(prefix) :].split(",")
+                if value
+            )
+            break
+    if not preflight.authorization_valid and not release_mismatches:
+        release_mismatches = ("authorization_binding_unverifiable",)
     value = status_report(
         ledger_path=args.ledger,
         config_path=args.config,
         marker_path=args.marker,
         expected_marker_sha256=_expected_marker_hash(args),
         authorization_path=args.authorization,
+        authorization_binding_valid=preflight.authorization_valid,
+        authorization_release_mismatches=release_mismatches,
     )
     root = Path(args.repository_root).resolve()
     value["current_branch"] = subprocess.run(

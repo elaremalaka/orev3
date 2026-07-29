@@ -187,6 +187,8 @@ def test_status_is_read_only_and_reports_caps_and_safety(
         config_path=CONFIG_PATH,
         marker_path=marker,
         authorization_path=path.with_suffix(".authorization.sqlite"),
+        authorization_binding_valid=True,
+        authorization_release_mismatches=(),
         expected_marker_sha256=digest,
         now=datetime(2026, 7, 25, 1, tzinfo=timezone.utc),
     )
@@ -212,6 +214,8 @@ def test_status_is_read_only_and_reports_caps_and_safety(
         config_path=CONFIG_PATH,
         marker_path=marker,
         authorization_path=path.with_suffix(".authorization.sqlite"),
+        authorization_binding_valid=True,
+        authorization_release_mismatches=(),
         expected_marker_sha256=digest,
         now=datetime(2026, 8, 9, tzinfo=timezone.utc),
     )

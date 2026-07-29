@@ -102,6 +102,7 @@ def initialized_start_state() -> dict[str, object]:
             ),
         ),
         "contract": SimpleNamespace(
+            collection_state="initialized",
             completed=False,
             active_session_identity=None,
             ledger_instance_identifier="ledger-instance",
@@ -133,6 +134,16 @@ def mock_start_preflight(
     )
     monkeypatch.setattr(cli, "validate_import_identity", lambda *a, **k: None)
     monkeypatch.setattr(cli, "approved_python_command", lambda root: sys.executable)
+    monkeypatch.setattr(
+        cli,
+        "validate_active_release",
+        lambda **kwargs: SimpleNamespace(valid=True),
+    )
+    monkeypatch.setattr(
+        cli,
+        "_active_authorization_release_mismatches",
+        lambda *args, **kwargs: (),
+    )
 
 
 def test_supervision_paths_are_deterministic_and_ledger_local(
@@ -632,6 +643,16 @@ def test_start_reports_success_only_after_authoritative_handshake(
     )
     monkeypatch.setattr(cli, "validate_import_identity", lambda *a, **k: None)
     monkeypatch.setattr(cli, "approved_python_command", lambda root: sys.executable)
+    monkeypatch.setattr(
+        cli,
+        "validate_active_release",
+        lambda **kwargs: SimpleNamespace(valid=True),
+    )
+    monkeypatch.setattr(
+        cli,
+        "_active_authorization_release_mismatches",
+        lambda *args, **kwargs: (),
+    )
     record = SimpleNamespace(
         authorization_identifier="authorization",
         authorization_digest="a" * 64,
@@ -647,12 +668,14 @@ def test_start_reports_success_only_after_authoritative_handshake(
         record=record,
     )
     initialized_contract = SimpleNamespace(
+        collection_state="initialized",
         completed=False,
         active_session_identity=None,
         ledger_instance_identifier="ledger-instance",
         collection_target=600,
     )
     active_contract = SimpleNamespace(
+        collection_state="active",
         completed=False,
         active_session_identity="session",
         ledger_instance_identifier="ledger-instance",
@@ -688,6 +711,9 @@ def test_start_reports_success_only_after_authoritative_handshake(
         lambda ledger: {
             "active": calls > 1,
             "recorded_process_id": 4321 if calls > 1 else None,
+            "recorded_process_start_identity": (
+                "f" * 64 if calls > 1 else None
+            ),
         },
     )
 

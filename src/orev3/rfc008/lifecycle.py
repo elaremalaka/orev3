@@ -592,69 +592,14 @@ def validate_collection_preflight(
             authorization = status.record
             authorization_state = status.lifecycle_state
             config = RFC008Config.from_path(config_path)
-            approval = active.parsed_active_approval or {}
-            authority = repository_release_authority(
-                repository_root=Path(repository_root).resolve(),
-                release_path=Path(release_approval_path).resolve(),
+            mismatches = authorization_release_mismatches(
+                repository_root=repository_root,
+                release_approval_path=release_approval_path,
+                ledger_path=ledger_file,
+                config=config,
+                active_release=active,
+                authorization=authorization,
             )
-            head = subprocess.run(
-                ("git", "rev-parse", "HEAD"),
-                cwd=Path(repository_root).resolve(),
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout.strip()
-            expected = {
-                "branch": authority.branch,
-                "repository_head": head,
-                "implementation_commit": authority.implementation_commit,
-                "active_approval_sha256": active.active_approval_sha256,
-                "immediate_predecessor_sha256": (
-                    authority.predecessor_approval_sha256
-                ),
-                "approval_chain_anchor": (
-                    active.approval_hashes[-1]
-                    if active.approval_hashes
-                    else None
-                ),
-                "marker_sha256": approval.get(
-                    "validated_production_marker_sha256"
-                ),
-                "marker_sidecar_sha256": approval.get(
-                    "validated_production_marker_sidecar_sha256"
-                ),
-                "candidate_sha256": config.candidate_configuration_sha256,
-                "experiment_id": config.experiment_id,
-                "configuration_fingerprint": (
-                    config.configuration_fingerprint
-                ),
-                "resolver_fingerprint": approval.get(
-                    "resolver_configuration_sha256"
-                ),
-                "migration_set_sha256": approval.get(
-                    "migration_set_sha256"
-                ),
-                "cli_sha256": approval.get("cli_sha256"),
-                "runbook_sha256": approval.get("runbook_sha256"),
-                "burn_in_evidence_sha256": approval.get(
-                    "validated_operational_burn_in_evidence_sha256"
-                ),
-                "burn_in_ledger_sha256": approval.get(
-                    "validated_operational_burn_in_ledger_sha256"
-                ),
-                "approval_manifest_sha256": approval.get(
-                    "frozen_approval_manifest_sha256"
-                ),
-                "external_rpc_burn_in_performed": approval.get(
-                    "verification", {}
-                ).get("external_rpc_burn_in_performed"),
-                "canonical_ledger_path": canonical_path(ledger_file),
-            }
-            mismatches = [
-                name
-                for name, expected_value in expected.items()
-                if getattr(authorization, name) != expected_value
-            ]
             if mismatches:
                 reasons.append(
                     "authorization_release_mismatch:"
@@ -774,4 +719,77 @@ def validate_collection_preflight(
                 and ledger_valid
             )
         ),
+    )
+
+
+def authorization_release_mismatches(
+    *,
+    repository_root: str | Path,
+    release_approval_path: str | Path,
+    ledger_path: str | Path,
+    config: RFC008Config,
+    active_release: Any,
+    authorization: CollectionAuthorizationRecord,
+) -> tuple[str, ...]:
+    """Compare persisted authorization authority with the active Git release."""
+    approval = active_release.parsed_active_approval or {}
+    authority = repository_release_authority(
+        repository_root=Path(repository_root).resolve(),
+        release_path=Path(release_approval_path).resolve(),
+    )
+    head = subprocess.run(
+        ("git", "rev-parse", "HEAD"),
+        cwd=Path(repository_root).resolve(),
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    expected = {
+        "branch": authority.branch,
+        "repository_head": head,
+        "implementation_commit": authority.implementation_commit,
+        "active_approval_sha256": active_release.active_approval_sha256,
+        "immediate_predecessor_sha256": (
+            authority.predecessor_approval_sha256
+        ),
+        "approval_chain_anchor": (
+            active_release.approval_hashes[-1]
+            if active_release.approval_hashes
+            else None
+        ),
+        "marker_sha256": approval.get(
+            "validated_production_marker_sha256"
+        ),
+        "marker_sidecar_sha256": approval.get(
+            "validated_production_marker_sidecar_sha256"
+        ),
+        "candidate_sha256": config.candidate_configuration_sha256,
+        "experiment_id": config.experiment_id,
+        "configuration_fingerprint": config.configuration_fingerprint,
+        "resolver_fingerprint": approval.get(
+            "resolver_configuration_sha256"
+        ),
+        "migration_set_sha256": approval.get("migration_set_sha256"),
+        "cli_sha256": approval.get("cli_sha256"),
+        "runbook_sha256": approval.get("runbook_sha256"),
+        "burn_in_evidence_sha256": approval.get(
+            "validated_operational_burn_in_evidence_sha256"
+        ),
+        "burn_in_ledger_sha256": approval.get(
+            "validated_operational_burn_in_ledger_sha256"
+        ),
+        "approval_manifest_sha256": approval.get(
+            "frozen_approval_manifest_sha256"
+        ),
+        "external_rpc_burn_in_performed": approval.get(
+            "verification", {}
+        ).get("external_rpc_burn_in_performed"),
+        "canonical_ledger_path": canonical_path(ledger_path),
+        "collection_target": 600,
+        "collection_mode": "paper",
+    }
+    return tuple(
+        name
+        for name, expected_value in expected.items()
+        if getattr(authorization, name) != expected_value
     )

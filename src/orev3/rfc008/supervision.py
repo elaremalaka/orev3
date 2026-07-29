@@ -18,6 +18,11 @@ from pathlib import Path
 from typing import Any
 from typing import Iterator
 from typing import Sequence
+from urllib.parse import parse_qsl
+from urllib.parse import quote
+from urllib.parse import quote_plus
+from urllib.parse import unquote
+from urllib.parse import urlsplit
 
 
 SUPERVISION_SCHEMA_VERSION = 2
@@ -39,6 +44,14 @@ _CREDENTIAL = re.compile(
     r"\s*[:=]\s*[^\s,;]+"
 )
 _BEARER = re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]+")
+_SECRET_ENVIRONMENT_NAME = re.compile(
+    r"(?i)(?:api[-_]?key|token|secret|password|authorization|rpc[-_]?url)"
+)
+_CREDENTIAL_PATH_HINT = re.compile(
+    r"(?i)(?:api[-_]?key|token|secret|password|credential|auth)"
+)
+_API_KEY_SHAPE = re.compile(r"^[A-Za-z0-9._~+/=-]{12,}$")
+_MINIMUM_SECRET_LENGTH = 6
 
 
 class SupervisionError(RuntimeError):
@@ -128,6 +141,93 @@ def supervision_paths(ledger_path: str | Path) -> dict[str, Path]:
         "launch_lock": ledger.with_name(f"{stem}.supervision.lock"),
         "log": ledger.with_name(f"{stem}.collector.log"),
     }
+
+
+def _usable_secret(value: str, *, credential_context: bool = False) -> bool:
+    if len(value) < _MINIMUM_SECRET_LENGTH or value.isdigit():
+        return False
+    if credential_context:
+        return True
+    return bool(
+        _CREDENTIAL_PATH_HINT.search(value)
+        or (
+            _API_KEY_SHAPE.fullmatch(value)
+            and any(character.isalpha() for character in value)
+            and any(
+                not character.isalpha()
+                for character in value
+            )
+        )
+    )
+
+
+def _secret_forms(value: str) -> set[str]:
+    decoded = unquote(value)
+    candidates = {
+        value,
+        decoded,
+        quote(decoded, safe=""),
+        quote_plus(decoded, safe=""),
+    }
+    return {
+        item
+        for item in candidates
+        if _usable_secret(item, credential_context=True)
+    }
+
+
+def provider_secret_values(
+    provider_urls: Sequence[str],
+    *,
+    secret_environment: dict[str, str] | None = None,
+) -> tuple[str, ...]:
+    """Derive redaction-only values without retaining provider URLs."""
+    secrets: set[str] = set()
+    for raw_url in provider_urls:
+        if not raw_url:
+            continue
+        secrets.update(_secret_forms(raw_url))
+        try:
+            parsed = urlsplit(raw_url)
+        except ValueError:
+            continue
+        for value in (parsed.username, parsed.password):
+            if value:
+                secrets.update(_secret_forms(value))
+        for _, value in parse_qsl(parsed.query, keep_blank_values=True):
+            if _usable_secret(value, credential_context=True):
+                secrets.update(_secret_forms(value))
+        for component in parsed.path.split("/"):
+            decoded = unquote(component)
+            if _usable_secret(decoded):
+                secrets.update(_secret_forms(component))
+                secrets.update(_secret_forms(decoded))
+    for name, value in (secret_environment or {}).items():
+        if value and _SECRET_ENVIRONMENT_NAME.search(name):
+            secrets.update(_secret_forms(value))
+    return tuple(sorted(secrets, key=lambda item: (-len(item), item)))
+
+
+def configured_secret_values(
+    environment: dict[str, str] | None = None,
+) -> tuple[str, ...]:
+    values = environment if environment is not None else dict(os.environ)
+    provider_urls = tuple(
+        values.get(name, "")
+        for name in (
+            "ORE_RECOVERY_PRIMARY_RPC_URL",
+            "ORE_RECOVERY_SECONDARY_RPC_URL",
+        )
+    )
+    secret_environment = {
+        name: value
+        for name, value in values.items()
+        if _SECRET_ENVIRONMENT_NAME.search(name)
+    }
+    return provider_secret_values(
+        provider_urls,
+        secret_environment=secret_environment,
+    )
 
 
 def sanitize_text(value: object, *, known_secrets: Sequence[str] = ()) -> str:
@@ -577,14 +677,9 @@ def terminate_unestablished_child(
     child: subprocess.Popen[bytes],
     expected_identity: str | None,
 ) -> None:
+    del expected_identity
     if child.poll() is not None:
         child.wait(timeout=1)
-        return
-    snapshot = process_snapshot(child.pid)
-    if expected_identity is not None and (
-        not snapshot["alive"]
-        or snapshot["start_identity"] != expected_identity
-    ):
         return
     # An unreaped Popen with poll() == None still identifies the exact child;
     # POSIX cannot reuse that PID before the child exits and is reaped.
@@ -592,10 +687,17 @@ def terminate_unestablished_child(
     try:
         child.wait(timeout=5)
     except subprocess.TimeoutExpired:
-        snapshot = process_snapshot(child.pid)
-        if snapshot["alive"] and snapshot["start_identity"] == expected_identity:
+        if child.poll() is None:
             child.kill()
-        child.wait(timeout=5)
+        try:
+            child.wait(timeout=5)
+        except subprocess.TimeoutExpired as exc:
+            if child.poll() is not None:
+                child.wait(timeout=1)
+                return
+            raise SupervisionError(
+                "RFC-008 unestablished child could not be reaped"
+            ) from exc
 
 
 def wait_for_process_identity(
