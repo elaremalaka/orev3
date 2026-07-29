@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import stat
 import uuid
 from pathlib import Path
 from types import SimpleNamespace
@@ -48,6 +49,46 @@ CURSORS = (
         "source_line_number": 3,
     },
 )
+
+
+def _file_evidence(path: Path) -> dict[str, object]:
+    if not path.exists():
+        return {"exists": False}
+    value = os.lstat(path)
+    result: dict[str, object] = {
+        "exists": True,
+        "size": value.st_size,
+        "mtime_ns": value.st_mtime_ns,
+        "ctime_ns": value.st_ctime_ns,
+        "mode": stat.S_IMODE(value.st_mode),
+        "uid": value.st_uid,
+        "gid": value.st_gid,
+        "inode": value.st_ino,
+    }
+    if stat.S_ISREG(value.st_mode):
+        result["sha256"] = __import__("hashlib").sha256(
+            path.read_bytes()
+        ).hexdigest()
+    return result
+
+
+def _production_like_evidence(paths: object) -> dict[str, dict[str, object]]:
+    monitored = (
+        paths.authorization,
+        Path(str(paths.authorization) + "-wal"),
+        Path(str(paths.authorization) + "-shm"),
+        paths.ledger,
+        Path(str(paths.ledger) + "-wal"),
+        Path(str(paths.ledger) + "-shm"),
+        paths.writer_lock,
+        paths.rotation_lock,
+        paths.launch_lock,
+        paths.manifest,
+        paths.archive_root,
+        paths.supervision_metadata,
+        paths.supervision_log,
+    )
+    return {str(path): _file_evidence(path) for path in monitored}
 
 
 def _record(
@@ -260,6 +301,218 @@ def test_dry_run_is_passive(
     assert result["eligible"] is True
     assert result["needed"] is True
     assert before == after
+
+
+def test_passive_dry_run_preserves_existing_wal_shm_and_all_metadata(
+    tmp_path: Path,
+    config: RFC008Config,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _, paths = _initialized_pair(tmp_path, config)
+    authorization_connection = sqlite3.connect(paths.authorization)
+    ledger_connection = sqlite3.connect(paths.ledger)
+    for connection in (authorization_connection, ledger_connection):
+        connection.execute("PRAGMA journal_mode=WAL")
+        connection.execute("PRAGMA wal_autocheckpoint=0")
+    authorization_connection.execute(
+        "CREATE TABLE passive_wal_fixture(value INTEGER)"
+    )
+    authorization_connection.execute(
+        "INSERT INTO passive_wal_fixture VALUES (1)"
+    )
+    authorization_connection.commit()
+    ledger_connection.execute(
+        "CREATE TABLE passive_wal_fixture(value INTEGER)"
+    )
+    ledger_connection.execute(
+        "INSERT INTO passive_wal_fixture VALUES (1)"
+    )
+    ledger_connection.commit()
+    assert Path(str(paths.authorization) + "-wal").stat().st_size > 0
+    assert Path(str(paths.authorization) + "-shm").exists()
+    assert Path(str(paths.ledger) + "-wal").stat().st_size > 0
+    assert Path(str(paths.ledger) + "-shm").exists()
+    original_temporary_directory = __import__(
+        "orev3.rfc008.rotation", fromlist=["tempfile"]
+    ).tempfile.TemporaryDirectory
+    temporary_paths: list[Path] = []
+
+    def tracked_temporary_directory(*args, **kwargs):
+        value = original_temporary_directory(*args, **kwargs)
+        temporary_paths.append(Path(value.name))
+        return value
+
+    monkeypatch.setattr(
+        "orev3.rfc008.rotation.tempfile.TemporaryDirectory",
+        tracked_temporary_directory,
+    )
+    before = _production_like_evidence(paths)
+    result = rotate_production_artifacts(
+        repository_root=tmp_path,
+        config=config,
+        release_mismatches=("repository_head",),
+        new_authorization_factory=lambda: pytest.fail(
+            "dry run must not issue an authorization"
+        ),
+        initialization_cursors=CURSORS,
+        dry_run=True,
+    )
+    after = _production_like_evidence(paths)
+    authorization_connection.close()
+    ledger_connection.close()
+    assert result["eligible"] is True
+    assert result["needed"] is True
+    assert before == after
+    assert temporary_paths
+    assert all(not path.exists() for path in temporary_paths)
+
+
+def test_passive_dry_run_reads_committed_wal_state_without_source_changes(
+    tmp_path: Path, config: RFC008Config
+) -> None:
+    _, paths = _initialized_pair(tmp_path, config)
+    store = RFC008Store(paths.ledger, config=config)
+    store.connection.execute("PRAGMA wal_autocheckpoint=0")
+    snapshot = snapshot_from_opportunity(
+        make_opportunity(500_002),
+        config,
+        source_content_sha256="8" * 64,
+    )
+    assert store.insert_snapshot_and_decisions(
+        snapshot, build_decisions(snapshot, config)
+    )
+    assert Path(str(paths.ledger) + "-wal").stat().st_size > 0
+    before = _production_like_evidence(paths)
+    result = rotate_production_artifacts(
+        repository_root=tmp_path,
+        config=config,
+        release_mismatches=("repository_head",),
+        new_authorization_factory=lambda: pytest.fail(
+            "ineligible dry run must not issue"
+        ),
+        initialization_cursors=CURSORS,
+        dry_run=True,
+    )
+    after = _production_like_evidence(paths)
+    store.close()
+    assert result["eligible"] is False
+    assert "ledger_stored_opportunities" in result["reasons"]
+    assert "ledger_decision_snapshots" in result["reasons"]
+    assert "ledger_arm_decisions" in result["reasons"]
+    assert before == after
+
+
+def test_passive_dry_run_preserves_empty_wal_and_existing_shm_timestamp(
+    tmp_path: Path, config: RFC008Config
+) -> None:
+    _, paths = _initialized_pair(tmp_path, config)
+    connection = sqlite3.connect(paths.ledger)
+    connection.execute("PRAGMA journal_mode=WAL")
+    connection.execute("SELECT COUNT(*) FROM collection_contract").fetchone()
+    connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+    wal = Path(str(paths.ledger) + "-wal")
+    shm = Path(str(paths.ledger) + "-shm")
+    assert wal.exists() and wal.stat().st_size == 0
+    assert shm.exists()
+    before = _production_like_evidence(paths)
+    before_shm_mtime = shm.stat().st_mtime_ns
+    result = rotate_production_artifacts(
+        repository_root=tmp_path,
+        config=config,
+        release_mismatches=("repository_head",),
+        new_authorization_factory=lambda: pytest.fail("must remain passive"),
+        initialization_cursors=CURSORS,
+        dry_run=True,
+    )
+    after = _production_like_evidence(paths)
+    after_shm_mtime = shm.stat().st_mtime_ns
+    connection.close()
+    assert result["eligible"] is True
+    assert before == after
+    assert before_shm_mtime == after_shm_mtime
+
+
+def test_passive_dry_run_without_wal_or_shm_creates_no_sidecars(
+    tmp_path: Path, config: RFC008Config
+) -> None:
+    _, paths = _initialized_pair(tmp_path, config)
+    for database in (paths.authorization, paths.ledger):
+        Path(str(database) + "-wal").unlink(missing_ok=True)
+        Path(str(database) + "-shm").unlink(missing_ok=True)
+    before = _production_like_evidence(paths)
+    result = rotate_production_artifacts(
+        repository_root=tmp_path,
+        config=config,
+        release_mismatches=("repository_head",),
+        new_authorization_factory=lambda: pytest.fail("must remain passive"),
+        initialization_cursors=CURSORS,
+        dry_run=True,
+    )
+    assert result["eligible"] is True
+    assert before == _production_like_evidence(paths)
+
+
+def test_repeated_current_release_dry_runs_are_exact_no_ops(
+    tmp_path: Path, config: RFC008Config
+) -> None:
+    _initialized_pair(tmp_path, config, release="new")
+    paths = production_rotation_paths(tmp_path)
+    before = _production_like_evidence(paths)
+    results = [
+        rotate_production_artifacts(
+            repository_root=tmp_path,
+            config=config,
+            release_mismatches=(),
+            new_authorization_factory=lambda: pytest.fail(
+                "no-op dry run must not issue"
+            ),
+            initialization_cursors=CURSORS,
+            dry_run=True,
+        )
+        for _ in range(3)
+    ]
+    assert all(result["needed"] is False for result in results)
+    assert all(result["reasons"] == ["already_current"] for result in results)
+    assert before == _production_like_evidence(paths)
+
+
+def test_ineligible_dry_run_is_passive(
+    tmp_path: Path, config: RFC008Config
+) -> None:
+    _, paths = _initialized_pair(tmp_path, config)
+    with CollectionAuthorizationStore(paths.authorization) as authorization:
+        authorization.consume_launch(str(uuid.uuid4()))
+    before = _production_like_evidence(paths)
+    result = rotate_production_artifacts(
+        repository_root=tmp_path,
+        config=config,
+        release_mismatches=("repository_head",),
+        new_authorization_factory=lambda: pytest.fail("must remain passive"),
+        initialization_cursors=CURSORS,
+        dry_run=True,
+    )
+    assert result["eligible"] is False
+    assert "authorization_not_initialized" in result["reasons"]
+    assert before == _production_like_evidence(paths)
+
+
+def test_recovery_required_dry_run_does_not_touch_manifest_or_sources(
+    tmp_path: Path, config: RFC008Config
+) -> None:
+    _, paths = _initialized_pair(tmp_path, config)
+    paths.manifest.write_text("{}\n", encoding="utf-8")
+    before = _production_like_evidence(paths)
+    result = rotate_production_artifacts(
+        repository_root=tmp_path,
+        config=config,
+        release_mismatches=("repository_head",),
+        new_authorization_factory=lambda: pytest.fail("must remain passive"),
+        initialization_cursors=CURSORS,
+        dry_run=True,
+    )
+    assert result["recovery_required"] is True
+    assert result["reasons"] == ["incomplete_rotation_requires_recovery"]
+    assert before == _production_like_evidence(paths)
 
 
 @pytest.mark.parametrize(

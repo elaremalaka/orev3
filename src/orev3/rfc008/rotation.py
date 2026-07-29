@@ -8,6 +8,7 @@ import shutil
 import sqlite3
 import stat
 import subprocess
+import tempfile
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -84,6 +85,12 @@ class RotationPaths:
     archive_root: Path
 
 
+@dataclass(frozen=True)
+class PassiveSQLiteSnapshot:
+    authorization: Path
+    ledger: Path
+
+
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -142,6 +149,25 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _source_fingerprint(path: Path) -> dict[str, object]:
+    if not path.exists():
+        return {"exists": False}
+    _regular(path)
+    value = os.lstat(path)
+    return {
+        "exists": True,
+        "device": value.st_dev,
+        "inode": value.st_ino,
+        "size": value.st_size,
+        "mtime_ns": value.st_mtime_ns,
+        "ctime_ns": value.st_ctime_ns,
+        "mode": stat.S_IMODE(value.st_mode),
+        "uid": value.st_uid,
+        "gid": value.st_gid,
+        "sha256": _sha256(path),
+    }
 
 
 def _regular(path: Path, *, required: bool = True) -> bool:
@@ -231,6 +257,65 @@ def _copy_exact(source: Path, target: Path) -> None:
     _fsync_directory(target.parent)
 
 
+def _sqlite_file_set(path: Path) -> tuple[Path, ...]:
+    return (
+        path,
+        Path(str(path) + "-wal"),
+        Path(str(path) + "-shm"),
+    )
+
+
+@contextmanager
+def _passive_sqlite_snapshot(
+    paths: RotationPaths,
+) -> Iterator[PassiveSQLiteSnapshot]:
+    sources = (
+        *_sqlite_file_set(paths.authorization),
+        *_sqlite_file_set(paths.ledger),
+    )
+    before = {source: _source_fingerprint(source) for source in sources}
+    with tempfile.TemporaryDirectory(
+        prefix="rfc008-passive-rotation-"
+    ) as temporary_raw:
+        temporary = Path(temporary_raw)
+        snapshot_authorization = temporary / paths.authorization.name
+        snapshot_ledger = temporary / paths.ledger.name
+        mapping = {
+            paths.authorization: snapshot_authorization,
+            paths.ledger: snapshot_ledger,
+        }
+        for source, target in tuple(mapping.items()):
+            for suffix in ("", "-wal", "-shm"):
+                source_file = Path(str(source) + suffix)
+                if before[source_file]["exists"]:
+                    target_file = Path(str(target) + suffix)
+                    with source_file.open("rb") as reader, target_file.open(
+                        "xb"
+                    ) as writer:
+                        shutil.copyfileobj(reader, writer)
+                    os.chmod(target_file, 0o600)
+                    if _sha256(target_file) != before[source_file]["sha256"]:
+                        raise RotationError(
+                            "RFC-008 passive SQLite snapshot hash mismatch"
+                        )
+        after_copy = {
+            source: _source_fingerprint(source) for source in sources
+        }
+        if after_copy != before:
+            raise RotationError(
+                "RFC-008 SQLite source changed during passive snapshot"
+            )
+        yield PassiveSQLiteSnapshot(
+            authorization=snapshot_authorization,
+            ledger=snapshot_ledger,
+        )
+    after = {source: _source_fingerprint(source) for source in sources}
+    if after != before:
+        raise RotationError(
+            "RFC-008 SQLite source changed during passive inspection"
+        )
+
+
 def _replace_from_copy(source: Path, target: Path) -> None:
     _regular(source)
     temporary = target.with_name(f".{target.name}.{uuid.uuid4().hex}.rotate")
@@ -295,10 +380,18 @@ def _checkpoint(path: Path) -> None:
         connection.close()
 
 
-def _authorization_eligibility(path: Path) -> tuple[object, list[str]]:
+def _authorization_eligibility(
+    path: Path,
+    *,
+    identity_path: Path | None = None,
+) -> tuple[object, list[str]]:
     failures: list[str] = []
     try:
-        with CollectionAuthorizationStore(path, read_only=True) as store:
+        with CollectionAuthorizationStore(
+            path,
+            read_only=True,
+            identity_path=identity_path,
+        ) as store:
             if store.connection.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                 failures.append("authorization_integrity")
             status = store.status()
@@ -338,10 +431,16 @@ def _ledger_eligibility(
     *,
     config: RFC008Config,
     authorization: CollectionAuthorizationRecord,
+    identity_path: Path | None = None,
 ) -> tuple[object, list[str]]:
     failures: list[str] = []
     try:
-        with RFC008Store(path, config=config, read_only=True) as store:
+        with RFC008Store(
+            path,
+            config=config,
+            read_only=True,
+            identity_path=identity_path,
+        ) as store:
             if store.integrity() != "ok":
                 failures.append("ledger_integrity")
             contract = store.validate_collection_contract(
@@ -418,6 +517,7 @@ def evaluate_rotation(
     repository_root: str | Path,
     config: RFC008Config,
     release_mismatches: tuple[str, ...],
+    passive: bool = False,
 ) -> dict[str, object]:
     paths = production_rotation_paths(repository_root)
     if rotation_status(repository_root)["recovery_required"]:
@@ -434,13 +534,28 @@ def evaluate_rotation(
         }
     _regular(paths.authorization)
     _regular(paths.ledger)
-    authorization, failures = _authorization_eligibility(paths.authorization)
-    contract, ledger_failures = _ledger_eligibility(
-        paths.ledger,
-        config=config,
-        authorization=authorization.record,
-    )
     runtime_failures, optional = _runtime_eligibility(paths)
+    if passive:
+        with _passive_sqlite_snapshot(paths) as snapshot:
+            authorization, failures = _authorization_eligibility(
+                snapshot.authorization,
+                identity_path=paths.authorization,
+            )
+            contract, ledger_failures = _ledger_eligibility(
+                snapshot.ledger,
+                config=config,
+                authorization=authorization.record,
+                identity_path=paths.ledger,
+            )
+    else:
+        authorization, failures = _authorization_eligibility(
+            paths.authorization
+        )
+        contract, ledger_failures = _ledger_eligibility(
+            paths.ledger,
+            config=config,
+            authorization=authorization.record,
+        )
     failures.extend(ledger_failures)
     failures.extend(runtime_failures)
     if contract.ledger_instance_identifier != (
@@ -580,6 +695,7 @@ def rotate_production_artifacts(
                 repository_root=repository_root,
                 config=config,
                 release_mismatches=release_mismatches,
+                passive=True,
             ),
         }
     if not recover:
@@ -587,6 +703,7 @@ def rotate_production_artifacts(
             repository_root=repository_root,
             config=config,
             release_mismatches=release_mismatches,
+            passive=True,
         )
         if passive["recovery_required"]:
             raise RotationError("Incomplete RFC-008 rotation requires recovery")
