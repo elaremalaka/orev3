@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import traceback
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -91,6 +92,86 @@ def test_provider_secret_fragment_is_absent_from_durable_log(
     assert PRIMARY_SECRET not in value
     assert "primary.rpc.invalid" in value
     assert "HTTP 429" in value
+
+
+@pytest.mark.parametrize(
+    ("command", "failure_name", "safe_context"),
+    (
+        ("status", "validate_active_release", "repository_head"),
+        ("start", "validate_collection_preflight", "collection_preflight"),
+    ),
+)
+def test_public_command_exception_never_returns_configured_secret(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    command: str,
+    failure_name: str,
+    safe_context: str,
+) -> None:
+    secret = f"{command.upper()}_BOUNDARY_SECRET_7fA91"
+    monkeypatch.setenv(
+        "ORE_RECOVERY_PRIMARY_RPC_URL",
+        f"https://audit.invalid/credential/{secret}?token={secret}",
+    )
+    monkeypatch.setattr(
+        cli,
+        failure_name,
+        lambda **kwargs: (_ for _ in ()).throw(
+            RuntimeError(f"{safe_context}: HTTP 429: {secret}")
+        ),
+    )
+    if command == "status":
+        args = SimpleNamespace(
+            repository_root=Path.cwd(),
+            config=Path("config.json"),
+            resolver_config=Path("resolver.json"),
+            burn_in_evidence=Path("burn.json"),
+            release_approval=Path("approval.json"),
+            approval_manifest=Path("manifest.json"),
+            marker=Path("marker.json"),
+            authorization=Path("authorization.sqlite"),
+            ledger=Path("ledger.sqlite"),
+            expected_marker_sha256="e" * 64,
+            expected_marker_sha256_file=None,
+        )
+        invoke = cli.command_status
+    else:
+        args = SimpleNamespace(
+            repository_root=Path.cwd(),
+            config=Path("config.json"),
+            resolver_config=Path("resolver.json"),
+            burn_in_evidence=Path("burn.json"),
+            release_approval=Path("approval.json"),
+            approval_manifest=Path("manifest.json"),
+            marker=Path("marker.json"),
+            authorization=Path("authorization.sqlite"),
+            ledger=Path("ledger.sqlite"),
+            recovery=False,
+        )
+        invoke = cli.command_start
+    with pytest.raises(RuntimeError) as caught:
+        invoke(args)
+    error = caught.value
+    formatted = "".join(
+        traceback.format_exception(type(error), error, error.__traceback__)
+    )
+    traceback.print_exception(type(error), error, error.__traceback__)
+    captured = capsys.readouterr()
+    combined = "\n".join(
+        (
+            str(error),
+            repr(error),
+            formatted,
+            captured.out,
+            captured.err,
+        )
+    )
+    assert secret not in combined
+    assert safe_context in combined
+    assert "RuntimeError" in combined
+    assert "HTTP 429" in combined
+    assert error.__cause__ is None
+    assert error.__context__ is None
 
 
 def _handshake_state() -> dict[str, object]:

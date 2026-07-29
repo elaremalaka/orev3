@@ -7,8 +7,11 @@ import os
 import subprocess
 import time
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timezone
+from functools import wraps
 from pathlib import Path
+from typing import ParamSpec, TypeVar
 
 from orev3.collection.tailer import new_cursor
 from orev3.rfc008.analysis import analyze_dataset
@@ -80,10 +83,39 @@ from orev3.rfc008.writer import RFC008WriterLease
 
 ANALYSIS_AUTHORIZATION = "RFC008_FORMAL_ANALYSIS_AUTHORIZED"
 CLI_VERSION = RFC008_CLI_VERSION
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
 
 
 def _print(value: object) -> None:
     print(json.dumps(value, allow_nan=False, sort_keys=True))
+
+
+def _sanitize_public_command_errors(
+    function: Callable[_P, _R],
+) -> Callable[_P, _R]:
+    """Keep configured secrets outside public command exception surfaces."""
+
+    @wraps(function)
+    def wrapped(*args: _P.args, **kwargs: _P.kwargs) -> _R:
+        known_secrets = configured_secret_values()
+        safe_error: BaseException | None = None
+        try:
+            return function(*args, **kwargs)
+        except BaseException as exc:
+            message = redact_exception(
+                exc,
+                known_secrets=known_secrets,
+            )
+            try:
+                safe_error = type(exc)(message)
+            except BaseException:
+                safe_error = SupervisionError(message)
+        # Raise outside the handler so no raw exception remains reachable
+        # through __context__; from None also suppresses implicit chaining.
+        raise safe_error from None
+
+    return wrapped
 
 
 def _source_identities(config: RFC008Config) -> tuple[str, ...]:
@@ -810,6 +842,7 @@ def _active_authorization_release_mismatches(
     )
 
 
+@_sanitize_public_command_errors
 def command_start(args: argparse.Namespace) -> None:
     known_secrets = configured_secret_values()
     readiness = validate_collection_preflight(
@@ -1195,6 +1228,7 @@ def command_preflight_collection(args: argparse.Namespace) -> None:
     _print(value.as_dict())
 
 
+@_sanitize_public_command_errors
 def command_status(args: argparse.Namespace) -> None:
     release = validate_active_release(
         repository_root=args.repository_root,
