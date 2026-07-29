@@ -8,6 +8,13 @@ from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.marker import verify_marker
 from orev3.rfc008.storage import RFC008Store
 from orev3.rfc008.storage import SCHEMA_VERSION
+from orev3.rfc008.supervision import (
+    process_matches_metadata,
+    process_snapshot,
+    read_metadata,
+    supervision_paths,
+    writer_lease_status,
+)
 
 
 def status_report(
@@ -23,13 +30,12 @@ def status_report(
     marker = verify_marker(
         marker_path, config, expected_sha256=expected_marker_sha256
     )
-    writer_lock = Path(str(ledger_path) + ".writer.lock")
-    writer_pid: int | None = None
-    if writer_lock.exists():
-        try:
-            writer_pid = int(writer_lock.read_text(encoding="utf-8").strip())
-        except (OSError, ValueError):
-            writer_pid = None
+    runtime_paths = supervision_paths(ledger_path)
+    supervision = read_metadata(runtime_paths["metadata"])
+    lease = writer_lease_status(ledger_path)
+    process = process_snapshot(
+        supervision["collector_pid"] if supervision is not None else None
+    )
     with (
         CollectionAuthorizationStore(
             authorization_path, read_only=True
@@ -59,6 +65,24 @@ def status_report(
         unusable_rate = unusable / started if started else 0.0
         counters = store.counters()
         integrity = store.integrity()
+        canonical_count = store.count("decision_snapshots")
+        arm_decision_count = store.count("arm_decisions")
+        open_runs = store.connection.execute(
+            """
+            SELECT run_id,started_at,ended_at,process_id
+            FROM collector_runs
+            WHERE ended_at IS NULL
+            ORDER BY started_at
+            """
+        ).fetchall()
+        latest_run = store.connection.execute(
+            """
+            SELECT run_id,started_at,ended_at,process_id
+            FROM collector_runs
+            ORDER BY started_at DESC
+            LIMIT 1
+            """
+        ).fetchone()
         elapsed_days = (
             (now or datetime.now(timezone.utc)) - marker.created_at
         ).total_seconds() / 86400
@@ -73,6 +97,52 @@ def status_report(
             "source_corruption": counters.get("source_corruption", 0),
         }
         no_safety_failure = not any(safety_failures.values())
+        process_identity_matches = (
+            process_matches_metadata(supervision)
+            if supervision is not None
+            else False
+        )
+        process_ledger_agree = (
+            (
+                contract.collection_state == "initialized"
+                and contract.active_session_identity is None
+                and not lease["active"]
+                and not process["alive"]
+                and not open_runs
+            )
+            or (
+                contract.collection_state == "active"
+                and contract.active_session_identity is not None
+                and authorization.lifecycle_state == "active"
+                and authorization.consuming_session_identity
+                == contract.active_session_identity
+                and len(open_runs) == 1
+                and process_identity_matches
+                and lease["active"]
+            )
+            or (
+                contract.completed
+                and contract.active_session_identity is None
+                and authorization.lifecycle_state == "completed"
+                and not open_runs
+                and not process["alive"]
+                and not lease["active"]
+            )
+        )
+        runtime_seconds = None
+        if (
+            supervision is not None
+            and supervision["collector_start_timestamp"] is not None
+        ):
+            started_at = datetime.fromisoformat(
+                str(supervision["collector_start_timestamp"])
+            )
+            runtime_seconds = max(
+                0.0,
+                (
+                    (now or datetime.now(timezone.utc)) - started_at
+                ).total_seconds(),
+            )
         ready = (
             integrity == "ok"
             and no_safety_failure
@@ -127,19 +197,101 @@ def status_report(
             "committed_opportunity_count": (
                 contract.committed_opportunity_count
             ),
+            "canonical_decision_snapshot_count": canonical_count,
+            "arm_decision_count": arm_decision_count,
             "remaining_opportunity_count": (
                 contract.remaining_opportunity_count
             ),
             "current_session": contract.active_session_identity,
-            "writer_lease": {
-                "path": str(writer_lock),
-                "file_present": writer_lock.exists(),
-                "recorded_process_id": writer_pid,
-            },
+            "writer_lease": lease,
             "collector_process_status": (
-                "session_recorded"
-                if contract.active_session_identity is not None
-                else "no_active_session"
+                "active_and_verified"
+                if process_identity_matches and process_ledger_agree
+                else (
+                    "inactive"
+                    if not process["alive"]
+                    and contract.active_session_identity is None
+                    else "inconsistent"
+                )
+            ),
+            "supervision": {
+                "metadata_path": str(runtime_paths["metadata"]),
+                "metadata_present": supervision is not None,
+                "state": (
+                    supervision["supervision_state"]
+                    if supervision is not None
+                    else "absent"
+                ),
+                "recorded_branch": (
+                    supervision["branch"] if supervision is not None else None
+                ),
+                "recorded_head": (
+                    supervision["head"] if supervision is not None else None
+                ),
+                "collector_pid": (
+                    supervision["collector_pid"]
+                    if supervision is not None
+                    else None
+                ),
+                "collector_pid_alive": process["alive"],
+                "process_identity_matches": process_identity_matches,
+                "collector_start_timestamp": (
+                    supervision["collector_start_timestamp"]
+                    if supervision is not None
+                    else None
+                ),
+                "runtime_seconds": runtime_seconds,
+                "log_path": (
+                    supervision["log_path"]
+                    if supervision is not None
+                    else str(runtime_paths["log"])
+                ),
+                "session_identity": (
+                    supervision["session_identity"]
+                    if supervision is not None
+                    else None
+                ),
+                "exit_code": (
+                    supervision["exit_code"]
+                    if supervision is not None
+                    else None
+                ),
+                "failure_reason": (
+                    supervision["failure_reason"]
+                    if supervision is not None
+                    else None
+                ),
+                "stale_recovery": (
+                    supervision["stale_recovery"]
+                    if supervision is not None
+                    else None
+                ),
+                "process_and_ledger_agree": process_ledger_agree,
+            },
+            "collector_runs": {
+                "total": int(
+                    store.connection.execute(
+                        "SELECT COUNT(*) FROM collector_runs"
+                    ).fetchone()[0]
+                ),
+                "open": len(open_runs),
+                "latest": (
+                    dict(latest_run) if latest_run is not None else None
+                ),
+            },
+            "stopped_automatically_at_target": bool(
+                contract.completed
+                and contract.committed_opportunity_count
+                == contract.collection_target
+                and not process["alive"]
+                and not lease["active"]
+            ),
+            "reconciliation_required": bool(
+                contract.completed
+                and (
+                    authorization.lifecycle_state != "completed"
+                    or contract.active_session_identity is not None
+                )
             ),
             "last_committed_opportunity": (
                 contract.last_committed_opportunity_identity

@@ -92,48 +92,65 @@ class RFC008Collector:
             )
         run_id = self.session_identifier or str(uuid.uuid4())
         now = datetime.now(timezone.utc)
+        authorization_consumed = False
         if self.authorization_store is not None:
             self.authorization_store.consume_launch(
                 run_id,
                 recovery=self.recovery,
             )
-        self.store.begin_collection_session(
-            run_id,
-            recovery=self.recovery,
-        )
-        contract = self.store.validate_collection_contract()
-        self.store.connection.execute(
-            """
-            INSERT INTO collector_runs
-            (run_id,started_at,process_id,configuration_fingerprint,record_json)
-            VALUES (?,?,?,?,?)
-            """,
-            (
+            authorization_consumed = True
+        try:
+            self.store.begin_collection_session(
                 run_id,
-                now.isoformat(),
-                os.getpid(),
-                self.config.configuration_fingerprint,
-                strict_json(
-                    {
-                        "run_id": run_id,
-                        "started_at": now.isoformat(),
-                        "process_id": os.getpid(),
-                        "paper_only": True,
-                        "configuration_fingerprint": self.config.configuration_fingerprint,
-                        "authorization_identifier": (
-                            contract.authorization_identifier
-                        ),
-                        "authorization_digest": contract.authorization_digest,
-                        "ledger_instance_identifier": (
-                            contract.ledger_instance_identifier
-                        ),
-                        "collection_target": contract.collection_target,
-                        "collection_mode": contract.collection_mode,
-                        "recovery": self.recovery,
-                    }
+                recovery=self.recovery,
+            )
+            if self.recovery:
+                self.store.connection.execute(
+                    """
+                    UPDATE collector_runs
+                    SET ended_at=COALESCE(ended_at,?)
+                    WHERE ended_at IS NULL AND run_id<>?
+                    """,
+                    (now.isoformat(), run_id),
+                )
+            contract = self.store.validate_collection_contract()
+            self.store.connection.execute(
+                """
+                INSERT INTO collector_runs
+                (run_id,started_at,process_id,configuration_fingerprint,record_json)
+                VALUES (?,?,?,?,?)
+                """,
+                (
+                    run_id,
+                    now.isoformat(),
+                    os.getpid(),
+                    self.config.configuration_fingerprint,
+                    strict_json(
+                        {
+                            "run_id": run_id,
+                            "started_at": now.isoformat(),
+                            "process_id": os.getpid(),
+                            "paper_only": True,
+                            "configuration_fingerprint": self.config.configuration_fingerprint,
+                            "authorization_identifier": (
+                                contract.authorization_identifier
+                            ),
+                            "authorization_digest": contract.authorization_digest,
+                            "ledger_instance_identifier": (
+                                contract.ledger_instance_identifier
+                            ),
+                            "collection_target": contract.collection_target,
+                            "collection_mode": contract.collection_mode,
+                            "recovery": self.recovery,
+                        }
+                    ),
                 ),
-            ),
-        )
+            )
+        except Exception:
+            self.store.connection.rollback()
+            if authorization_consumed and self.authorization_store is not None:
+                self.authorization_store.fail(run_id)
+            raise
         self.run_id = run_id
         return run_id
 

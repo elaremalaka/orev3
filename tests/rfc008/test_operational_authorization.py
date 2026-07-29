@@ -269,6 +269,45 @@ def test_authorization_is_single_use_and_transition_history_is_tamper_evident(
         CollectionAuthorizationStore(path, read_only=True)
 
 
+def test_begin_run_fails_authorization_closed_if_session_creation_fails(
+    tmp_path: Path,
+    config: RFC008Config,
+    marker_file,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    marker, digest = marker_file
+    authorization_path, ledger_path = issue_and_initialize(
+        tmp_path,
+        config,
+        marker_sha256=digest,
+    )
+    with (
+        CollectionAuthorizationStore(authorization_path) as authorization,
+        RFC008Store(ledger_path, config=config) as store,
+    ):
+        collector = RFC008Collector(
+            store=store,
+            config=config,
+            marker_path=marker,
+            expected_marker_sha256=digest,
+            authorization_store=authorization,
+            session_identifier="failed-startup-session",
+        )
+        monkeypatch.setattr(
+            store,
+            "begin_collection_session",
+            lambda *args, **kwargs: (_ for _ in ()).throw(
+                RuntimeError("fixture session failure")
+            ),
+        )
+        with pytest.raises(RuntimeError, match="fixture session failure"):
+            collector.begin_run()
+        assert authorization.status().lifecycle_state == "failed"
+        assert store.collection_contract().collection_state == "initialized"
+        assert store.collection_contract().active_session_identity is None
+        assert store.count("decision_snapshots") == 0
+
+
 def test_authorization_rejects_copy_digest_tamper_and_timestamp_tamper(
     tmp_path: Path,
     config: RFC008Config,
@@ -643,6 +682,64 @@ def test_recovery_preserves_target_count_and_replaces_only_stale_session(
         assert contract.collection_target == 600
         assert contract.committed_opportunity_count == 1
         assert contract.active_session_identity == "recovery-session"
+
+
+def test_recovery_closes_stale_run_before_opening_new_session(
+    tmp_path: Path,
+    config: RFC008Config,
+    marker_file,
+) -> None:
+    marker, digest = marker_file
+    authorization_path, ledger_path = issue_and_initialize(
+        tmp_path,
+        config,
+        marker_sha256=digest,
+    )
+    with (
+        CollectionAuthorizationStore(authorization_path) as authorization,
+        RFC008Store(ledger_path, config=config) as store,
+    ):
+        first = RFC008Collector(
+            store=store,
+            config=config,
+            marker_path=marker,
+            expected_marker_sha256=digest,
+            authorization_store=authorization,
+            session_identifier="first-session",
+        )
+        with store.connection:
+            first.begin_run()
+    with (
+        CollectionAuthorizationStore(authorization_path) as authorization,
+        RFC008Store(ledger_path, config=config) as store,
+    ):
+        recovery = RFC008Collector(
+            store=store,
+            config=config,
+            marker_path=marker,
+            expected_marker_sha256=digest,
+            authorization_store=authorization,
+            recovery=True,
+            session_identifier="recovery-session",
+        )
+        with store.connection:
+            recovery.begin_run()
+        runs = store.connection.execute(
+            "SELECT run_id,ended_at FROM collector_runs ORDER BY started_at"
+        ).fetchall()
+        assert len(runs) == 2
+        assert runs[0]["run_id"] == "first-session"
+        assert runs[0]["ended_at"] is not None
+        assert runs[1]["run_id"] == "recovery-session"
+        assert runs[1]["ended_at"] is None
+        assert (
+            store.collection_contract().active_session_identity
+            == "recovery-session"
+        )
+        assert (
+            authorization.status().consuming_session_identity
+            == "recovery-session"
+        )
 
 
 def test_validator_uses_one_snapshot_across_final_commit(

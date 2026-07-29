@@ -427,6 +427,11 @@ def test_publication_path_races_fail_without_overwrite(
 def test_temporary_marker_has_no_collection_side_effects(monkeypatch) -> None:
     production_marker = ROOT / "data/ledger/rfc008_marker_v1.json"
     production_before = capture_marker_pair(production_marker)
+    production_ledger = ROOT / "data/ledger/rfc008_paper_ledger_v1.sqlite"
+    ledger_existed_before = production_ledger.exists()
+    ledger_bytes_before = (
+        production_ledger.read_bytes() if ledger_existed_before else None
+    )
     with race_directory() as directory:
         environment = build_environment(directory, monkeypatch)
         marker, digest = create(environment)
@@ -443,9 +448,9 @@ def test_temporary_marker_has_no_collection_side_effects(monkeypatch) -> None:
         )
         assert sha256_file(environment["marker"]) == digest
         assert not environment["ledger"].exists()
-        assert not (
-            ROOT / "data/ledger/rfc008_paper_ledger_v1.sqlite"
-        ).exists()
+        assert production_ledger.exists() is ledger_existed_before
+        if ledger_existed_before:
+            assert production_ledger.read_bytes() == ledger_bytes_before
     assert marker_pair_unchanged(
         production_before,
         capture_marker_pair(production_marker),

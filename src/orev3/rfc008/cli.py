@@ -5,7 +5,9 @@ import glob
 import json
 import os
 import subprocess
+import time
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 from orev3.collection.tailer import new_cursor
@@ -41,6 +43,24 @@ from orev3.rfc008.storage import (
     LedgerInitialization,
     RFC008Store,
     create_authorized_ledger,
+)
+from orev3.rfc008.supervision import (
+    STARTUP_TIMEOUT_SECONDS,
+    SupervisionError,
+    atomic_write_metadata,
+    command_identity,
+    launch_mutex,
+    process_matches_metadata,
+    process_snapshot,
+    python_command,
+    read_metadata,
+    redact_exception,
+    spawn_detached,
+    supervision_paths,
+    update_metadata,
+    utc_now,
+    wait_for_process_identity,
+    writer_lease_status,
 )
 from orev3.rfc008.writer import RFC008WriterLease
 
@@ -331,7 +351,7 @@ def command_create_marker(args: argparse.Namespace) -> None:
     )
 
 
-def command_run(args: argparse.Namespace) -> None:
+def _command_run(args: argparse.Namespace) -> None:
     action = "recovery" if args.recovery else "launch"
     readiness = validate_collection_preflight(
         repository_root=getattr(args, "repository_root", "."),
@@ -470,6 +490,412 @@ def command_run(args: argparse.Namespace) -> None:
                     provider.close()
 
 
+def _supervision_exit_state(args: argparse.Namespace) -> str:
+    config = RFC008Config.from_path(args.config)
+    with (
+        CollectionAuthorizationStore(
+            args.authorization, read_only=True
+        ) as authorization,
+        RFC008Store(
+            args.ledger, config=config, read_only=True
+        ) as store,
+    ):
+        authorization_state = authorization.status().lifecycle_state
+        contract = store.validate_collection_contract(config=config)
+    if contract.completed and authorization_state == "completed":
+        return "completed"
+    return "interrupted"
+
+
+def command_run(args: argparse.Namespace) -> None:
+    metadata_path = getattr(args, "supervision_metadata", None)
+    launch_identifier = getattr(
+        args, "supervision_launch_identifier", None
+    )
+    if metadata_path is None:
+        _command_run(args)
+        return
+    metadata = read_metadata(metadata_path)
+    if (
+        metadata is None
+        or metadata["launch_identifier"] != launch_identifier
+        or Path(metadata["ledger_path"]).resolve()
+        != Path(args.ledger).resolve()
+    ):
+        raise SupervisionError(
+            "RFC-008 supervised child metadata binding mismatch"
+        )
+    own_process = process_snapshot(os.getpid())
+    update_metadata(
+        metadata_path,
+        collector_pid=os.getpid(),
+        collector_start_timestamp=utc_now(),
+        collector_process_start_identity=own_process["start_identity"],
+    )
+    try:
+        _command_run(args)
+    except BaseException as exc:
+        try:
+            state = _supervision_exit_state(args)
+        except Exception:
+            state = "failed"
+        update_metadata(
+            metadata_path,
+            supervision_state=state,
+            exit_code=1,
+            failure_reason=redact_exception(exc),
+        )
+        raise
+    else:
+        state = _supervision_exit_state(args)
+        update_metadata(
+            metadata_path,
+            supervision_state=state,
+            exit_code=0,
+            failure_reason=None,
+        )
+
+
+def _git_branch_and_head(repository_root: str | Path) -> tuple[str, str]:
+    root = Path(repository_root).resolve()
+    branch = subprocess.run(
+        ("git", "branch", "--show-current"),
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    head = subprocess.run(
+        ("git", "rev-parse", "HEAD"),
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    status = subprocess.run(
+        ("git", "status", "--porcelain", "--untracked-files=all"),
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    if status:
+        raise PermissionError(
+            "RFC-008 supervised launch requires a clean Git worktree"
+        )
+    return branch, head
+
+
+def _supervised_child_command(
+    args: argparse.Namespace,
+    *,
+    metadata_path: Path,
+    launch_identifier: str,
+) -> list[str]:
+    command = [
+        python_command(),
+        "-m",
+        "orev3.rfc008.cli",
+        "run",
+        "--config",
+        str(args.config),
+        "--resolver-config",
+        str(args.resolver_config),
+        "--marker",
+        str(args.marker),
+        "--ledger",
+        str(args.ledger),
+        "--authorization",
+        str(args.authorization),
+        "--repository-root",
+        str(args.repository_root),
+        "--burn-in-evidence",
+        str(args.burn_in_evidence),
+        "--release-approval",
+        str(args.release_approval),
+        "--approval-manifest",
+        str(args.approval_manifest),
+        "--supervision-metadata",
+        str(metadata_path),
+        "--supervision-launch-identifier",
+        launch_identifier,
+    ]
+    if args.expected_marker_sha256:
+        command.extend(
+            (
+                "--expected-marker-sha256",
+                str(args.expected_marker_sha256),
+            )
+        )
+    else:
+        command.extend(
+            (
+                "--expected-marker-sha256-file",
+                str(args.expected_marker_sha256_file),
+            )
+        )
+    if args.recovery:
+        command.append("--recovery")
+    return command
+
+
+def _startup_authoritative_state(
+    args: argparse.Namespace,
+    *,
+    process_id: int | None = None,
+) -> dict[str, object]:
+    config = RFC008Config.from_path(args.config)
+    with (
+        CollectionAuthorizationStore(
+            args.authorization, read_only=True
+        ) as authorization_store,
+        RFC008Store(
+            args.ledger, config=config, read_only=True
+        ) as store,
+    ):
+        authorization = authorization_store.status()
+        contract = store.validate_collection_contract(
+            config=config,
+            authorization=authorization.record,
+        )
+        open_runs = store.connection.execute(
+            """
+            SELECT run_id,process_id,started_at
+            FROM collector_runs
+            WHERE ended_at IS NULL
+            ORDER BY started_at
+            """
+        ).fetchall()
+        matching_run = next(
+            (
+                row
+                for row in open_runs
+                if process_id is not None
+                and int(row["process_id"]) == process_id
+            ),
+            None,
+        )
+        canonical_count = store.count("decision_snapshots")
+        arm_count = store.count("arm_decisions")
+    return {
+        "authorization": authorization,
+        "contract": contract,
+        "open_runs": open_runs,
+        "matching_run": matching_run,
+        "canonical_count": canonical_count,
+        "arm_count": arm_count,
+    }
+
+
+def command_start(args: argparse.Namespace) -> None:
+    readiness = validate_collection_preflight(
+        repository_root=args.repository_root,
+        config_path=args.config,
+        resolver_config_path=args.resolver_config,
+        burn_in_evidence_path=args.burn_in_evidence,
+        release_approval_path=args.release_approval,
+        approval_manifest_path=args.approval_manifest,
+        marker_path=args.marker,
+        authorization_path=args.authorization,
+        ledger_path=args.ledger,
+        action="recovery" if args.recovery else "launch",
+        collector_running=False,
+    )
+    if not readiness.ready:
+        raise PermissionError(
+            "RFC-008 supervised preflight rejected launch: "
+            + ", ".join(readiness.gate_reasons)
+        )
+    branch, head = _git_branch_and_head(args.repository_root)
+    paths = supervision_paths(args.ledger)
+    with launch_mutex(args.ledger):
+        state = _startup_authoritative_state(args)
+        authorization = state["authorization"]
+        contract = state["contract"]
+        if contract.completed:
+            raise PermissionError(
+                "RFC-008 completed collection cannot be relaunched"
+            )
+        if (
+            not args.recovery
+            and (
+                state["open_runs"]
+                or contract.active_session_identity is not None
+            )
+        ):
+            raise PermissionError(
+                "RFC-008 authoritative collector session already exists"
+            )
+        if (
+            not args.recovery
+            and authorization.consuming_session_identity is not None
+        ):
+            raise PermissionError(
+                "RFC-008 authorization is already bound to a session"
+            )
+        expected_authorization_state = "active" if args.recovery else "initialized"
+        if authorization.lifecycle_state != expected_authorization_state:
+            raise PermissionError(
+                "RFC-008 authorization state rejects supervised launch"
+            )
+        lease = writer_lease_status(args.ledger)
+        if lease["active"]:
+            raise PermissionError("RFC-008 writer lease is active")
+        prior = read_metadata(paths["metadata"])
+        stale_recovery = None
+        if prior is not None:
+            if process_matches_metadata(prior):
+                raise PermissionError(
+                    "An RFC-008 supervised collector is already active"
+                )
+            stale_recovery = {
+                "launch_identifier": prior["launch_identifier"],
+                "prior_state": prior["supervision_state"],
+                "recovered_at": utc_now(),
+            }
+        launch_identifier = str(uuid.uuid4())
+        child_command = _supervised_child_command(
+            args,
+            metadata_path=paths["metadata"],
+            launch_identifier=launch_identifier,
+        )
+        metadata = {
+            "schema_version": 1,
+            "launch_identifier": launch_identifier,
+            "launcher_pid": os.getpid(),
+            "collector_pid": None,
+            "collector_start_timestamp": None,
+            "collector_process_start_identity": None,
+            "command_identity": command_identity(child_command),
+            "log_path": str(paths["log"]),
+            "metadata_path": str(paths["metadata"]),
+            "branch": branch,
+            "head": head,
+            "authorization_identifier": (
+                authorization.record.authorization_identifier
+            ),
+            "authorization_digest": authorization.record.authorization_digest,
+            "ledger_instance_identifier": (
+                contract.ledger_instance_identifier
+            ),
+            "ledger_path": str(Path(args.ledger).resolve()),
+            "session_identity": None,
+            "target_count": contract.collection_target,
+            "supervision_state": "starting",
+            "last_observed_status_timestamp": utc_now(),
+            "exit_code": None,
+            "failure_reason": None,
+            "stale_recovery": stale_recovery,
+        }
+        atomic_write_metadata(paths["metadata"], metadata)
+        child = spawn_detached(
+            child_command,
+            cwd=args.repository_root,
+            log_path=paths["log"],
+        )
+        child_snapshot = wait_for_process_identity(child.pid)
+        update_metadata(
+            paths["metadata"],
+            collector_pid=child.pid,
+            collector_start_timestamp=datetime.now(
+                timezone.utc
+            ).isoformat(),
+            collector_process_start_identity=child_snapshot[
+                "start_identity"
+            ],
+        )
+        deadline = time.monotonic() + args.startup_timeout_seconds
+        while time.monotonic() < deadline:
+            current_metadata = read_metadata(paths["metadata"])
+            current_process = process_snapshot(child.pid)
+            if not current_process["alive"]:
+                reason = (
+                    current_metadata["failure_reason"]
+                    if current_metadata is not None
+                    else None
+                )
+                if (
+                    current_metadata is not None
+                    and current_metadata["supervision_state"] == "starting"
+                ):
+                    poll = getattr(child, "poll", None)
+                    exit_code = poll() if callable(poll) else None
+                    update_metadata(
+                        paths["metadata"],
+                        supervision_state="failed",
+                        exit_code=exit_code,
+                        failure_reason=(
+                            reason
+                            or "SupervisionError: child exited before session"
+                        ),
+                    )
+                raise SupervisionError(
+                    "RFC-008 supervised child exited before startup "
+                    f"completed: {reason or 'no failure detail'}"
+                )
+            current = _startup_authoritative_state(
+                args, process_id=child.pid
+            )
+            current_authorization = current["authorization"]
+            current_contract = current["contract"]
+            run = current["matching_run"]
+            lease = writer_lease_status(args.ledger)
+            session = current_contract.active_session_identity
+            if (
+                current_authorization.lifecycle_state == "active"
+                and session is not None
+                and current_authorization.consuming_session_identity
+                == session
+                and run is not None
+                and str(run["run_id"]) == session
+                and lease["active"]
+                and lease["recorded_process_id"] == child.pid
+                and current_process["start_identity"]
+                == child_snapshot["start_identity"]
+            ):
+                value = update_metadata(
+                    paths["metadata"],
+                    session_identity=session,
+                    supervision_state="active",
+                    failure_reason=None,
+                )
+                _print(
+                    {
+                        "supervised_launch": "active",
+                        "collector_pid": child.pid,
+                        "collector_start_timestamp": value[
+                            "collector_start_timestamp"
+                        ],
+                        "session_identity": session,
+                        "authorization_identifier": value[
+                            "authorization_identifier"
+                        ],
+                        "ledger_instance_identifier": value[
+                            "ledger_instance_identifier"
+                        ],
+                        "target": value["target_count"],
+                        "metadata_path": value["metadata_path"],
+                        "log_path": value["log_path"],
+                        "writer_lease_active": True,
+                    }
+                )
+                return
+            time.sleep(0.1)
+        child.terminate()
+        try:
+            child.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            child.kill()
+            child.wait(timeout=5)
+        update_metadata(
+            paths["metadata"],
+            supervision_state="failed",
+            exit_code=child.returncode,
+            failure_reason="SupervisionError: startup timeout",
+        )
+        raise SupervisionError("RFC-008 supervised startup timed out")
+
+
 def command_preflight_collection(args: argparse.Namespace) -> None:
     value = validate_collection_preflight(
         repository_root=args.repository_root,
@@ -499,15 +925,38 @@ def command_status(args: argparse.Namespace) -> None:
     )
     if not release.valid:
         raise PermissionError("RFC-008 active release validation failed")
-    _print(
-        status_report(
-            ledger_path=args.ledger,
-            config_path=args.config,
-            marker_path=args.marker,
-            expected_marker_sha256=_expected_marker_hash(args),
-            authorization_path=args.authorization,
-        )
+    value = status_report(
+        ledger_path=args.ledger,
+        config_path=args.config,
+        marker_path=args.marker,
+        expected_marker_sha256=_expected_marker_hash(args),
+        authorization_path=args.authorization,
     )
+    root = Path(args.repository_root).resolve()
+    value["current_branch"] = subprocess.run(
+        ("git", "branch", "--show-current"),
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    value["current_head"] = subprocess.run(
+        ("git", "rev-parse", "HEAD"),
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    value["worktree_clean"] = not bool(
+        subprocess.run(
+            ("git", "status", "--porcelain", "--untracked-files=all"),
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+    )
+    _print(value)
 
 
 def command_build_dataset(args: argparse.Namespace) -> None:
@@ -650,7 +1099,52 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--burn-in-evidence", required=True)
     run.add_argument("--release-approval", required=True)
     run.add_argument("--approval-manifest", required=True)
+    run.add_argument("--supervision-metadata", help=argparse.SUPPRESS)
+    run.add_argument(
+        "--supervision-launch-identifier", help=argparse.SUPPRESS
+    )
     run.set_defaults(func=command_run)
+
+    start = sub.add_parser(
+        "start",
+        description=(
+            "Launch one fail-closed detached RFC-008 paper collector and wait "
+            "for its authoritative session handshake."
+        ),
+    )
+    start.add_argument("--config", required=True)
+    start.add_argument(
+        "--resolver-config",
+        default="config/collection/rfc008_resolver_v1.json",
+    )
+    start.add_argument("--marker", required=True)
+    _marker_hash_arguments(start)
+    start.add_argument("--ledger", required=True)
+    start.add_argument("--authorization", required=True)
+    start.add_argument("--recovery", action="store_true")
+    start.add_argument("--repository-root", default=".")
+    start.add_argument(
+        "--burn-in-evidence",
+        default="data/resolver/rfc008_operational_burn_in_v1.json",
+    )
+    start.add_argument(
+        "--release-approval",
+        default=(
+            "docs/research/rfc008/"
+            "release_implementation_approval_v1.json"
+        ),
+    )
+    start.add_argument(
+        "--approval-manifest",
+        default="docs/research/rfc008/approval_manifest_v1.json",
+    )
+    start.add_argument(
+        "--startup-timeout-seconds",
+        type=float,
+        default=STARTUP_TIMEOUT_SECONDS,
+        help=argparse.SUPPRESS,
+    )
+    start.set_defaults(func=command_start)
 
     collection_preflight = sub.add_parser("preflight-collection")
     collection_preflight.add_argument("--config", required=True)

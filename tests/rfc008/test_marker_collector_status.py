@@ -198,6 +198,15 @@ def test_status_is_read_only_and_reports_caps_and_safety(
     assert report["authorization_state"] == "initialized"
     assert report["collection_target"] == 600
     assert report["committed_opportunity_count"] == 0
+    assert report["canonical_decision_snapshot_count"] == 0
+    assert report["arm_decision_count"] == 0
+    assert report["supervision"]["state"] == "absent"
+    assert report["supervision"]["process_and_ledger_agree"]
+    assert report["collector_runs"] == {
+        "total": 0,
+        "open": 0,
+        "latest": None,
+    }
     expired = status_report(
         ledger_path=path,
         config_path=CONFIG_PATH,

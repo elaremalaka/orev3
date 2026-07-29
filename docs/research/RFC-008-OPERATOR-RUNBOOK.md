@@ -3,7 +3,7 @@
 Status: **Corrected implementation reference; marker and collection are not
 authorized**
 
-Runbook contract version: `rfc008-operator-runbook-v7`
+Runbook contract version: `rfc008-operator-runbook-v8`
 
 All commands run from `/Users/anisbaker/Documents/orev3`. Production commands
 below are future procedures and were not executed during implementation.
@@ -381,21 +381,50 @@ PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli initialize-ledger \
   --approval-manifest docs/research/rfc008/approval_manifest_v1.json
 ```
 
-Launch only after that preflight reports ready:
+Launch only after that preflight reports ready. Production collection uses the
+repository-owned supervised interface; do not use `nohup`, shell `&`,
+`disown`, `screen`, `tmux`, or another improvised wrapper:
 
 ```bash
-PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli run \
+PYTHONPATH=src .venv/bin/python -m orev3.rfc008.cli start \
   --config config/collection/rfc008_paper_v1.json \
-  --resolver-config config/collection/rfc008_resolver_v1.json \
   --marker data/ledger/rfc008_marker_v1.json \
   --expected-marker-sha256-file data/ledger/rfc008_marker_v1.json.sha256 \
   --ledger data/ledger/rfc008_paper_ledger_v1.sqlite \
-  --authorization data/ledger/rfc008_collection_authorization_v1.sqlite \
-  --repository-root . \
-  --burn-in-evidence data/resolver/rfc008_operational_burn_in_v1.json \
-  --release-approval docs/research/rfc008/release_implementation_approval_v1.json \
-  --approval-manifest docs/research/rfc008/approval_manifest_v1.json
+  --authorization data/ledger/rfc008_collection_authorization_v1.sqlite
 ```
+
+`start` performs the release and collection preflights, takes an exclusive
+launch mutex, rejects authoritative active-session or writer-lease state, and
+launches the existing `run` command with `start_new_session=True`, detached
+stdin, deliberately closed file descriptors, a controlled environment, and
+combined stdout/stderr at:
+
+```text
+data/ledger/rfc008_paper_ledger_v1.collector.log
+```
+
+It atomically publishes schema-1 supervision metadata at:
+
+```text
+data/ledger/rfc008_paper_ledger_v1.supervision.json
+```
+
+Launch success is reported only after the child remains alive, the exact
+process-start identity matches, the writer lease is held by that PID, the
+authorization and ledger name the same session, and the corresponding open
+`collector_runs` row exists. The metadata contains no RPC URL or environment
+value. A child that exits before the handshake, a timeout, PID reuse, an
+active writer, a duplicate session, or inconsistent authorization/ledger
+state fails closed.
+
+An inactive supervision record is recoverable as stale only when the process,
+authorization, ledger session, open run, and advisory writer lease all agree
+that no collector is active. The next authorized `start` records the prior
+launch identity and state in `stale_recovery`; it does not rewrite the
+authorization or ledger. An old writer-lock file is not manually removed:
+the existing advisory-lock acquisition decides whether a writer is active and
+updates the PID only after exclusive acquisition succeeds.
 
 The authorization is release-, marker-, path-, paper-mode-, and
 600-opportunity-bound. Initialization and launch consumption are
@@ -445,7 +474,7 @@ counters, and stopping caps. No interim efficacy analysis is allowed.
 
 Send SIGINT only to the RFC-008 collector. Do not signal the observer,
 RFC-007 collector, or caffeinate wrapper. Confirm the RFC-008 writer lease is
-released, run status, and restart with `--recovery` using the exact
+released, run status, and restart with supervised `start --recovery` using the exact
 authorization, marker, hash, configuration, resolver configuration, provider
 identities, and ledger. A completed ledger exits without creating another
 session. If authorization remains `active` because the process stopped after
@@ -453,6 +482,17 @@ the opportunity-600 ledger commit, this recovery invocation performs mandatory
 completion reconciliation and stale-session cleanup before exiting. It never
 reopens the completed collection. Repeating the same recovery is safe and
 remains completed.
+
+The status command remains read-only and reports the recorded and current Git
+identities, metadata and log paths, process liveness and process-start
+identity, authorization/session binding, canonical and stored counts, arm
+decisions, open and latest run records, advisory writer-lease state,
+reconciliation requirements, and process/ledger agreement. On normal target
+completion, the child records `completed` supervision state after the ledger
+reaches exactly 600, the session and authorization close, and the lease is
+released. On an unexpected post-session exit it records `interrupted`;
+operators must inspect status and use the existing separately authorized
+recovery path. Supervision never automatically restarts a failed collector.
 
 ## 9. Future authorized final freeze
 
