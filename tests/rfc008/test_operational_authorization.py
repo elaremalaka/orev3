@@ -35,6 +35,7 @@ from orev3.rfc008.storage import (
     RFC008Store,
     create_authorized_ledger,
 )
+from orev3.rfc008.supervision import SupervisionError
 
 from .conftest import make_opportunity
 from .test_marker_collector_status import raw_record
@@ -457,6 +458,141 @@ def test_startup_is_visible_while_first_poll_is_blocked(
             ).active_session_identity
             is None
         )
+
+
+def test_supervised_collector_waits_for_acknowledgement_before_long_poll(
+    tmp_path: Path,
+    config: RFC008Config,
+    marker_file,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    marker, digest = marker_file
+    authorization_path, ledger_path = issue_and_initialize(
+        tmp_path,
+        config,
+        marker_sha256=digest,
+    )
+    acknowledgement_started = Event()
+    release_acknowledgement = Event()
+    poll_started = Event()
+    release_poll = Event()
+    finished = Event()
+    errors: list[BaseException] = []
+
+    def worker() -> None:
+        try:
+            with (
+                CollectionAuthorizationStore(
+                    authorization_path
+                ) as authorization,
+                RFC008Store(ledger_path, config=config) as store,
+            ):
+                def acknowledge(_session: str, _stop: Event) -> bool:
+                    acknowledgement_started.set()
+                    return release_acknowledgement.wait(timeout=5.0)
+
+                collector = RFC008Collector(
+                    store=store,
+                    config=config,
+                    marker_path=marker,
+                    expected_marker_sha256=digest,
+                    authorization_store=authorization,
+                    session_identifier="acknowledged-session",
+                    startup_acknowledgement=acknowledge,
+                )
+                monkeypatch.setattr(
+                    collector, "install_signal_handlers", lambda: None
+                )
+
+                def long_poll() -> int:
+                    poll_started.set()
+                    assert release_poll.wait(timeout=5.0)
+                    collector.stop_requested.set()
+                    return 0
+
+                monkeypatch.setattr(collector, "poll_once", long_poll)
+                collector.run()
+        except BaseException as exc:  # pragma: no cover - asserted below
+            errors.append(exc)
+        finally:
+            finished.set()
+
+    thread = Thread(target=worker)
+    thread.start()
+    assert acknowledgement_started.wait(timeout=5.0)
+    assert not poll_started.is_set()
+    assert not finished.is_set()
+
+    with RFC008Store(
+        ledger_path, config=config, read_only=True
+    ) as observer:
+        assert (
+            observer.collection_contract().active_session_identity
+            == "acknowledged-session"
+        )
+
+    release_acknowledgement.set()
+    assert poll_started.wait(timeout=5.0)
+    assert not finished.is_set()
+    release_poll.set()
+    thread.join(timeout=5.0)
+    assert not thread.is_alive()
+    assert not errors
+
+
+def test_failed_startup_acknowledgement_polls_and_commits_nothing(
+    tmp_path: Path,
+    config: RFC008Config,
+    marker_file,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    marker, digest = marker_file
+    authorization_path, ledger_path = issue_and_initialize(
+        tmp_path,
+        config,
+        marker_sha256=digest,
+    )
+    poll_count = 0
+
+    with (
+        CollectionAuthorizationStore(authorization_path) as authorization,
+        RFC008Store(ledger_path, config=config) as store,
+    ):
+        def reject_acknowledgement(_session: str, _stop: Event) -> bool:
+            raise SupervisionError("fixture acknowledgment timeout")
+
+        collector = RFC008Collector(
+            store=store,
+            config=config,
+            marker_path=marker,
+            expected_marker_sha256=digest,
+            authorization_store=authorization,
+            session_identifier="timed-out-session",
+            startup_acknowledgement=reject_acknowledgement,
+        )
+        monkeypatch.setattr(
+            collector, "install_signal_handlers", lambda: None
+        )
+
+        def forbidden_poll() -> int:
+            nonlocal poll_count
+            poll_count += 1
+            return 0
+
+        monkeypatch.setattr(collector, "poll_once", forbidden_poll)
+        with pytest.raises(SupervisionError, match="acknowledgment timeout"):
+            collector.run()
+
+        assert poll_count == 0
+        assert store.count("decision_snapshots") == 0
+        assert store.count("arm_decisions") == 0
+        assert store.collection_contract().active_session_identity is None
+        run = store.connection.execute(
+            "SELECT ended_at FROM collector_runs WHERE run_id=?",
+            ("timed-out-session",),
+        ).fetchone()
+        assert run is not None
+        assert run["ended_at"] is not None
 
 
 def test_authorization_rejects_copy_digest_tamper_and_timestamp_tamper(

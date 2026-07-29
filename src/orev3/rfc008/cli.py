@@ -11,8 +11,9 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from functools import wraps
 from pathlib import Path
-from typing import ParamSpec, TypeVar
+from threading import Event
 from types import SimpleNamespace
+from typing import ParamSpec, TypeVar
 
 from orev3.collection.tailer import new_cursor
 from orev3.rfc008.analysis import analyze_dataset
@@ -86,6 +87,7 @@ from orev3.rfc008.supervision import (
     wait_for_process_identity,
     writer_lease_status,
 )
+from orev3.rfc008.writer import RFC008WriterLease
 from orev3.rfc009.continuation import (
     activate_continuation,
     issue_continuation_approval,
@@ -108,7 +110,11 @@ def _continuation_kwargs(args: argparse.Namespace) -> dict[str, object]:
     }
 
 
-def _runtime_preflight(args: argparse.Namespace):
+def _runtime_preflight(
+    args: argparse.Namespace,
+    *,
+    expected_active_session: str | None = None,
+):
     continuation = getattr(args, "continuation_approval", None)
     if continuation is None:
         return validate_collection_preflight(
@@ -131,6 +137,13 @@ def _runtime_preflight(args: argparse.Namespace):
     value = preflight_continuation(
         require_activated=True, **_continuation_kwargs(args)
     )
+    gate_reasons = list(value.gate_reasons)
+    if expected_active_session is not None:
+        gate_reasons = [
+            reason
+            for reason in gate_reasons
+            if reason != "active_session_present"
+        ]
     release_commit = subprocess.run(
         ("git", "rev-parse", "HEAD^"),
         cwd=args.repository_root,
@@ -149,11 +162,54 @@ def _runtime_preflight(args: argparse.Namespace):
         approval_commit=release_commit,
     )
     return SimpleNamespace(
-        ready=value.ready and release.valid,
-        gate_reasons=value.gate_reasons,
+        ready=not gate_reasons and release.valid,
+        gate_reasons=tuple(gate_reasons),
         active_release_validation=release,
     )
-from orev3.rfc008.writer import RFC008WriterLease
+
+
+def _await_supervisor_acknowledgement(
+    *,
+    metadata_path: str | Path,
+    launch_identifier: str,
+    session_identifier: str,
+    collector_pid: int,
+    stop_requested: Event,
+    timeout_seconds: float,
+) -> bool:
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        if stop_requested.is_set():
+            return False
+        metadata = read_metadata(metadata_path)
+        if metadata is None:
+            raise SupervisionError(
+                "RFC-008 supervision metadata disappeared before acknowledgment"
+            )
+        if (
+            metadata["launch_identifier"] != launch_identifier
+            or metadata["collector_pid"] != collector_pid
+        ):
+            raise SupervisionError(
+                "RFC-008 supervisor acknowledgment binding mismatch"
+            )
+        acknowledged_session = metadata["session_identity"]
+        if acknowledged_session not in {None, session_identifier}:
+            raise SupervisionError(
+                "RFC-008 supervisor acknowledged another session"
+            )
+        if metadata["supervision_state"] == "active":
+            if acknowledged_session != session_identifier:
+                raise SupervisionError(
+                    "RFC-008 active supervision lacks the collector session"
+                )
+            return True
+        if metadata["supervision_state"] != "starting":
+            raise SupervisionError(
+                "RFC-008 supervision ended before startup acknowledgment"
+            )
+        time.sleep(STARTUP_POLL_SECONDS)
+    raise SupervisionError("RFC-008 supervisor acknowledgment timed out")
 
 
 ANALYSIS_AUTHORIZATION = "RFC008_FORMAL_ANALYSIS_AUTHORIZED"
@@ -623,6 +679,25 @@ def _command_run(args: argparse.Namespace) -> None:
                 providers=providers,
             )
             resolver.validate_provider_networks()
+            startup_acknowledgement = None
+            if getattr(args, "supervision_metadata", None) is not None:
+                def acknowledge_startup(
+                    session_identifier: str,
+                    stop_requested: Event,
+                ) -> bool:
+                    return _await_supervisor_acknowledgement(
+                        metadata_path=args.supervision_metadata,
+                        launch_identifier=args.supervision_launch_identifier,
+                        session_identifier=session_identifier,
+                        collector_pid=os.getpid(),
+                        stop_requested=stop_requested,
+                        timeout_seconds=(
+                            args.startup_timeout_seconds
+                            + max(1.0, STARTUP_POLL_SECONDS * 10)
+                        ),
+                    )
+
+                startup_acknowledgement = acknowledge_startup
             collector = RFC008Collector(
                 store=store,
                 config=config,
@@ -632,6 +707,7 @@ def _command_run(args: argparse.Namespace) -> None:
                 authorization_store=authorization,
                 recovery=args.recovery,
                 session_identifier=str(uuid.uuid4()),
+                startup_acknowledgement=startup_acknowledgement,
             )
             try:
                 collector.run()
@@ -825,6 +901,18 @@ def _supervised_child_command(
         command.extend(
             ("--continuation-approval", str(args.continuation_approval))
         )
+    command.extend(
+        (
+            "--startup-timeout-seconds",
+            str(
+                getattr(
+                    args,
+                    "startup_timeout_seconds",
+                    STARTUP_TIMEOUT_SECONDS,
+                )
+            ),
+        )
+    )
     return command
 
 
@@ -1239,7 +1327,10 @@ def command_start(args: argparse.Namespace) -> None:
                         process_id=child.pid,
                     )
                     final_lease = writer_lease_status(args.ledger)
-                    final_release = _runtime_preflight(args)
+                    final_release = _runtime_preflight(
+                        args,
+                        expected_active_session=session,
+                    )
                     final_mismatches = (
                         ()
                         if final_release.ready
@@ -1679,6 +1770,11 @@ def parser() -> argparse.ArgumentParser:
         "--supervision-authority-fd", required=True, type=int
     )
     internal.add_argument("--supervision-log-fd", required=True, type=int)
+    internal.add_argument(
+        "--startup-timeout-seconds",
+        required=True,
+        type=float,
+    )
     internal.set_defaults(func=command_run)
 
     start = sub.add_parser(

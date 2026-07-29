@@ -350,7 +350,114 @@ def test_supervised_child_command_contains_no_rpc_values(
     assert "ORE_RECOVERY_PRIMARY_RPC_URL" not in text
     assert "ORE_RECOVERY_SECONDARY_RPC_URL" not in text
     assert "--supervision-metadata" in command
+    assert "--startup-timeout-seconds" in command
     assert INTERNAL_CHILD_COMMAND in command
+
+
+def test_supervisor_acknowledgement_requires_exact_session(
+    tmp_path: Path,
+) -> None:
+    value = metadata_for(tmp_path)
+    value.update(
+        {
+            "collector_pid": 4321,
+            "collector_start_timestamp": "2026-07-29T00:00:00+00:00",
+            "collector_process_start_identity": "f" * 64,
+            "launch_authority_consumed_at": "2026-07-29T00:00:00+00:00",
+            "session_identity": "another-session",
+            "supervision_state": "active",
+        }
+    )
+    path = Path(value["metadata_path"])
+    atomic_write_metadata(path, value)
+    with pytest.raises(SupervisionError, match="another session"):
+        cli._await_supervisor_acknowledgement(
+            metadata_path=path,
+            launch_identifier=str(value["launch_identifier"]),
+            session_identifier="expected-session",
+            collector_pid=4321,
+            stop_requested=SimpleNamespace(is_set=lambda: False),
+            timeout_seconds=1.0,
+        )
+
+
+def test_supervisor_acknowledgement_accepts_exact_active_session(
+    tmp_path: Path,
+) -> None:
+    value = metadata_for(tmp_path)
+    value.update(
+        {
+            "collector_pid": 4321,
+            "collector_start_timestamp": "2026-07-29T00:00:00+00:00",
+            "collector_process_start_identity": "f" * 64,
+            "launch_authority_consumed_at": "2026-07-29T00:00:00+00:00",
+            "session_identity": "expected-session",
+            "supervision_state": "active",
+        }
+    )
+    path = Path(value["metadata_path"])
+    atomic_write_metadata(path, value)
+    assert cli._await_supervisor_acknowledgement(
+        metadata_path=path,
+        launch_identifier=str(value["launch_identifier"]),
+        session_identifier="expected-session",
+        collector_pid=4321,
+        stop_requested=SimpleNamespace(is_set=lambda: False),
+        timeout_seconds=1.0,
+    )
+
+
+@pytest.mark.parametrize(
+    ("gate_reasons", "expected_ready"),
+    (
+        (("active_session_present",), True),
+        (("active_session_present", "ledger_completed"), False),
+    ),
+)
+def test_continuation_runtime_preflight_allows_only_expected_active_session(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    gate_reasons: tuple[str, ...],
+    expected_ready: bool,
+) -> None:
+    monkeypatch.setattr(
+        cli,
+        "preflight_continuation",
+        lambda **kwargs: SimpleNamespace(
+            ready=False,
+            gate_reasons=gate_reasons,
+        ),
+    )
+    monkeypatch.setattr(
+        cli.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(stdout="a" * 40 + "\n"),
+    )
+    release = SimpleNamespace(
+        valid=True,
+        parsed_active_approval={"cli_sha256": "d" * 64},
+    )
+    monkeypatch.setattr(cli, "validate_active_release", lambda **kwargs: release)
+    args = SimpleNamespace(
+        continuation_approval=tmp_path / "continuation.json",
+        recovery=True,
+        repository_root=tmp_path,
+        config="config",
+        resolver_config="resolver",
+        burn_in_evidence="burn",
+        release_approval="release",
+        approval_manifest="manifest",
+        marker="marker",
+        authorization="authorization",
+        ledger="ledger",
+    )
+    before_session = cli._runtime_preflight(args)
+    runtime = cli._runtime_preflight(
+        args,
+        expected_active_session="expected-session",
+    )
+    assert not before_session.ready
+    assert runtime.ready is expected_ready
 
 
 def test_supervised_run_rejects_wrong_launch_binding(
@@ -770,6 +877,124 @@ def test_start_reports_success_only_after_authoritative_handshake(
     )
     assert metadata["supervision_state"] == "active"
     assert metadata["session_identity"] == "session"
+
+
+def test_continuation_recovery_uses_runtime_session_preflight(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    preflight_sessions: list[str | None] = []
+    release = SimpleNamespace(
+        parsed_active_approval={"cli_sha256": "d" * 64}
+    )
+
+    def runtime_preflight(args, *, expected_active_session=None):
+        preflight_sessions.append(expected_active_session)
+        return SimpleNamespace(
+            ready=True,
+            gate_reasons=(),
+            active_release_validation=release,
+        )
+
+    monkeypatch.setattr(cli, "_runtime_preflight", runtime_preflight)
+    monkeypatch.setattr(
+        cli,
+        "_git_branch_and_head",
+        lambda root: ("research/rfc-007-paper-collection-burn-in", "a" * 40),
+    )
+    monkeypatch.setattr(cli, "validate_import_identity", lambda *a, **k: None)
+    monkeypatch.setattr(cli, "approved_python_command", lambda root: sys.executable)
+    record = SimpleNamespace(
+        authorization_identifier="authorization",
+        authorization_digest="a" * 64,
+    )
+    before = {
+        "authorization": SimpleNamespace(
+            lifecycle_state="active",
+            consuming_session_identity=None,
+            record=record,
+        ),
+        "contract": SimpleNamespace(
+            collection_state="active",
+            completed=False,
+            active_session_identity=None,
+            ledger_instance_identifier="ledger-instance",
+            collection_target=600,
+        ),
+        "open_runs": [],
+        "matching_run": None,
+    }
+    active = {
+        "authorization": SimpleNamespace(
+            lifecycle_state="active",
+            consuming_session_identity="session",
+            record=record,
+        ),
+        "contract": SimpleNamespace(
+            collection_state="active",
+            completed=False,
+            active_session_identity="session",
+            ledger_instance_identifier="ledger-instance",
+            collection_target=600,
+        ),
+        "open_runs": [{"run_id": "session", "process_id": 4321}],
+        "matching_run": {"run_id": "session", "process_id": 4321},
+    }
+    states = iter((before, active, active))
+    monkeypatch.setattr(
+        cli,
+        "_startup_authoritative_state",
+        lambda *args, **kwargs: next(states),
+    )
+    lease_calls = 0
+
+    def lease_status(_ledger):
+        nonlocal lease_calls
+        lease_calls += 1
+        return {
+            "active": lease_calls > 1,
+            "recorded_process_id": 4321 if lease_calls > 1 else None,
+            "recorded_process_start_identity": (
+                "f" * 64 if lease_calls > 1 else None
+            ),
+        }
+
+    monkeypatch.setattr(cli, "writer_lease_status", lease_status)
+
+    class Child:
+        pid = 4321
+
+        def poll(self):
+            return None
+
+    def spawn(*_args, **_kwargs):
+        update_metadata(
+            supervision_paths(args.ledger)["metadata"],
+            collector_pid=4321,
+            collector_start_timestamp="2026-07-29T00:00:00+00:00",
+            collector_process_start_identity="f" * 64,
+            launch_authority_consumed_at="2026-07-29T00:00:00+00:00",
+        )
+        return Child()
+
+    monkeypatch.setattr(cli, "spawn_detached", spawn)
+    snapshot = {
+        "pid": 4321,
+        "alive": True,
+        "start_identity": "f" * 64,
+        "command": f"python -m orev3.rfc008.cli {INTERNAL_CHILD_COMMAND}",
+    }
+    monkeypatch.setattr(cli, "wait_for_process_identity", lambda pid: snapshot)
+    monkeypatch.setattr(cli, "process_snapshot", lambda pid: snapshot)
+    args = start_args(tmp_path)
+    args.recovery = True
+    args.continuation_approval = "continuation.json"
+    cli.command_start(args)
+    result = json.loads(capsys.readouterr().out)
+    assert result["supervised_launch"] == "active"
+    assert result["session_identity"] == "session"
+    assert preflight_sessions == [None, "session"]
 
 
 def test_process_fixture_uses_no_shell_or_ad_hoc_backgrounding() -> None:

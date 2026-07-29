@@ -4,6 +4,7 @@ import glob
 import os
 import signal
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import Event
@@ -48,6 +49,7 @@ class RFC008Collector:
         authorization_store: CollectionAuthorizationStore | None = None,
         recovery: bool = False,
         session_identifier: str | None = None,
+        startup_acknowledgement: Callable[[str, Event], bool] | None = None,
     ) -> None:
         self.store = store
         self.config = config
@@ -60,6 +62,7 @@ class RFC008Collector:
         self.authorization_store = authorization_store
         self.recovery = recovery
         self.session_identifier = session_identifier
+        self.startup_acknowledgement = startup_acknowledgement
         contract = self.store.validate_collection_contract(config=config)
         if authorization_store is not None:
             authorization = authorization_store.status().record
@@ -332,6 +335,13 @@ class RFC008Collector:
         self.install_signal_handlers()
         self.begin_run()
         try:
+            if (
+                self.startup_acknowledgement is not None
+                and not self.startup_acknowledgement(
+                    str(self.run_id), self.stop_requested
+                )
+            ):
+                return
             while not self.stop_requested.is_set():
                 with self.store.connection:
                     processed = self.poll_once()
