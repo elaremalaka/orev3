@@ -162,6 +162,31 @@ def _other_branch_commit(root: Path) -> str:
     return commit
 
 
+def _commit_path(root: Path, relative: str, content: str, message: str) -> str:
+    path = root / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    subprocess.run(("git", "add", relative), cwd=root, check=True)
+    environment = {
+        **os.environ,
+        "GIT_AUTHOR_NAME": "RFC-008 audit",
+        "GIT_AUTHOR_EMAIL": "audit@example.invalid",
+        "GIT_COMMITTER_NAME": "RFC-008 audit",
+        "GIT_COMMITTER_EMAIL": "audit@example.invalid",
+    }
+    subprocess.run(
+        ("git", "commit", "-q", "-m", message),
+        cwd=root,
+        env=environment,
+        check=True,
+    )
+    return subprocess.check_output(
+        ("git", "rev-parse", "HEAD"),
+        cwd=root,
+        text=True,
+    ).strip()
+
+
 def _assert_rejected_everywhere(
     root: Path,
     capsys: pytest.CaptureFixture[str],
@@ -203,20 +228,132 @@ def test_active_authority_is_derived_from_git(
         repository_root=authority_root,
         release_path=path["release"],
     )
-    assert authority.branch == BRANCH
-    assert authority.approval_commit == subprocess.check_output(
-        ("git", "rev-parse", "HEAD"),
+    approval_commit = subprocess.check_output(
+        (
+            "git",
+            "log",
+            "-1",
+            "--format=%H",
+            "--",
+            str(path["release"].relative_to(authority_root)),
+        ),
         cwd=authority_root,
         text=True,
     ).strip()
+    assert authority.branch == BRANCH
+    assert authority.approval_commit == approval_commit
     assert authority.implementation_commit == subprocess.check_output(
-        ("git", "rev-parse", "HEAD^"),
+        ("git", "rev-parse", f"{approval_commit}^"),
         cwd=authority_root,
         text=True,
     ).strip()
     assert authority.approval_committed_at_head
     assert authority.approval_commit_is_approval_only
     assert _active(authority_root).valid
+
+
+def test_research_domain_commit_does_not_require_approval_only_child(
+    authority_root: Path,
+) -> None:
+    path = _paths(authority_root)
+    approval_before = repository_release_authority(
+        repository_root=authority_root,
+        release_path=path["release"],
+    )
+    research_path = "src/orev3/strategy_lab/research_fixture.py"
+    research_head = _commit_path(
+        authority_root,
+        research_path,
+        '"""Offline RFC-010 research fixture."""\n',
+        "Add offline research fixture",
+    )
+
+    authority_after = repository_release_authority(
+        repository_root=authority_root,
+        release_path=path["release"],
+    )
+
+    assert research_head != authority_after.approval_commit
+    assert authority_after == approval_before
+    assert _active(authority_root).valid
+
+
+def test_production_release_closure_commit_requires_approval_only_child(
+    authority_root: Path,
+) -> None:
+    path = _paths(authority_root)
+    production_path = "src/orev3/rfc008/release_fixture.py"
+    _commit_path(
+        authority_root,
+        production_path,
+        '"""Production Release Closure fixture."""\n',
+        "Change production closure",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Production Release Closure change requires",
+    ):
+        repository_release_authority(
+            repository_root=authority_root,
+            release_path=path["release"],
+        )
+    assert not _active(authority_root).valid
+
+
+def test_unclassified_commit_fails_closed_as_production_change(
+    authority_root: Path,
+) -> None:
+    path = _paths(authority_root)
+    _commit_path(
+        authority_root,
+        "unclassified-runtime-input.txt",
+        "unknown authority\n",
+        "Add unclassified input",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Production Release Closure change requires",
+    ):
+        repository_release_authority(
+            repository_root=authority_root,
+            release_path=path["release"],
+        )
+
+
+def test_research_package_becomes_closure_when_production_imports_it(
+    authority_root: Path,
+) -> None:
+    path = _paths(authority_root)
+    _commit_path(
+        authority_root,
+        "src/orev3/rfc008/research_dependency_fixture.py",
+        "from orev3.strategy_lab import Strategy\n",
+        "Add approved production dependency",
+    )
+    release_text = path["release"].read_text(encoding="utf-8")
+    _commit_path(
+        authority_root,
+        str(path["release"].relative_to(authority_root)),
+        release_text + "\n",
+        "Approve production dependency",
+    )
+    _commit_path(
+        authority_root,
+        "src/orev3/strategy_lab/research_dependency_change.py",
+        '"""Now reachable from production."""\n',
+        "Change production-reachable research package",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Production Release Closure change requires",
+    ):
+        repository_release_authority(
+            repository_root=authority_root,
+            release_path=path["release"],
+        )
 
 
 def test_caller_git_authority_parameters_are_removed() -> None:
@@ -249,8 +386,21 @@ def test_wrong_implementation_rejected_by_every_interface(
             text=True,
         ).strip()
     elif claim == "grandparent":
+        release = _paths(authority_root)["release"]
+        approval_commit = subprocess.check_output(
+            (
+                "git",
+                "log",
+                "-1",
+                "--format=%H",
+                "--",
+                str(release.relative_to(authority_root)),
+            ),
+            cwd=authority_root,
+            text=True,
+        ).strip()
         value = subprocess.check_output(
-            ("git", "rev-parse", "HEAD^^"),
+            ("git", "rev-parse", f"{approval_commit}^^"),
             cwd=authority_root,
             text=True,
         ).strip()

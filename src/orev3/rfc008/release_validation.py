@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import os
@@ -29,6 +30,24 @@ from orev3.rfc008.approval_contract import (
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.resolver_config import ResolverConfig
 from orev3.rfc008.schemas import ExperimentMarker, ResolverBurnInEvidence
+
+
+_RESEARCH_SOURCE_PACKAGES = frozenset(
+    {
+        "analysis",
+        "analytics",
+        "datasets",
+        "economics",
+        "experiments",
+        "features",
+        "historical",
+        "modeling",
+        "replay",
+        "simulator",
+        "strategies",
+        "strategy_lab",
+    }
+)
 
 
 def sha256_file(path: str | Path) -> str:
@@ -122,6 +141,164 @@ def _git(root: Path, *arguments: str) -> bytes:
     ).stdout
 
 
+def _changed_paths(root: Path, commit: str) -> frozenset[str]:
+    parent_count = len(
+        _git(root, "rev-list", "--parents", "-n", "1", commit)
+        .decode()
+        .split()
+    ) - 1
+    if parent_count != 1:
+        raise ValueError(
+            "Active release ancestry must remain a linear Git history"
+        )
+    return frozenset(
+        value
+        for value in _git(
+            root,
+            "diff-tree",
+            "--no-commit-id",
+            "--name-only",
+            "-r",
+            commit,
+        )
+        .decode()
+        .splitlines()
+        if value
+    )
+
+
+def _production_reachable_research_packages(root: Path) -> frozenset[str]:
+    source_root = root / "src/orev3"
+    if not source_root.is_dir():
+        return _RESEARCH_SOURCE_PACKAGES
+
+    available = {
+        path.name
+        for path in source_root.iterdir()
+        if path.is_dir() and not path.name.startswith("__")
+    }
+    reachable = available - _RESEARCH_SOURCE_PACKAGES
+    pending = list(sorted(reachable))
+    parsed: set[str] = set()
+
+    try:
+        while pending:
+            package = pending.pop()
+            if package in parsed:
+                continue
+            parsed.add(package)
+            package_root = source_root / package
+            if not package_root.is_dir():
+                continue
+            for path in sorted(package_root.rglob("*.py")):
+                text = path.read_text(encoding="utf-8")
+                tree = ast.parse(text, filename=str(path))
+                dependencies: set[str] = set()
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.Import):
+                        names = (alias.name for alias in node.names)
+                    elif isinstance(node, ast.ImportFrom) and node.module:
+                        names = (node.module,)
+                    else:
+                        continue
+                    for name in names:
+                        parts = name.split(".")
+                        if len(parts) >= 2 and parts[0] == "orev3":
+                            dependencies.add(parts[1])
+                for candidate in _RESEARCH_SOURCE_PACKAGES:
+                    if f"orev3.{candidate}" in text:
+                        dependencies.add(candidate)
+                for dependency in sorted(dependencies & available):
+                    if dependency not in reachable:
+                        reachable.add(dependency)
+                        pending.append(dependency)
+    except (OSError, SyntaxError, UnicodeError):
+        return _RESEARCH_SOURCE_PACKAGES
+
+    return frozenset(reachable & _RESEARCH_SOURCE_PACKAGES)
+
+
+def _path_is_outside_production_release_closure(
+    path: str,
+    *,
+    reachable_research_packages: frozenset[str],
+) -> bool:
+    if path.startswith("tests/"):
+        return True
+    if path.startswith("docs/architecture/"):
+        return True
+    if path.startswith("docs/rfcs/RFC-010"):
+        return True
+    if path.startswith("docs/research/") and not path.startswith(
+        ("docs/research/rfc008/", "docs/research/rfc009/")
+    ):
+        return True
+    prefix = "src/orev3/"
+    if path.startswith(prefix):
+        remainder = path[len(prefix) :]
+        package = remainder.split("/", 1)[0]
+        return (
+            package in _RESEARCH_SOURCE_PACKAGES
+            and package not in reachable_research_packages
+        )
+    return False
+
+
+def _commit_is_outside_production_release_closure(
+    root: Path,
+    commit: str,
+    *,
+    reachable_research_packages: frozenset[str],
+) -> bool:
+    changed = _changed_paths(root, commit)
+    return bool(changed) and all(
+        _path_is_outside_production_release_closure(
+            path,
+            reachable_research_packages=reachable_research_packages,
+        )
+        for path in changed
+    )
+
+
+def _active_approval_commit(
+    root: Path,
+    *,
+    head: str,
+    release_relative: str,
+    reachable_research_packages: frozenset[str],
+) -> str:
+    commits = (
+        _git(root, "log", "-1", "--format=%H", head, "--", release_relative)
+        .decode()
+        .splitlines()
+    )
+    if len(commits) != 1:
+        raise ValueError("Committed active approval cannot be located")
+    approval_commit = commits[0]
+    trailing = (
+        _git(
+            root,
+            "rev-list",
+            "--reverse",
+            "--first-parent",
+            f"{approval_commit}..{head}",
+        )
+        .decode()
+        .splitlines()
+    )
+    for commit in trailing:
+        if not _commit_is_outside_production_release_closure(
+            root,
+            commit,
+            reachable_research_packages=reachable_research_packages,
+        ):
+            raise ValueError(
+                "Production Release Closure change requires an RFC-008 "
+                "approval-only child"
+            )
+    return approval_commit
+
+
 def repository_release_authority(
     *,
     repository_root: Path,
@@ -129,28 +306,41 @@ def repository_release_authority(
     approval_commit: str | None = None,
 ) -> GitReleaseAuthority:
     head = _git(repository_root, "rev-parse", "HEAD").decode().strip()
-    authority_commit = approval_commit or head
+    release_relative = str(release_path.resolve().relative_to(repository_root))
+    reachable_research_packages = _production_reachable_research_packages(
+        repository_root
+    )
+    committed_at_head = (
+        _git(repository_root, "show", f"{head}:{release_relative}")
+        == release_path.read_bytes()
+    )
+    if approval_commit is not None:
+        authority_commit = approval_commit
+    elif committed_at_head:
+        authority_commit = _active_approval_commit(
+            repository_root,
+            head=head,
+            release_relative=release_relative,
+            reachable_research_packages=reachable_research_packages,
+        )
+    else:
+        if _commit_is_outside_production_release_closure(
+            repository_root,
+            head,
+            reachable_research_packages=reachable_research_packages,
+        ):
+            raise ValueError(
+                "Pending RFC-008 approval cannot approve a commit outside "
+                "the Production Release Closure"
+            )
+        authority_commit = head
     parent = _git(
         repository_root, "rev-parse", f"{authority_commit}^"
     ).decode().strip()
     branch = (
         _git(repository_root, "branch", "--show-current").decode().strip()
     )
-    changed = {
-        value
-        for value in _git(
-            repository_root,
-            "diff-tree",
-            "--no-commit-id",
-            "--name-only",
-            "-r",
-            authority_commit,
-        )
-        .decode()
-        .splitlines()
-        if value
-    }
-    release_relative = str(release_path.resolve().relative_to(repository_root))
+    changed = _changed_paths(repository_root, authority_commit)
     approval_only = changed == {release_relative}
     committed_release = _git(
         repository_root,
@@ -386,7 +576,13 @@ def validate_active_release(
             "approval_commit_is_direct_child_of_implementation",
             (
                 not git_authority.approval_committed_at_head
-                or _git(root, "rev-parse", "HEAD^").decode().strip()
+                or _git(
+                    root,
+                    "rev-parse",
+                    f"{git_authority.approval_commit}^",
+                )
+                .decode()
+                .strip()
                 == implementation
             ),
             "Active approval commit is not the direct child of implementation",

@@ -7,9 +7,12 @@ from orev3.strategy_lab.interfaces import (
     RankedCandidateSet,
     Strategy,
 )
+from orev3.strategy_lab.runner import ExperimentConfiguration, ExperimentRunner
 
 __all__ = (
     "DecisionContext",
+    "ExperimentConfiguration",
+    "ExperimentRunner",
     "Explanation",
     "RankedCandidate",
     "RankedCandidateSet",
