@@ -114,6 +114,30 @@ class EqualWeightDeploymentModel(DeploymentModel):
         )
 
 
+@dataclass(frozen=True, slots=True)
+class TopRankedDeploymentModel(DeploymentModel):
+    """Deploy a deterministic unit allocation to only the first candidate."""
+
+    def allocate(self, candidates: RankedCandidateSet) -> DeploymentDecision:
+        if not isinstance(candidates, RankedCandidateSet):
+            raise TypeError("candidates must be a RankedCandidateSet")
+        if not candidates:
+            return DeploymentDecision(())
+        return DeploymentDecision(
+            (
+                DeploymentAllocation(
+                    square_identifier=candidates[0].square_identifier,
+                    allocation_amount=1.0,
+                    allocation_weight=1.0,
+                    metadata={
+                        "deployment_model": "top_ranked",
+                        "candidate_rank": 1,
+                    },
+                ),
+            )
+        )
+
+
 def _finite_nonnegative_float(name: str, value: object) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise TypeError(f"{name} must be numeric")
@@ -128,4 +152,5 @@ __all__ = (
     "DeploymentDecision",
     "DeploymentModel",
     "EqualWeightDeploymentModel",
+    "TopRankedDeploymentModel",
 )
