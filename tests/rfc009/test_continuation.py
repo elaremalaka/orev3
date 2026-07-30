@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -10,10 +10,12 @@ from pydantic import ValidationError
 
 from orev3.collection.schemas import CompleteOpportunity
 from orev3.rfc008.config import RFC008Config
+from orev3.rfc008.collector import RFC008Collector
 from orev3.rfc008.decisions import build_decisions, snapshot_from_opportunity
 from orev3.rfc008.migrations import APPLICATION_ID, MIGRATIONS, apply_migrations
 from orev3.rfc008.storage import RFC008Store
 import orev3.rfc008.storage as storage_module
+import orev3.rfc008.collector as collector_module
 from orev3.rfc009.continuation import (
     CANONICAL_APPROVAL,
     CONTINUATION_ACTIVATION_TOKEN,
@@ -31,6 +33,7 @@ from orev3.rfc009.continuation import (
     continuity_state_sha256,
     derive_continuation_approval,
     issue_continuation_approval,
+    reconstruct_release_history,
     semantic_compatibility_sha256,
     validate_release_epoch_chain,
 )
@@ -198,6 +201,11 @@ def _activate_fixture_epoch(
     identifier: str,
     digest: str,
 ) -> None:
+    predecessor = store.release_epochs()[-1]
+    activated_at = (
+        datetime.fromisoformat(str(predecessor["activated_at"]))
+        + timedelta(microseconds=1)
+    ).isoformat()
     if epoch == 2:
         store.connection.execute(
             """
@@ -209,11 +217,10 @@ def _activate_fixture_epoch(
                 release,
                 identifier,
                 digest,
-                "2026-07-29T00:00:00+00:00",
+                activated_at,
             ),
         )
         return
-    predecessor = store.release_epochs()[-1]
     store.connection.execute(
         """
         INSERT INTO collection_release_successor_epochs(
@@ -229,13 +236,288 @@ def _activate_fixture_epoch(
             release,
             identifier,
             digest,
-            "2026-07-29T00:00:00+00:00",
+            activated_at,
             predecessor["epoch_number"],
             predecessor["authority_identifier"],
             predecessor["authority_digest"],
             predecessor["release_approval_sha256"],
         ),
     )
+
+
+def _activate_transition_fixture(
+    store: RFC008Store,
+    *,
+    epoch: int,
+    release: str,
+    identifier: str,
+    digest: str,
+    transition_kind: str,
+    activated_at: str | None = None,
+) -> None:
+    predecessor = store.release_epochs()[-1]
+    if activated_at is None:
+        activated_at = (
+            datetime.fromisoformat(str(predecessor["activated_at"]))
+            + timedelta(microseconds=1)
+        ).isoformat()
+    store.connection.execute(
+        """
+        INSERT INTO collection_release_transition_epochs(
+          epoch_number,start_sequence,release_approval_sha256,
+          authority_type,authority_identifier,authority_digest,activated_at,
+          predecessor_epoch_number,predecessor_authority_identifier,
+          predecessor_authority_digest,predecessor_release_approval_sha256,
+          transition_kind
+        ) VALUES (?,? ,?,'rfc009_continuation',?,?,?,?,?,?,?,?)
+        """,
+        (
+            epoch,
+            store.collection_contract().committed_opportunity_count + 1,
+            release,
+            identifier,
+            digest,
+            activated_at,
+            predecessor["epoch_number"],
+            predecessor["authority_identifier"],
+            predecessor["authority_digest"],
+            predecessor["release_approval_sha256"],
+            transition_kind,
+        ),
+    )
+
+
+def test_empty_epoch_supersession_is_append_only_and_nonoverlapping(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = RFC008Config.from_path(
+        "config/collection/rfc008_paper_v1.json"
+    )
+    path = tmp_path / "ledger.sqlite"
+    with RFC008Store(path, config=config, create=True) as store:
+        authorization = store.collection_contract().immutable_release
+        _commit_opportunity(store, config, 10)
+        _activate_fixture_epoch(
+            store,
+            epoch=2,
+            release="2" * 64,
+            identifier="epoch-2",
+            digest="a" * 64,
+        )
+        _commit_opportunity(store, config, 9)
+        _activate_transition_fixture(
+            store,
+            epoch=3,
+            release="3" * 64,
+            identifier="epoch-3",
+            digest="b" * 64,
+            transition_kind="ordinary_successor",
+        )
+        _activate_transition_fixture(
+            store,
+            epoch=4,
+            release="4" * 64,
+            identifier="epoch-4",
+            digest="c" * 64,
+            transition_kind="empty_epoch_supersession",
+        )
+        _activate_transition_fixture(
+            store,
+            epoch=5,
+            release="5" * 64,
+            identifier="epoch-5",
+            digest="d" * 64,
+            transition_kind="empty_epoch_supersession",
+        )
+        epoch_three = store.release_epochs()[2]
+        store.connection.execute(
+            """
+            INSERT INTO collector_runs(
+              run_id,started_at,ended_at,process_id,
+              configuration_fingerprint,record_json
+            ) VALUES (?,?,?,?,?,?)
+            """,
+            (
+                "failed-epoch-3-recovery",
+                epoch_three["activated_at"],
+                epoch_three["activated_at"],
+                999,
+                config.configuration_fingerprint,
+                __import__("json").dumps(
+                    {
+                        "recovery": True,
+                        "release_epoch_number": 3,
+                    }
+                ),
+            ),
+        )
+        store.connection.commit()
+
+        epochs = _release_epochs(store.connection)
+        validate_release_epoch_chain(
+            epochs,
+            authorization=authorization,
+            committed_count=2,
+        )
+        assert [row["start_sequence"] for row in epochs] == [1, 2, 3, 3, 3]
+        assert [row["transition_kind"] for row in epochs[2:]] == [
+            "ordinary_successor",
+            "empty_epoch_supersession",
+            "empty_epoch_supersession",
+        ]
+        history = reconstruct_release_history(store.connection)
+        assert history[2]["authority_interval_ended_at"] == (
+            history[3]["authority_interval_started_at"]
+        )
+        assert history[3]["authority_interval_ended_at"] == (
+            history[4]["authority_interval_started_at"]
+        )
+        assert history[2]["opportunity_interval_empty"] is True
+        assert history[3]["opportunity_interval_empty"] is True
+        assert history[4]["opportunity_interval_empty"] is False
+        assert history[2]["governed_committed_sequence_start"] is None
+        assert history[3]["governed_committed_sequence_start"] is None
+        assert history[2]["collector_runs"][0]["run_id"] == (
+            "failed-epoch-3-recovery"
+        )
+        assert history[2]["collector_runs"][0]["recovery"] is True
+
+        _commit_opportunity(store, config, 8)
+        store.connection.commit()
+        validate_release_epoch_chain(
+            _release_epochs(store.connection),
+            authorization=authorization,
+            committed_count=3,
+        )
+        history = reconstruct_release_history(store.connection)
+        assert history[4]["governed_committed_sequence_start"] == 3
+        assert history[4]["governed_committed_sequence_end"] == 3
+        assert store.collection_contract().committed_opportunity_count == 3
+
+        monkeypatch.setattr(
+            collector_module,
+            "verify_marker",
+            lambda *args, **kwargs: SimpleNamespace(
+                resolver_configuration_sha256=""
+            ),
+        )
+        collector = RFC008Collector(
+            store=store,
+            config=config,
+            marker_path=tmp_path / "unused-marker.json",
+            expected_marker_sha256="f" * 64,
+            recovery=True,
+            session_identifier="epoch-5-recovery",
+        )
+        assert collector.begin_run() == "epoch-5-recovery"
+        run = store.connection.execute(
+            "SELECT record_json FROM collector_runs WHERE run_id=?",
+            ("epoch-5-recovery",),
+        ).fetchone()
+        run_record = __import__("json").loads(run[0])
+        assert run_record["release_epoch_number"] == 5
+        assert run_record["governing_release_approval_sha256"] == "5" * 64
+        assert run_record["governing_authority_identifier"] == "epoch-5"
+        collector.finish_run()
+        store.connection.commit()
+        history = reconstruct_release_history(store.connection)
+        assert history[4]["collector_runs"][0]["run_id"] == "epoch-5-recovery"
+        assert history[4]["collector_runs"][0]["recovery"] is True
+
+
+def test_empty_epoch_supersession_rejects_invalid_or_replayed_claims(
+    tmp_path: Path,
+) -> None:
+    config = RFC008Config.from_path(
+        "config/collection/rfc008_paper_v1.json"
+    )
+    path = tmp_path / "ledger.sqlite"
+    with RFC008Store(path, config=config, create=True) as store:
+        _commit_opportunity(store, config, 1)
+        _activate_fixture_epoch(
+            store,
+            epoch=2,
+            release="2" * 64,
+            identifier="epoch-2",
+            digest="a" * 64,
+        )
+        _commit_opportunity(store, config, 2)
+        _activate_transition_fixture(
+            store,
+            epoch=3,
+            release="3" * 64,
+            identifier="epoch-3",
+            digest="b" * 64,
+            transition_kind="ordinary_successor",
+        )
+        store.connection.commit()
+
+        with pytest.raises(sqlite3.IntegrityError, match="ordinary successor"):
+            _activate_transition_fixture(
+                store,
+                epoch=4,
+                release="4" * 64,
+                identifier="epoch-4",
+                digest="c" * 64,
+                transition_kind="ordinary_successor",
+            )
+        store.connection.rollback()
+        predecessor_at = datetime.fromisoformat(
+            str(store.release_epochs()[-1]["activated_at"])
+        )
+        with pytest.raises(sqlite3.IntegrityError, match="time is not ordered"):
+            _activate_transition_fixture(
+                store,
+                epoch=4,
+                release="4" * 64,
+                identifier="epoch-4",
+                digest="c" * 64,
+                transition_kind="empty_epoch_supersession",
+                activated_at=(
+                    predecessor_at - timedelta(microseconds=1)
+                ).isoformat(),
+            )
+        store.connection.rollback()
+        _activate_transition_fixture(
+            store,
+            epoch=4,
+            release="4" * 64,
+            identifier="epoch-4",
+            digest="c" * 64,
+            transition_kind="empty_epoch_supersession",
+        )
+        store.connection.commit()
+        with pytest.raises(sqlite3.IntegrityError):
+            _activate_transition_fixture(
+                store,
+                epoch=4,
+                release="5" * 64,
+                identifier="fork",
+                digest="d" * 64,
+                transition_kind="empty_epoch_supersession",
+            )
+        store.connection.rollback()
+        _commit_opportunity(store, config, 3)
+        store.connection.commit()
+        with pytest.raises(sqlite3.IntegrityError, match="not empty"):
+            _activate_transition_fixture(
+                store,
+                epoch=5,
+                release="5" * 64,
+                identifier="epoch-5",
+                digest="d" * 64,
+                transition_kind="empty_epoch_supersession",
+            )
+        store.connection.rollback()
+        with pytest.raises(sqlite3.IntegrityError):
+            store.connection.execute(
+                """
+                UPDATE collection_release_transition_epochs
+                SET transition_kind='ordinary_successor'
+                WHERE epoch_number=4
+                """
+            )
 
 
 def test_successor_epoch_chain_is_linear_immutable_and_replay_safe(
@@ -396,10 +678,88 @@ def test_schema_six_epoch_two_migrates_without_rewriting_history(
         connection.execute(
             "SELECT key,value FROM metadata WHERE key='schema_version'"
         )
-    )["schema_version"] == "7"
+    )["schema_version"] == "8"
     assert connection.execute(
         "SELECT COUNT(*) FROM collection_release_successor_epochs"
     ).fetchone()[0] == 0
+    assert connection.execute(
+        "SELECT COUNT(*) FROM collection_release_transition_epochs"
+    ).fetchone()[0] == 0
+    connection.close()
+
+
+def test_schema_seven_history_migrates_without_rewriting_epochs(
+    tmp_path: Path,
+) -> None:
+    config = RFC008Config.from_path(
+        "config/collection/rfc008_paper_v1.json"
+    )
+    path = tmp_path / "schema-seven.sqlite"
+    connection = sqlite3.connect(path)
+    connection.row_factory = sqlite3.Row
+    connection.execute(f"PRAGMA application_id={APPLICATION_ID}")
+    apply_migrations(connection, MIGRATIONS[:7])
+    legacy = object.__new__(RFC008Store)
+    legacy.path = path
+    legacy.identity_path = path
+    legacy.connection = connection
+    current_schema = storage_module.SCHEMA_VERSION
+    storage_module.SCHEMA_VERSION = 7
+    try:
+        legacy.initialize(
+            config, RFC008Store._fixture_initialization(config, path)
+        )
+    finally:
+        storage_module.SCHEMA_VERSION = current_schema
+    _commit_opportunity(legacy, config, 1)
+    _activate_fixture_epoch(
+        legacy,
+        epoch=2,
+        release="2" * 64,
+        identifier="epoch-2",
+        digest="a" * 64,
+    )
+    _commit_opportunity(legacy, config, 2)
+    _activate_fixture_epoch(
+        legacy,
+        epoch=3,
+        release="3" * 64,
+        identifier="epoch-3",
+        digest="b" * 64,
+    )
+    before = legacy.release_epochs()
+    legacy_rows = {
+        table: tuple(
+            tuple(row)
+            for row in connection.execute(
+                f"SELECT * FROM {table} ORDER BY epoch_number"
+            )
+        )
+        for table in (
+            "collection_release_epochs",
+            "collection_release_successor_epochs",
+        )
+    }
+    connection.commit()
+    apply_migrations(connection)
+    migrated = object.__new__(RFC008Store)
+    migrated.path = path
+    migrated.identity_path = path
+    migrated.connection = connection
+    assert migrated.release_epochs() == before
+    for table, rows in legacy_rows.items():
+        assert tuple(
+            tuple(row)
+            for row in connection.execute(
+                f"SELECT * FROM {table} ORDER BY epoch_number"
+            )
+        ) == rows
+    assert connection.execute(
+        "SELECT COUNT(*) FROM collection_release_transition_epochs"
+    ).fetchone()[0] == 0
+    assert connection.execute(
+        "SELECT MAX(version) FROM schema_migrations"
+    ).fetchone()[0] == 8
     connection.close()
 
 
@@ -478,6 +838,89 @@ def test_activation_appends_exact_successor_and_rejects_replay(
         assert epochs[-1]["epoch_number"] == 3
         assert epochs[-1]["authority_identifier"] == (
             approval.continuation_identifier
+        )
+    with pytest.raises(sqlite3.IntegrityError):
+        activate_continuation(
+            authorization_token=CONTINUATION_ACTIVATION_TOKEN,
+            config_path=config_path,
+            ledger_path=path,
+            continuation_approval_path=tmp_path / "approval.json",
+        )
+
+
+def test_activation_supersedes_an_activated_empty_epoch_exactly_once(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config_path = Path("config/collection/rfc008_paper_v1.json")
+    config = RFC008Config.from_path(config_path)
+    path = tmp_path / "ledger.sqlite"
+    with RFC008Store(path, config=config, create=True) as store:
+        authorization = store.collection_contract().immutable_release
+        _commit_opportunity(store, config, 1)
+        _activate_fixture_epoch(
+            store,
+            epoch=2,
+            release="2" * 64,
+            identifier="epoch-2",
+            digest="a" * 64,
+        )
+        contract = store.collection_contract()
+        approval = build_continuation_approval(
+            created_at="2026-07-29T00:00:00+00:00",
+            authorization=authorization,
+            starting_committed_count=1,
+            starting_last_opportunity_identity=(
+                contract.last_committed_opportunity_identity
+            ),
+            continuity_sha256=continuity_state_sha256(
+                store.connection,
+                ledger_path=path,
+                include_release_epochs=True,
+            ),
+            successor_release_approval_sha256="3" * 64,
+            implementation_diff_sha256_value="4" * 64,
+            release_epoch_number=3,
+            predecessor_epoch_number=2,
+            predecessor_authority_identifier="epoch-2",
+            predecessor_authority_digest="a" * 64,
+            predecessor_release_approval_sha256="2" * 64,
+        )
+        store.connection.commit()
+
+    def ready(**kwargs):
+        return ContinuationPreflight(
+            ready=True,
+            activated=kwargs.get("require_activated", False),
+            approval_sha256="f" * 64,
+            continuation_identifier=approval.continuation_identifier,
+            successor_release_approval_sha256=(
+                approval.successor_release_approval_sha256
+            ),
+            starting_committed_count=1,
+            current_committed_count=1,
+            release_epochs=(),
+            gate_reasons=(),
+            transition_kind="empty_epoch_supersession",
+        )
+
+    monkeypatch.setattr(continuation_module, "preflight_continuation", ready)
+    monkeypatch.setattr(
+        continuation_module,
+        "_strict_json",
+        lambda path: (approval, "f" * 64),
+    )
+    activate_continuation(
+        authorization_token=CONTINUATION_ACTIVATION_TOKEN,
+        config_path=config_path,
+        ledger_path=path,
+        continuation_approval_path=tmp_path / "approval.json",
+    )
+    with RFC008Store(path, config=config, read_only=True) as store:
+        epochs = store.release_epochs()
+        assert [epoch["start_sequence"] for epoch in epochs] == [1, 2, 2]
+        assert epochs[-1]["transition_kind"] == (
+            "empty_epoch_supersession"
         )
     with pytest.raises(sqlite3.IntegrityError):
         activate_continuation(

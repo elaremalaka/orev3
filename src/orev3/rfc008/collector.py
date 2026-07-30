@@ -117,6 +117,7 @@ class RFC008Collector:
                     (now.isoformat(), run_id),
                 )
             contract = self.store.validate_collection_contract()
+            governing_epoch = self.store.release_epochs()[-1]
             self.store.connection.execute(
                 """
                 INSERT INTO collector_runs
@@ -145,6 +146,15 @@ class RFC008Collector:
                             "collection_target": contract.collection_target,
                             "collection_mode": contract.collection_mode,
                             "recovery": self.recovery,
+                            "release_epoch_number": int(
+                                governing_epoch["epoch_number"]
+                            ),
+                            "governing_release_approval_sha256": str(
+                                governing_epoch["release_approval_sha256"]
+                            ),
+                            "governing_authority_identifier": str(
+                                governing_epoch["authority_identifier"]
+                            ),
                         }
                     ),
                 ),

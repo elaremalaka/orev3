@@ -40,7 +40,7 @@ PROTECTED_LEDGER_NAMES = {
 }
 CANONICAL_PRODUCTION_LEDGER_NAME = "rfc008_paper_ledger_v1.sqlite"
 LEDGER_SCHEMA_VERSION = 1
-LEGACY_CONTINUATION_SCHEMA_VERSION = 6
+LEGACY_CONTINUATION_SCHEMA_VERSIONS = {6, 7}
 
 
 class CollectionTargetReached(RuntimeError):
@@ -358,7 +358,7 @@ class RFC008Store:
         applied_version = self._applied_schema_version()
         supported_schema_versions = {
             SCHEMA_VERSION,
-            LEGACY_CONTINUATION_SCHEMA_VERSION,
+            *LEGACY_CONTINUATION_SCHEMA_VERSIONS,
         }
         metadata_version = int(values.get("schema_version", -1))
         if (
@@ -468,7 +468,12 @@ class RFC008Store:
                 """
                 SELECT epoch_number,start_sequence,release_approval_sha256,
                        authority_type,authority_identifier,authority_digest,
-                       activated_at
+                       activated_at,NULL AS predecessor_epoch_number,
+                       NULL AS predecessor_authority_identifier,
+                       NULL AS predecessor_authority_digest,
+                       NULL AS predecessor_release_approval_sha256,
+                       CASE WHEN epoch_number=1 THEN 'original'
+                            ELSE 'ordinary_successor' END AS transition_kind
                 FROM collection_release_epochs
                 ORDER BY epoch_number
                 """
@@ -481,24 +486,58 @@ class RFC008Store:
               AND name='collection_release_successor_epochs'
             """
         ).fetchone()
-        if successor_table is None:
-            return legacy
-        successors = tuple(
-            dict(row)
-            for row in self.connection.execute(
-                """
-                SELECT epoch_number,start_sequence,release_approval_sha256,
-                       authority_type,authority_identifier,authority_digest,
-                       activated_at,predecessor_epoch_number,
-                       predecessor_authority_identifier,
-                       predecessor_authority_digest,
-                       predecessor_release_approval_sha256
-                FROM collection_release_successor_epochs
-                ORDER BY epoch_number
-                """
+        successors = (
+            tuple(
+                dict(row)
+                for row in self.connection.execute(
+                    """
+                    SELECT epoch_number,start_sequence,release_approval_sha256,
+                           authority_type,authority_identifier,authority_digest,
+                           activated_at,predecessor_epoch_number,
+                           predecessor_authority_identifier,
+                           predecessor_authority_digest,
+                           predecessor_release_approval_sha256,
+                           'ordinary_successor' AS transition_kind
+                    FROM collection_release_successor_epochs
+                    ORDER BY epoch_number
+                    """
+                )
+            )
+            if successor_table is not None
+            else ()
+        )
+        transition_table = self.connection.execute(
+            """
+            SELECT 1 FROM sqlite_master
+            WHERE type='table'
+              AND name='collection_release_transition_epochs'
+            """
+        ).fetchone()
+        transitions = (
+            tuple(
+                dict(row)
+                for row in self.connection.execute(
+                    """
+                    SELECT epoch_number,start_sequence,release_approval_sha256,
+                           authority_type,authority_identifier,authority_digest,
+                           activated_at,predecessor_epoch_number,
+                           predecessor_authority_identifier,
+                           predecessor_authority_digest,
+                           predecessor_release_approval_sha256,transition_kind
+                    FROM collection_release_transition_epochs
+                    ORDER BY epoch_number
+                    """
+                )
+            )
+            if transition_table is not None
+            else ()
+        )
+        return tuple(
+            sorted(
+                (*legacy, *successors, *transitions),
+                key=lambda row: row["epoch_number"],
             )
         )
-        return (*legacy, *successors)
 
     def _validate_collection_contract_snapshot(
         self,

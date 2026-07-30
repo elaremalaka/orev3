@@ -198,6 +198,7 @@ class ContinuationPreflight:
     current_committed_count: int
     release_epochs: tuple[dict[str, object], ...]
     gate_reasons: tuple[str, ...]
+    transition_kind: str = "ordinary_successor"
 
     def as_dict(self) -> dict[str, object]:
         return asdict(self)
@@ -441,6 +442,7 @@ _CONTINUITY_TABLES = (
 _CONTINUITY_AUTHORITY_TABLES = (
     "collection_release_epochs",
     "collection_release_successor_epochs",
+    "collection_release_transition_epochs",
 )
 
 
@@ -528,7 +530,9 @@ def _release_epochs(
                    activated_at,NULL AS predecessor_epoch_number,
                    NULL AS predecessor_authority_identifier,
                    NULL AS predecessor_authority_digest,
-                   NULL AS predecessor_release_approval_sha256
+                   NULL AS predecessor_release_approval_sha256,
+                   CASE WHEN epoch_number=1 THEN 'original'
+                        ELSE 'ordinary_successor' END AS transition_kind
             FROM collection_release_epochs
             ORDER BY epoch_number
             """
@@ -550,7 +554,8 @@ def _release_epochs(
                        activated_at,predecessor_epoch_number,
                        predecessor_authority_identifier,
                        predecessor_authority_digest,
-                       predecessor_release_approval_sha256
+                       predecessor_release_approval_sha256,
+                       'ordinary_successor' AS transition_kind
                 FROM collection_release_successor_epochs
                 ORDER BY epoch_number
                 """
@@ -559,13 +564,44 @@ def _release_epochs(
         if successor_table is not None
         else ()
     )
-    return tuple(sorted((*legacy, *successors), key=lambda row: row["epoch_number"]))
+    transition_table = connection.execute(
+        """
+        SELECT 1 FROM sqlite_master
+        WHERE type='table' AND name='collection_release_transition_epochs'
+        """
+    ).fetchone()
+    transitions = (
+        tuple(
+            dict(row)
+            for row in connection.execute(
+                """
+                SELECT epoch_number,start_sequence,release_approval_sha256,
+                       authority_type,authority_identifier,authority_digest,
+                       activated_at,predecessor_epoch_number,
+                       predecessor_authority_identifier,
+                       predecessor_authority_digest,
+                       predecessor_release_approval_sha256,transition_kind
+                FROM collection_release_transition_epochs
+                ORDER BY epoch_number
+                """
+            )
+        )
+        if transition_table is not None
+        else ()
+    )
+    return tuple(
+        sorted(
+            (*legacy, *successors, *transitions),
+            key=lambda row: row["epoch_number"],
+        )
+    )
 
 
 def validate_release_epoch_chain(
     epochs: tuple[dict[str, object], ...],
     *,
     authorization: CollectionAuthorizationRecord,
+    committed_count: int | None = None,
 ) -> None:
     if not epochs:
         raise ValueError("RFC-009 release authority chain is absent")
@@ -596,17 +632,50 @@ def validate_release_epoch_chain(
         values = [str(epoch[field]) for epoch in epochs]
         if len(values) != len(set(values)):
             raise ValueError(f"RFC-009 duplicate release epoch {field}")
-    previous_start = 0
+    previous_activation: datetime | None = None
     for index, epoch in enumerate(epochs):
         start = int(epoch["start_sequence"])
-        if start <= previous_start:
-            raise ValueError("RFC-009 release epoch boundaries are not ordered")
-        previous_start = start
+        try:
+            activated_at = datetime.fromisoformat(str(epoch["activated_at"]))
+        except ValueError as exc:
+            raise ValueError(
+                "RFC-009 release epoch activation timestamp is invalid"
+            ) from exc
+        if (
+            activated_at.tzinfo is None
+            or activated_at.utcoffset()
+            != timezone.utc.utcoffset(activated_at)
+        ):
+            raise ValueError(
+                "RFC-009 release epoch activation timestamp must use UTC"
+            )
+        if (
+            previous_activation is not None
+            and activated_at < previous_activation
+        ):
+            raise ValueError(
+                "RFC-009 release authority intervals are not ordered"
+            )
+        previous_activation = activated_at
         if index == 0:
+            if str(epoch.get("transition_kind", "original")) != "original":
+                raise ValueError("RFC-009 original transition kind mismatch")
             continue
         previous = epochs[index - 1]
+        previous_start = int(previous["start_sequence"])
+        if start < previous_start:
+            raise ValueError("RFC-009 release epoch boundaries are not ordered")
         if str(epoch["authority_type"]) != "rfc009_continuation":
             raise ValueError("RFC-009 successor authority type mismatch")
+        expected_kind = (
+            "empty_epoch_supersession"
+            if start == previous_start
+            else "ordinary_successor"
+        )
+        if str(epoch.get("transition_kind", "ordinary_successor")) != (
+            expected_kind
+        ):
+            raise ValueError("RFC-009 release transition kind mismatch")
         if int(epoch["epoch_number"]) >= 3:
             predecessor = (
                 int(epoch["predecessor_epoch_number"]),
@@ -624,6 +693,121 @@ def validate_release_epoch_chain(
                 raise ValueError(
                     "RFC-009 successor predecessor authority mismatch"
                 )
+    if committed_count is not None:
+        if committed_count < 0:
+            raise ValueError("RFC-009 committed count is invalid")
+        for sequence in range(1, committed_count + 1):
+            owners = [
+                epoch
+                for index, epoch in enumerate(epochs)
+                if int(epoch["start_sequence"]) <= sequence
+                and (
+                    index == len(epochs) - 1
+                    or sequence < int(epochs[index + 1]["start_sequence"])
+                )
+            ]
+            if len(owners) != 1:
+                raise ValueError(
+                    "RFC-009 committed opportunity authority is ambiguous"
+                )
+
+
+def reconstruct_release_history(
+    connection: sqlite3.Connection,
+) -> tuple[dict[str, object], ...]:
+    """Reconstruct immutable authority and opportunity intervals."""
+    connection.row_factory = sqlite3.Row
+    epochs = _release_epochs(connection)
+    contract = connection.execute(
+        """
+        SELECT committed_opportunity_count
+        FROM collection_contract WHERE singleton=1
+        """
+    ).fetchone()
+    committed_count = int(contract[0])
+    runs = tuple(
+        dict(row)
+        for row in connection.execute(
+            """
+            SELECT run_id,started_at,ended_at,record_json
+            FROM collector_runs ORDER BY started_at,run_id
+            """
+        )
+    )
+    history: list[dict[str, object]] = []
+    for index, epoch in enumerate(epochs):
+        successor = epochs[index + 1] if index + 1 < len(epochs) else None
+        authority_start_at = datetime.fromisoformat(
+            str(epoch["activated_at"])
+        )
+        opportunity_start = int(epoch["start_sequence"])
+        opportunity_end = (
+            int(successor["start_sequence"]) if successor is not None else None
+        )
+        authority_end = (
+            str(successor["activated_at"]) if successor is not None else None
+        )
+        authority_end_at = (
+            datetime.fromisoformat(authority_end)
+            if authority_end is not None
+            else None
+        )
+        epoch_runs = []
+        for run in runs:
+            started_at = str(run["started_at"])
+            run_started_at = datetime.fromisoformat(started_at)
+            if run_started_at < authority_start_at:
+                continue
+            if (
+                authority_end_at is not None
+                and run_started_at >= authority_end_at
+            ):
+                continue
+            record = json.loads(str(run["record_json"]))
+            declared_epoch = record.get("release_epoch_number")
+            if declared_epoch is not None and int(declared_epoch) != int(
+                epoch["epoch_number"]
+            ):
+                raise ValueError(
+                    "RFC-009 collector run authority epoch mismatch"
+                )
+            epoch_runs.append(
+                {
+                    "run_id": str(run["run_id"]),
+                    "started_at": started_at,
+                    "ended_at": run["ended_at"],
+                    "recovery": bool(record.get("recovery", False)),
+                    "release_epoch_number": int(epoch["epoch_number"]),
+                }
+            )
+        governed_end = committed_count
+        if opportunity_end is not None:
+            governed_end = min(governed_end, opportunity_end - 1)
+        value = dict(epoch)
+        value.update(
+            {
+                "authority_interval_started_at": str(epoch["activated_at"]),
+                "authority_interval_ended_at": authority_end,
+                "opportunity_interval_start": opportunity_start,
+                "opportunity_interval_end_exclusive": opportunity_end,
+                "opportunity_interval_empty": (
+                    opportunity_end == opportunity_start
+                ),
+                "governed_committed_sequence_start": (
+                    opportunity_start
+                    if opportunity_start <= governed_end
+                    else None
+                ),
+                "governed_committed_sequence_end": (
+                    governed_end
+                    if opportunity_start <= governed_end
+                    else None
+                ),
+                "collector_runs": tuple(epoch_runs),
+            }
+        )
+        history.append(value)
+    return tuple(history)
 
 
 def _validate_interrupted_ledger(
@@ -735,7 +919,11 @@ def _validate_interrupted_ledger(
         ) != count * 5:
             raise ValueError("RFC-009 arm-decision count mismatch")
         epochs = _release_epochs(connection)
-        validate_release_epoch_chain(epochs, authorization=authorization)
+        validate_release_epoch_chain(
+            epochs,
+            authorization=authorization,
+            committed_count=count,
+        )
         continuity = continuity_state_sha256(
             connection,
             ledger_path=ledger,
@@ -909,6 +1097,8 @@ def preflight_continuation(
     ledger_path: str | Path,
     continuation_approval_path: str | Path,
     require_activated: bool = False,
+    allow_writer_lease: bool = False,
+    allow_open_run: bool = False,
 ) -> ContinuationPreflight:
     root = Path(repository_root).resolve()
     approval_path = Path(continuation_approval_path).resolve()
@@ -991,6 +1181,8 @@ def preflight_continuation(
     connection = sqlite3.connect(uri, uri=True)
     connection.row_factory = sqlite3.Row
     try:
+        if connection.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+            reasons.append("ledger_integrity_invalid")
         if int(connection.execute("PRAGMA application_id").fetchone()[0]) != APPLICATION_ID:
             reasons.append("ledger_application_mismatch")
         row = connection.execute(
@@ -1001,6 +1193,18 @@ def preflight_continuation(
             reasons.append("ledger_binding_mismatch")
         if row["active_session_identity"] is not None:
             reasons.append("active_session_present")
+        if (
+            not allow_open_run
+            and int(
+                connection.execute(
+                    """
+                    SELECT COUNT(*) FROM collector_runs
+                    WHERE ended_at IS NULL
+                    """
+                ).fetchone()[0]
+            )
+        ):
+            reasons.append("open_collector_run_present")
         if str(row["collection_state"]) == "completed":
             reasons.append("ledger_completed")
         if count != approval.starting_committed_count:
@@ -1020,12 +1224,16 @@ def preflight_continuation(
         epochs = _release_epochs(connection)
         try:
             validate_release_epoch_chain(
-                epochs, authorization=record
+                epochs,
+                authorization=record,
+                committed_count=count,
             )
         except ValueError:
             reasons.append("release_epoch_chain_invalid")
     finally:
         connection.close()
+    if not allow_writer_lease and writer_lease_status(ledger_path)["active"]:
+        reasons.append("active_writer_lease_present")
     target_epoch = approval_epoch(approval)
     predecessor_epoch, predecessor_identifier, predecessor_digest, (
         predecessor_release
@@ -1059,6 +1267,20 @@ def preflight_continuation(
         == approval.continuation_identifier
         and target["authority_digest"] == approval.digest
     )
+    predecessor_start = (
+        int(epochs[predecessor_epoch - 1]["start_sequence"])
+        if predecessor_matches
+        else -1
+    )
+    transition_kind = (
+        str(target.get("transition_kind", "ordinary_successor"))
+        if activated
+        else (
+            "empty_epoch_supersession"
+            if approval.starting_committed_count + 1 == predecessor_start
+            else "ordinary_successor"
+        )
+    )
     current = activated and len(epochs) == target_epoch
     if activated and current and count >= approval.starting_committed_count:
         reasons = [
@@ -1091,6 +1313,7 @@ def preflight_continuation(
         current_committed_count=count,
         release_epochs=epochs,
         gate_reasons=tuple(reasons),
+        transition_kind=transition_kind,
     )
 
 
@@ -1145,6 +1368,19 @@ def activate_continuation(
                     values,
                 )
             else:
+                epochs = _release_epochs(store.connection)
+                predecessor = epochs[-1]
+                start_sequence = approval.starting_committed_count + 1
+                predecessor_start = int(predecessor["start_sequence"])
+                if start_sequence < predecessor_start:
+                    raise PermissionError(
+                        "RFC-009 successor boundary precedes its predecessor"
+                    )
+                transition_kind = (
+                    "empty_epoch_supersession"
+                    if start_sequence == predecessor_start
+                    else "ordinary_successor"
+                )
                 (
                     predecessor_epoch,
                     predecessor_identifier,
@@ -1153,15 +1389,15 @@ def activate_continuation(
                 ) = approval_predecessor(approval)
                 store.connection.execute(
                     """
-                    INSERT INTO collection_release_successor_epochs(
+                    INSERT INTO collection_release_transition_epochs(
                       epoch_number,start_sequence,release_approval_sha256,
                       authority_type,authority_identifier,authority_digest,
                       activated_at,predecessor_epoch_number,
                       predecessor_authority_identifier,
                       predecessor_authority_digest,
-                      predecessor_release_approval_sha256
+                      predecessor_release_approval_sha256,transition_kind
                     ) VALUES (
-                      ?,?,?,'rfc009_continuation',?,?,?,?,?,?,?
+                      ?,?,?,'rfc009_continuation',?,?,?,?,?,?,?,?
                     )
                     """,
                     (
@@ -1170,6 +1406,7 @@ def activate_continuation(
                         predecessor_identifier,
                         predecessor_digest,
                         predecessor_release,
+                        transition_kind,
                     ),
                 )
     result = preflight_continuation(require_activated=True, **kwargs)

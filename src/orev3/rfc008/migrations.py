@@ -579,6 +579,250 @@ MIGRATIONS = (
             """,
         ),
     ),
+    Migration(
+        8,
+        "rfc009_empty_epoch_supersession",
+        (
+            """
+            CREATE TABLE collection_release_transition_epochs (
+              epoch_number INTEGER PRIMARY KEY CHECK(
+                typeof(epoch_number)='integer' AND epoch_number>=3
+              ),
+              start_sequence INTEGER NOT NULL CHECK(
+                typeof(start_sequence)='integer' AND start_sequence>=1
+              ),
+              release_approval_sha256 TEXT NOT NULL UNIQUE CHECK(
+                length(release_approval_sha256)=64
+              ),
+              authority_type TEXT NOT NULL CHECK(
+                authority_type='rfc009_continuation'
+              ),
+              authority_identifier TEXT NOT NULL UNIQUE,
+              authority_digest TEXT NOT NULL UNIQUE CHECK(
+                length(authority_digest)=64
+              ),
+              activated_at TEXT NOT NULL,
+              predecessor_epoch_number INTEGER NOT NULL UNIQUE CHECK(
+                typeof(predecessor_epoch_number)='integer'
+                AND predecessor_epoch_number>=2
+              ),
+              predecessor_authority_identifier TEXT NOT NULL,
+              predecessor_authority_digest TEXT NOT NULL CHECK(
+                length(predecessor_authority_digest)=64
+              ),
+              predecessor_release_approval_sha256 TEXT NOT NULL CHECK(
+                length(predecessor_release_approval_sha256)=64
+              ),
+              transition_kind TEXT NOT NULL CHECK(
+                transition_kind IN (
+                  'ordinary_successor',
+                  'empty_epoch_supersession'
+                )
+              )
+            )
+            """,
+            """
+            CREATE TRIGGER collection_release_transition_epoch_order
+            BEFORE INSERT ON collection_release_transition_epochs
+            BEGIN
+              SELECT CASE WHEN NEW.epoch_number !=
+                COALESCE(
+                  (
+                    SELECT MAX(epoch_number) FROM (
+                      SELECT epoch_number FROM collection_release_epochs
+                      UNION ALL
+                      SELECT epoch_number
+                      FROM collection_release_successor_epochs
+                      UNION ALL
+                      SELECT epoch_number
+                      FROM collection_release_transition_epochs
+                    )
+                  ),
+                  0
+                )+1
+                THEN RAISE(
+                  ABORT,'RFC-009 successor release epoch order mismatch'
+                )
+              END;
+              SELECT CASE WHEN NEW.predecessor_epoch_number
+                               != NEW.epoch_number-1
+                THEN RAISE(
+                  ABORT,'RFC-009 successor predecessor epoch mismatch'
+                )
+              END;
+              SELECT CASE WHEN NEW.start_sequence !=
+                (SELECT committed_opportunity_count+1
+                 FROM collection_contract WHERE singleton=1)
+                THEN RAISE(
+                  ABORT,'RFC-009 successor release boundary mismatch'
+                )
+              END;
+              SELECT CASE WHEN
+                (SELECT collection_state FROM collection_contract
+                 WHERE singleton=1)='completed'
+                OR (SELECT active_session_identity FROM collection_contract
+                    WHERE singleton=1) IS NOT NULL
+                OR EXISTS (
+                  SELECT 1 FROM collector_runs WHERE ended_at IS NULL
+                )
+                THEN RAISE(ABORT,'RFC-009 ledger is not continuable')
+              END;
+              SELECT CASE WHEN
+                COALESCE(
+                  (SELECT authority_identifier
+                   FROM collection_release_transition_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number),
+                  (SELECT authority_identifier
+                   FROM collection_release_successor_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number),
+                  (SELECT authority_identifier
+                   FROM collection_release_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number)
+                ) IS NOT NEW.predecessor_authority_identifier
+                OR COALESCE(
+                  (SELECT authority_digest
+                   FROM collection_release_transition_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number),
+                  (SELECT authority_digest
+                   FROM collection_release_successor_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number),
+                  (SELECT authority_digest
+                   FROM collection_release_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number)
+                ) IS NOT NEW.predecessor_authority_digest
+                OR COALESCE(
+                  (SELECT release_approval_sha256
+                   FROM collection_release_transition_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number),
+                  (SELECT release_approval_sha256
+                   FROM collection_release_successor_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number),
+                  (SELECT release_approval_sha256
+                   FROM collection_release_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number)
+                ) IS NOT NEW.predecessor_release_approval_sha256
+                THEN RAISE(
+                  ABORT,'RFC-009 successor predecessor authority mismatch'
+                )
+              END;
+              SELECT CASE WHEN NEW.activated_at < COALESCE(
+                (SELECT activated_at
+                 FROM collection_release_transition_epochs
+                 WHERE epoch_number=NEW.predecessor_epoch_number),
+                (SELECT activated_at
+                 FROM collection_release_successor_epochs
+                 WHERE epoch_number=NEW.predecessor_epoch_number),
+                (SELECT activated_at
+                 FROM collection_release_epochs
+                 WHERE epoch_number=NEW.predecessor_epoch_number)
+              )
+                THEN RAISE(
+                  ABORT,'RFC-009 successor authority time is not ordered'
+                )
+              END;
+              SELECT CASE WHEN
+                NEW.transition_kind='empty_epoch_supersession'
+                AND NEW.start_sequence != COALESCE(
+                  (SELECT start_sequence
+                   FROM collection_release_transition_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number),
+                  (SELECT start_sequence
+                   FROM collection_release_successor_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number),
+                  (SELECT start_sequence
+                   FROM collection_release_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number)
+                )
+                THEN RAISE(
+                  ABORT,'RFC-009 predecessor epoch is not empty'
+                )
+              END;
+              SELECT CASE WHEN
+                NEW.transition_kind='ordinary_successor'
+                AND NEW.start_sequence <= COALESCE(
+                  (SELECT start_sequence
+                   FROM collection_release_transition_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number),
+                  (SELECT start_sequence
+                   FROM collection_release_successor_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number),
+                  (SELECT start_sequence
+                   FROM collection_release_epochs
+                   WHERE epoch_number=NEW.predecessor_epoch_number)
+                )
+                THEN RAISE(
+                  ABORT,'RFC-009 ordinary successor requires progress'
+                )
+              END;
+              SELECT CASE WHEN
+                EXISTS (
+                  SELECT 1 FROM collection_release_epochs
+                  WHERE release_approval_sha256=NEW.release_approval_sha256
+                     OR authority_identifier=NEW.authority_identifier
+                     OR authority_digest=NEW.authority_digest
+                )
+                OR EXISTS (
+                  SELECT 1 FROM collection_release_successor_epochs
+                  WHERE release_approval_sha256=NEW.release_approval_sha256
+                     OR authority_identifier=NEW.authority_identifier
+                     OR authority_digest=NEW.authority_digest
+                     OR predecessor_epoch_number=
+                        NEW.predecessor_epoch_number
+                )
+                OR EXISTS (
+                  SELECT 1 FROM collection_release_transition_epochs
+                  WHERE release_approval_sha256=NEW.release_approval_sha256
+                     OR authority_identifier=NEW.authority_identifier
+                     OR authority_digest=NEW.authority_digest
+                     OR predecessor_epoch_number=
+                        NEW.predecessor_epoch_number
+                )
+                THEN RAISE(
+                  ABORT,'RFC-009 successor release authority replay'
+                )
+              END;
+            END
+            """,
+            """
+            CREATE TRIGGER collection_release_transition_epochs_no_update
+            BEFORE UPDATE ON collection_release_transition_epochs
+            BEGIN
+              SELECT RAISE(
+                ABORT,'RFC-009 successor release epochs are immutable'
+              );
+            END
+            """,
+            """
+            CREATE TRIGGER collection_release_transition_epochs_no_delete
+            BEFORE DELETE ON collection_release_transition_epochs
+            BEGIN
+              SELECT RAISE(
+                ABORT,'RFC-009 successor release epochs are immutable'
+              );
+            END
+            """,
+            """
+            CREATE TRIGGER freeze_collection_release_transition_epochs_insert
+            BEFORE INSERT ON collection_release_transition_epochs
+            WHEN (SELECT value FROM metadata WHERE key='ledger_state')='frozen'
+            BEGIN SELECT RAISE(ABORT,'RFC-008 ledger is frozen'); END
+            """,
+            "DROP TRIGGER immutable_ledger_metadata_update",
+            "UPDATE metadata SET value='8' WHERE key='schema_version'",
+            """
+            CREATE TRIGGER immutable_ledger_metadata_update
+            BEFORE UPDATE ON metadata
+            WHEN OLD.key IN (
+              'schema_version','database_family','experiment_id',
+              'configuration_fingerprint','candidate_configuration_sha256',
+              'approval_manifest_sha256'
+            )
+            BEGIN
+              SELECT RAISE(ABORT,'RFC-008 immutable ledger metadata');
+            END
+            """,
+        ),
+    ),
 )
 
 

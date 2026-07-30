@@ -114,6 +114,7 @@ def _runtime_preflight(
     args: argparse.Namespace,
     *,
     expected_active_session: str | None = None,
+    writer_lease_expected: bool = False,
 ):
     continuation = getattr(args, "continuation_approval", None)
     if continuation is None:
@@ -135,7 +136,12 @@ def _runtime_preflight(
             "RFC-009 continuation is valid only for supervised recovery"
         )
     value = preflight_continuation(
-        require_activated=True, **_continuation_kwargs(args)
+        require_activated=True,
+        allow_writer_lease=(
+            writer_lease_expected or expected_active_session is not None
+        ),
+        allow_open_run=expected_active_session is not None,
+        **_continuation_kwargs(args),
     )
     gate_reasons = list(value.gate_reasons)
     if expected_active_session is not None:
@@ -618,7 +624,7 @@ def _command_run(args: argparse.Namespace) -> None:
     config = RFC008Config.from_path(args.config)
     resolver_config = ResolverConfig.from_path(args.resolver_config)
     with RFC008WriterLease(args.ledger):
-        second = _runtime_preflight(args)
+        second = _runtime_preflight(args, writer_lease_expected=True)
         if not second.ready:
             raise PermissionError(
                 "RFC-008 collection preflight changed before launch: "
