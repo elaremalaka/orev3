@@ -181,11 +181,15 @@ def test_strategy_can_maintain_deterministic_internal_state() -> None:
     assert execute() == execute()
 
 
-def test_public_api_exports_phase_one_and_phase_two_interfaces() -> None:
+def test_public_api_exports_completed_strategy_lab_phases() -> None:
     import orev3.strategy_lab as strategy_lab
 
     assert strategy_lab.__all__ == (
         "DecisionContext",
+        "DeploymentAllocation",
+        "DeploymentDecision",
+        "DeploymentModel",
+        "EqualWeightDeploymentModel",
         "ExperimentConfiguration",
         "ExperimentRunner",
         "Explanation",
