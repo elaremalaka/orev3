@@ -21,6 +21,7 @@ from orev3.rfc008.supervision import (
     controlled_environment,
     launch_mutex,
     process_matches_metadata,
+    process_snapshot,
     read_metadata,
     redact_exception,
     safe_open_log,
@@ -268,6 +269,7 @@ def test_writer_lease_status_distinguishes_stale_and_active(
             state = writer_lease_status(ledger)
             assert state["active"]
             assert state["recorded_process_id"] == os.getpid()
+    stale.write_text("999999\n")
     assert not writer_lease_status(ledger)["active"]
 
 
@@ -296,6 +298,79 @@ def test_process_identity_rejects_pid_reuse(
         },
     )
     assert not process_matches_metadata(value)
+
+
+def test_process_identity_is_canonical_across_observers_and_environments(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    long_arguments = tuple(
+        f"argument-{index}-{'x' * 80}" for index in range(40)
+    )
+    target = subprocess.Popen(
+        (
+            sys.executable,
+            "-c",
+            "import time; time.sleep(10)",
+            *long_arguments,
+        ),
+        start_new_session=True,
+    )
+    observer = (
+        "import json,sys;"
+        "from orev3.rfc008.supervision import process_snapshot;"
+        "print(json.dumps(process_snapshot(int(sys.argv[1])),sort_keys=True))"
+    )
+    try:
+        deadline = time.monotonic() + 2
+        while time.monotonic() < deadline:
+            current = process_snapshot(target.pid)
+            if long_arguments[-1] in str(current["command"]):
+                break
+            time.sleep(0.02)
+        else:
+            pytest.fail("Long-command fixture did not become observable")
+        monkeypatch.setenv("COLUMNS", "20")
+        monkeypatch.setenv("LINES", "10")
+        monkeypatch.setenv("LC_ALL", "C")
+        first = process_snapshot(target.pid)
+        monkeypatch.setenv("COLUMNS", "1000")
+        monkeypatch.setenv("LINES", "500")
+        monkeypatch.setenv("LC_ALL", "C.UTF-8")
+        second = process_snapshot(target.pid)
+        third = process_snapshot(target.pid)
+
+        inherited = dict(os.environ)
+        sanitized = controlled_environment(Path.cwd())
+        sanitized.pop("COLUMNS", None)
+        sanitized.pop("LINES", None)
+        observed = [
+            json.loads(
+                subprocess.run(
+                    (
+                        sys.executable,
+                        "-c",
+                        observer,
+                        str(target.pid),
+                    ),
+                    cwd=Path.cwd(),
+                    env=environment,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout
+            )
+            for environment in (inherited, sanitized)
+        ]
+        snapshots = (first, second, third, *observed)
+        assert all(snapshot["alive"] for snapshot in snapshots)
+        assert len(
+            {snapshot["start_identity"] for snapshot in snapshots}
+        ) == 1
+        assert len({snapshot["command"] for snapshot in snapshots}) == 1
+        assert len(str(first["command"])) > 3000
+    finally:
+        target.terminate()
+        target.wait(timeout=5)
 
 
 def test_cli_exposes_start_and_hides_internal_supervision_arguments() -> None:

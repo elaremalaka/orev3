@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import ctypes
+import ctypes.util
 import fcntl
 import hashlib
 import io
 import json
 import os
 import re
+import shlex
 import stat
 import subprocess
 import sys
@@ -491,32 +494,162 @@ def update_metadata(path: str | Path, **updates: Any) -> dict[str, Any]:
     return value
 
 
+class _DarwinProcessInfo(ctypes.Structure):
+    _fields_ = [
+        ("pbi_flags", ctypes.c_uint32),
+        ("pbi_status", ctypes.c_uint32),
+        ("pbi_xstatus", ctypes.c_uint32),
+        ("pbi_pid", ctypes.c_uint32),
+        ("pbi_ppid", ctypes.c_uint32),
+        ("pbi_uid", ctypes.c_uint32),
+        ("pbi_gid", ctypes.c_uint32),
+        ("pbi_ruid", ctypes.c_uint32),
+        ("pbi_rgid", ctypes.c_uint32),
+        ("pbi_svuid", ctypes.c_uint32),
+        ("pbi_svgid", ctypes.c_uint32),
+        ("pbi_rfu_1", ctypes.c_uint32),
+        ("pbi_comm", ctypes.c_char * 16),
+        ("pbi_name", ctypes.c_char * 32),
+        ("pbi_nfiles", ctypes.c_uint32),
+        ("pbi_pgid", ctypes.c_uint32),
+        ("pbi_pjobc", ctypes.c_uint32),
+        ("e_tdev", ctypes.c_uint32),
+        ("e_tpgid", ctypes.c_uint32),
+        ("pbi_nice", ctypes.c_int32),
+        ("pbi_start_tvsec", ctypes.c_uint64),
+        ("pbi_start_tvusec", ctypes.c_uint64),
+    ]
+
+
+_PROC_PIDTBSDINFO = 3
+_CTL_KERN = 1
+_KERN_PROCARGS2 = 49
+
+
+def _darwin_process_details(pid: int) -> tuple[str, tuple[str, ...]] | None:
+    library_name = ctypes.util.find_library("proc")
+    if library_name is None:
+        return None
+    library = ctypes.CDLL(library_name, use_errno=True)
+    library.proc_pidinfo.argtypes = (
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_uint64,
+        ctypes.c_void_p,
+        ctypes.c_int,
+    )
+    library.proc_pidinfo.restype = ctypes.c_int
+    info = _DarwinProcessInfo()
+    if library.proc_pidinfo(
+        pid,
+        _PROC_PIDTBSDINFO,
+        0,
+        ctypes.byref(info),
+        ctypes.sizeof(info),
+    ) != ctypes.sizeof(info):
+        return None
+
+    libc = ctypes.CDLL(None, use_errno=True)
+    libc.sysctl.argtypes = (
+        ctypes.POINTER(ctypes.c_int),
+        ctypes.c_uint,
+        ctypes.c_void_p,
+        ctypes.POINTER(ctypes.c_size_t),
+        ctypes.c_void_p,
+        ctypes.c_size_t,
+    )
+    libc.sysctl.restype = ctypes.c_int
+    mib = (ctypes.c_int * 3)(_CTL_KERN, _KERN_PROCARGS2, pid)
+    size = ctypes.c_size_t()
+    if libc.sysctl(mib, 3, None, ctypes.byref(size), None, 0) != 0:
+        return None
+    arguments_buffer = ctypes.create_string_buffer(size.value)
+    if (
+        libc.sysctl(
+            mib,
+            3,
+            arguments_buffer,
+            ctypes.byref(size),
+            None,
+            0,
+        )
+        != 0
+    ):
+        return None
+    raw = arguments_buffer.raw[: size.value]
+    integer_size = ctypes.sizeof(ctypes.c_int)
+    if len(raw) < integer_size:
+        return None
+    argument_count = int.from_bytes(
+        raw[:integer_size], byteorder=sys.byteorder, signed=True
+    )
+    if argument_count <= 0:
+        return None
+    offset = integer_size
+    executable_end = raw.find(b"\0", offset)
+    if executable_end < 0:
+        return None
+    offset = executable_end
+    while offset < len(raw) and raw[offset] == 0:
+        offset += 1
+    arguments: list[str] = []
+    for _ in range(argument_count):
+        end = raw.find(b"\0", offset)
+        if end < 0:
+            return None
+        arguments.append(os.fsdecode(raw[offset:end]))
+        offset = end + 1
+    start = f"{info.pbi_start_tvsec}:{info.pbi_start_tvusec}"
+    return start, tuple(arguments)
+
+
+def _linux_process_details(pid: int) -> tuple[str, tuple[str, ...]] | None:
+    process = Path("/proc") / str(pid)
+    stat_value = (process / "stat").read_text(encoding="utf-8")
+    command_end = stat_value.rfind(")")
+    if command_end < 0:
+        return None
+    fields = stat_value[command_end + 2 :].split()
+    if len(fields) <= 19:
+        return None
+    start = fields[19]
+    raw_arguments = (process / "cmdline").read_bytes().rstrip(b"\0")
+    arguments = tuple(
+        os.fsdecode(value)
+        for value in raw_arguments.split(b"\0")
+        if value
+    )
+    if not arguments:
+        return None
+    return start, arguments
+
+
+def _native_process_details(
+    pid: int,
+) -> tuple[str, tuple[str, ...]] | None:
+    try:
+        if sys.platform == "darwin":
+            return _darwin_process_details(pid)
+        if sys.platform.startswith("linux"):
+            return _linux_process_details(pid)
+    except (OSError, UnicodeError, ValueError):
+        return None
+    return None
+
+
 def process_snapshot(pid: int | None) -> dict[str, Any]:
     if not pid or pid <= 0:
         return {"pid": pid, "alive": False, "start_identity": None, "command": None}
-    try:
-        result = subprocess.run(
-            ("ps", "-p", str(pid), "-o", "lstart=", "-o", "command="),
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-    except OSError:
+    details = _native_process_details(pid)
+    if details is None:
         return {"pid": pid, "alive": False, "start_identity": None, "command": None}
-    output = result.stdout.strip()
-    if result.returncode != 0 or not output:
-        return {"pid": pid, "alive": False, "start_identity": None, "command": None}
-    fields = output.split(None, 5)
-    first = " ".join(fields[:5])
-    command = fields[5] if len(fields) == 6 else ""
-    identity = hashlib.sha256(
-        f"{pid}\0{first.strip()}\0{command.strip()}".encode()
-    ).hexdigest()
+    start, arguments = details
+    identity = hashlib.sha256(f"{pid}\0{start}".encode()).hexdigest()
     return {
         "pid": pid,
         "alive": True,
         "start_identity": identity,
-        "command": command.strip(),
+        "command": shlex.join(arguments[1:]),
     }
 
 
