@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import os
 import tempfile
 from dataclasses import dataclass, field
@@ -15,6 +16,7 @@ from orev3.dataset.metadata import (
     write_metadata,
 )
 from orev3.dataset.validation import (
+    DatasetValidationError,
     DatasetValidationResult,
     validate_replay_dataset,
 )
@@ -139,13 +141,6 @@ def build_replay_dataset(
         raise ValueError("no observer data files were discovered")
 
     read_result = read_observer_files(source_paths)
-    if read_result.malformed_records:
-        first = read_result.malformed_records[0]
-        raise ValueError(
-            "observer data is malformed at "
-            f"{first.source_file}:{first.source_line_number}: "
-            f"{first.error_type}: {first.error_message}"
-        )
     assembled = assemble_rounds(read_result.snapshots)
     rounds = list(assembled.rounds)
     observed_outcome_count = sum(
@@ -170,6 +165,17 @@ def build_replay_dataset(
         (lifecycle_to_index_record(lifecycle) for lifecycle in rounds),
         key=lambda record: (record.start_slot, record.round_id),
     )
+    source_file_count = read_result.files_read
+    source_line_count = read_result.lines_read
+    malformed_source_record_count = len(read_result.malformed_records)
+    enriched_outcome_count = sum(
+        lifecycle.finalized_outcome_source == "enriched"
+        for lifecycle in rounds
+    )
+    del rounds
+    del assembled
+    del read_result
+    gc.collect()
     output_path = configuration.output_path
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary_name = tempfile.mkstemp(
@@ -181,7 +187,12 @@ def build_replay_dataset(
     temporary_path = Path(temporary_name)
     try:
         write_round_index(records, temporary_path)
-        validation = validate_replay_dataset(temporary_path)
+        validation = validate_replay_dataset(
+            temporary_path,
+            fail_closed=False,
+        )
+        if not validation.integrity_valid:
+            raise DatasetValidationError(validation)
         os.replace(temporary_path, output_path)
     except Exception:
         temporary_path.unlink(missing_ok=True)
@@ -191,6 +202,7 @@ def build_replay_dataset(
         dataset_version=configuration.dataset_version,
         created_at_utc=configuration.created_at_utc,
         source_collection=tuple(str(path) for path in source_paths),
+        malformed_source_record_count=malformed_source_record_count,
         replay_round_count=validation.replay_round_count,
         snapshot_count=validation.snapshot_count,
         complete_round_count=validation.complete_round_count,
@@ -205,14 +217,11 @@ def build_replay_dataset(
         dataset_path=output_path,
         metadata_path=metadata_path,
         metadata=metadata,
-        source_file_count=read_result.files_read,
-        source_line_count=read_result.lines_read,
-        malformed_source_record_count=len(read_result.malformed_records),
+        source_file_count=source_file_count,
+        source_line_count=source_line_count,
+        malformed_source_record_count=malformed_source_record_count,
         observed_outcome_count=observed_outcome_count,
-        enriched_outcome_count=sum(
-            lifecycle.finalized_outcome_source == "enriched"
-            for lifecycle in rounds
-        ),
+        enriched_outcome_count=enriched_outcome_count,
     )
 
 

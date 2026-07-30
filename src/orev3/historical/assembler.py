@@ -316,16 +316,29 @@ def assemble_rounds(
         first = round_snapshots[0]
         last = round_snapshots[-1]
 
-        start_slot = (
-            first.board.start_slot
-        )
-
         valid_end_slots = [
             snapshot.board.end_slot
             for snapshot in round_snapshots
             if snapshot.board.end_slot
             != U64_MAX
         ]
+
+        initialized_snapshots = [
+            snapshot
+            for snapshot in round_snapshots
+            if snapshot.board.end_slot
+            != U64_MAX
+        ]
+
+        # Board start_slot is provisional while end_slot still carries the
+        # protocol's uninitialized sentinel.  Use the first initialized board
+        # state as the canonical lifecycle boundary while retaining every
+        # earlier observation in the replay history.
+        start_slot = (
+            initialized_snapshots[0].board.start_slot
+            if initialized_snapshots
+            else first.board.start_slot
+        )
 
         end_slot = (
             valid_end_slots[-1]

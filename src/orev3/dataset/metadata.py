@@ -19,6 +19,7 @@ class DatasetMetadata:
     dataset_version: str
     created_at_utc: datetime
     source_collection: tuple[str, ...]
+    malformed_source_record_count: int
     replay_round_count: int
     snapshot_count: int
     complete_round_count: int
@@ -27,11 +28,11 @@ class DatasetMetadata:
     integrity_status: Literal["valid"]
     ready_for_replay: bool
     dataset_sha256: str
-    metadata_schema_version: int = 1
+    metadata_schema_version: int = 2
 
     def __post_init__(self) -> None:
-        if self.metadata_schema_version != 1:
-            raise ValueError("metadata_schema_version must be 1")
+        if self.metadata_schema_version != 2:
+            raise ValueError("metadata_schema_version must be 2")
         _canonical_text("dataset_version", self.dataset_version)
         created_at = self.created_at_utc
         if not isinstance(created_at, datetime) or created_at.tzinfo is None:
@@ -48,6 +49,7 @@ class DatasetMetadata:
             )
         object.__setattr__(self, "source_collection", sources)
         for name in (
+            "malformed_source_record_count",
             "replay_round_count",
             "snapshot_count",
             "complete_round_count",
@@ -121,6 +123,7 @@ def load_metadata(path: str | Path) -> DatasetMetadata:
         "dataset_version",
         "incomplete_round_count",
         "integrity_status",
+        "malformed_source_record_count",
         "metadata_schema_version",
         "missing_outcome_count",
         "ready_for_replay",
@@ -134,6 +137,7 @@ def load_metadata(path: str | Path) -> DatasetMetadata:
         dataset_version=raw["dataset_version"],
         created_at_utc=datetime.fromisoformat(raw["created_at_utc"]),
         source_collection=tuple(raw["source_collection"]),
+        malformed_source_record_count=raw["malformed_source_record_count"],
         replay_round_count=raw["replay_round_count"],
         snapshot_count=raw["snapshot_count"],
         complete_round_count=raw["complete_round_count"],

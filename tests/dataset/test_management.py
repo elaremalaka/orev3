@@ -33,6 +33,10 @@ def test_builder_discovers_sources_and_writes_deterministic_dataset(
     source_root = tmp_path / "raw"
     first_source = _write_observer_file(source_root, "observer-b.jsonl", (2,))
     second_source = _write_observer_file(source_root, "observer-a.jsonl", (1,))
+    first_source.write_text(
+        first_source.read_text(encoding="utf-8") + "{malformed}\n",
+        encoding="utf-8",
+    )
     first_output = tmp_path / "first.jsonl"
     first_metadata = tmp_path / "first.metadata.json"
     second_output = tmp_path / "second.jsonl"
@@ -60,10 +64,12 @@ def test_builder_discovers_sources_and_writes_deterministic_dataset(
     assert first_metadata.read_bytes() == second_metadata.read_bytes()
     assert first.metadata == second.metadata
     assert first.metadata.dataset_version == "fixture-replay-v1"
+    assert first.metadata.metadata_schema_version == 2
     assert first.metadata.created_at_utc == CREATED_AT
     assert first.metadata.source_collection == tuple(
         str(path) for path in discovered
     )
+    assert first.metadata.malformed_source_record_count == 1
     assert first.metadata.replay_round_count == 2
     assert first.metadata.snapshot_count == 4
     assert first.metadata.complete_round_count == 2
@@ -73,7 +79,8 @@ def test_builder_discovers_sources_and_writes_deterministic_dataset(
     assert first.metadata.ready_for_replay
     assert first.metadata.dataset_sha256 == dataset_sha256(first_output)
     assert first.source_file_count == 2
-    assert first.source_line_count == 4
+    assert first.source_line_count == 5
+    assert first.malformed_source_record_count == 1
     assert first.observed_outcome_count == 2
     assert first.enriched_outcome_count == 0
 
@@ -105,6 +112,82 @@ def test_builder_uses_explicit_sources_and_orders_rounds_chronologically(
     assert [record["round_id"] for record in records] == [1, 2, 3]
 
 
+def test_builder_publishes_integral_dataset_that_is_not_replay_ready(
+    tmp_path: Path,
+) -> None:
+    source = _write_observer_file(tmp_path, "observer-missing.jsonl", (1,))
+    records = _read_raw_records(source)
+    records[-1]["round"]["slot_hash_hex"] = "00" * 32
+    records[-1]["round"]["entropy"] = None
+    records[-1]["round"]["total_vaulted"] = 0
+    records[-1]["round"]["total_winnings"] = 0
+    _write_raw_records(source, records)
+    output = tmp_path / "not-ready.jsonl"
+    metadata_path = tmp_path / "not-ready.metadata.json"
+
+    result = build_replay_dataset(
+        DatasetBuildConfiguration(
+            output_path=output,
+            metadata_path=metadata_path,
+            dataset_version="not-ready-v1",
+            observer_paths=(source,),
+            enrich_missing_outcomes=False,
+            created_at_utc=CREATED_AT,
+        )
+    )
+    validation = validate_replay_dataset(output, fail_closed=False)
+
+    assert validation.integrity_valid
+    assert not validation.valid
+    assert not validation.ready_for_replay
+    assert result.metadata.integrity_status == "valid"
+    assert result.metadata.missing_outcome_count == 1
+    assert not result.metadata.ready_for_replay
+
+
+def test_builder_uses_initialized_start_slot_and_preserves_provisional_snapshot(
+    tmp_path: Path,
+) -> None:
+    source = _write_observer_file(tmp_path, "observer-start.jsonl", (1,))
+    records = _read_raw_records(source)
+    records[0]["board"]["start_slot"] = 97
+    _write_raw_records(source, records)
+    output = tmp_path / "dataset.jsonl"
+
+    build_replay_dataset(
+        DatasetBuildConfiguration(
+            output_path=output,
+            metadata_path=tmp_path / "metadata.json",
+            dataset_version="provisional-start-v1",
+            observer_paths=(source,),
+            enrich_missing_outcomes=False,
+            created_at_utc=CREATED_AT,
+        )
+    )
+
+    record = _read_raw_records(output)[0]
+    validation = validate_replay_dataset(output, fail_closed=False)
+    assert record["start_slot"] == 100
+    assert record["observation_count"] == 2
+    assert validation.integrity_valid
+    assert "round_start_mismatch" not in _issue_codes(validation)
+
+
+def test_validator_rejects_initialized_start_slot_mismatch(
+    tmp_path: Path,
+) -> None:
+    source_root, output, _ = _built_fixture(tmp_path)
+    source = next(source_root.glob("observer*.jsonl"))
+    records = _read_raw_records(source)
+    records[1]["board"]["start_slot"] += 1
+    _write_raw_records(source, records)
+
+    validation = validate_replay_dataset(output, fail_closed=False)
+
+    assert not validation.integrity_valid
+    assert "round_start_mismatch" in _issue_codes(validation)
+
+
 def test_builder_fails_closed_without_sources_or_on_corrupted_source(
     tmp_path: Path,
 ) -> None:
@@ -125,7 +208,7 @@ def test_builder_fails_closed_without_sources_or_on_corrupted_source(
     )
     output = tmp_path / "preserved.jsonl"
     output.write_text("preserved\n", encoding="utf-8")
-    with pytest.raises(ValueError, match="observer data is malformed"):
+    with pytest.raises(DatasetValidationError, match="empty_dataset"):
         build_replay_dataset(
             _configuration(
                 source_root,
@@ -287,6 +370,7 @@ def test_metadata_rejects_inconsistent_readiness() -> None:
             dataset_version="fixture-v1",
             created_at_utc=CREATED_AT,
             source_collection=("observer.jsonl",),
+            malformed_source_record_count=0,
             replay_round_count=1,
             snapshot_count=2,
             complete_round_count=0,

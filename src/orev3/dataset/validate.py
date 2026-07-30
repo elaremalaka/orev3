@@ -28,6 +28,7 @@ def main(argv: list[str] | None = None) -> None:
     print(f"incomplete_rounds: {result.incomplete_round_count}")
     print(f"missing_outcomes: {result.missing_outcome_count}")
     print(f"validation_issues: {len(result.issues)}")
+    print(f"integrity_valid: {str(result.integrity_valid).lower()}")
     print(f"ready_for_replay: {str(result.ready_for_replay).lower()}")
     for issue in result.issues:
         location = (

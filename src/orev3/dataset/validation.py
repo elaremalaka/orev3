@@ -5,9 +5,11 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import BinaryIO
 
 from pydantic import ValidationError
 
+from orev3.historical.assembler import U64_MAX
 from orev3.historical.models import NormalizedSnapshot, RoundLifecycleIndexRecord
 from orev3.historical.reader import normalize_snapshot
 
@@ -39,9 +41,17 @@ class DatasetValidationResult:
         return not self.issues
 
     @property
+    def integrity_valid(self) -> bool:
+        readiness_codes = {
+            "incomplete_round",
+            "missing_finalized_outcome",
+        }
+        return not any(issue.code not in readiness_codes for issue in self.issues)
+
+    @property
     def ready_for_replay(self) -> bool:
         return (
-            self.valid
+            self.integrity_valid
             and self.replay_round_count > 0
             and self.incomplete_round_count == 0
             and self.missing_outcome_count == 0
@@ -73,6 +83,7 @@ def validate_replay_dataset(
     snapshot_count = 0
     complete_round_count = 0
     missing_outcome_count = 0
+    source_reader = _ObservationSourceReader()
 
     for line_number, record in records:
         if record.round_id in seen_rounds:
@@ -131,7 +142,9 @@ def validate_replay_dataset(
                     record.round_id,
                 )
             )
-        _validate_record(record, line_number, issues)
+        _validate_record(record, line_number, issues, source_reader)
+
+    source_reader.close()
 
     ordered_records = tuple(record for _, record in records)
     result = DatasetValidationResult(
@@ -218,6 +231,7 @@ def _validate_record(
     record: RoundLifecycleIndexRecord,
     line_number: int,
     issues: list[DatasetValidationIssue],
+    source_reader: _ObservationSourceReader,
 ) -> None:
     def issue(code: str, message: str) -> None:
         issues.append(
@@ -269,7 +283,7 @@ def _validate_record(
         )
     try:
         snapshots = [
-            _load_snapshot_reference(
+            source_reader.load(
                 reference.source_file,
                 reference.source_line_number,
             )
@@ -298,10 +312,14 @@ def _validate_record(
             "round_reference_mismatch",
             "an observation belongs to a different round",
         )
-    if any(snapshot.board.start_slot != record.start_slot for snapshot in snapshots):
+    if any(
+        snapshot.board.end_slot != U64_MAX
+        and snapshot.board.start_slot != record.start_slot
+        for snapshot in snapshots
+    ):
         issue(
             "round_start_mismatch",
-            "an observation has a different round start slot",
+            "an initialized observation has a different round start slot",
         )
     for reference, snapshot in zip(record.observation_references, snapshots):
         if (
@@ -342,22 +360,47 @@ def _validate_record(
         )
 
 
-def _load_snapshot_reference(
-    source_file: str,
-    line_number: int,
-) -> NormalizedSnapshot:
-    if line_number < 1:
-        raise ValueError("source_line_number must be >= 1")
-    path = Path(source_file)
-    with path.open("r", encoding="utf-8") as handle:
-        for current_line, line in enumerate(handle, start=1):
-            if current_line == line_number:
-                return normalize_snapshot(
-                    raw=json.loads(line),
-                    source_file=path,
-                    source_line_number=line_number,
-                )
-    raise ValueError(f"snapshot reference not found: {source_file}:{line_number}")
+class _ObservationSourceReader:
+    """Resolve references using one binary offset scan per observer file."""
+
+    def __init__(self) -> None:
+        self._handles: dict[Path, BinaryIO] = {}
+        self._offsets: dict[Path, tuple[int, ...]] = {}
+
+    def close(self) -> None:
+        for handle in self._handles.values():
+            handle.close()
+        self._handles.clear()
+        self._offsets.clear()
+
+    def load(self, source_file: str, line_number: int) -> NormalizedSnapshot:
+        if line_number < 1:
+            raise ValueError("source_line_number must be >= 1")
+        path = Path(source_file)
+        if path not in self._handles:
+            handle = path.open("rb")
+            offsets: list[int] = []
+            while True:
+                offset = handle.tell()
+                line = handle.readline()
+                if not line:
+                    break
+                offsets.append(offset)
+            self._handles[path] = handle
+            self._offsets[path] = tuple(offsets)
+        offsets = self._offsets[path]
+        if line_number > len(offsets):
+            raise ValueError(
+                f"snapshot reference not found: {source_file}:{line_number}"
+            )
+        handle = self._handles[path]
+        handle.seek(offsets[line_number - 1])
+        raw = json.loads(handle.readline())
+        return normalize_snapshot(
+            raw=raw,
+            source_file=path,
+            source_line_number=line_number,
+        )
 
 
 __all__ = (

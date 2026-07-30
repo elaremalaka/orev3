@@ -59,6 +59,10 @@ def main(argv: list[str] | None = None) -> None:
     print(f"dataset_version: {metadata.dataset_version}")
     print(f"source_files: {result.source_file_count}")
     print(f"source_lines: {result.source_line_count}")
+    print(
+        "malformed_source_records: "
+        f"{result.malformed_source_record_count}"
+    )
     print(f"replay_rounds: {metadata.replay_round_count}")
     print(f"snapshots: {metadata.snapshot_count}")
     print(f"complete_rounds: {metadata.complete_round_count}")

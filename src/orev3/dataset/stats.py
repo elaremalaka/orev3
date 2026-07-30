@@ -28,13 +28,17 @@ def main(argv: list[str] | None = None) -> None:
     validation = inspection.validation
     integrity_status = (
         "valid"
-        if validation.valid and not inspection.metadata_issues
+        if validation.integrity_valid and not inspection.metadata_issues
         else "invalid"
     )
     print("ORE Miner V3 — Replay Dataset Statistics")
     print(f"dataset_version: {metadata.dataset_version}")
     print(f"created_at_utc: {metadata.created_at_utc.isoformat()}")
     print(f"source_collection: {len(metadata.source_collection)}")
+    print(
+        "malformed_source_records: "
+        f"{metadata.malformed_source_record_count}"
+    )
     print(f"replay_rounds: {validation.replay_round_count}")
     print(f"snapshots: {validation.snapshot_count}")
     print(f"first_round: {validation.first_round_identifier}")
