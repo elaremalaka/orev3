@@ -1,0 +1,23 @@
+{
+  "approved_implementation_diff_sha256": "940f271f2133cb7d0c5e69a45bf76bf3cd074c6459ea9863428c08b6d0d6707e",
+  "artifact_type": "rfc009_continuation_approval",
+  "continuation_identifier": "b8142062-3a82-55dd-8606-c2743b0b1f86",
+  "continuation_schema_version": 2,
+  "continuity_state_sha256": "e3fd7da37ba5f57803efadaa19a5a7d4076b86b5fb508adfc5e0057a7085459d",
+  "created_at": "2026-07-30T01:35:17+00:00",
+  "ledger_instance_identifier": "f252d584-d0c1-5751-afd0-a0de5d79edc6",
+  "ledger_path_identity": "3120434aecd1e6640937a8ad734615b4d122b8992f8f72f7d2cde8e120bdadcb",
+  "original_authorization_digest": "4bbfe163f73804769d710db40506b666012ec800b5c0c5d6e6359689d0452f4b",
+  "original_authorization_identifier": "030dfedd-79bd-546c-9077-e3497457eb24",
+  "predecessor_authority_digest": "262feb005bac3307ad056e5c3cc43e3ccf0cb0ae5ce2482d9e57f8d2c2cbb87f",
+  "predecessor_authority_identifier": "3550032b-48a6-5cf5-92e8-b414e0740ad4",
+  "predecessor_epoch_number": 2,
+  "predecessor_release_approval_sha256": "1c651ad3da7a33700ad024a02c9f3f94f50b44b48179928c91f6332d6dc99c91",
+  "release_epoch_number": 3,
+  "rfc_identifier": "RFC-009",
+  "schema_version": 1,
+  "semantic_compatibility_sha256": "4b56bba7d284fa6e277a2aafff3f268cfaaf5487c1679447fb7aefd5d6dbe533",
+  "starting_committed_count": 188,
+  "starting_last_opportunity_identity": "f3eea7ff-6336-5123-bd6f-70fdf8b2b1d0",
+  "successor_release_approval_sha256": "568dea1067c62431839df7ce0fa316d37a5038d366c00b3db4c33d18db5f02af"
+}
