@@ -40,6 +40,10 @@ CANONICAL_APPROVAL = (
 SUCCESSOR_APPROVAL_TEMPLATE = (
     "docs/research/rfc009/rfc008_continuation_approval_epoch_{epoch}.json"
 )
+SUPERSEDING_APPROVAL_TEMPLATE = (
+    "docs/research/rfc009/"
+    "rfc008_continuation_approval_epoch_{epoch}_revision_{revision}.json"
+)
 
 
 def _continuation_identifier(fields: dict[str, object]) -> str:
@@ -70,6 +74,16 @@ def _continuation_identifier(fields: dict[str, object]) -> str:
             "semantic_compatibility_sha256",
         )
     }
+    if int(fields.get("continuation_schema_version", 0)) >= 3:
+        material.update(
+            approval_revision_number=fields["approval_revision_number"],
+            supersedes_continuation_identifier=(
+                fields["supersedes_continuation_identifier"]
+            ),
+            supersedes_continuation_approval_sha256=(
+                fields["supersedes_continuation_approval_sha256"]
+            ),
+        )
     return str(
         uuid.uuid5(
             uuid.NAMESPACE_URL,
@@ -128,8 +142,7 @@ class LegacyContinuationApproval(_ContinuationApprovalBase):
         return self
 
 
-class ContinuationApproval(_ContinuationApprovalBase):
-    continuation_schema_version: Literal[2]
+class _SuccessorContinuationApprovalBase(_ContinuationApprovalBase):
     release_epoch_number: int = Field(ge=2)
     predecessor_epoch_number: int = Field(ge=1)
     predecessor_authority_identifier: str
@@ -138,8 +151,7 @@ class ContinuationApproval(_ContinuationApprovalBase):
         pattern=r"^[0-9a-f]{64}$"
     )
 
-    @model_validator(mode="after")
-    def validate_identifier_and_predecessor(self):
+    def _validate_successor(self) -> None:
         if self.release_epoch_number != self.predecessor_epoch_number + 1:
             raise ValueError("Continuation release epoch must follow predecessor")
         if (
@@ -148,13 +160,69 @@ class ContinuationApproval(_ContinuationApprovalBase):
         ):
             raise ValueError("Continuation authority cycle")
         self._validate_common()
+
+
+class ContinuationApproval(_SuccessorContinuationApprovalBase):
+    continuation_schema_version: Literal[2]
+
+    @model_validator(mode="after")
+    def validate_identifier_and_predecessor(self):
+        self._validate_successor()
         return self
 
 
-ContinuationApprovalRecord = LegacyContinuationApproval | ContinuationApproval
+class SupersedingContinuationApproval(_SuccessorContinuationApprovalBase):
+    continuation_schema_version: Literal[3]
+    approval_revision_number: int = Field(ge=2)
+    supersedes_continuation_identifier: str
+    supersedes_continuation_approval_sha256: str = Field(
+        pattern=r"^[0-9a-f]{64}$"
+    )
+
+    @model_validator(mode="after")
+    def validate_identifier_and_predecessors(self):
+        if (
+            self.supersedes_continuation_identifier
+            == self.continuation_identifier
+        ):
+            raise ValueError("Continuation approval supersession cycle")
+        try:
+            uuid.UUID(self.supersedes_continuation_identifier)
+        except ValueError as exc:
+            raise ValueError(
+                "Superseded continuation identifier must be a UUID"
+            ) from exc
+        self._validate_successor()
+        return self
 
 
-def canonical_approval_path(epoch_number: int) -> str:
+ContinuationApprovalRecord = (
+    LegacyContinuationApproval
+    | ContinuationApproval
+    | SupersedingContinuationApproval
+)
+
+
+def approval_revision(approval: ContinuationApprovalRecord) -> int:
+    return (
+        approval.approval_revision_number
+        if isinstance(approval, SupersedingContinuationApproval)
+        else 1
+    )
+
+
+def canonical_approval_path(
+    epoch_number: int, revision_number: int = 1
+) -> str:
+    if revision_number < 1:
+        raise ValueError("RFC-009 approval revision must be positive")
+    if revision_number > 1:
+        if epoch_number < 2:
+            raise ValueError("RFC-009 continuation epoch must be at least 2")
+        return SUPERSEDING_APPROVAL_TEMPLATE.format(
+            epoch=epoch_number,
+            revision=revision_number,
+        )
     if epoch_number == 2:
         return CANONICAL_APPROVAL
     if epoch_number < 2:
@@ -165,7 +233,7 @@ def canonical_approval_path(epoch_number: int) -> str:
 def approval_epoch(approval: ContinuationApprovalRecord) -> int:
     return (
         approval.release_epoch_number
-        if isinstance(approval, ContinuationApproval)
+        if isinstance(approval, _SuccessorContinuationApprovalBase)
         else 2
     )
 
@@ -173,7 +241,7 @@ def approval_epoch(approval: ContinuationApprovalRecord) -> int:
 def approval_predecessor(
     approval: ContinuationApprovalRecord,
 ) -> tuple[int, str, str, str]:
-    if isinstance(approval, ContinuationApproval):
+    if isinstance(approval, _SuccessorContinuationApprovalBase):
         return (
             approval.predecessor_epoch_number,
             approval.predecessor_authority_identifier,
@@ -216,7 +284,11 @@ def _decode_approval(raw: bytes) -> ContinuationApprovalRecord:
     value = json.loads(raw, object_pairs_hook=pairs)
     if "continuation_schema_version" not in value:
         return LegacyContinuationApproval.model_validate(value)
-    return ContinuationApproval.model_validate(value)
+    if value["continuation_schema_version"] == 2:
+        return ContinuationApproval.model_validate(value)
+    if value["continuation_schema_version"] == 3:
+        return SupersedingContinuationApproval.model_validate(value)
+    raise ValueError("RFC-009 continuation approval schema is unsupported")
 
 
 def _strict_json(
@@ -302,7 +374,7 @@ def semantic_compatibility_sha256(
     return hashlib.sha256(canonical_json(fields).encode()).hexdigest()
 
 
-def _approval_bytes(approval: ContinuationApproval) -> bytes:
+def _approval_bytes(approval: ContinuationApprovalRecord) -> bytes:
     return (
         json.dumps(
             approval.model_dump(mode="json"),
@@ -354,7 +426,10 @@ def build_continuation_approval(
     predecessor_authority_identifier: str | None = None,
     predecessor_authority_digest: str | None = None,
     predecessor_release_approval_sha256: str | None = None,
-) -> ContinuationApproval:
+    approval_revision_number: int = 1,
+    supersedes_continuation_identifier: str | None = None,
+    supersedes_continuation_approval_sha256: str | None = None,
+) -> ContinuationApprovalRecord:
     semantic_sha256 = semantic_compatibility_sha256(authorization)
     predecessor_authority_identifier = (
         predecessor_authority_identifier
@@ -367,8 +442,11 @@ def build_continuation_approval(
         predecessor_release_approval_sha256
         or authorization.active_approval_sha256
     )
+    continuation_schema_version = (
+        3 if approval_revision_number > 1 else 2
+    )
     identity_material = {
-        "continuation_schema_version": 2,
+        "continuation_schema_version": continuation_schema_version,
         "release_epoch_number": release_epoch_number,
         "predecessor_epoch_number": predecessor_epoch_number,
         "predecessor_authority_identifier": (
@@ -394,11 +472,28 @@ def build_continuation_approval(
         ),
         "semantic_compatibility_sha256": semantic_sha256,
     }
+    if continuation_schema_version == 3:
+        if (
+            supersedes_continuation_identifier is None
+            or supersedes_continuation_approval_sha256 is None
+        ):
+            raise ValueError(
+                "RFC-009 superseding approval requires its predecessor"
+            )
+        identity_material.update(
+            approval_revision_number=approval_revision_number,
+            supersedes_continuation_identifier=(
+                supersedes_continuation_identifier
+            ),
+            supersedes_continuation_approval_sha256=(
+                supersedes_continuation_approval_sha256
+            ),
+        )
     continuation_identifier = _continuation_identifier(identity_material)
-    return ContinuationApproval(
+    values = dict(
         artifact_type="rfc009_continuation_approval",
         schema_version=1,
-        continuation_schema_version=2,
+        continuation_schema_version=continuation_schema_version,
         rfc_identifier="RFC-009",
         continuation_identifier=continuation_identifier,
         created_at=created_at,
@@ -430,6 +525,18 @@ def build_continuation_approval(
             predecessor_release_approval_sha256
         ),
     )
+    if continuation_schema_version == 3:
+        values.update(
+            approval_revision_number=approval_revision_number,
+            supersedes_continuation_identifier=(
+                supersedes_continuation_identifier
+            ),
+            supersedes_continuation_approval_sha256=(
+                supersedes_continuation_approval_sha256
+            ),
+        )
+        return SupersedingContinuationApproval.model_validate(values)
+    return ContinuationApproval.model_validate(values)
 
 
 _CONTINUITY_TABLES = (
@@ -516,6 +623,314 @@ def _topology(
     if release_changed != {release_relative}:
         raise ValueError("RFC-008 successor approval is not approval-only")
     return head, release_commit, implementation
+
+
+def _approval_boundary(
+    approval: ContinuationApprovalRecord,
+) -> tuple[object, ...]:
+    predecessor = approval_predecessor(approval)
+    return (
+        approval.original_authorization_identifier,
+        approval.original_authorization_digest,
+        approval.ledger_instance_identifier,
+        approval.ledger_path_identity,
+        approval.starting_committed_count,
+        approval.starting_last_opportunity_identity,
+        approval.continuity_state_sha256,
+        approval.semantic_compatibility_sha256,
+        approval_epoch(approval),
+        *predecessor,
+    )
+
+
+def _approval_target(
+    approval: ContinuationApprovalRecord,
+) -> tuple[object, ...]:
+    predecessor = approval_predecessor(approval)
+    return (
+        approval.original_authorization_identifier,
+        approval.original_authorization_digest,
+        approval.ledger_instance_identifier,
+        approval.ledger_path_identity,
+        approval_epoch(approval),
+        *predecessor,
+    )
+
+
+def _repository_continuation_approvals(
+    root: Path,
+) -> tuple[tuple[ContinuationApprovalRecord, str, str, str], ...]:
+    prefix = "docs/research/rfc009"
+    paths = tuple(
+        path
+        for path in _git(
+            root, "ls-tree", "-r", "--name-only", "HEAD", prefix
+        ).splitlines()
+        if path.endswith(".json")
+    )
+    records: list[
+        tuple[ContinuationApprovalRecord, str, str, str]
+    ] = []
+    for relative in paths:
+        raw = subprocess.run(
+            ("git", "show", f"HEAD:{relative}"),
+            cwd=root,
+            check=True,
+            capture_output=True,
+        ).stdout
+        try:
+            approval = _decode_approval(raw)
+        except (ValueError, json.JSONDecodeError):
+            continue
+        working = root / relative
+        if not working.exists() or working.read_bytes() != raw:
+            raise ValueError(
+                "RFC-009 committed approval differs from the worktree"
+            )
+        commits = tuple(
+            _git(root, "log", "--format=%H", "--", relative).splitlines()
+        )
+        if len(commits) != 1:
+            raise ValueError(
+                "RFC-009 committed approvals must be append-only"
+            )
+        changed = {
+            value
+            for value in _git(
+                root,
+                "diff-tree",
+                "--no-commit-id",
+                "--name-only",
+                "-r",
+                commits[0],
+            ).splitlines()
+            if value
+        }
+        if changed != {relative}:
+            raise ValueError(
+                "RFC-009 approval commit must contain one approval"
+            )
+        committed_at = datetime.fromisoformat(
+            _git(root, "show", "-s", "--format=%cI", commits[0])
+        ).astimezone(timezone.utc).isoformat()
+        records.append(
+            (
+                approval,
+                hashlib.sha256(raw).hexdigest(),
+                relative,
+                committed_at,
+            )
+        )
+    return tuple(records)
+
+
+def reconstruct_approval_history(
+    records: tuple[
+        tuple[ContinuationApprovalRecord, str, str]
+        | tuple[ContinuationApprovalRecord, str, str, str],
+        ...,
+    ],
+    *,
+    epochs: tuple[dict[str, object], ...] = (),
+) -> tuple[dict[str, object], ...]:
+    if not records:
+        return ()
+    identifiers = [record[0].continuation_identifier for record in records]
+    digests = [record[1] for record in records]
+    if len(identifiers) != len(set(identifiers)):
+        raise ValueError("RFC-009 continuation approval identifier replay")
+    if len(digests) != len(set(digests)):
+        raise ValueError("RFC-009 continuation approval digest replay")
+    activated_by_identifier = {
+        str(epoch["authority_identifier"]): epoch
+        for epoch in epochs
+        if str(epoch["authority_type"]) == "rfc009_continuation"
+    }
+    groups: dict[
+        tuple[object, ...],
+        list[
+            tuple[ContinuationApprovalRecord, str, str]
+            | tuple[ContinuationApprovalRecord, str, str, str]
+        ],
+    ] = {}
+    for record in records:
+        groups.setdefault(_approval_boundary(record[0]), []).append(record)
+    history: list[dict[str, object]] = []
+    mapped_epochs: set[int] = set()
+    for boundary, group in groups.items():
+        ordered = sorted(group, key=lambda record: approval_revision(record[0]))
+        if approval_revision(ordered[0][0]) != 1:
+            raise ValueError("RFC-009 approval chain root is missing")
+        for index, record in enumerate(ordered):
+            approval, approval_sha256, relative = record[:3]
+            committed_at = (
+                record[3] if len(record) == 4 else approval.created_at
+            )
+            revision = approval_revision(approval)
+            expected_path = canonical_approval_path(
+                approval_epoch(approval), revision
+            )
+            if relative != expected_path:
+                raise ValueError(
+                    "RFC-009 approval path does not match its revision"
+                )
+            if revision != index + 1:
+                raise ValueError(
+                    "RFC-009 approval chain has a skipped revision"
+                )
+            if index == 0:
+                if isinstance(approval, SupersedingContinuationApproval):
+                    raise ValueError(
+                        "RFC-009 approval chain root cannot supersede"
+                    )
+            else:
+                predecessor_record = ordered[index - 1]
+                predecessor, predecessor_sha256, _ = predecessor_record[:3]
+                predecessor_committed_at = (
+                    predecessor_record[3]
+                    if len(predecessor_record) == 4
+                    else predecessor.created_at
+                )
+                if not isinstance(
+                    approval, SupersedingContinuationApproval
+                ):
+                    raise ValueError(
+                        "RFC-009 approval successor lacks supersession"
+                    )
+                if (
+                    approval.supersedes_continuation_identifier
+                    != predecessor.continuation_identifier
+                    or approval.supersedes_continuation_approval_sha256
+                    != predecessor_sha256
+                ):
+                    raise ValueError(
+                        "RFC-009 approval predecessor is ambiguous"
+                    )
+                if datetime.fromisoformat(committed_at) < (
+                    datetime.fromisoformat(predecessor_committed_at)
+                ):
+                    raise ValueError(
+                        "RFC-009 approval intervals are not ordered"
+                    )
+                if predecessor.continuation_identifier in (
+                    activated_by_identifier
+                ):
+                    raise ValueError(
+                        "RFC-009 activated approval cannot be superseded"
+                    )
+            activated_epoch = activated_by_identifier.get(
+                approval.continuation_identifier
+            )
+            if activated_epoch is not None:
+                if datetime.fromisoformat(
+                    str(activated_epoch["activated_at"])
+                ) < datetime.fromisoformat(committed_at):
+                    raise ValueError(
+                        "RFC-009 authority predates its approval interval"
+                    )
+                if (
+                    str(activated_epoch["authority_digest"])
+                    != approval.digest
+                    or str(activated_epoch["release_approval_sha256"])
+                    != approval.successor_release_approval_sha256
+                    or int(activated_epoch["epoch_number"])
+                    != approval_epoch(approval)
+                ):
+                    raise ValueError(
+                        "RFC-009 approval-to-authority mapping mismatch"
+                    )
+                mapped_epochs.add(int(activated_epoch["epoch_number"]))
+                if index != len(ordered) - 1:
+                    raise ValueError(
+                        "RFC-009 activated approval is not terminal"
+                    )
+            successor_record = (
+                ordered[index + 1] if index + 1 < len(ordered) else None
+            )
+            successor = successor_record[0] if successor_record else None
+            successor_committed_at = (
+                successor_record[3]
+                if successor_record is not None and len(successor_record) == 4
+                else successor.created_at
+                if successor is not None
+                else None
+            )
+            status = (
+                "activated"
+                if activated_epoch is not None
+                else "superseded"
+                if successor is not None
+                else "activation_eligible"
+            )
+            history.append(
+                {
+                    "approval": approval,
+                    "approval_sha256": approval_sha256,
+                    "path": relative,
+                    "boundary": boundary,
+                    "target": _approval_target(approval),
+                    "revision_number": revision,
+                    "status": status,
+                    "activation_eligible": status == "activation_eligible",
+                    "approval_interval_started_at": committed_at,
+                    "approval_interval_ended_at": (
+                        str(activated_epoch["activated_at"])
+                        if activated_epoch is not None
+                        else successor_committed_at
+                        if successor is not None
+                        else None
+                    ),
+                    "activated_epoch_number": (
+                        int(activated_epoch["epoch_number"])
+                        if activated_epoch is not None
+                        else None
+                    ),
+                }
+            )
+    expected_epochs = {
+        int(epoch["epoch_number"])
+        for epoch in epochs
+        if str(epoch["authority_type"]) == "rfc009_continuation"
+    }
+    if mapped_epochs != expected_epochs:
+        raise ValueError(
+            "RFC-009 activated authority lacks exactly one approval"
+        )
+    terminal_targets: dict[tuple[object, ...], int] = {}
+    for item in history:
+        if item["status"] in {"activation_eligible", "activated"}:
+            target = item["target"]
+            terminal_targets[target] = terminal_targets.get(target, 0) + 1
+    if any(count != 1 for count in terminal_targets.values()):
+        raise ValueError(
+            "RFC-009 governing predecessor has multiple eligible approvals"
+        )
+    return tuple(
+        sorted(
+            history,
+            key=lambda item: (
+                approval_epoch(item["approval"]),
+                item["revision_number"],
+            ),
+        )
+    )
+
+
+def terminal_approval_for_boundary(
+    history: tuple[dict[str, object], ...],
+    boundary: tuple[object, ...],
+) -> dict[str, object] | None:
+    terminal = [
+        item
+        for item in history
+        if item["boundary"] == boundary
+        and item["status"] in {"activation_eligible", "activated"}
+    ]
+    if len(terminal) > 1:
+        raise ValueError(
+            "RFC-009 approval boundary has multiple terminal approvals"
+        )
+    return terminal[0] if terminal else None
 
 
 def _release_epochs(
@@ -945,7 +1360,7 @@ def derive_continuation_approval(
     marker_path: str | Path,
     authorization_path: str | Path,
     ledger_path: str | Path,
-) -> ContinuationApproval:
+) -> ContinuationApprovalRecord:
     root = Path(repository_root).resolve()
     if _git(root, "status", "--porcelain", "--untracked-files=all"):
         raise PermissionError(
@@ -1033,7 +1448,7 @@ def derive_continuation_approval(
         )
     )
     created_at = committed_at.astimezone(timezone.utc).isoformat()
-    return build_continuation_approval(
+    root_approval = build_continuation_approval(
         created_at=created_at,
         authorization=authorization,
         starting_committed_count=count,
@@ -1053,13 +1468,52 @@ def derive_continuation_approval(
         predecessor_authority_digest=str(predecessor["authority_digest"]),
         predecessor_release_approval_sha256=predecessor_release,
     )
+    records = _repository_continuation_approvals(root)
+    history = reconstruct_approval_history(records, epochs=epochs)
+    terminal = terminal_approval_for_boundary(
+        history, _approval_boundary(root_approval)
+    )
+    if terminal is None:
+        return root_approval
+    if terminal["status"] == "activated":
+        raise PermissionError(
+            "RFC-009 activated approval cannot be superseded"
+        )
+    predecessor_approval = terminal["approval"]
+    return build_continuation_approval(
+        created_at=created_at,
+        authorization=authorization,
+        starting_committed_count=count,
+        starting_last_opportunity_identity=last_identity,
+        continuity_sha256=continuity,
+        successor_release_approval_sha256=(
+            release.active_approval_sha256
+        ),
+        implementation_diff_sha256_value=implementation_diff_sha256(
+            root, predecessor_implementation, authority.implementation_commit
+        ),
+        release_epoch_number=predecessor_epoch + 1,
+        predecessor_epoch_number=predecessor_epoch,
+        predecessor_authority_identifier=str(
+            predecessor["authority_identifier"]
+        ),
+        predecessor_authority_digest=str(predecessor["authority_digest"]),
+        predecessor_release_approval_sha256=predecessor_release,
+        approval_revision_number=int(terminal["revision_number"]) + 1,
+        supersedes_continuation_identifier=(
+            predecessor_approval.continuation_identifier
+        ),
+        supersedes_continuation_approval_sha256=str(
+            terminal["approval_sha256"]
+        ),
+    )
 
 
 def issue_continuation_approval(
     *,
     continuation_approval_path: str | Path,
     **kwargs: Any,
-) -> tuple[ContinuationApproval, str]:
+) -> tuple[ContinuationApprovalRecord, str]:
     root = Path(kwargs["repository_root"]).resolve()
     output = Path(continuation_approval_path).resolve()
     if output.exists():
@@ -1068,7 +1522,10 @@ def issue_continuation_approval(
         )
     approval = derive_continuation_approval(**kwargs)
     expected = (
-        root / canonical_approval_path(approval_epoch(approval))
+        root
+        / canonical_approval_path(
+            approval_epoch(approval), approval_revision(approval)
+        )
     ).resolve()
     if output != expected:
         raise ValueError(
@@ -1126,7 +1583,7 @@ def preflight_continuation(
         ):
             reasons.append("successor_release_mismatch")
         if (
-            isinstance(approval, ContinuationApproval)
+            isinstance(approval, _SuccessorContinuationApprovalBase)
             and not _is_approved_release_ancestor(
                 release,
                 approval.predecessor_release_approval_sha256,
@@ -1217,7 +1674,7 @@ def preflight_continuation(
             connection,
             ledger_path=ledger_path,
             include_release_epochs=isinstance(
-                approval, ContinuationApproval
+                approval, _SuccessorContinuationApprovalBase
             ),
         ) != approval.continuity_state_sha256:
             reasons.append("continuity_state_mismatch")
@@ -1282,6 +1739,32 @@ def preflight_continuation(
         )
     )
     current = activated and len(epochs) == target_epoch
+    try:
+        approval_history = reconstruct_approval_history(
+            _repository_continuation_approvals(root),
+            epochs=epochs,
+        )
+        matching_approvals = [
+            item
+            for item in approval_history
+            if item["approval_sha256"] == approval_sha
+            and item["approval"].continuation_identifier
+            == approval.continuation_identifier
+        ]
+        if len(matching_approvals) != 1:
+            reasons.append("approval_history_identity_mismatch")
+        else:
+            approval_status = matching_approvals[0]["status"]
+            if activated and approval_status != "activated":
+                reasons.append("activated_approval_mapping_mismatch")
+            if not activated and approval_status != "activation_eligible":
+                reasons.append("approval_not_terminal")
+    except (
+        ValueError,
+        subprocess.CalledProcessError,
+        json.JSONDecodeError,
+    ):
+        reasons.append("approval_supersession_chain_invalid")
     if activated and current and count >= approval.starting_committed_count:
         reasons = [
             reason

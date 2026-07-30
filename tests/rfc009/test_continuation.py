@@ -22,17 +22,20 @@ from orev3.rfc009.continuation import (
     ContinuationApproval,
     ContinuationPreflight,
     LegacyContinuationApproval,
+    SupersedingContinuationApproval,
     _continuation_identifier,
     _decode_approval,
     _release_epochs,
     _strict_json,
     _validate_interrupted_ledger,
     activate_continuation,
+    approval_revision,
     build_continuation_approval,
     canonical_approval_path,
     continuity_state_sha256,
     derive_continuation_approval,
     issue_continuation_approval,
+    reconstruct_approval_history,
     reconstruct_release_history,
     semantic_compatibility_sha256,
     validate_release_epoch_chain,
@@ -999,7 +1002,8 @@ def _derive_successor_fixture(
     monkeypatch: pytest.MonkeyPatch,
     *,
     approval_hashes: tuple[str, ...],
-) -> tuple[ContinuationApproval, list[str]]:
+    existing_unactivated: bool = False,
+) -> tuple[ContinuationApproval | SupersedingContinuationApproval, list[str]]:
     config_path = Path("config/collection/rfc008_paper_v1.json")
     config = RFC008Config.from_path(config_path)
     with RFC008Store(
@@ -1118,6 +1122,49 @@ def _derive_successor_fixture(
         raise AssertionError(arguments)
 
     monkeypatch.setattr(continuation_module, "_git", fake_git)
+    if existing_unactivated:
+        prior = build_continuation_approval(
+            created_at="2026-07-29T00:00:00+00:00",
+            authorization=authorization,
+            starting_committed_count=188,
+            starting_last_opportunity_identity="snapshot-188",
+            continuity_sha256="5" * 64,
+            successor_release_approval_sha256=skipped_release,
+            implementation_diff_sha256_value="8" * 64,
+            release_epoch_number=3,
+            predecessor_epoch_number=2,
+            predecessor_authority_identifier="epoch-2",
+            predecessor_authority_digest="6" * 64,
+            predecessor_release_approval_sha256=predecessor_release,
+        )
+        prior_record = _approval_record(prior)
+        terminal = {
+            "approval": prior,
+            "approval_sha256": prior_record[1],
+            "revision_number": 1,
+            "status": "activation_eligible",
+        }
+        monkeypatch.setattr(
+            continuation_module,
+            "_repository_continuation_approvals",
+            lambda root: (prior_record,),
+        )
+        monkeypatch.setattr(
+            continuation_module,
+            "reconstruct_approval_history",
+            lambda records, epochs=(): (terminal,),
+        )
+        monkeypatch.setattr(
+            continuation_module,
+            "terminal_approval_for_boundary",
+            lambda history, boundary: terminal,
+        )
+    else:
+        monkeypatch.setattr(
+            continuation_module,
+            "_repository_continuation_approvals",
+            lambda root: (),
+        )
     approval = derive_continuation_approval(
         repository_root=tmp_path,
         config_path=config_path,
@@ -1145,6 +1192,26 @@ def test_successor_issuance_allows_unactivated_approved_intermediate_release(
     assert approval.predecessor_release_approval_sha256 == "2" * 64
     assert approval.successor_release_approval_sha256 == "4" * 64
     assert resolved == ["2" * 64]
+
+
+def test_successor_issuance_supersedes_committed_unactivated_approval(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    approval, _ = _derive_successor_fixture(
+        tmp_path,
+        monkeypatch,
+        approval_hashes=("2" * 64, "3" * 64, "4" * 64),
+        existing_unactivated=True,
+    )
+    assert isinstance(approval, SupersedingContinuationApproval)
+    assert approval.approval_revision_number == 2
+    assert approval.release_epoch_number == 3
+    assert approval.supersedes_continuation_identifier
+    assert len(approval.supersedes_continuation_approval_sha256) == 64
+    assert canonical_approval_path(
+        approval.release_epoch_number,
+        approval.approval_revision_number,
+    ).endswith("epoch_3_revision_2.json")
 
 
 def test_successor_issuance_rejects_ledger_release_outside_git_ancestry(
@@ -1256,3 +1323,228 @@ def test_issuance_fails_closed_on_invalid_inputs(
             continuation_approval_path=output,
         )
     assert not output.exists()
+
+
+def _superseding_approval(
+    predecessor,
+    predecessor_sha256: str,
+    *,
+    revision: int,
+    successor_release: str,
+    created_at: str,
+    ledger_instance_identifier: str | None = None,
+):
+    value = predecessor.model_dump(mode="json")
+    value.update(
+        continuation_schema_version=3,
+        approval_revision_number=revision,
+        supersedes_continuation_identifier=(
+            predecessor.continuation_identifier
+        ),
+        supersedes_continuation_approval_sha256=predecessor_sha256,
+        successor_release_approval_sha256=successor_release,
+        approved_implementation_diff_sha256=successor_release,
+        created_at=created_at,
+    )
+    if ledger_instance_identifier is not None:
+        value["ledger_instance_identifier"] = ledger_instance_identifier
+    value["continuation_identifier"] = _continuation_identifier(value)
+    return SupersedingContinuationApproval.model_validate(value)
+
+
+def _approval_record(approval):
+    raw = continuation_module._approval_bytes(approval)
+    return (
+        approval,
+        __import__("hashlib").sha256(raw).hexdigest(),
+        canonical_approval_path(
+            approval.release_epoch_number
+            if hasattr(approval, "release_epoch_number")
+            else 2,
+            approval_revision(approval),
+        ),
+    )
+
+
+def test_approval_supersession_chain_is_append_only_and_deterministic(
+    tmp_path: Path,
+) -> None:
+    first = _built_approval(tmp_path)
+    first_record = _approval_record(first)
+    second = _superseding_approval(
+        first,
+        first_record[1],
+        revision=2,
+        successor_release="7" * 64,
+        created_at="2026-07-29T01:00:00+00:00",
+    )
+    second_record = _approval_record(second)
+    third = _superseding_approval(
+        second,
+        second_record[1],
+        revision=3,
+        successor_release="8" * 64,
+        created_at="2026-07-29T02:00:00+00:00",
+    )
+    records = (first_record, second_record, _approval_record(third))
+    history = reconstruct_approval_history(records)
+    assert [item["revision_number"] for item in history] == [1, 2, 3]
+    assert [item["status"] for item in history] == [
+        "superseded",
+        "superseded",
+        "activation_eligible",
+    ]
+    assert history[0]["approval_interval_ended_at"] == second.created_at
+    assert history[1]["approval_interval_ended_at"] == third.created_at
+    assert history[2]["approval_interval_ended_at"] is None
+    assert sum(item["activation_eligible"] for item in history) == 1
+    assert canonical_approval_path(2, 3).endswith("_revision_3.json")
+
+
+def test_approval_supersession_rejects_forks_skips_cycles_and_replay(
+    tmp_path: Path,
+) -> None:
+    first = _built_approval(tmp_path)
+    first_record = _approval_record(first)
+    second = _superseding_approval(
+        first,
+        first_record[1],
+        revision=2,
+        successor_release="7" * 64,
+        created_at="2026-07-29T01:00:00+00:00",
+    )
+    second_record = _approval_record(second)
+    fork = _superseding_approval(
+        first,
+        first_record[1],
+        revision=2,
+        successor_release="8" * 64,
+        created_at="2026-07-29T01:30:00+00:00",
+    )
+    with pytest.raises(ValueError, match="skipped revision"):
+        reconstruct_approval_history(
+            (first_record, second_record, _approval_record(fork))
+        )
+    skipped = _superseding_approval(
+        second,
+        second_record[1],
+        revision=4,
+        successor_release="9" * 64,
+        created_at="2026-07-29T02:00:00+00:00",
+    )
+    with pytest.raises(ValueError, match="skipped revision"):
+        reconstruct_approval_history(
+            (first_record, second_record, _approval_record(skipped))
+        )
+    cycle_value = second.model_dump(mode="json")
+    cycle_value["supersedes_continuation_identifier"] = str(
+        __import__("uuid").uuid4()
+    )
+    cycle_value["continuation_identifier"] = _continuation_identifier(
+        cycle_value
+    )
+    cycle = SupersedingContinuationApproval.model_validate(cycle_value)
+    with pytest.raises(ValueError, match="predecessor is ambiguous"):
+        reconstruct_approval_history(
+            (first_record, _approval_record(cycle))
+        )
+    with pytest.raises(ValueError, match="identifier replay"):
+        reconstruct_approval_history((first_record, first_record))
+
+
+def test_only_terminal_approval_maps_to_activated_authority(
+    tmp_path: Path,
+) -> None:
+    first = _built_approval(tmp_path)
+    first_record = _approval_record(first)
+    terminal = _superseding_approval(
+        first,
+        first_record[1],
+        revision=2,
+        successor_release="7" * 64,
+        created_at="2026-07-29T01:00:00+00:00",
+    )
+    terminal_record = _approval_record(terminal)
+    epoch = {
+        "epoch_number": 2,
+        "start_sequence": 101,
+        "release_approval_sha256": (
+            terminal.successor_release_approval_sha256
+        ),
+        "authority_type": "rfc009_continuation",
+        "authority_identifier": terminal.continuation_identifier,
+        "authority_digest": terminal.digest,
+        "activated_at": "2026-07-29T02:00:00+00:00",
+    }
+    history = reconstruct_approval_history(
+        (first_record, terminal_record), epochs=(epoch,)
+    )
+    assert [item["status"] for item in history] == [
+        "superseded",
+        "activated",
+    ]
+    assert history[-1]["activated_epoch_number"] == 2
+    old_epoch = {
+        **epoch,
+        "release_approval_sha256": first.successor_release_approval_sha256,
+        "authority_identifier": first.continuation_identifier,
+        "authority_digest": first.digest,
+    }
+    with pytest.raises(ValueError, match="activated approval is not terminal"):
+        reconstruct_approval_history(
+            (first_record, terminal_record), epochs=(old_epoch,)
+        )
+
+
+def test_approval_supersession_rejects_cross_ledger_reuse(
+    tmp_path: Path,
+) -> None:
+    first = _built_approval(tmp_path)
+    first_record = _approval_record(first)
+    replacement = _superseding_approval(
+        first,
+        first_record[1],
+        revision=2,
+        successor_release="7" * 64,
+        created_at="2026-07-29T01:00:00+00:00",
+        ledger_instance_identifier="other-ledger",
+    )
+    with pytest.raises(ValueError, match="root is missing"):
+        reconstruct_approval_history(
+            (first_record, _approval_record(replacement))
+        )
+
+
+def test_superseding_approval_uses_distinct_immutable_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    first = _built_approval(tmp_path)
+    first_record = _approval_record(first)
+    replacement = _superseding_approval(
+        first,
+        first_record[1],
+        revision=2,
+        successor_release="7" * 64,
+        created_at="2026-07-29T01:00:00+00:00",
+    )
+    root = tmp_path / "repository"
+    original = root / canonical_approval_path(2)
+    original.parent.mkdir(parents=True)
+    original.write_bytes(continuation_module._approval_bytes(first))
+    output = root / canonical_approval_path(2, 2)
+    monkeypatch.setattr(
+        continuation_module,
+        "derive_continuation_approval",
+        lambda **kwargs: replacement,
+    )
+    persisted, _ = issue_continuation_approval(
+        repository_root=root,
+        continuation_approval_path=output,
+    )
+    assert persisted == replacement
+    assert original.read_bytes() == continuation_module._approval_bytes(first)
+    with pytest.raises(FileExistsError):
+        issue_continuation_approval(
+            repository_root=root,
+            continuation_approval_path=output,
+        )

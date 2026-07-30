@@ -13,6 +13,28 @@ path, starting count and last opportunity, exact ledger continuity digest,
 immediate predecessor epoch and authority, predecessor and successor releases,
 implementation diff, and frozen experimental semantics.
 
+A committed approval has a half-open approval interval beginning at its
+approval-only commit and ending at activation or explicit approval
+supersession. A committed approval that never activated may be superseded by
+one human-reviewed replacement approval. The replacement names the immediate
+predecessor approval by immutable identifier and byte digest, retains the exact
+ledger, authorization, governing predecessor, prospective epoch, boundary,
+continuity, and semantic bindings, and occupies the next immutable revision in
+that boundary's approval chain. Successful approval supersession atomically
+ends predecessor eligibility and establishes the replacement as the sole
+terminal activation-eligible approval. It creates no authority, release epoch,
+session, writer lease, or ledger mutation.
+
+All approval revisions remain permanent. Multiple historical approvals may
+therefore exist for one prospective epoch, but they form one append-only,
+contiguous, acyclic chain with no forks, skipped predecessors, overwrite, or
+deletion. Eligibility is derived from that immutable chain rather than stored
+as mutable state. Only its terminal unsuperseded approval may activate; an
+activated or already-superseded approval can never be superseded or reused.
+Historical reconstruction identifies every approval interval, supersession,
+terminal approval, activation, approval-to-authority mapping, and approval that
+never activated.
+
 Activation is one-shot per transition. Epoch 1 records the original RFC-008
 authority and the legacy epoch-2 record remains in
 `collection_release_epochs`. Existing schema-7 successor records remain in
@@ -50,7 +72,9 @@ orev3.rfc008.cli start --recovery --continuation-approval PATH ...
 ```
 
 Issuance is read-only except for atomically creating the epoch-specific
-canonical approval document and refuses overwrite. It validates the committed
+canonical approval document and refuses overwrite. The first approval for an
+epoch uses its epoch path; immutable replacements use successive
+revision-specific paths. Issuance validates the committed
 successor release, original authorization, exact non-empty interrupted ledger,
 complete predecessor chain, semantic compatibility, canonical opportunity
 sequence, last identity, session absence, and writer-lease absence. The
@@ -64,7 +88,9 @@ therefore produces identical bytes.
 
 Preflight is read-only. Activation requires no active session, open collector
 run, or active writer lease; verifies the frozen prefix, predecessor chain, and
-Git topology; and appends exactly the next immutable epoch. Equal prospective
+Git topology; proves that the submitted approval is the unique terminal member
+of its approval-supersession chain; and appends exactly the next immutable
+epoch. Equal prospective
 boundaries fail closed unless the immediate predecessor is proven empty.
 Non-empty predecessors require a strictly later boundary. An activated
 approval cannot be replayed, and an earlier approval cannot authorize recovery
