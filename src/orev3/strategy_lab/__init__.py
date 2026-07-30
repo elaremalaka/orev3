@@ -6,6 +6,11 @@ from orev3.strategy_lab.deployment import (
     DeploymentModel,
     EqualWeightDeploymentModel,
 )
+from orev3.strategy_lab.evaluation import (
+    EvaluationObservation,
+    EvaluationResult,
+    Evaluator,
+)
 from orev3.strategy_lab.interfaces import (
     DecisionContext,
     Explanation,
@@ -21,6 +26,9 @@ __all__ = (
     "DeploymentDecision",
     "DeploymentModel",
     "EqualWeightDeploymentModel",
+    "EvaluationObservation",
+    "EvaluationResult",
+    "Evaluator",
     "ExperimentConfiguration",
     "ExperimentRunner",
     "Explanation",
