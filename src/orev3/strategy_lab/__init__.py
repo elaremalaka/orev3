@@ -18,6 +18,8 @@ from orev3.strategy_lab.interfaces import (
     RankedCandidateSet,
     Strategy,
 )
+from orev3.strategy_lab.metrics import ExperimentMetrics, MetricsEngine
+from orev3.strategy_lab.registry import ExperimentRecord, ExperimentRegistry
 from orev3.strategy_lab.runner import ExperimentConfiguration, ExperimentRunner
 
 __all__ = (
@@ -30,8 +32,12 @@ __all__ = (
     "EvaluationResult",
     "Evaluator",
     "ExperimentConfiguration",
+    "ExperimentMetrics",
+    "ExperimentRecord",
+    "ExperimentRegistry",
     "ExperimentRunner",
     "Explanation",
+    "MetricsEngine",
     "RankedCandidate",
     "RankedCandidateSet",
     "Strategy",
