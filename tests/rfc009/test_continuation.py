@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from pydantic import ValidationError
@@ -28,6 +29,7 @@ from orev3.rfc009.continuation import (
     build_continuation_approval,
     canonical_approval_path,
     continuity_state_sha256,
+    derive_continuation_approval,
     issue_continuation_approval,
     semantic_compatibility_sha256,
     validate_release_epoch_chain,
@@ -547,6 +549,170 @@ def test_issuance_boundary_uses_current_authoritative_epoch(
     assert len(continuity) == 64
     assert epochs[-1]["epoch_number"] == 2
     assert epochs[-1]["authority_identifier"] == "epoch-2"
+
+
+def _derive_successor_fixture(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    approval_hashes: tuple[str, ...],
+) -> tuple[ContinuationApproval, list[str]]:
+    config_path = Path("config/collection/rfc008_paper_v1.json")
+    config = RFC008Config.from_path(config_path)
+    with RFC008Store(
+        tmp_path / "fixture.sqlite", config=config, create=True
+    ) as store:
+        authorization = store.collection_contract().immutable_release
+    predecessor_release = "2" * 64
+    skipped_release = "3" * 64
+    successor_release = "4" * 64
+    release = SimpleNamespace(
+        valid=True,
+        active_approval_sha256=successor_release,
+        approval_hashes=approval_hashes,
+        parsed_active_approval={
+            "supersedes_release_implementation_approval_sha256": (
+                skipped_release
+            ),
+            "validated_production_marker_sha256": (
+                authorization.marker_sha256
+            ),
+            "validated_production_marker_sidecar_sha256": (
+                authorization.marker_sidecar_sha256
+            ),
+        },
+    )
+    authority = SimpleNamespace(
+        approval_committed_at_head=True,
+        approval_commit="a" * 40,
+        implementation_commit="b" * 40,
+    )
+
+    class AuthorizationStore:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def status(self):
+            return SimpleNamespace(
+                lifecycle_state="active", record=authorization
+            )
+
+    resolved_predecessors: list[str] = []
+
+    def predecessor_implementation(root, release_path, release_sha256):
+        resolved_predecessors.append(release_sha256)
+        return "c" * 40
+
+    monkeypatch.setattr(
+        continuation_module, "validate_active_release", lambda **kwargs: release
+    )
+    monkeypatch.setattr(
+        continuation_module,
+        "repository_release_authority",
+        lambda **kwargs: authority,
+    )
+    monkeypatch.setattr(
+        continuation_module, "CollectionAuthorizationStore", AuthorizationStore
+    )
+    monkeypatch.setattr(
+        continuation_module.ResolverConfig,
+        "from_path",
+        staticmethod(
+            lambda path: SimpleNamespace(
+                fingerprint=authorization.resolver_fingerprint
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        continuation_module,
+        "_validate_interrupted_ledger",
+        lambda **kwargs: (
+            188,
+            "snapshot-188",
+            "5" * 64,
+            (
+                {
+                    "epoch_number": 1,
+                    "release_approval_sha256": (
+                        authorization.active_approval_sha256
+                    ),
+                    "authority_identifier": (
+                        authorization.authorization_identifier
+                    ),
+                    "authority_digest": authorization.authorization_digest,
+                },
+                {
+                    "epoch_number": 2,
+                    "release_approval_sha256": predecessor_release,
+                    "authority_identifier": "epoch-2",
+                    "authority_digest": "6" * 64,
+                },
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        continuation_module,
+        "_approved_implementation_for_release",
+        predecessor_implementation,
+    )
+    monkeypatch.setattr(
+        continuation_module,
+        "implementation_diff_sha256",
+        lambda *args: "7" * 64,
+    )
+
+    def fake_git(root, *arguments):
+        if arguments[0] == "status":
+            return ""
+        if arguments[:3] == ("show", "-s", "--format=%cI"):
+            return "2026-07-29T18:00:00-07:00"
+        raise AssertionError(arguments)
+
+    monkeypatch.setattr(continuation_module, "_git", fake_git)
+    approval = derive_continuation_approval(
+        repository_root=tmp_path,
+        config_path=config_path,
+        resolver_config_path="config/collection/rfc008_resolver_v1.json",
+        burn_in_evidence_path=tmp_path / "burn-in.json",
+        release_approval_path=tmp_path / "release.json",
+        approval_manifest_path=tmp_path / "manifest.json",
+        marker_path=tmp_path / "marker.json",
+        authorization_path=tmp_path / "authorization.sqlite",
+        ledger_path=tmp_path / "ledger.sqlite",
+    )
+    return approval, resolved_predecessors
+
+
+def test_successor_issuance_allows_unactivated_approved_intermediate_release(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    approval, resolved = _derive_successor_fixture(
+        tmp_path,
+        monkeypatch,
+        approval_hashes=("2" * 64, "3" * 64, "4" * 64),
+    )
+    assert approval.release_epoch_number == 3
+    assert approval.predecessor_epoch_number == 2
+    assert approval.predecessor_release_approval_sha256 == "2" * 64
+    assert approval.successor_release_approval_sha256 == "4" * 64
+    assert resolved == ["2" * 64]
+
+
+def test_successor_issuance_rejects_ledger_release_outside_git_ancestry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    with pytest.raises(PermissionError, match="approved successor.*ancestry"):
+        _derive_successor_fixture(
+            tmp_path,
+            monkeypatch,
+            approval_hashes=("3" * 64, "4" * 64),
+        )
 
 
 def test_issuance_is_deterministic_valid_and_refuses_overwrite(

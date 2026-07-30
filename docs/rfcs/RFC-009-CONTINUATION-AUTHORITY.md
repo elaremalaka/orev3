@@ -40,11 +40,13 @@ canonical approval document and refuses overwrite. It validates the committed
 successor release, original authorization, exact non-empty interrupted ledger,
 complete predecessor chain, semantic compatibility, canonical opportunity
 sequence, last identity, session absence, and writer-lease absence. The
-successor release must directly supersede the active ledger release. The
-continuation UUID is deterministically derived from the immutable approval
-fields, including the predecessor relationship; `created_at` is the committed
-successor approval timestamp. Reissuing identical inputs therefore produces
-identical bytes.
+successor release must include the highest activated ledger release in its
+validated Git approval ancestry. Approved intermediate releases that never
+governed the ledger remain part of that audit ancestry but do not become ledger
+epochs. The continuation UUID is deterministically derived from the immutable
+approval fields, including the activated predecessor relationship; `created_at`
+is the committed successor approval timestamp. Reissuing identical inputs
+therefore produces identical bytes.
 
 Preflight is read-only. Activation requires no active session, verifies the
 frozen prefix, predecessor chain, and Git topology, and appends exactly the

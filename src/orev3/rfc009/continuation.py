@@ -268,6 +268,15 @@ def _approved_implementation_for_release(
     return implementation
 
 
+def _is_approved_release_ancestor(
+    release: Any, predecessor_release_sha256: str
+) -> bool:
+    return (
+        predecessor_release_sha256 != release.active_approval_sha256
+        and predecessor_release_sha256 in release.approval_hashes
+    )
+
+
 def semantic_compatibility_sha256(
     authorization: CollectionAuthorizationRecord,
 ) -> str:
@@ -813,12 +822,10 @@ def derive_continuation_approval(
     )
     predecessor = epochs[-1]
     predecessor_release = str(predecessor["release_approval_sha256"])
-    if approval.get(
-        "supersedes_release_implementation_approval_sha256"
-    ) != predecessor_release:
+    if not _is_approved_release_ancestor(release, predecessor_release):
         raise PermissionError(
-            "RFC-009 successor release does not directly supersede "
-            "the active ledger release"
+            "RFC-009 active ledger release is not a predecessor in "
+            "the approved successor release ancestry"
         )
     predecessor_epoch = int(predecessor["epoch_number"])
     predecessor_implementation = (
@@ -930,13 +937,12 @@ def preflight_continuation(
             reasons.append("successor_release_mismatch")
         if (
             isinstance(approval, ContinuationApproval)
-            and release.parsed_active_approval is not None
-            and release.parsed_active_approval.get(
-                "supersedes_release_implementation_approval_sha256"
+            and not _is_approved_release_ancestor(
+                release,
+                approval.predecessor_release_approval_sha256,
             )
-            != approval.predecessor_release_approval_sha256
         ):
-            reasons.append("successor_release_predecessor_mismatch")
+            reasons.append("predecessor_release_not_in_successor_ancestry")
     except Exception as exc:
         reasons.append(f"git_topology_invalid:{type(exc).__name__}")
         implementation = ""
