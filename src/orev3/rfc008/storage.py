@@ -40,6 +40,7 @@ PROTECTED_LEDGER_NAMES = {
 }
 CANONICAL_PRODUCTION_LEDGER_NAME = "rfc008_paper_ledger_v1.sqlite"
 LEDGER_SCHEMA_VERSION = 1
+LEGACY_CONTINUATION_SCHEMA_VERSION = 6
 
 
 class CollectionTargetReached(RuntimeError):
@@ -354,7 +355,16 @@ class RFC008Store:
             values = dict(self.connection.execute("SELECT key,value FROM metadata"))
         except sqlite3.OperationalError as exc:
             raise ValueError("Not an initialized RFC-008 ledger") from exc
-        if int(values.get("schema_version", -1)) != SCHEMA_VERSION:
+        applied_version = self._applied_schema_version()
+        supported_schema_versions = {
+            SCHEMA_VERSION,
+            LEGACY_CONTINUATION_SCHEMA_VERSION,
+        }
+        metadata_version = int(values.get("schema_version", -1))
+        if (
+            metadata_version not in supported_schema_versions
+            or metadata_version != applied_version
+        ):
             raise ValueError("Unsupported RFC-008 schema version")
         if values.get("database_family") != DATABASE_FAMILY:
             raise ValueError("RFC-008 database family sentinel mismatch")
@@ -364,7 +374,10 @@ class RFC008Store:
                 "SELECT version,checksum FROM schema_migrations"
             )
         }
-        expected = {migration.version: migration.checksum for migration in MIGRATIONS}
+        expected = {
+            migration.version: migration.checksum
+            for migration in MIGRATIONS[:applied_version]
+        }
         if applied != expected:
             raise ValueError("RFC-008 migration history mismatch")
         if config is not None:
@@ -449,7 +462,7 @@ class RFC008Store:
             raise
 
     def release_epochs(self) -> tuple[dict[str, object], ...]:
-        return tuple(
+        legacy = tuple(
             dict(row)
             for row in self.connection.execute(
                 """
@@ -461,6 +474,31 @@ class RFC008Store:
                 """
             )
         )
+        successor_table = self.connection.execute(
+            """
+            SELECT 1 FROM sqlite_master
+            WHERE type='table'
+              AND name='collection_release_successor_epochs'
+            """
+        ).fetchone()
+        if successor_table is None:
+            return legacy
+        successors = tuple(
+            dict(row)
+            for row in self.connection.execute(
+                """
+                SELECT epoch_number,start_sequence,release_approval_sha256,
+                       authority_type,authority_identifier,authority_digest,
+                       activated_at,predecessor_epoch_number,
+                       predecessor_authority_identifier,
+                       predecessor_authority_digest,
+                       predecessor_release_approval_sha256
+                FROM collection_release_successor_epochs
+                ORDER BY epoch_number
+                """
+            )
+        )
+        return (*legacy, *successors)
 
     def _validate_collection_contract_snapshot(
         self,

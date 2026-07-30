@@ -171,7 +171,7 @@ class ExperimentMarker(StrictModel):
 
 
 SHA256_PATTERN = r"^[0-9a-f]{64}$"
-RFC008_CLI_VERSION = "rfc008-cli-v9"
+RFC008_CLI_VERSION = "rfc008-cli-v10"
 RFC008_BURN_IN_EVIDENCE_SCHEMA_VERSION = 4
 RFC008_BURN_IN_AUDIT_VERSION = "rfc008-release-preflight-v5"
 RFC008_RUNBOOK_VERSION = "rfc008-operator-runbook-v10"

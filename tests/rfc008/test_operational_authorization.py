@@ -834,7 +834,7 @@ def test_empty_schema_four_migrates_additively_to_sequence_contract() -> None:
         connection.execute(
             "SELECT MAX(version) FROM schema_migrations"
         ).fetchone()[0]
-        == 6
+        == 7
     )
     assert "committed_opportunity_sequence" in columns
     assert "collection_contract_last_identity_guard" in triggers

@@ -626,7 +626,13 @@ def _command_run(args: argparse.Namespace) -> None:
             )
         with (
             CollectionAuthorizationStore(args.authorization) as authorization,
-            RFC008Store(args.ledger, config=config) as store,
+            RFC008Store(
+                args.ledger,
+                config=config,
+                explicit_continuation_migration=bool(
+                    getattr(args, "continuation_approval", None)
+                ),
+            ) as store,
         ):
             contract = store.validate_collection_contract(
                 config=config,

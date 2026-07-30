@@ -24,7 +24,10 @@ from orev3.rfc008.authorization import (
 from orev3.rfc008.config import RFC008Config
 from orev3.rfc008.migrations import APPLICATION_ID, MIGRATIONS, apply_migrations
 from orev3.rfc008.release_validation import validate_active_release
-from orev3.rfc008.release_validation import repository_release_authority
+from orev3.rfc008.release_validation import (
+    repository_approval_history,
+    repository_release_authority,
+)
 from orev3.rfc008.resolver_config import ResolverConfig
 from orev3.rfc008.storage import RFC008Store
 from orev3.rfc008.supervision import writer_lease_status
@@ -34,12 +37,28 @@ CONTINUATION_ACTIVATION_TOKEN = "RFC009_CONTINUATION_ACTIVATION_AUTHORIZED"
 CANONICAL_APPROVAL = (
     "docs/research/rfc009/rfc008_continuation_approval_v1.json"
 )
+SUCCESSOR_APPROVAL_TEMPLATE = (
+    "docs/research/rfc009/rfc008_continuation_approval_epoch_{epoch}.json"
+)
 
 
 def _continuation_identifier(fields: dict[str, object]) -> str:
+    predecessor_fields = (
+        (
+            "continuation_schema_version",
+            "release_epoch_number",
+            "predecessor_epoch_number",
+            "predecessor_authority_identifier",
+            "predecessor_authority_digest",
+            "predecessor_release_approval_sha256",
+        )
+        if "continuation_schema_version" in fields
+        else ()
+    )
     material = {
         key: fields[key]
-        for key in (
+        for key in predecessor_fields
+        + (
             "original_authorization_digest",
             "ledger_instance_identifier",
             "ledger_path_identity",
@@ -59,7 +78,7 @@ def _continuation_identifier(fields: dict[str, object]) -> str:
     )
 
 
-class ContinuationApproval(BaseModel):
+class _ContinuationApprovalBase(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
 
     artifact_type: Literal["rfc009_continuation_approval"]
@@ -78,8 +97,7 @@ class ContinuationApproval(BaseModel):
     approved_implementation_diff_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     semantic_compatibility_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
-    @model_validator(mode="after")
-    def validate_identifier(self):
+    def _validate_common(self) -> None:
         try:
             uuid.UUID(self.continuation_identifier)
         except ValueError as exc:
@@ -95,7 +113,6 @@ class ContinuationApproval(BaseModel):
             created
         ):
             raise ValueError("Continuation timestamp must use UTC")
-        return self
 
     @property
     def digest(self) -> str:
@@ -103,6 +120,72 @@ class ContinuationApproval(BaseModel):
             canonical_json(self.model_dump(mode="json")).encode()
         ).hexdigest()
 
+
+class LegacyContinuationApproval(_ContinuationApprovalBase):
+    @model_validator(mode="after")
+    def validate_identifier(self):
+        self._validate_common()
+        return self
+
+
+class ContinuationApproval(_ContinuationApprovalBase):
+    continuation_schema_version: Literal[2]
+    release_epoch_number: int = Field(ge=2)
+    predecessor_epoch_number: int = Field(ge=1)
+    predecessor_authority_identifier: str
+    predecessor_authority_digest: str = Field(pattern=r"^[0-9a-f]{64}$")
+    predecessor_release_approval_sha256: str = Field(
+        pattern=r"^[0-9a-f]{64}$"
+    )
+
+    @model_validator(mode="after")
+    def validate_identifier_and_predecessor(self):
+        if self.release_epoch_number != self.predecessor_epoch_number + 1:
+            raise ValueError("Continuation release epoch must follow predecessor")
+        if (
+            self.predecessor_authority_identifier
+            == self.continuation_identifier
+        ):
+            raise ValueError("Continuation authority cycle")
+        self._validate_common()
+        return self
+
+
+ContinuationApprovalRecord = LegacyContinuationApproval | ContinuationApproval
+
+
+def canonical_approval_path(epoch_number: int) -> str:
+    if epoch_number == 2:
+        return CANONICAL_APPROVAL
+    if epoch_number < 2:
+        raise ValueError("RFC-009 continuation epoch must be at least 2")
+    return SUCCESSOR_APPROVAL_TEMPLATE.format(epoch=epoch_number)
+
+
+def approval_epoch(approval: ContinuationApprovalRecord) -> int:
+    return (
+        approval.release_epoch_number
+        if isinstance(approval, ContinuationApproval)
+        else 2
+    )
+
+
+def approval_predecessor(
+    approval: ContinuationApprovalRecord,
+) -> tuple[int, str, str, str]:
+    if isinstance(approval, ContinuationApproval):
+        return (
+            approval.predecessor_epoch_number,
+            approval.predecessor_authority_identifier,
+            approval.predecessor_authority_digest,
+            approval.predecessor_release_approval_sha256,
+        )
+    return (
+        1,
+        approval.original_authorization_identifier,
+        approval.original_authorization_digest,
+        "",
+    )
 
 @dataclass(frozen=True)
 class ContinuationPreflight:
@@ -120,7 +203,7 @@ class ContinuationPreflight:
         return asdict(self)
 
 
-def _decode_approval(raw: bytes) -> ContinuationApproval:
+def _decode_approval(raw: bytes) -> ContinuationApprovalRecord:
     def pairs(values: list[tuple[str, Any]]) -> dict[str, Any]:
         result: dict[str, Any] = {}
         for key, value in values:
@@ -130,10 +213,14 @@ def _decode_approval(raw: bytes) -> ContinuationApproval:
         return result
 
     value = json.loads(raw, object_pairs_hook=pairs)
+    if "continuation_schema_version" not in value:
+        return LegacyContinuationApproval.model_validate(value)
     return ContinuationApproval.model_validate(value)
 
 
-def _strict_json(path: str | Path) -> tuple[ContinuationApproval, str]:
+def _strict_json(
+    path: str | Path,
+) -> tuple[ContinuationApprovalRecord, str]:
     raw = Path(path).read_bytes()
     return _decode_approval(raw), hashlib.sha256(raw).hexdigest()
 
@@ -157,6 +244,28 @@ def implementation_diff_sha256(
         capture_output=True,
     ).stdout
     return hashlib.sha256(raw).hexdigest()
+
+
+def _approved_implementation_for_release(
+    root: Path,
+    release_path: Path,
+    release_sha256: str,
+) -> str:
+    raw = repository_approval_history(
+        repository_root=root,
+        release_path=release_path,
+    ).get(release_sha256)
+    if raw is None:
+        raise ValueError("RFC-009 predecessor release approval is unavailable")
+    value = json.loads(raw)
+    implementation = value.get("approved_implementation_commit")
+    if (
+        not isinstance(implementation, str)
+        or len(implementation) != 40
+        or any(character not in "0123456789abcdef" for character in implementation)
+    ):
+        raise ValueError("RFC-009 predecessor implementation is invalid")
+    return implementation
 
 
 def semantic_compatibility_sha256(
@@ -230,9 +339,35 @@ def build_continuation_approval(
     continuity_sha256: str,
     successor_release_approval_sha256: str,
     implementation_diff_sha256_value: str,
+    release_epoch_number: int = 2,
+    predecessor_epoch_number: int = 1,
+    predecessor_authority_identifier: str | None = None,
+    predecessor_authority_digest: str | None = None,
+    predecessor_release_approval_sha256: str | None = None,
 ) -> ContinuationApproval:
     semantic_sha256 = semantic_compatibility_sha256(authorization)
+    predecessor_authority_identifier = (
+        predecessor_authority_identifier
+        or authorization.authorization_identifier
+    )
+    predecessor_authority_digest = (
+        predecessor_authority_digest or authorization.authorization_digest
+    )
+    predecessor_release_approval_sha256 = (
+        predecessor_release_approval_sha256
+        or authorization.active_approval_sha256
+    )
     identity_material = {
+        "continuation_schema_version": 2,
+        "release_epoch_number": release_epoch_number,
+        "predecessor_epoch_number": predecessor_epoch_number,
+        "predecessor_authority_identifier": (
+            predecessor_authority_identifier
+        ),
+        "predecessor_authority_digest": predecessor_authority_digest,
+        "predecessor_release_approval_sha256": (
+            predecessor_release_approval_sha256
+        ),
         "original_authorization_digest": authorization.authorization_digest,
         "ledger_instance_identifier": authorization.ledger_instance_identifier,
         "ledger_path_identity": authorization.canonical_ledger_path_identity,
@@ -253,6 +388,7 @@ def build_continuation_approval(
     return ContinuationApproval(
         artifact_type="rfc009_continuation_approval",
         schema_version=1,
+        continuation_schema_version=2,
         rfc_identifier="RFC-009",
         continuation_identifier=continuation_identifier,
         created_at=created_at,
@@ -274,6 +410,15 @@ def build_continuation_approval(
             implementation_diff_sha256_value
         ),
         semantic_compatibility_sha256=semantic_sha256,
+        release_epoch_number=release_epoch_number,
+        predecessor_epoch_number=predecessor_epoch_number,
+        predecessor_authority_identifier=(
+            predecessor_authority_identifier
+        ),
+        predecessor_authority_digest=predecessor_authority_digest,
+        predecessor_release_approval_sha256=(
+            predecessor_release_approval_sha256
+        ),
     )
 
 
@@ -284,11 +429,17 @@ _CONTINUITY_TABLES = (
     "round_accounting", "counters", "collector_runs",
 )
 
+_CONTINUITY_AUTHORITY_TABLES = (
+    "collection_release_epochs",
+    "collection_release_successor_epochs",
+)
+
 
 def continuity_state_sha256(
     connection: sqlite3.Connection,
     *,
     ledger_path: str | Path,
+    include_release_epochs: bool = False,
 ) -> str:
     connection.row_factory = sqlite3.Row
     contract = dict(
@@ -301,7 +452,17 @@ def continuity_state_sha256(
         "ledger_path_identity": path_identity(ledger_path),
         "contract": contract,
     }
-    for table in _CONTINUITY_TABLES:
+    tables = list(_CONTINUITY_TABLES)
+    if include_release_epochs:
+        tables.extend(
+            table
+            for table in _CONTINUITY_AUTHORITY_TABLES
+            if connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+                (table,),
+            ).fetchone()
+        )
+    for table in tables:
         columns = tuple(
             str(row[1])
             for row in connection.execute(f"PRAGMA table_info({table})")
@@ -346,12 +507,122 @@ def _topology(
     return head, release_commit, implementation
 
 
+def _release_epochs(
+    connection: sqlite3.Connection,
+) -> tuple[dict[str, object], ...]:
+    legacy = tuple(
+        dict(row)
+        for row in connection.execute(
+            """
+            SELECT epoch_number,start_sequence,release_approval_sha256,
+                   authority_type,authority_identifier,authority_digest,
+                   activated_at,NULL AS predecessor_epoch_number,
+                   NULL AS predecessor_authority_identifier,
+                   NULL AS predecessor_authority_digest,
+                   NULL AS predecessor_release_approval_sha256
+            FROM collection_release_epochs
+            ORDER BY epoch_number
+            """
+        )
+    )
+    successor_table = connection.execute(
+        """
+        SELECT 1 FROM sqlite_master
+        WHERE type='table' AND name='collection_release_successor_epochs'
+        """
+    ).fetchone()
+    successors = (
+        tuple(
+            dict(row)
+            for row in connection.execute(
+                """
+                SELECT epoch_number,start_sequence,release_approval_sha256,
+                       authority_type,authority_identifier,authority_digest,
+                       activated_at,predecessor_epoch_number,
+                       predecessor_authority_identifier,
+                       predecessor_authority_digest,
+                       predecessor_release_approval_sha256
+                FROM collection_release_successor_epochs
+                ORDER BY epoch_number
+                """
+            )
+        )
+        if successor_table is not None
+        else ()
+    )
+    return tuple(sorted((*legacy, *successors), key=lambda row: row["epoch_number"]))
+
+
+def validate_release_epoch_chain(
+    epochs: tuple[dict[str, object], ...],
+    *,
+    authorization: CollectionAuthorizationRecord,
+) -> None:
+    if not epochs:
+        raise ValueError("RFC-009 release authority chain is absent")
+    expected_numbers = tuple(range(1, len(epochs) + 1))
+    actual_numbers = tuple(int(epoch["epoch_number"]) for epoch in epochs)
+    if actual_numbers != expected_numbers:
+        raise ValueError("RFC-009 release authority chain has skipped epochs")
+    if (
+        int(epochs[0]["start_sequence"]),
+        str(epochs[0]["authority_type"]),
+        str(epochs[0]["authority_identifier"]),
+        str(epochs[0]["authority_digest"]),
+        str(epochs[0]["release_approval_sha256"]),
+    ) != (
+        1,
+        "rfc008_original",
+        authorization.authorization_identifier,
+        authorization.authorization_digest,
+        authorization.active_approval_sha256,
+    ):
+        raise ValueError("RFC-009 original release authority mismatch")
+    unique_fields = (
+        "release_approval_sha256",
+        "authority_identifier",
+        "authority_digest",
+    )
+    for field in unique_fields:
+        values = [str(epoch[field]) for epoch in epochs]
+        if len(values) != len(set(values)):
+            raise ValueError(f"RFC-009 duplicate release epoch {field}")
+    previous_start = 0
+    for index, epoch in enumerate(epochs):
+        start = int(epoch["start_sequence"])
+        if start <= previous_start:
+            raise ValueError("RFC-009 release epoch boundaries are not ordered")
+        previous_start = start
+        if index == 0:
+            continue
+        previous = epochs[index - 1]
+        if str(epoch["authority_type"]) != "rfc009_continuation":
+            raise ValueError("RFC-009 successor authority type mismatch")
+        if int(epoch["epoch_number"]) >= 3:
+            predecessor = (
+                int(epoch["predecessor_epoch_number"]),
+                str(epoch["predecessor_authority_identifier"]),
+                str(epoch["predecessor_authority_digest"]),
+                str(epoch["predecessor_release_approval_sha256"]),
+            )
+            expected = (
+                int(previous["epoch_number"]),
+                str(previous["authority_identifier"]),
+                str(previous["authority_digest"]),
+                str(previous["release_approval_sha256"]),
+            )
+            if predecessor != expected:
+                raise ValueError(
+                    "RFC-009 successor predecessor authority mismatch"
+                )
+
+
 def _validate_interrupted_ledger(
     *,
     ledger_path: str | Path,
     config: RFC008Config,
     authorization: CollectionAuthorizationRecord,
-) -> tuple[int, str, str]:
+) -> tuple[int, str, str, tuple[dict[str, object], ...]]:
     ledger = Path(ledger_path).resolve()
     lease = writer_lease_status(ledger)
     if lease["active"]:
@@ -454,38 +725,14 @@ def _validate_interrupted_ledger(
             ).fetchone()[0]
         ) != count * 5:
             raise ValueError("RFC-009 arm-decision count mismatch")
-        epoch_table = connection.execute(
-            """
-            SELECT 1 FROM sqlite_master
-            WHERE type='table' AND name='collection_release_epochs'
-            """
-        ).fetchone()
-        if epoch_table is not None:
-            epochs = connection.execute(
-                """
-                SELECT epoch_number,authority_type,authority_identifier,
-                       authority_digest
-                FROM collection_release_epochs ORDER BY epoch_number
-                """
-            ).fetchall()
-            if len(epochs) != 1 or (
-                int(epochs[0]["epoch_number"]),
-                str(epochs[0]["authority_type"]),
-                str(epochs[0]["authority_identifier"]),
-                str(epochs[0]["authority_digest"]),
-            ) != (
-                1,
-                "rfc008_original",
-                authorization.authorization_identifier,
-                authorization.authorization_digest,
-            ):
-                raise ValueError(
-                    "RFC-009 ledger already has continuation authority"
-                )
+        epochs = _release_epochs(connection)
+        validate_release_epoch_chain(epochs, authorization=authorization)
         continuity = continuity_state_sha256(
-            connection, ledger_path=ledger
+            connection,
+            ledger_path=ledger,
+            include_release_epochs=True,
         )
-        return count, str(final["snapshot_id"]), continuity
+        return count, str(final["snapshot_id"]), continuity, epochs
     finally:
         connection.close()
 
@@ -559,10 +806,27 @@ def derive_continuation_approval(
         raise PermissionError(
             "RFC-009 successor release changes frozen experiment semantics"
         )
-    count, last_identity, continuity = _validate_interrupted_ledger(
+    count, last_identity, continuity, epochs = _validate_interrupted_ledger(
         ledger_path=ledger_path,
         config=config,
         authorization=authorization,
+    )
+    predecessor = epochs[-1]
+    predecessor_release = str(predecessor["release_approval_sha256"])
+    if approval.get(
+        "supersedes_release_implementation_approval_sha256"
+    ) != predecessor_release:
+        raise PermissionError(
+            "RFC-009 successor release does not directly supersede "
+            "the active ledger release"
+        )
+    predecessor_epoch = int(predecessor["epoch_number"])
+    predecessor_implementation = (
+        authorization.implementation_commit
+        if predecessor_epoch == 1
+        else _approved_implementation_for_release(
+            root, release_path, predecessor_release
+        )
     )
     committed_at = datetime.fromisoformat(
         _git(
@@ -584,10 +848,15 @@ def derive_continuation_approval(
             release.active_approval_sha256
         ),
         implementation_diff_sha256_value=implementation_diff_sha256(
-            root,
-            authorization.implementation_commit,
-            authority.implementation_commit,
+            root, predecessor_implementation, authority.implementation_commit
         ),
+        release_epoch_number=predecessor_epoch + 1,
+        predecessor_epoch_number=predecessor_epoch,
+        predecessor_authority_identifier=str(
+            predecessor["authority_identifier"]
+        ),
+        predecessor_authority_digest=str(predecessor["authority_digest"]),
+        predecessor_release_approval_sha256=predecessor_release,
     )
 
 
@@ -598,16 +867,18 @@ def issue_continuation_approval(
 ) -> tuple[ContinuationApproval, str]:
     root = Path(kwargs["repository_root"]).resolve()
     output = Path(continuation_approval_path).resolve()
-    expected = (root / CANONICAL_APPROVAL).resolve()
-    if output != expected:
-        raise ValueError(
-            "RFC-009 issuance requires the canonical approval path"
-        )
     if output.exists():
         raise FileExistsError(
             f"RFC-009 continuation approval already exists: {output}"
         )
     approval = derive_continuation_approval(**kwargs)
+    expected = (
+        root / canonical_approval_path(approval_epoch(approval))
+    ).resolve()
+    if output != expected:
+        raise ValueError(
+            "RFC-009 issuance requires the canonical approval path"
+        )
     payload = _approval_bytes(approval)
     if _decode_approval(payload) != approval:
         raise ValueError("RFC-009 generated approval failed validation")
@@ -657,6 +928,15 @@ def preflight_continuation(
             approval.successor_release_approval_sha256
         ):
             reasons.append("successor_release_mismatch")
+        if (
+            isinstance(approval, ContinuationApproval)
+            and release.parsed_active_approval is not None
+            and release.parsed_active_approval.get(
+                "supersedes_release_implementation_approval_sha256"
+            )
+            != approval.predecessor_release_approval_sha256
+        ):
+            reasons.append("successor_release_predecessor_mismatch")
     except Exception as exc:
         reasons.append(f"git_topology_invalid:{type(exc).__name__}")
         implementation = ""
@@ -681,12 +961,25 @@ def preflight_continuation(
         semantic_compatibility_sha256(record)
     ):
         reasons.append("semantic_compatibility_mismatch")
-    if implementation and approval.approved_implementation_diff_sha256 != (
-        implementation_diff_sha256(
-            root, record.implementation_commit, implementation
-        )
-    ):
-        reasons.append("implementation_diff_mismatch")
+    if implementation:
+        try:
+            predecessor_implementation = (
+                record.implementation_commit
+                if approval_epoch(approval) == 2
+                else _approved_implementation_for_release(
+                    root,
+                    release_path,
+                    approval_predecessor(approval)[3],
+                )
+            )
+            if approval.approved_implementation_diff_sha256 != (
+                implementation_diff_sha256(
+                    root, predecessor_implementation, implementation
+                )
+            ):
+                reasons.append("implementation_diff_mismatch")
+        except (ValueError, subprocess.CalledProcessError):
+            reasons.append("predecessor_release_invalid")
 
     uri = f"file:{Path(ledger_path).resolve()}?mode=ro"
     connection = sqlite3.connect(uri, uri=True)
@@ -711,31 +1004,57 @@ def preflight_continuation(
         ):
             reasons.append("starting_identity_mismatch")
         if continuity_state_sha256(
-            connection, ledger_path=ledger_path
+            connection,
+            ledger_path=ledger_path,
+            include_release_epochs=isinstance(
+                approval, ContinuationApproval
+            ),
         ) != approval.continuity_state_sha256:
             reasons.append("continuity_state_mismatch")
-        table = connection.execute(
-            "SELECT 1 FROM sqlite_master WHERE type='table' "
-            "AND name='collection_release_epochs'"
-        ).fetchone()
-        epochs = (
-            tuple(
-                dict(value)
-                for value in connection.execute(
-                    "SELECT * FROM collection_release_epochs ORDER BY epoch_number"
-                )
+        epochs = _release_epochs(connection)
+        try:
+            validate_release_epoch_chain(
+                epochs, authorization=record
             )
-            if table else ()
-        )
+        except ValueError:
+            reasons.append("release_epoch_chain_invalid")
     finally:
         connection.close()
-    activated = (
-        len(epochs) == 2
-        and epochs[-1]["authority_identifier"]
-        == approval.continuation_identifier
-        and epochs[-1]["authority_digest"] == approval.digest
+    target_epoch = approval_epoch(approval)
+    predecessor_epoch, predecessor_identifier, predecessor_digest, (
+        predecessor_release
+    ) = approval_predecessor(approval)
+    if not predecessor_release:
+        predecessor_release = record.active_approval_sha256
+    predecessor_matches = (
+        len(epochs) >= predecessor_epoch
+        and int(epochs[predecessor_epoch - 1]["epoch_number"])
+        == predecessor_epoch
+        and str(epochs[predecessor_epoch - 1]["authority_identifier"])
+        == predecessor_identifier
+        and str(epochs[predecessor_epoch - 1]["authority_digest"])
+        == predecessor_digest
+        and str(epochs[predecessor_epoch - 1]["release_approval_sha256"])
+        == predecessor_release
     )
-    if activated and count >= approval.starting_committed_count:
+    if not predecessor_matches:
+        reasons.append("predecessor_authority_mismatch")
+    target = (
+        epochs[target_epoch - 1]
+        if len(epochs) >= target_epoch
+        else None
+    )
+    activated = (
+        target is not None
+        and int(target["epoch_number"]) == target_epoch
+        and target["release_approval_sha256"]
+        == approval.successor_release_approval_sha256
+        and target["authority_identifier"]
+        == approval.continuation_identifier
+        and target["authority_digest"] == approval.digest
+    )
+    current = activated and len(epochs) == target_epoch
+    if activated and current and count >= approval.starting_committed_count:
         reasons = [
             reason
             for reason in reasons
@@ -746,9 +1065,11 @@ def preflight_continuation(
                 "continuity_state_mismatch",
             }
         ]
-    if len(epochs) > 2:
-        reasons.append("release_epoch_overflow")
-    if require_activated and not activated:
+    if not activated and len(epochs) != predecessor_epoch:
+        reasons.append("release_epoch_boundary_mismatch")
+    if activated and not current:
+        reasons.append("continuation_not_current")
+    if require_activated and not (activated and current):
         reasons.append("continuation_not_activated")
     if activated and not require_activated:
         reasons.append("continuation_already_activated")
@@ -800,19 +1121,51 @@ def activate_continuation(
                         contract.created_at,
                     ),
                 )
-            store.connection.execute(
-                """
-                INSERT INTO collection_release_epochs
-                VALUES (2,?,?,'rfc009_continuation',?,?,?)
-                """,
-                (
-                    approval.starting_committed_count + 1,
-                    approval.successor_release_approval_sha256,
-                    approval.continuation_identifier,
-                    approval.digest,
-                    datetime.now(timezone.utc).isoformat(),
-                ),
+            epoch_number = approval_epoch(approval)
+            values = (
+                epoch_number,
+                approval.starting_committed_count + 1,
+                approval.successor_release_approval_sha256,
+                approval.continuation_identifier,
+                approval.digest,
+                datetime.now(timezone.utc).isoformat(),
             )
+            if epoch_number == 2:
+                store.connection.execute(
+                    """
+                    INSERT INTO collection_release_epochs
+                    VALUES (?, ?,?,'rfc009_continuation',?,?,?)
+                    """,
+                    values,
+                )
+            else:
+                (
+                    predecessor_epoch,
+                    predecessor_identifier,
+                    predecessor_digest,
+                    predecessor_release,
+                ) = approval_predecessor(approval)
+                store.connection.execute(
+                    """
+                    INSERT INTO collection_release_successor_epochs(
+                      epoch_number,start_sequence,release_approval_sha256,
+                      authority_type,authority_identifier,authority_digest,
+                      activated_at,predecessor_epoch_number,
+                      predecessor_authority_identifier,
+                      predecessor_authority_digest,
+                      predecessor_release_approval_sha256
+                    ) VALUES (
+                      ?,?,?,'rfc009_continuation',?,?,?,?,?,?,?
+                    )
+                    """,
+                    (
+                        *values,
+                        predecessor_epoch,
+                        predecessor_identifier,
+                        predecessor_digest,
+                        predecessor_release,
+                    ),
+                )
     result = preflight_continuation(require_activated=True, **kwargs)
     if not result.ready:
         raise RuntimeError("RFC-009 activation did not validate")
