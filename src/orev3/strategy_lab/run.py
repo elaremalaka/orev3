@@ -7,6 +7,7 @@ import hashlib
 import json
 import tempfile
 import time
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
@@ -19,6 +20,10 @@ from orev3.strategy_lab.deployment import (
 )
 from orev3.strategy_lab.experiment import ExecutableExperiment
 from orev3.strategy_lab.registry import ExperimentRegistry
+from orev3.strategy_lab.readiness import (
+    ReplayReadiness,
+    assess_replay_readiness,
+)
 from orev3.strategy_lab.runner import (
     ExperimentConfiguration,
     ExperimentRunner,
@@ -45,7 +50,7 @@ DEPLOYMENTS: dict[str, DeploymentFactory] = {
     "top-ranked": TopRankedDeploymentModel,
 }
 
-IMPLEMENTATION_IDENTIFIER = "rfc010-strategy-lab-cli-v1"
+IMPLEMENTATION_IDENTIFIER = "rfc010-strategy-lab-cli-v2"
 
 
 def parse_args(
@@ -111,9 +116,25 @@ def _execute(
         dataset_path,
         metadata_path,
     )
-    if not inspection.ready_for_replay:
+    readiness = assess_replay_readiness(
+        inspection
+    )
+    if (
+        readiness.readiness
+        is ReplayReadiness.INVALID
+    ):
         raise ValueError(
-            "dataset is not ready for replay"
+            "dataset replay integrity is invalid: "
+            + "; ".join(readiness.reasons)
+        )
+    if (
+        readiness.readiness
+        is ReplayReadiness.PARTIAL
+    ):
+        print(
+            "WARNING: partial replay; only replay-eligible "
+            "rounds with finalized outcomes will be evaluated.",
+            file=sys.stderr,
         )
 
     strategy = STRATEGIES[
@@ -140,6 +161,15 @@ def _execute(
             max_slot_distance=(
                 args.max_slot_distance
             ),
+            replay_readiness=(
+                readiness.readiness.value
+            ),
+            finalized_outcome_count=(
+                readiness.finalized_outcome_count
+            ),
+            skipped_round_count=(
+                readiness.skipped_round_count
+            ),
         )
     )
     experiment_identifier = str(
@@ -160,6 +190,14 @@ def _execute(
             ),
             max_slot_distance=(
                 args.max_slot_distance
+            ),
+            skip_missing_outcomes=(
+                readiness.readiness
+                is ReplayReadiness.PARTIAL
+            ),
+            skip_unavailable_replay_points=(
+                readiness.readiness
+                is ReplayReadiness.PARTIAL
             ),
         )
     )
@@ -204,6 +242,10 @@ def _execute(
     )
     validation = inspection.validation
     metrics = execution.metrics
+    skipped_round_count = (
+        readiness.replay_round_count
+        - metrics.evaluation_count
+    )
 
     print("ORE Miner V3 — Strategy Lab Experiment")
     print("Dataset")
@@ -214,6 +256,22 @@ def _execute(
     print(
         "  replay_rounds: "
         f"{validation.replay_round_count}"
+    )
+    print(
+        "  replay_readiness: "
+        f"{readiness.readiness.value}"
+    )
+    print(
+        "  dataset_integrity: "
+        + (
+            "valid"
+            if readiness.integrity_valid
+            else "invalid"
+        )
+    )
+    print(
+        "  dataset_completeness: "
+        f"{readiness.completeness_percentage:.6f}%"
     )
     print(
         "  date_range: "
@@ -227,8 +285,16 @@ def _execute(
         f"{args.deployment}"
     )
     print(
-        "  runtime_seconds: "
-        f"{runtime_seconds:.6f}"
+        "  evaluated_rounds: "
+        f"{metrics.evaluation_count}"
+    )
+    print(
+        "  skipped_rounds: "
+        f"{skipped_round_count}"
+    )
+    print(
+        "  finalized_outcomes_available: "
+        f"{readiness.finalized_outcome_count}"
     )
     print("Results")
     print(
@@ -240,6 +306,10 @@ def _execute(
     print(
         "  hit_rate: "
         f"{_format_rate(metrics.hit_rate)}"
+    )
+    print(
+        "  runtime_seconds: "
+        f"{runtime_seconds:.6f}"
     )
     print(
         "  experiment_uuid: "

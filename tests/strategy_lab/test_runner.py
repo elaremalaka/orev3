@@ -74,6 +74,18 @@ def test_experiment_configuration_is_immutable_and_validated(
         ExperimentConfiguration(tmp_path, True)  # type: ignore[arg-type]
     with pytest.raises(ValueError):
         ExperimentConfiguration(tmp_path, 1, -1)
+    with pytest.raises(TypeError):
+        ExperimentConfiguration(
+            tmp_path,
+            1,
+            skip_missing_outcomes=1,  # type: ignore[arg-type]
+        )
+    with pytest.raises(TypeError):
+        ExperimentConfiguration(
+            tmp_path,
+            1,
+            skip_unavailable_replay_points=1,  # type: ignore[arg-type]
+        )
 
 
 def test_runner_orchestrates_lifecycle_in_chronological_order(
@@ -208,6 +220,51 @@ def test_missing_outcome_fails_after_decision_and_finalizes(
     assert strategy.outcomes == []
 
 
+def test_partial_mode_skips_missing_outcome_before_strategy_decision(
+    tmp_path: Path,
+) -> None:
+    dataset = _write_dataset(
+        tmp_path,
+        round_ids=(5,),
+        include_outcome=False,
+    )
+    strategy = RecordingStrategy()
+
+    decisions = _runner(
+        dataset,
+        skip_missing_outcomes=True,
+    ).run(strategy)
+
+    assert decisions == ()
+    assert strategy.events == [
+        "initialize",
+        "finalize",
+    ]
+
+
+def test_partial_mode_skips_unavailable_replay_point_deterministically(
+    tmp_path: Path,
+) -> None:
+    dataset = _write_dataset(
+        tmp_path,
+        round_ids=(4,),
+        actual_slots_remaining=8,
+    )
+    strategy = RecordingStrategy()
+
+    decisions = _runner(
+        dataset,
+        max_slot_distance=1,
+        skip_unavailable_replay_points=True,
+    ).run(strategy)
+
+    assert decisions == ()
+    assert strategy.events == [
+        "initialize",
+        "finalize",
+    ]
+
+
 def test_invalid_strategy_decision_fails_closed_and_finalizes(
     tmp_path: Path,
 ) -> None:
@@ -236,12 +293,20 @@ def _runner(
     dataset: Path,
     *,
     max_slot_distance: int | None = 0,
+    skip_missing_outcomes: bool = False,
+    skip_unavailable_replay_points: bool = False,
 ) -> ExperimentRunner:
     return ExperimentRunner(
         ExperimentConfiguration(
             dataset_path=dataset,
             requested_slots_remaining=5,
             max_slot_distance=max_slot_distance,
+            skip_missing_outcomes=(
+                skip_missing_outcomes
+            ),
+            skip_unavailable_replay_points=(
+                skip_unavailable_replay_points
+            ),
         )
     )
 

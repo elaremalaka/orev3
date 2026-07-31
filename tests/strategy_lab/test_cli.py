@@ -71,8 +71,14 @@ def test_cli_executes_complete_pipeline_and_serializes_record(
     )
     assert "dataset_version: cli-fixture-v1" in report
     assert "replay_rounds: 2" in report
+    assert "replay_readiness: COMPLETE" in report
+    assert "dataset_integrity: valid" in report
+    assert "dataset_completeness: 100.000000%" in report
     assert "strategy: least-crowded" in report
     assert "deployment_model: top-ranked" in report
+    assert "evaluated_rounds: 2" in report
+    assert "skipped_rounds: 0" in report
+    assert "finalized_outcomes_available: 2" in report
     assert "evaluations: 2" in report
     assert "hits: 2" in report
     assert "misses: 0" in report
@@ -100,6 +106,74 @@ def test_repeated_cli_execution_has_deterministic_metrics_and_registry_record(
         "random",
         "--deployment",
         "equal-weight",
+        "--max-slot-distance",
+        "0",
+    ]
+
+    main([*arguments, "--output", str(first)])
+    main([*arguments, "--output", str(second)])
+
+    assert first.read_bytes() == second.read_bytes()
+
+
+def test_partial_dataset_executes_only_finalized_rounds_and_reports_skips(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    dataset = _write_managed_dataset(
+        tmp_path,
+        missing_round_ids=(2,),
+    )
+    output = tmp_path / "partial.jsonl"
+
+    main(
+        [
+            "--dataset",
+            str(dataset),
+            "--strategy",
+            "least-crowded",
+            "--deployment",
+            "top-ranked",
+            "--output",
+            str(output),
+            "--max-slot-distance",
+            "0",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    record = json.loads(
+        output.read_text(encoding="utf-8")
+    )
+    assert (
+        "WARNING: partial replay"
+        in captured.err
+    )
+    assert "replay_readiness: PARTIAL" in captured.out
+    assert "dataset_integrity: valid" in captured.out
+    assert "dataset_completeness: 50.000000%" in captured.out
+    assert "evaluated_rounds: 1" in captured.out
+    assert "skipped_rounds: 1" in captured.out
+    assert "finalized_outcomes_available: 1" in captured.out
+    assert record["metrics"]["evaluation_count"] == 1
+
+
+def test_repeated_partial_replay_is_deterministic(
+    tmp_path: Path,
+) -> None:
+    dataset = _write_managed_dataset(
+        tmp_path,
+        missing_round_ids=(2,),
+    )
+    first = tmp_path / "partial-first.jsonl"
+    second = tmp_path / "partial-second.jsonl"
+    arguments = [
+        "--dataset",
+        str(dataset),
+        "--strategy",
+        "least-crowded",
+        "--deployment",
+        "top-ranked",
         "--max-slot-distance",
         "0",
     ]
@@ -159,6 +233,8 @@ def test_cli_fails_closed_on_invalid_dataset(
 
 def _write_managed_dataset(
     root: Path,
+    *,
+    missing_round_ids: tuple[int, ...] = (),
 ) -> Path:
     raw_path = root / "observer.jsonl"
     dataset_path = root / "replay.jsonl"
@@ -223,6 +299,27 @@ def _write_managed_dataset(
                 },
             }
         )
+        outcome = (
+            None
+            if round_id in missing_round_ids
+            else FinalizedRoundOutcome(
+                observed_at_utc=(
+                    observed_at
+                    + timedelta(seconds=1)
+                ),
+                rpc_slot=end_slot + 1,
+                entropy=0,
+                winning_square=0,
+                deployed_lamports=[1] * 25,
+                miner_counts=miner_counts,
+                reward_buckets=[0] * 25,
+                total_vaulted=1,
+                total_winnings=1,
+                total_miners=25,
+                round_motherlode=2,
+                top_miner="winner",
+            )
+        )
         lifecycles.append(
             RoundLifecycleIndexRecord(
                 round_id=round_id,
@@ -262,27 +359,11 @@ def _write_managed_dataset(
                         rpc_slot=rpc_slot,
                     )
                 ],
-                finalized_outcome=(
-                    FinalizedRoundOutcome(
-                        observed_at_utc=(
-                            observed_at
-                            + timedelta(seconds=1)
-                        ),
-                        rpc_slot=end_slot + 1,
-                        entropy=0,
-                        winning_square=0,
-                        deployed_lamports=[1] * 25,
-                        miner_counts=miner_counts,
-                        reward_buckets=[0] * 25,
-                        total_vaulted=1,
-                        total_winnings=1,
-                        total_miners=25,
-                        round_motherlode=2,
-                        top_miner="winner",
-                    )
-                ),
+                finalized_outcome=outcome,
                 finalized_outcome_source=(
                     "observed"
+                    if outcome is not None
+                    else None
                 ),
                 quality=RoundQualityMetadata(
                     coverage_status="complete",
@@ -330,9 +411,13 @@ def _write_managed_dataset(
             snapshot_count=2,
             complete_round_count=2,
             incomplete_round_count=0,
-            missing_outcome_count=0,
+            missing_outcome_count=len(
+                missing_round_ids
+            ),
             integrity_status="valid",
-            ready_for_replay=True,
+            ready_for_replay=(
+                not missing_round_ids
+            ),
             dataset_sha256=dataset_sha256(
                 dataset_path
             ),

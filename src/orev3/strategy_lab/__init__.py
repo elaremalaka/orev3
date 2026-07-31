@@ -22,6 +22,11 @@ from orev3.strategy_lab.interfaces import (
 from orev3.strategy_lab.experiment import ExecutableExperiment, ExperimentExecution
 from orev3.strategy_lab.metrics import ExperimentMetrics, MetricsEngine
 from orev3.strategy_lab.registry import ExperimentRecord, ExperimentRegistry
+from orev3.strategy_lab.readiness import (
+    ReplayReadiness,
+    ReplayReadinessAssessment,
+    assess_replay_readiness,
+)
 from orev3.strategy_lab.runner import ExperimentConfiguration, ExperimentRunner
 from orev3.strategy_lab.strategies import (
     EqualDistributionStrategy,
@@ -52,6 +57,9 @@ __all__ = (
     "RankedCandidate",
     "RankedCandidateSet",
     "RandomStrategy",
+    "ReplayReadiness",
+    "ReplayReadinessAssessment",
     "Strategy",
     "TopRankedDeploymentModel",
+    "assess_replay_readiness",
 )

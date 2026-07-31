@@ -26,6 +26,8 @@ class ExperimentConfiguration:
     dataset_path: Path
     requested_slots_remaining: int
     max_slot_distance: int | None = 3
+    skip_missing_outcomes: bool = False
+    skip_unavailable_replay_points: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "dataset_path", Path(self.dataset_path))
@@ -37,6 +39,21 @@ class ExperimentConfiguration:
             _validate_nonnegative_integer(
                 "max_slot_distance",
                 self.max_slot_distance,
+            )
+        if not isinstance(
+            self.skip_missing_outcomes,
+            bool,
+        ):
+            raise TypeError(
+                "skip_missing_outcomes must be a boolean"
+            )
+        if not isinstance(
+            self.skip_unavailable_replay_points,
+            bool,
+        ):
+            raise TypeError(
+                "skip_unavailable_replay_points "
+                "must be a boolean"
             )
 
 
@@ -60,6 +77,16 @@ class ExperimentRunner:
         strategy.initialize()
         try:
             for lifecycle in lifecycles:
+                outcome = (
+                    lifecycle.finalized_outcome
+                )
+                if (
+                    outcome is None
+                    and self.configuration
+                    .skip_missing_outcomes
+                ):
+                    continue
+
                 selection = select_by_slots_remaining(
                     lifecycle,
                     requested_slots_remaining=(
@@ -68,6 +95,11 @@ class ExperimentRunner:
                     max_slot_distance=self.configuration.max_slot_distance,
                 )
                 if not selection.within_tolerance:
+                    if (
+                        self.configuration
+                        .skip_unavailable_replay_points
+                    ):
+                        continue
                     raise ValueError(
                         "replay selection is outside the configured slot "
                         f"tolerance for round {lifecycle.round_id}"
@@ -83,7 +115,6 @@ class ExperimentRunner:
                     )
                 decisions.append(decision)
 
-                outcome = lifecycle.finalized_outcome
                 if outcome is None:
                     raise ValueError(
                         "finalized historical outcome is required after the "

@@ -207,6 +207,9 @@ def test_public_api_exports_completed_strategy_lab_phases() -> None:
         "RankedCandidate",
         "RankedCandidateSet",
         "RandomStrategy",
+        "ReplayReadiness",
+        "ReplayReadinessAssessment",
         "Strategy",
         "TopRankedDeploymentModel",
+        "assess_replay_readiness",
     )
