@@ -200,6 +200,8 @@ def test_public_api_exports_completed_strategy_lab_phases() -> None:
         "EqualDistributionStrategy",
         "ECONOMIC_SCENARIO_SCHEMA_VERSION",
         "EconomicScenario",
+        "EconomicExperimentMetrics",
+        "EconomicMetricsEngine",
         "EconomicReplayRound",
         "EconomicRoundResult",
         "EconomicRoundStatus",

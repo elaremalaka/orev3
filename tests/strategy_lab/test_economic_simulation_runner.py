@@ -224,7 +224,7 @@ def test_missing_outcome_is_reported_and_terminates_interval() -> None:
     )
 
 
-def test_missing_outcome_provenance_mismatch_is_visible_and_fail_closed() -> None:
+def test_missing_outcome_provenance_mismatch_fails_before_processing() -> None:
     missing = MissingFinalizedOutcome(
         round_identifier=17,
         replay_round_identity="replay-round-17",
@@ -233,19 +233,13 @@ def test_missing_outcome_provenance_mismatch_is_visible_and_fail_closed() -> Non
         dataset_identity="other-dataset",
     )
 
-    result = _runner().run(
-        _experiment((17,)),
-        (EconomicReplayRound(17, 10, 20, missing),),
-        _scenario(),
-        _state(current_round=17, last_settled=16),
-    )[0]
-
-    assert result.status is EconomicRoundStatus.MISSING_OUTCOME
-    assert {value.code for value in result.rejection_reasons} == {
-        SettlementRejectionCode.REPLAY_IDENTITY_MISMATCH,
-        SettlementRejectionCode.DATASET_IDENTITY_MISMATCH,
-        SettlementRejectionCode.MISSING_FINALIZED_OUTCOME,
-    }
+    with pytest.raises(ValueError, match="replay outcome identity"):
+        _runner().run(
+            _experiment((17,)),
+            (EconomicReplayRound(17, 10, 20, missing),),
+            _scenario(),
+            _state(current_round=17, last_settled=16),
+        )
 
 
 def test_later_complete_interval_requires_explicit_initial_state() -> None:
@@ -373,6 +367,20 @@ def test_component_and_provenance_identities_are_preserved() -> None:
         EconomicSimulationRunner("wrong-runner").run(
             _experiment((17,)),
             _replay((17,)),
+            scenario,
+            _state(current_round=17, last_settled=16),
+        )
+
+    mismatched = EconomicReplayRound(
+        17,
+        10,
+        20,
+        replace(_facts(17), replay_identity="other-replay"),
+    )
+    with pytest.raises(ValueError, match="replay outcome identity"):
+        _runner().run(
+            _experiment((17,)),
+            (mismatched,),
             scenario,
             _state(current_round=17, last_settled=16),
         )

@@ -34,6 +34,10 @@ from orev3.strategy_lab.economic_runner import (
     EconomicReplayRound,
     EconomicSimulationRunner,
 )
+from orev3.strategy_lab.economic_metrics import (
+    EconomicExperimentMetrics,
+    EconomicMetricsEngine,
+)
 from orev3.strategy_lab.evaluation import (
     EvaluationObservation,
     EvaluationResult,
@@ -100,6 +104,8 @@ __all__ = (
     "EqualDistributionStrategy",
     "ECONOMIC_SCENARIO_SCHEMA_VERSION",
     "EconomicScenario",
+    "EconomicExperimentMetrics",
+    "EconomicMetricsEngine",
     "EconomicReplayRound",
     "EconomicRoundResult",
     "EconomicRoundStatus",

@@ -278,6 +278,7 @@ class EconomicRoundResult:
     finalized_entropy: int | None
     winning_square_identifier: int | None
     materialized_deployment_lamports: tuple[int, ...]
+    deployment_budget_lamports: int
     historical_deployed_lamports: tuple[int, ...]
     counterfactual_deployed_lamports: tuple[int, ...]
     occupied_square_count: int
@@ -375,6 +376,7 @@ class EconomicRoundResult:
             ("occupied_square_count", self.occupied_square_count),
             ("instruction_count", self.instruction_count),
             ("transaction_count", self.transaction_count),
+            ("deployment_budget_lamports", self.deployment_budget_lamports),
             ("deployed_sol_lamports", self.deployed_sol_lamports),
             ("returned_principal_lamports", self.returned_principal_lamports),
             ("sol_winnings_lamports", self.sol_winnings_lamports),
@@ -515,6 +517,16 @@ class ORESettlementModel:
             raise TypeError("scenario must be an EconomicScenario")
         if not isinstance(participant_state, ParticipantEconomicState):
             raise TypeError("participant_state must be ParticipantEconomicState")
+        if evaluation_result is not None and not isinstance(
+            evaluation_result,
+            EvaluationResult,
+        ):
+            raise TypeError("evaluation_result must be EvaluationResult or None")
+        if finalized_facts is not None and not isinstance(
+            finalized_facts,
+            FinalizedReplayFacts,
+        ):
+            raise TypeError("finalized_facts must be FinalizedReplayFacts or None")
 
         common_reasons = self._binding_reasons(scenario)
         if isinstance(deployment, ProtocolRejection):
@@ -531,6 +543,8 @@ class ORESettlementModel:
                 scenario=scenario,
                 participant_state=participant_state,
                 reasons=tuple(common_reasons),
+                evaluation_result=evaluation_result,
+                finalized_facts=finalized_facts,
             )
 
         plan_identity = protocol_deployment_plan_identity(deployment)
@@ -581,6 +595,8 @@ class ORESettlementModel:
                 reasons=tuple(reasons),
                 deployment=deployment,
                 transaction_result=transaction_result,
+                evaluation_result=evaluation_result,
+                finalized_facts=finalized_facts,
             )
         if not transaction_result.included:
             transaction_reasons = tuple(
@@ -598,16 +614,13 @@ class ORESettlementModel:
                 reasons=transaction_reasons,
                 deployment=deployment,
                 transaction_result=transaction_result,
+                evaluation_result=evaluation_result,
+                finalized_facts=finalized_facts,
             )
         if evaluation_result is None or finalized_facts is None:
             raise TypeError(
                 "included deployment requires evaluation_result and finalized_facts"
             )
-        if not isinstance(evaluation_result, EvaluationResult):
-            raise TypeError("evaluation_result must be EvaluationResult")
-        if not isinstance(finalized_facts, FinalizedReplayFacts):
-            raise TypeError("finalized_facts must be FinalizedReplayFacts")
-
         reconciliation = _reconciliation_reasons(
             deployment,
             evaluation_result,
@@ -943,6 +956,9 @@ def _settled_result(
         finalized_entropy=facts.entropy,
         winning_square_identifier=facts.winning_square_identifier,
         materialized_deployment_lamports=deployment.deployed_lamports,
+        deployment_budget_lamports=(
+            scenario.per_round_deployment_budget_lamports
+        ),
         historical_deployed_lamports=facts.historical_deployed_lamports,
         counterfactual_deployed_lamports=adjusted,
         occupied_square_count=deployment.occupied_square_count,
@@ -1060,6 +1076,9 @@ def _unsettled_result(
             else None
         ),
         materialized_deployment_lamports=vector,
+        deployment_budget_lamports=(
+            scenario.per_round_deployment_budget_lamports
+        ),
         historical_deployed_lamports=(
             finalized_facts.historical_deployed_lamports
             if finalized_facts

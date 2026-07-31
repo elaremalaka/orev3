@@ -119,6 +119,7 @@ class EconomicSimulationRunner:
         ):
             decision, evaluation = pair
             _validate_round_state(state, round_input.round_identifier)
+            _validate_outcome_binding(round_input, scenario)
 
             proposed = materializer.materialize(decision, scenario)
             deployment = constraints.validate(proposed, scenario, state)
@@ -287,6 +288,22 @@ def _validate_round_state(
         raise ValueError("participant state contains an unclosed deployment")
     if state.checkpoint_state is CheckpointState.REQUIRED:
         raise ValueError("participant state requires checkpoint completion")
+
+
+def _validate_outcome_binding(
+    round_input: EconomicReplayRound,
+    scenario: EconomicScenario,
+) -> None:
+    outcome = round_input.outcome
+    if outcome.replay_identity != scenario.replay_identity:
+        raise ValueError("replay outcome identity does not match the scenario")
+    if outcome.dataset_identity != scenario.dataset_identity:
+        raise ValueError("dataset outcome identity does not match the scenario")
+    if isinstance(outcome, FinalizedReplayFacts):
+        if outcome.outcome_source not in scenario.outcome_policy.accepted_sources:
+            raise ValueError("outcome provenance is not accepted by the scenario")
+        if outcome.completeness_status != "complete":
+            raise ValueError("finalized replay facts are not outcome-complete")
 
 
 def _validate_state_identity(state: ParticipantEconomicState) -> None:
