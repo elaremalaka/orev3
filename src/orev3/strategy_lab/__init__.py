@@ -1,4 +1,4 @@
-"""Public interfaces for the RFC-010 Deterministic Strategy Laboratory."""
+"""Public RFC-010 Strategy Lab and RFC-011 economics interfaces."""
 
 from orev3.strategy_lab.deployment import (
     DeploymentAllocation,
@@ -6,6 +6,22 @@ from orev3.strategy_lab.deployment import (
     DeploymentModel,
     EqualWeightDeploymentModel,
     TopRankedDeploymentModel,
+)
+from orev3.strategy_lab.economics import (
+    BudgetModel,
+    CapitalReserveRules,
+    CheckpointAssumptions,
+    CheckpointState,
+    ComponentIdentities,
+    ECONOMIC_SCENARIO_SCHEMA_VERSION,
+    EconomicScenario,
+    FeeAssumptions,
+    LamportApportionmentRule,
+    MissingOutcomePolicy,
+    OutcomePolicy,
+    ParticipantEconomicState,
+    SQUARE_COUNT,
+    TransactionAssumptions,
 )
 from orev3.strategy_lab.evaluation import (
     EvaluationObservation,
@@ -35,12 +51,19 @@ from orev3.strategy_lab.strategies import (
 )
 
 __all__ = (
+    "BudgetModel",
+    "CapitalReserveRules",
+    "CheckpointAssumptions",
+    "CheckpointState",
+    "ComponentIdentities",
     "DecisionContext",
     "DeploymentAllocation",
     "DeploymentDecision",
     "DeploymentModel",
     "EqualWeightDeploymentModel",
     "EqualDistributionStrategy",
+    "ECONOMIC_SCENARIO_SCHEMA_VERSION",
+    "EconomicScenario",
     "EvaluationObservation",
     "EvaluationResult",
     "Evaluator",
@@ -52,14 +75,21 @@ __all__ = (
     "ExperimentRegistry",
     "ExperimentRunner",
     "Explanation",
+    "FeeAssumptions",
+    "LamportApportionmentRule",
     "MetricsEngine",
+    "MissingOutcomePolicy",
     "LeastCrowdedStrategy",
+    "OutcomePolicy",
+    "ParticipantEconomicState",
     "RankedCandidate",
     "RankedCandidateSet",
     "RandomStrategy",
     "ReplayReadiness",
     "ReplayReadinessAssessment",
+    "SQUARE_COUNT",
     "Strategy",
     "TopRankedDeploymentModel",
+    "TransactionAssumptions",
     "assess_replay_readiness",
 )
