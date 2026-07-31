@@ -1,5 +1,12 @@
 """Public RFC-010 Strategy Lab and RFC-011 economics interfaces."""
 
+from orev3.strategy_lab.constraints import (
+    ProtocolConstraintCode,
+    ProtocolConstraintModel,
+    ProtocolConstraintViolation,
+    ProtocolDeploymentPlan,
+    ProtocolRejection,
+)
 from orev3.strategy_lab.deployment import (
     DeploymentAllocation,
     DeploymentDecision,
@@ -84,6 +91,11 @@ __all__ = (
     "LeastCrowdedStrategy",
     "OutcomePolicy",
     "ParticipantEconomicState",
+    "ProtocolConstraintCode",
+    "ProtocolConstraintModel",
+    "ProtocolConstraintViolation",
+    "ProtocolDeploymentPlan",
+    "ProtocolRejection",
     "RankedCandidate",
     "RankedCandidateSet",
     "RandomStrategy",
