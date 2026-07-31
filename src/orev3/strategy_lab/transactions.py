@@ -308,6 +308,8 @@ class TransactionInclusionResult:
     """Immutable modeled inclusion result for one transaction plan."""
 
     transaction_plan_identity: str
+    protocol_deployment_plan_identity: str
+    scenario_identity: str
     inclusion_model_identity: str
     status: TransactionInclusionStatus
     assumed_submission_slots: tuple[int, ...]
@@ -321,6 +323,14 @@ class TransactionInclusionResult:
         _validate_canonical_string(
             "transaction_plan_identity",
             self.transaction_plan_identity,
+        )
+        _validate_canonical_string(
+            "protocol_deployment_plan_identity",
+            self.protocol_deployment_plan_identity,
+        )
+        _validate_canonical_string(
+            "scenario_identity",
+            self.scenario_identity,
         )
         _validate_canonical_string(
             "inclusion_model_identity",
@@ -388,6 +398,10 @@ class TransactionInclusionResult:
                         _violation_payload(value) for value in reasons
                     ],
                     "status": self.status.value,
+                    "protocol_deployment_plan_identity": (
+                        self.protocol_deployment_plan_identity
+                    ),
+                    "scenario_identity": self.scenario_identity,
                     "transaction_plan_identity": self.transaction_plan_identity,
                 },
             ),
@@ -479,6 +493,10 @@ class InclusionModel:
             priority_costs = 0
         return TransactionInclusionResult(
             transaction_plan_identity=plan.transaction_plan_identity,
+            protocol_deployment_plan_identity=(
+                plan.protocol_deployment_plan_identity
+            ),
+            scenario_identity=plan.scenario_identity,
             inclusion_model_identity=self.model_identity,
             status=(
                 TransactionInclusionStatus.INCLUDED
@@ -627,7 +645,7 @@ class TransactionModel:
             )
         return TransactionPlan(
             protocol_deployment_plan_identity=(
-                _protocol_deployment_plan_identity(deployment)
+                protocol_deployment_plan_identity(deployment)
             ),
             scenario_identity=scenario.scenario_identity,
             transaction_model_identity=self.model_identity,
@@ -741,7 +759,7 @@ def _group_transactions(
     )
 
 
-def _protocol_deployment_plan_identity(
+def protocol_deployment_plan_identity(
     deployment: ProtocolDeploymentPlan,
 ) -> str:
     return _identity(
@@ -824,4 +842,5 @@ __all__ = (
     "TransactionPlan",
     "TransactionViolation",
     "TransactionViolationCode",
+    "protocol_deployment_plan_identity",
 )

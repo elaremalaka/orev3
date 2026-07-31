@@ -87,6 +87,10 @@ def test_included_result_preserves_plan_timing_costs_and_identity() -> None:
     assert result.status is TransactionInclusionStatus.INCLUDED
     assert result.included is True
     assert result.transaction_plan_identity == plan.transaction_plan_identity
+    assert result.protocol_deployment_plan_identity == (
+        plan.protocol_deployment_plan_identity
+    )
+    assert result.scenario_identity == scenario.scenario_identity
     assert result.assumed_submission_slots == (101, 102)
     assert result.assumed_inclusion_slots == (103, 104)
     assert result.modeled_transaction_costs_lamports == 20
