@@ -48,6 +48,16 @@ _RESEARCH_SOURCE_PACKAGES = frozenset(
         "strategy_lab",
     }
 )
+_APPROVAL_MANIFEST_RELATIVE_PATH = (
+    "docs/research/rfc008/approval_manifest_v1.json"
+)
+_HASH_BOUND_RUNBOOK_RELATIVE_PATH = (
+    "docs/research/RFC-008-OPERATOR-RUNBOOK.md"
+)
+_PRODUCTION_GOVERNANCE_DOCUMENT_PREFIXES = (
+    "docs/research/rfc008/",
+    "docs/research/rfc009/",
+)
 
 
 def sha256_file(path: str | Path) -> str:
@@ -218,21 +228,70 @@ def _production_reachable_research_packages(root: Path) -> frozenset[str]:
     return frozenset(reachable & _RESEARCH_SOURCE_PACKAGES)
 
 
+def _production_release_document_paths(root: Path) -> frozenset[str]:
+    """Return documents explicitly bound into the production release."""
+
+    manifest_path = root / _APPROVAL_MANIFEST_RELATIVE_PATH
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(
+            "Production approval manifest cannot define document closure"
+        ) from exc
+    if not isinstance(manifest, dict):
+        raise ValueError("Production approval manifest must be an object")
+    artifacts = manifest.get("artifacts")
+    if not isinstance(artifacts, list):
+        raise ValueError(
+            "Production approval manifest artifacts must be a list"
+        )
+
+    manifest_paths: set[str] = set()
+    for artifact in artifacts:
+        if not isinstance(artifact, dict):
+            raise ValueError(
+                "Production approval manifest artifact must be an object"
+            )
+        path = artifact.get("path")
+        if (
+            not isinstance(path, str)
+            or not path
+            or path.startswith("/")
+            or "\\" in path
+            or any(part in {"", ".", ".."} for part in path.split("/"))
+        ):
+            raise ValueError(
+                "Production approval manifest artifact path is invalid"
+            )
+        if path in manifest_paths:
+            raise ValueError(
+                "Production approval manifest artifact path is duplicated"
+            )
+        manifest_paths.add(path)
+    return frozenset(
+        manifest_paths | {_HASH_BOUND_RUNBOOK_RELATIVE_PATH}
+    )
+
+
 def _path_is_outside_production_release_closure(
     path: str,
     *,
     reachable_research_packages: frozenset[str],
+    production_document_paths: frozenset[str],
 ) -> bool:
     if path.startswith("tests/"):
         return True
     if path.startswith("docs/architecture/"):
         return True
-    if path.startswith("docs/rfcs/RFC-010"):
-        return True
-    if path.startswith("docs/research/") and not path.startswith(
-        ("docs/research/rfc008/", "docs/research/rfc009/")
-    ):
-        return True
+    if path.startswith("docs/rfcs/"):
+        return path not in production_document_paths
+    if path.startswith("docs/research/"):
+        return (
+            path not in production_document_paths
+            and not path.startswith(
+                _PRODUCTION_GOVERNANCE_DOCUMENT_PREFIXES
+            )
+        )
     prefix = "src/orev3/"
     if path.startswith(prefix):
         remainder = path[len(prefix) :]
@@ -249,12 +308,14 @@ def _commit_is_outside_production_release_closure(
     commit: str,
     *,
     reachable_research_packages: frozenset[str],
+    production_document_paths: frozenset[str],
 ) -> bool:
     changed = _changed_paths(root, commit)
     return bool(changed) and all(
         _path_is_outside_production_release_closure(
             path,
             reachable_research_packages=reachable_research_packages,
+            production_document_paths=production_document_paths,
         )
         for path in changed
     )
@@ -266,6 +327,7 @@ def _active_approval_commit(
     head: str,
     release_relative: str,
     reachable_research_packages: frozenset[str],
+    production_document_paths: frozenset[str],
 ) -> str:
     commits = (
         _git(root, "log", "-1", "--format=%H", head, "--", release_relative)
@@ -291,6 +353,7 @@ def _active_approval_commit(
             root,
             commit,
             reachable_research_packages=reachable_research_packages,
+            production_document_paths=production_document_paths,
         ):
             raise ValueError(
                 "Production Release Closure change requires an RFC-008 "
@@ -310,6 +373,9 @@ def repository_release_authority(
     reachable_research_packages = _production_reachable_research_packages(
         repository_root
     )
+    production_document_paths = _production_release_document_paths(
+        repository_root
+    )
     committed_at_head = (
         _git(repository_root, "show", f"{head}:{release_relative}")
         == release_path.read_bytes()
@@ -322,12 +388,14 @@ def repository_release_authority(
             head=head,
             release_relative=release_relative,
             reachable_research_packages=reachable_research_packages,
+            production_document_paths=production_document_paths,
         )
     else:
         if _commit_is_outside_production_release_closure(
             repository_root,
             head,
             reachable_research_packages=reachable_research_packages,
+            production_document_paths=production_document_paths,
         ):
             raise ValueError(
                 "Pending RFC-008 approval cannot approve a commit outside "

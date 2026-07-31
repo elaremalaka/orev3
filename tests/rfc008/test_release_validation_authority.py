@@ -278,6 +278,63 @@ def test_research_domain_commit_does_not_require_approval_only_child(
     assert _active(authority_root).valid
 
 
+@pytest.mark.parametrize(
+    "rfc_path",
+    (
+        "docs/rfcs/RFC-010-STRATEGY-LAB.md",
+        "docs/rfcs/RFC-011-ORE-DEPLOYMENT-ECONOMICS.md",
+        "docs/rfcs/RFC-999-FUTURE-RESEARCH.md",
+    ),
+)
+def test_unbound_rfc_documentation_does_not_require_approval_only_child(
+    authority_root: Path,
+    rfc_path: str,
+) -> None:
+    path = _paths(authority_root)
+    approval_before = repository_release_authority(
+        repository_root=authority_root,
+        release_path=path["release"],
+    )
+    documentation_head = _commit_path(
+        authority_root,
+        rfc_path,
+        "# Offline research RFC fixture\n",
+        "Change research RFC documentation",
+    )
+
+    authority_after = repository_release_authority(
+        repository_root=authority_root,
+        release_path=path["release"],
+    )
+
+    assert documentation_head != authority_after.approval_commit
+    assert authority_after == approval_before
+    assert _active(authority_root).valid
+
+
+def test_manifest_bound_rfc_document_requires_approval_only_child(
+    authority_root: Path,
+) -> None:
+    path = _paths(authority_root)
+    _commit_path(
+        authority_root,
+        "docs/rfcs/"
+        "RFC-008-PREREGISTERED-ROUND-LEVEL-STRATEGY-EVALUATION.md",
+        "# Modified production-bound RFC fixture\n",
+        "Change production-bound RFC documentation",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Production Release Closure change requires",
+    ):
+        repository_release_authority(
+            repository_root=authority_root,
+            release_path=path["release"],
+        )
+    assert not _active(authority_root).valid
+
+
 def test_production_release_closure_commit_requires_approval_only_child(
     authority_root: Path,
 ) -> None:
