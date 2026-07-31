@@ -30,6 +30,10 @@ from orev3.strategy_lab.economics import (
     SQUARE_COUNT,
     TransactionAssumptions,
 )
+from orev3.strategy_lab.economic_runner import (
+    EconomicReplayRound,
+    EconomicSimulationRunner,
+)
 from orev3.strategy_lab.evaluation import (
     EvaluationObservation,
     EvaluationResult,
@@ -56,6 +60,7 @@ from orev3.strategy_lab.settlement import (
     EconomicRoundResult,
     EconomicRoundStatus,
     FinalizedReplayFacts,
+    MissingFinalizedOutcome,
     ORERewardTreatment,
     ORESettlementModel,
     SPLIT_REWARD_ADDRESS,
@@ -95,8 +100,10 @@ __all__ = (
     "EqualDistributionStrategy",
     "ECONOMIC_SCENARIO_SCHEMA_VERSION",
     "EconomicScenario",
+    "EconomicReplayRound",
     "EconomicRoundResult",
     "EconomicRoundStatus",
+    "EconomicSimulationRunner",
     "EvaluationObservation",
     "EvaluationResult",
     "Evaluator",
@@ -112,6 +119,7 @@ __all__ = (
     "FinalizedReplayFacts",
     "LamportApportionmentRule",
     "InclusionModel",
+    "MissingFinalizedOutcome",
     "MetricsEngine",
     "MissingOutcomePolicy",
     "LeastCrowdedStrategy",

@@ -35,6 +35,7 @@ class EconomicRoundStatus(str, Enum):
     SETTLED = "settled"
     REJECTED = "rejected"
     UNINCLUDED = "unincluded"
+    MISSING_OUTCOME = "missing_outcome"
 
 
 class ORERewardTreatment(str, Enum):
@@ -73,6 +74,7 @@ class SettlementRejectionCode(str, Enum):
         "counterfactual_reward_state_unavailable"
     )
     AVAILABLE_BALANCE_EXCEEDED = "available_balance_exceeded"
+    MISSING_FINALIZED_OUTCOME = "missing_finalized_outcome"
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,6 +91,33 @@ class SettlementRejection:
         _validate_string("message", self.message)
         if self.source_code is not None:
             _validate_string("source_code", self.source_code)
+
+
+@dataclass(frozen=True, slots=True)
+class MissingFinalizedOutcome:
+    """Immutable provenance for a replay round lacking settlement facts."""
+
+    round_identifier: int
+    replay_round_identity: str
+    decision_identity: str
+    replay_identity: str
+    dataset_identity: str
+    completeness_status: str = "missing"
+
+    def __post_init__(self) -> None:
+        _validate_nonnegative_integer("round_identifier", self.round_identifier)
+        for name, value in (
+            ("replay_round_identity", self.replay_round_identity),
+            ("decision_identity", self.decision_identity),
+            ("replay_identity", self.replay_identity),
+            ("dataset_identity", self.dataset_identity),
+            ("completeness_status", self.completeness_status),
+        ):
+            _validate_string(name, value)
+        if self.completeness_status == "complete":
+            raise ValueError(
+                "a missing finalized outcome cannot be marked complete"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -606,6 +635,151 @@ class ORESettlementModel:
             participant_state,
         )
 
+    def classify_missing_outcome(
+        self,
+        deployment: ProtocolDeploymentPlan | ProtocolRejection,
+        transaction_result: TransactionInclusionResult | None,
+        evaluation_result: EvaluationResult,
+        missing_outcome: MissingFinalizedOutcome,
+        scenario: EconomicScenario,
+        participant_state: ParticipantEconomicState,
+    ) -> EconomicRoundResult:
+        """Report an unresolved round without fabricating settlement."""
+
+        if not isinstance(deployment, (ProtocolDeploymentPlan, ProtocolRejection)):
+            raise TypeError("deployment must be a plan or protocol rejection")
+        if not isinstance(evaluation_result, EvaluationResult):
+            raise TypeError("evaluation_result must be EvaluationResult")
+        if not isinstance(missing_outcome, MissingFinalizedOutcome):
+            raise TypeError("missing_outcome must be MissingFinalizedOutcome")
+        if not isinstance(scenario, EconomicScenario):
+            raise TypeError("scenario must be an EconomicScenario")
+        if not isinstance(participant_state, ParticipantEconomicState):
+            raise TypeError("participant_state must be ParticipantEconomicState")
+
+        reasons = self._binding_reasons(scenario)
+        if missing_outcome.replay_identity != scenario.replay_identity:
+            reasons.append(
+                _reason(
+                    SettlementRejectionCode.REPLAY_IDENTITY_MISMATCH,
+                    "missing outcome replay identity does not match the scenario",
+                )
+            )
+        if missing_outcome.dataset_identity != scenario.dataset_identity:
+            reasons.append(
+                _reason(
+                    SettlementRejectionCode.DATASET_IDENTITY_MISMATCH,
+                    "missing outcome dataset identity does not match the scenario",
+                )
+            )
+        if (
+            evaluation_result.observation.round_identifier
+            != missing_outcome.round_identifier
+            or participant_state.current_round != missing_outcome.round_identifier
+        ):
+            reasons.append(
+                _reason(
+                    SettlementRejectionCode.ROUND_IDENTITY_MISMATCH,
+                    "evaluation, missing outcome, and state must share a round",
+                )
+            )
+
+        plan: ProtocolDeploymentPlan | None = None
+        if isinstance(deployment, ProtocolRejection):
+            if deployment.scenario_identity != scenario.scenario_identity:
+                reasons.append(
+                    _reason(
+                        SettlementRejectionCode.SCENARIO_IDENTITY_MISMATCH,
+                        "protocol rejection scenario does not match",
+                    )
+                )
+            if (
+                deployment.participant_state_identity
+                != participant_state.state_identity
+            ):
+                reasons.append(
+                    _reason(
+                        SettlementRejectionCode.PARTICIPANT_STATE_IDENTITY_MISMATCH,
+                        "protocol rejection participant state does not match",
+                    )
+                )
+            reasons.extend(
+                SettlementRejection(
+                    code=SettlementRejectionCode.PROTOCOL_REJECTION,
+                    message=value.message,
+                    source_code=value.code.value,
+                )
+                for value in deployment.violations
+            )
+        else:
+            plan = deployment
+            if plan.round_identifier != missing_outcome.round_identifier:
+                reasons.append(
+                    _reason(
+                        SettlementRejectionCode.ROUND_IDENTITY_MISMATCH,
+                        "deployment and missing outcome must share a round",
+                    )
+                )
+            if plan.scenario_identity != scenario.scenario_identity:
+                reasons.append(
+                    _reason(
+                        SettlementRejectionCode.SCENARIO_IDENTITY_MISMATCH,
+                        "deployment scenario identity does not match",
+                    )
+                )
+            if plan.participant_state_identity != participant_state.state_identity:
+                reasons.append(
+                    _reason(
+                        SettlementRejectionCode.PARTICIPANT_STATE_IDENTITY_MISMATCH,
+                        "deployment participant state identity does not match",
+                    )
+                )
+            if transaction_result is None:
+                raise TypeError(
+                    "a protocol deployment plan requires transaction_result"
+                )
+            if not isinstance(transaction_result, TransactionInclusionResult):
+                raise TypeError(
+                    "transaction_result must be TransactionInclusionResult"
+                )
+            if (
+                transaction_result.protocol_deployment_plan_identity
+                != protocol_deployment_plan_identity(plan)
+                or transaction_result.scenario_identity
+                != scenario.scenario_identity
+            ):
+                reasons.append(
+                    _reason(
+                        SettlementRejectionCode.TRANSACTION_BINDING_MISMATCH,
+                        "transaction result is not bound to this deployment",
+                    )
+                )
+            reasons.extend(
+                SettlementRejection(
+                    code=SettlementRejectionCode.TRANSACTION_REJECTION,
+                    message=value.message,
+                    source_code=value.code.value,
+                )
+                for value in transaction_result.rejection_reasons
+            )
+
+        reasons.append(
+            _reason(
+                SettlementRejectionCode.MISSING_FINALIZED_OUTCOME,
+                "finalized replay facts are unavailable for this round",
+            )
+        )
+        return _unsettled_result(
+            status=EconomicRoundStatus.MISSING_OUTCOME,
+            scenario=scenario,
+            participant_state=participant_state,
+            reasons=tuple(reasons),
+            deployment=plan,
+            transaction_result=transaction_result,
+            evaluation_result=evaluation_result,
+            missing_outcome=missing_outcome,
+        )
+
     def _binding_reasons(
         self,
         scenario: EconomicScenario,
@@ -815,7 +989,24 @@ def _unsettled_result(
     transaction_result: TransactionInclusionResult | None = None,
     evaluation_result: EvaluationResult | None = None,
     finalized_facts: FinalizedReplayFacts | None = None,
+    missing_outcome: MissingFinalizedOutcome | None = None,
 ) -> EconomicRoundResult:
+    if finalized_facts is not None and missing_outcome is not None:
+        raise ValueError("an outcome cannot be both finalized and missing")
+    replay_round_identity = (
+        finalized_facts.replay_round_identity
+        if finalized_facts
+        else missing_outcome.replay_round_identity
+        if missing_outcome
+        else None
+    )
+    decision_identity = (
+        finalized_facts.decision_identity
+        if finalized_facts
+        else missing_outcome.decision_identity
+        if missing_outcome
+        else None
+    )
     vector = deployment.deployed_lamports if deployment else (0,) * SQUARE_COUNT
     return EconomicRoundResult(
         status=status,
@@ -848,20 +1039,16 @@ def _unsettled_result(
             if finalized_facts
             else None
         ),
-        replay_round_identity=(
-            finalized_facts.replay_round_identity
-            if finalized_facts
-            else None
-        ),
-        decision_identity=(
-            finalized_facts.decision_identity if finalized_facts else None
-        ),
+        replay_round_identity=replay_round_identity,
+        decision_identity=decision_identity,
         outcome_source=(
             finalized_facts.outcome_source if finalized_facts else None
         ),
         completeness_status=(
             finalized_facts.completeness_status
             if finalized_facts
+            else missing_outcome.completeness_status
+            if missing_outcome
             else "not_evaluated"
         ),
         finalized_entropy=(
@@ -1115,6 +1302,7 @@ __all__ = (
     "EconomicRoundResult",
     "EconomicRoundStatus",
     "FinalizedReplayFacts",
+    "MissingFinalizedOutcome",
     "ORERewardTreatment",
     "ORESettlementModel",
     "SPLIT_REWARD_ADDRESS",
