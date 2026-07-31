@@ -37,6 +37,7 @@ from orev3.strategy_lab.interfaces import (
 )
 from orev3.strategy_lab.experiment import ExecutableExperiment, ExperimentExecution
 from orev3.strategy_lab.metrics import ExperimentMetrics, MetricsEngine
+from orev3.strategy_lab.materialization import AllocationMaterializer
 from orev3.strategy_lab.registry import ExperimentRecord, ExperimentRegistry
 from orev3.strategy_lab.readiness import (
     ReplayReadiness,
@@ -51,6 +52,7 @@ from orev3.strategy_lab.strategies import (
 )
 
 __all__ = (
+    "AllocationMaterializer",
     "BudgetModel",
     "CapitalReserveRules",
     "CheckpointAssumptions",

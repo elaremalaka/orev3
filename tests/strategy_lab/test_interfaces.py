@@ -185,6 +185,7 @@ def test_public_api_exports_completed_strategy_lab_phases() -> None:
     import orev3.strategy_lab as strategy_lab
 
     assert strategy_lab.__all__ == (
+        "AllocationMaterializer",
         "BudgetModel",
         "CapitalReserveRules",
         "CheckpointAssumptions",
