@@ -85,6 +85,13 @@ def test_scenario_identity_is_deterministic_and_content_addressed() -> None:
             metrics_engine="rfc011-metrics-v2",
         ),
     )
+    changed_transaction = replace(
+        first,
+        transaction_assumptions=replace(
+            first.transaction_assumptions,
+            deploy_instruction_compute_units=99_999,
+        ),
+    )
 
     identities = {
         first.scenario_identity,
@@ -93,8 +100,9 @@ def test_scenario_identity_is_deterministic_and_content_addressed() -> None:
         changed_fee.scenario_identity,
         changed_replay.scenario_identity,
         changed_component.scenario_identity,
+        changed_transaction.scenario_identity,
     }
-    assert len(identities) == 6
+    assert len(identities) == 7
 
 
 def test_outcome_source_order_canonicalizes_before_identity_generation() -> None:
@@ -202,6 +210,18 @@ def test_fee_checkpoint_and_transaction_assumptions_validate_types() -> None:
         replace(transaction, compute_unit_limit=0)
     with pytest.raises(ValueError, match="nonnegative integer"):
         replace(transaction, inclusion_latency_slots=-1)
+    with pytest.raises(ValueError, match="positive integer"):
+        replace(transaction, deploy_instruction_size_bytes=0)
+    with pytest.raises(ValueError, match="positive integer"):
+        replace(transaction, deploy_instruction_compute_units=0)
+    with pytest.raises(ValueError, match="nonnegative integer"):
+        replace(transaction, transaction_base_size_bytes=-1)
+    with pytest.raises(ValueError, match="nonnegative integer"):
+        replace(transaction, transaction_base_compute_units=-1)
+    with pytest.raises(ValueError, match="positive integer"):
+        replace(transaction, maximum_transactions_per_slot=0)
+    with pytest.raises(ValueError, match="nonnegative integer"):
+        replace(transaction, submission_delay_slots=-1)
 
 
 def test_outcome_policy_fails_closed_on_unknown_or_ambiguous_sources() -> None:
@@ -434,6 +454,12 @@ def _transaction() -> TransactionAssumptions:
         compute_unit_limit=1_400_000,
         maximum_instructions_per_transaction=4,
         inclusion_latency_slots=2,
+        transaction_base_size_bytes=200,
+        deploy_instruction_size_bytes=40,
+        transaction_base_compute_units=10_000,
+        deploy_instruction_compute_units=100_000,
+        maximum_transactions_per_slot=2,
+        submission_delay_slots=1,
     )
 
 

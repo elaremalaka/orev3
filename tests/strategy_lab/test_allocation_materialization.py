@@ -303,6 +303,12 @@ def _scenario(*, budget_lamports: int = 100) -> EconomicScenario:
             compute_unit_limit=200_000,
             maximum_instructions_per_transaction=8,
             inclusion_latency_slots=1,
+            transaction_base_size_bytes=200,
+            deploy_instruction_size_bytes=40,
+            transaction_base_compute_units=10_000,
+            deploy_instruction_compute_units=50_000,
+            maximum_transactions_per_slot=2,
+            submission_delay_slots=0,
         ),
         outcome_policy=OutcomePolicy(
             accepted_sources=("observed", "enriched"),

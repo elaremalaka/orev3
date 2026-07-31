@@ -57,6 +57,17 @@ from orev3.strategy_lab.strategies import (
     LeastCrowdedStrategy,
     RandomStrategy,
 )
+from orev3.strategy_lab.transactions import (
+    DeployInstruction,
+    InclusionModel,
+    PlannedTransaction,
+    TransactionInclusionResult,
+    TransactionInclusionStatus,
+    TransactionModel,
+    TransactionPlan,
+    TransactionViolation,
+    TransactionViolationCode,
+)
 
 __all__ = (
     "AllocationMaterializer",
@@ -66,6 +77,7 @@ __all__ = (
     "CheckpointState",
     "ComponentIdentities",
     "DecisionContext",
+    "DeployInstruction",
     "DeploymentAllocation",
     "DeploymentDecision",
     "DeploymentModel",
@@ -86,11 +98,13 @@ __all__ = (
     "Explanation",
     "FeeAssumptions",
     "LamportApportionmentRule",
+    "InclusionModel",
     "MetricsEngine",
     "MissingOutcomePolicy",
     "LeastCrowdedStrategy",
     "OutcomePolicy",
     "ParticipantEconomicState",
+    "PlannedTransaction",
     "ProtocolConstraintCode",
     "ProtocolConstraintModel",
     "ProtocolConstraintViolation",
@@ -105,5 +119,11 @@ __all__ = (
     "Strategy",
     "TopRankedDeploymentModel",
     "TransactionAssumptions",
+    "TransactionInclusionResult",
+    "TransactionInclusionStatus",
+    "TransactionModel",
+    "TransactionPlan",
+    "TransactionViolation",
+    "TransactionViolationCode",
     "assess_replay_readiness",
 )

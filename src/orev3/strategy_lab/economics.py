@@ -178,6 +178,12 @@ class TransactionAssumptions:
     compute_unit_limit: int
     maximum_instructions_per_transaction: int
     inclusion_latency_slots: int
+    transaction_base_size_bytes: int
+    deploy_instruction_size_bytes: int
+    transaction_base_compute_units: int
+    deploy_instruction_compute_units: int
+    maximum_transactions_per_slot: int
+    submission_delay_slots: int
 
     def __post_init__(self) -> None:
         _validate_positive_integer(
@@ -195,6 +201,30 @@ class TransactionAssumptions:
         _validate_nonnegative_integer(
             "inclusion_latency_slots",
             self.inclusion_latency_slots,
+        )
+        _validate_nonnegative_integer(
+            "transaction_base_size_bytes",
+            self.transaction_base_size_bytes,
+        )
+        _validate_positive_integer(
+            "deploy_instruction_size_bytes",
+            self.deploy_instruction_size_bytes,
+        )
+        _validate_nonnegative_integer(
+            "transaction_base_compute_units",
+            self.transaction_base_compute_units,
+        )
+        _validate_positive_integer(
+            "deploy_instruction_compute_units",
+            self.deploy_instruction_compute_units,
+        )
+        _validate_positive_integer(
+            "maximum_transactions_per_slot",
+            self.maximum_transactions_per_slot,
+        )
+        _validate_nonnegative_integer(
+            "submission_delay_slots",
+            self.submission_delay_slots,
         )
 
 
@@ -560,14 +590,32 @@ class EconomicScenario:
             "schema_version": self.schema_version,
             "transaction_assumptions": {
                 "compute_unit_limit": transaction.compute_unit_limit,
+                "deploy_instruction_compute_units": (
+                    transaction.deploy_instruction_compute_units
+                ),
+                "deploy_instruction_size_bytes": (
+                    transaction.deploy_instruction_size_bytes
+                ),
                 "inclusion_latency_slots": (
                     transaction.inclusion_latency_slots
                 ),
                 "maximum_instructions_per_transaction": (
                     transaction.maximum_instructions_per_transaction
                 ),
+                "maximum_transactions_per_slot": (
+                    transaction.maximum_transactions_per_slot
+                ),
                 "maximum_transaction_size_bytes": (
                     transaction.maximum_transaction_size_bytes
+                ),
+                "submission_delay_slots": (
+                    transaction.submission_delay_slots
+                ),
+                "transaction_base_compute_units": (
+                    transaction.transaction_base_compute_units
+                ),
+                "transaction_base_size_bytes": (
+                    transaction.transaction_base_size_bytes
                 ),
             },
         }
