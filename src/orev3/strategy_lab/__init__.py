@@ -38,6 +38,7 @@ from orev3.strategy_lab.economic_metrics import (
     EconomicExperimentMetrics,
     EconomicMetricsEngine,
 )
+from orev3.strategy_lab.economic_record import EconomicSimulationRecord
 from orev3.strategy_lab.evaluation import (
     EvaluationObservation,
     EvaluationResult,
@@ -109,6 +110,7 @@ __all__ = (
     "EconomicReplayRound",
     "EconomicRoundResult",
     "EconomicRoundStatus",
+    "EconomicSimulationRecord",
     "EconomicSimulationRunner",
     "EvaluationObservation",
     "EvaluationResult",

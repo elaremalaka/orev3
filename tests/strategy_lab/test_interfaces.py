@@ -205,6 +205,7 @@ def test_public_api_exports_completed_strategy_lab_phases() -> None:
         "EconomicReplayRound",
         "EconomicRoundResult",
         "EconomicRoundStatus",
+        "EconomicSimulationRecord",
         "EconomicSimulationRunner",
         "EvaluationObservation",
         "EvaluationResult",
