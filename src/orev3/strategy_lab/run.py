@@ -1,4 +1,4 @@
-"""Command-line execution for deterministic RFC-010 experiments."""
+"""Command-line execution for deterministic RFC-010/RFC-011 experiments."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import tempfile
 import time
 import sys
 from collections.abc import Callable
+from fractions import Fraction
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
 
@@ -19,6 +20,13 @@ from orev3.strategy_lab.deployment import (
     TopRankedDeploymentModel,
 )
 from orev3.strategy_lab.experiment import ExecutableExperiment
+from orev3.strategy_lab.economic_cli import (
+    dataset_and_replay_identities,
+    execute_economic_simulation,
+    load_economic_scenario,
+    write_economic_simulation_record,
+)
+from orev3.strategy_lab.economic_record import EconomicSimulationRecord
 from orev3.strategy_lab.registry import ExperimentRegistry
 from orev3.strategy_lab.readiness import (
     ReplayReadiness,
@@ -50,7 +58,7 @@ DEPLOYMENTS: dict[str, DeploymentFactory] = {
     "top-ranked": TopRankedDeploymentModel,
 }
 
-IMPLEMENTATION_IDENTIFIER = "rfc010-strategy-lab-cli-v2"
+IMPLEMENTATION_IDENTIFIER = "rfc010-strategy-lab-cli-v3"
 
 
 def parse_args(
@@ -90,6 +98,14 @@ def main(
     if args.deployment is None:
         parser.error(
             "--deployment is required to execute an experiment"
+        )
+    if args.economic_scenario is None and (
+        args.deployment_budget_lamports is not None
+        or args.protocol_revision is not None
+    ):
+        parser.error(
+            "--deployment-budget-lamports and --protocol-revision require "
+            "--economic-scenario"
         )
 
     try:
@@ -182,29 +198,41 @@ def _execute(
             ),
         )
     )
-    runner = ExperimentRunner(
-        ExperimentConfiguration(
-            dataset_path=dataset_path,
-            requested_slots_remaining=(
-                args.slots_remaining
-            ),
-            max_slot_distance=(
-                args.max_slot_distance
-            ),
-            skip_missing_outcomes=(
-                readiness.readiness
-                is ReplayReadiness.PARTIAL
-            ),
-            skip_unavailable_replay_points=(
-                readiness.readiness
-                is ReplayReadiness.PARTIAL
-            ),
-        )
+    runner_configuration = ExperimentConfiguration(
+        dataset_path=dataset_path,
+        requested_slots_remaining=(
+            args.slots_remaining
+        ),
+        max_slot_distance=(
+            args.max_slot_distance
+        ),
+        skip_missing_outcomes=(
+            readiness.readiness
+            is ReplayReadiness.PARTIAL
+        ),
+        skip_unavailable_replay_points=(
+            readiness.readiness
+            is ReplayReadiness.PARTIAL
+        ),
     )
+    runner = ExperimentRunner(runner_configuration)
+    economic_scenario = None
+    if args.economic_scenario is not None:
+        dataset_identity, replay_identity = dataset_and_replay_identities(
+            dataset_sha256=inspection.metadata.dataset_sha256,
+            configuration_identifier=configuration_identifier,
+        )
+        economic_scenario = load_economic_scenario(
+            args.economic_scenario.resolve(),
+            dataset_identity=dataset_identity,
+            replay_identity=replay_identity,
+            deployment_budget_lamports=args.deployment_budget_lamports,
+            protocol_revision=args.protocol_revision,
+        )
 
     started_at = time.perf_counter()
 
-    if args.output is None:
+    if args.output is None or economic_scenario is not None:
         with tempfile.TemporaryDirectory(
             prefix="orev3-strategy-lab-"
         ) as temporary_directory:
@@ -236,6 +264,16 @@ def _execute(
                 experiment_identifier
             ),
         )
+
+    economic_record: EconomicSimulationRecord | None = None
+    if economic_scenario is not None:
+        economic_record = execute_economic_simulation(
+            experiment=execution,
+            configuration=runner_configuration,
+            scenario=economic_scenario,
+        )
+        if args.output is not None:
+            write_economic_simulation_record(economic_record, args.output)
 
     runtime_seconds = (
         time.perf_counter() - started_at
@@ -274,17 +312,6 @@ def _execute(
         f"{readiness.completeness_percentage:.6f}%"
     )
     print(
-        "  date_range: "
-        f"{validation.first_observed_at_utc} .. "
-        f"{validation.last_observed_at_utc}"
-    )
-    print("Experiment")
-    print(f"  strategy: {args.strategy}")
-    print(
-        "  deployment_model: "
-        f"{args.deployment}"
-    )
-    print(
         "  evaluated_rounds: "
         f"{metrics.evaluation_count}"
     )
@@ -296,6 +323,26 @@ def _execute(
         "  finalized_outcomes_available: "
         f"{readiness.finalized_outcome_count}"
     )
+    print(
+        "  date_range: "
+        f"{validation.first_observed_at_utc} .. "
+        f"{validation.last_observed_at_utc}"
+    )
+    print("Decision")
+    print(f"  strategy: {args.strategy}")
+    print(
+        "  deployment_model: "
+        f"{args.deployment}"
+    )
+    if economic_scenario is not None:
+        print(
+            "  economic_scenario: "
+            f"{args.economic_scenario}"
+        )
+        print(
+            "  economic_scenario_identity: "
+            f"{economic_scenario.scenario_identity}"
+        )
     print("Results")
     print(
         "  evaluations: "
@@ -315,11 +362,65 @@ def _execute(
         "  experiment_uuid: "
         f"{execution.record.experiment_identifier}"
     )
+    if economic_record is not None:
+        _print_economic_summary(economic_record)
     if args.output is not None:
         print(
             "  output: "
             f"{args.output}"
         )
+
+
+def _print_economic_summary(record: EconomicSimulationRecord) -> None:
+    metrics = record.economic_experiment_metrics
+    terminal = record.terminal_participant_state
+    total_fees = (
+        metrics.total_protocol_fees_lamports
+        + metrics.total_transaction_fees_lamports
+        + metrics.total_priority_fees_lamports
+        + metrics.total_checkpoint_costs_lamports
+    )
+
+    print("Economics")
+    print(f"  settled_rounds: {metrics.settled_round_count}")
+    print(f"  rejected_rounds: {metrics.rejected_round_count}")
+    print(f"  unincluded_rounds: {metrics.unincluded_round_count}")
+    print(
+        "  missing_outcome_rounds: "
+        f"{metrics.missing_outcome_round_count}"
+    )
+    print(
+        "  deployed_sol_lamports: "
+        f"{metrics.total_deployed_lamports}"
+    )
+    print(
+        "  returned_sol_lamports: "
+        f"{metrics.total_returned_sol_lamports}"
+    )
+    print(
+        "  net_sol_change_lamports: "
+        f"{metrics.net_sol_change_lamports}"
+    )
+    print(f"  ore_earned_raw: {metrics.total_ore_earned_raw}")
+    print(f"  total_fees_lamports: {total_fees}")
+    print(
+        "  capture_efficiency: "
+        f"{_format_fraction(metrics.capture_efficiency)}"
+    )
+    print(
+        "  economic_completeness: "
+        f"{_format_fraction(metrics.completeness_percentage)}%"
+    )
+    print("Simulation")
+    print(
+        "  participant_ending_sol_lamports: "
+        f"{terminal.available_sol_lamports + terminal.accrued_sol_lamports}"
+    )
+    print(f"  participant_ending_ore_raw: {terminal.accrued_ore}")
+    print(
+        "  economic_simulation_record_identity: "
+        f"{record.record_identity}"
+    )
 
 
 def _run_experiment(
@@ -378,6 +479,14 @@ def _format_rate(
     )
 
 
+def _format_fraction(value: Fraction | None) -> str:
+    if value is None:
+        return "n/a"
+    if value.denominator == 1:
+        return str(value.numerator)
+    return f"{value.numerator}/{value.denominator}"
+
+
 def _print_registry(
     name: str,
     registry: dict[str, object],
@@ -390,8 +499,8 @@ def _print_registry(
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Execute a deterministic RFC-010 "
-            "Strategy Lab experiment."
+            "Execute a deterministic RFC-010 Strategy Lab experiment, with "
+            "optional RFC-011 economic simulation."
         )
     )
     parser.add_argument(
@@ -415,8 +524,29 @@ def _parser() -> argparse.ArgumentParser:
         "--output",
         type=Path,
         help=(
-            "Optional append-only ExperimentRecord "
-            "JSONL path."
+            "Optional output path. Writes append-only RFC-010 metadata for "
+            "a decision-only run, or one immutable RFC-011 simulation record "
+            "when --economic-scenario is selected."
+        ),
+    )
+    parser.add_argument(
+        "--economic-scenario",
+        type=Path,
+        help="Immutable RFC-011 Economic Scenario template JSON.",
+    )
+    parser.add_argument(
+        "--deployment-budget-lamports",
+        type=int,
+        help=(
+            "Optional immutable per-round deployment-budget override in "
+            "lamports. Requires --economic-scenario."
+        ),
+    )
+    parser.add_argument(
+        "--protocol-revision",
+        help=(
+            "Optional immutable protocol-revision override. Requires "
+            "--economic-scenario."
         ),
     )
     parser.add_argument(
