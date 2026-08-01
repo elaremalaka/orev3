@@ -909,6 +909,21 @@ def _construct_response_identity(
         if protocol_payload is not None:
             raise ValueError("payload cannot exist without a predecessor response")
         return None
+    if (
+        predecessor_response_context_slot is not None
+        and predecessor_response_commitment is not None
+        and response_raw_account_sha256 is None
+        and protocol_payload is None
+    ):
+        _require_nonnegative_integer(
+            "predecessor_response_context_slot",
+            predecessor_response_context_slot,
+        )
+        _require_commitment(
+            "predecessor_response_commitment",
+            predecessor_response_commitment,
+        )
+        return None
     if any(value is None for value in values):
         raise ValueError("predecessor response identity inputs are incomplete")
     assert predecessor_response_context_slot is not None

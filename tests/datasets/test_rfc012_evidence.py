@@ -142,6 +142,33 @@ def _no_response_failure() -> PostTransitionEvidence:
     )
 
 
+def test_account_unavailable_preserves_explicit_response_context() -> None:
+    evidence = PostTransitionEvidence.create(
+        transition_evidence=_transition(),
+        attempt_timestamp=datetime(2026, 8, 1, tzinfo=timezone.utc),
+        predecessor_response_context_slot=901,
+        predecessor_response_commitment="confirmed",
+        response_raw_account_sha256=None,
+        protocol_payload=None,
+        validation_outcome=ValidationOutcome.UNAVAILABLE,
+        failure_category=FailureCategory.ACCOUNT_UNAVAILABLE,
+        terminal_disposition=TerminalDisposition.ACCOUNT_UNAVAILABLE,
+        finalized_state=None,
+        outcome_source=None,
+        capture_mode=None,
+    )
+
+    assert evidence.response_identity is None
+    assert evidence.predecessor_response_context_slot == 901
+    assert evidence.predecessor_response_commitment == "confirmed"
+    assert (
+        PostTransitionEvidence.from_canonical_bytes(
+            evidence.to_canonical_bytes()
+        )
+        == evidence
+    )
+
+
 @pytest.mark.parametrize(
     "factory",
     [
