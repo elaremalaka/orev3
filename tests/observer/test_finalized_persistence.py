@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import logging
 from pathlib import Path
+
+import pytest
 
 from orev3.data.models import (
     BoardState,
@@ -104,6 +107,121 @@ def test_restart_reconstructs_finalized_deduplication(
     )
 
     assert _read_rounds(path) == [41, 42]
+
+
+def test_malformed_historical_json_is_logged_and_skipped(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch,
+) -> None:
+    fsync_calls: list[int] = []
+    monkeypatch.setattr(
+        "orev3.data.writer.os.fsync",
+        fsync_calls.append,
+    )
+    historical_path = (
+        tmp_path / "observer_2026-07-29.jsonl"
+    )
+    historical_path.write_text(
+        '{"round":{"round_id":broken}}\n',
+        encoding="utf-8",
+    )
+    writer = JsonlSnapshotWriter(tmp_path)
+
+    with caplog.at_level(
+        logging.WARNING,
+        logger="orev3.data.writer",
+    ):
+        output_path = writer.write(
+            _snapshot(41, finalized=True)
+        )
+
+    assert output_path != historical_path
+    assert json.loads(
+        output_path.read_text(encoding="utf-8")
+    )["round"]["round_id"] == 41
+    assert (
+        "Skipping malformed historical Observer record "
+        f"at {historical_path}:1"
+        in caplog.text
+    )
+    assert len(fsync_calls) == 2
+
+
+def test_malformed_history_does_not_hide_true_duplicate(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    malformed_path = (
+        tmp_path / "observer_2026-07-31.jsonl"
+    )
+    malformed_path.write_text(
+        "not-json\n",
+        encoding="utf-8",
+    )
+    existing_path = (
+        tmp_path / "observer_2026-07-30.jsonl"
+    )
+    existing_path.write_text(
+        _snapshot(
+            41,
+            finalized=True,
+        ).model_dump_json()
+        + "\n",
+        encoding="utf-8",
+    )
+    original_bytes = existing_path.read_bytes()
+    writer = JsonlSnapshotWriter(tmp_path)
+
+    with caplog.at_level(
+        logging.WARNING,
+        logger="orev3.data.writer",
+    ):
+        output_path = writer.write(
+            _snapshot(
+                41,
+                finalized=True,
+                rpc_slot=999,
+            )
+        )
+
+    assert output_path == existing_path
+    assert existing_path.read_bytes() == original_bytes
+    assert "Skipping malformed historical Observer record" in caplog.text
+
+
+def test_target_round_identity_ambiguity_remains_fail_closed(
+    tmp_path: Path,
+) -> None:
+    ambiguous_path = (
+        tmp_path / "observer_2026-07-29.jsonl"
+    )
+    ambiguous = _snapshot(
+        41,
+        finalized=True,
+    ).model_dump(mode="json")
+    ambiguous["round"]["deployed_lamports"] = [1] * 24
+    ambiguous_path.write_text(
+        json.dumps(ambiguous) + "\n",
+        encoding="utf-8",
+    )
+    writer = JsonlSnapshotWriter(tmp_path)
+
+    for _ in range(2):
+        with pytest.raises(
+            ValueError,
+            match=(
+                "Cannot establish finalized snapshot "
+                "identity"
+            ),
+        ):
+            writer.write(
+                _snapshot(41, finalized=True)
+            )
+
+    assert ambiguous_path.read_text(
+        encoding="utf-8"
+    ).count("\n") == 1
 
 
 def _read_rounds(path: Path) -> list[int]:

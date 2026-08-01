@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,9 @@ from orev3.data.models import (
 
 ZERO_SLOT_HASH = "00" * 32
 UNINITIALIZED_SLOT_HASH = "ff" * 32
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def is_finalized_round(
@@ -139,9 +143,8 @@ class JsonlSnapshotWriter:
         if round_id in self._checked_round_ids:
             return False
 
-        self._checked_round_ids.add(round_id)
-
         if not self.output_dir.exists():
+            self._checked_round_ids.add(round_id)
             return False
 
         for path in sorted(
@@ -163,12 +166,25 @@ class JsonlSnapshotWriter:
 
                     try:
                         payload = json.loads(line)
-                    except Exception as exc:
-                        raise ValueError(
-                            "Cannot establish finalized "
-                            "snapshot identity from "
-                            f"{path}:{line_number}."
-                        ) from exc
+                    except json.JSONDecodeError as exc:
+                        LOGGER.warning(
+                            "Skipping malformed historical "
+                            "Observer record at %s:%d: %s",
+                            path,
+                            line_number,
+                            exc,
+                        )
+                        continue
+
+                    if not isinstance(payload, dict):
+                        LOGGER.warning(
+                            "Skipping malformed historical "
+                            "Observer record at %s:%d: "
+                            "top-level value is not an object",
+                            path,
+                            line_number,
+                        )
+                        continue
 
                     round_payload = payload.get(
                         "round"
@@ -177,11 +193,14 @@ class JsonlSnapshotWriter:
                         round_payload,
                         dict,
                     ):
-                        raise ValueError(
-                            "Cannot establish finalized "
-                            "snapshot identity from "
-                            f"{path}:{line_number}."
+                        LOGGER.warning(
+                            "Skipping malformed historical "
+                            "Observer record at %s:%d: "
+                            "round value is not an object",
+                            path,
+                            line_number,
                         )
+                        continue
 
                     if (
                         round_payload.get(
@@ -212,6 +231,7 @@ class JsonlSnapshotWriter:
                         )
                         return True
 
+        self._checked_round_ids.add(round_id)
         return False
 
     def _path_for_snapshot(
