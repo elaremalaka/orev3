@@ -16,6 +16,14 @@ Version 1.0 marks the completion of the platform itself.
 
 Future development will be driven primarily by experimental findings rather than architectural expansion.
 
+## Official Protocol Compatibility
+
+Version 1.0 is pinned to the official ORE protocol revision:
+
+`3112ab78a64f92892a70d5d4cbd17e1d14b1c2fe`
+
+This revision already includes the official ORE V4 migration. Compatibility is determined by the exact source revision rather than marketing version labels.
+
 ---
 
 # Major Milestones
