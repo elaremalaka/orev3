@@ -78,6 +78,12 @@ def lifecycle_to_index_record(
         finalized_outcome_source=(
             lifecycle.finalized_outcome_source
         ),
+        finalized_outcome_capture_mode=(
+            lifecycle.finalized_outcome_capture_mode
+        ),
+        finalized_outcome_evidence_identities=(
+            lifecycle.finalized_outcome_evidence_identities
+        ),
         quality=lifecycle.quality,
     )
 

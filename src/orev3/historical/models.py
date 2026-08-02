@@ -200,6 +200,18 @@ class RoundLifecycle(BaseModel):
         "enriched",
     ] | None = None
 
+    # RFC-012 capture detail remains outcome-only metadata.  None preserves
+    # compatibility with pre-RFC-012 lifecycles and enriched outcomes.
+    finalized_outcome_capture_mode: Literal[
+        "current_round",
+        "post_transition_predecessor",
+    ] | None = None
+
+    # Immutable evidence identities supporting the selected local outcome.
+    # Current-round outcomes may retain agreeing supplementary RFC-012
+    # identities without exposing them through replay snapshots.
+    finalized_outcome_evidence_identities: tuple[str, ...] = ()
+
     quality: RoundQualityMetadata
 
 
@@ -274,6 +286,13 @@ class RoundLifecycleIndexRecord(BaseModel):
         "observed",
         "enriched",
     ] | None
+
+    finalized_outcome_capture_mode: Literal[
+        "current_round",
+        "post_transition_predecessor",
+    ] | None = None
+
+    finalized_outcome_evidence_identities: tuple[str, ...] = ()
 
     quality: RoundQualityMetadata
 

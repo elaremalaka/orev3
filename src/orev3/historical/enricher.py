@@ -193,6 +193,10 @@ def enrich_round(
                     outcome,
                 "finalized_outcome_source":
                     "enriched",
+                "finalized_outcome_capture_mode":
+                    None,
+                "finalized_outcome_evidence_identities":
+                    (),
             }
         )
 

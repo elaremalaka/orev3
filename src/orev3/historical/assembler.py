@@ -429,6 +429,12 @@ def assemble_rounds(
                     is not None
                     else None
                 ),
+                finalized_outcome_capture_mode=(
+                    "current_round"
+                    if finalized_outcome
+                    is not None
+                    else None
+                ),
                 quality=quality,
             )
         )

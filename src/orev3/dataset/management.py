@@ -15,6 +15,13 @@ from orev3.dataset.metadata import (
     load_metadata,
     write_metadata,
 )
+from orev3.dataset.rfc012_outcomes import (
+    DEFAULT_RFC012_EVIDENCE_PATTERN,
+    DEFAULT_RFC012_EVIDENCE_ROOT,
+    consume_rfc012_outcomes,
+    discover_rfc012_evidence,
+    freeze_decision_snapshots,
+)
 from orev3.dataset.validation import (
     DatasetValidationError,
     DatasetValidationResult,
@@ -45,6 +52,9 @@ class DatasetBuildConfiguration:
     observer_paths: tuple[Path, ...] = ()
     observer_root: Path = DEFAULT_OBSERVER_ROOT
     observer_pattern: str = DEFAULT_OBSERVER_PATTERN
+    rfc012_evidence_paths: tuple[Path, ...] = ()
+    rfc012_evidence_root: Path = DEFAULT_RFC012_EVIDENCE_ROOT
+    rfc012_evidence_pattern: str = DEFAULT_RFC012_EVIDENCE_PATTERN
     enrich_missing_outcomes: bool = True
     enrichment_delay_seconds: float = 0.25
     created_at_utc: datetime = field(
@@ -55,8 +65,17 @@ class DatasetBuildConfiguration:
         object.__setattr__(self, "output_path", Path(self.output_path))
         object.__setattr__(self, "metadata_path", Path(self.metadata_path))
         object.__setattr__(self, "observer_root", Path(self.observer_root))
+        object.__setattr__(
+            self,
+            "rfc012_evidence_root",
+            Path(self.rfc012_evidence_root),
+        )
         paths = tuple(sorted({Path(path) for path in self.observer_paths}))
         object.__setattr__(self, "observer_paths", paths)
+        evidence_paths = tuple(
+            sorted({Path(path) for path in self.rfc012_evidence_paths})
+        )
+        object.__setattr__(self, "rfc012_evidence_paths", evidence_paths)
         if (
             not isinstance(self.dataset_version, str)
             or not self.dataset_version
@@ -68,6 +87,11 @@ class DatasetBuildConfiguration:
             or not self.observer_pattern
         ):
             raise ValueError("observer_pattern must be nonempty")
+        if (
+            not isinstance(self.rfc012_evidence_pattern, str)
+            or not self.rfc012_evidence_pattern
+        ):
+            raise ValueError("rfc012_evidence_pattern must be nonempty")
         if not isinstance(self.enrich_missing_outcomes, bool):
             raise TypeError("enrich_missing_outcomes must be a boolean")
         delay = float(self.enrichment_delay_seconds)
@@ -142,7 +166,24 @@ def build_replay_dataset(
 
     read_result = read_observer_files(source_paths)
     assembled = assemble_rounds(read_result.snapshots)
-    rounds = list(assembled.rounds)
+    rounds = tuple(assembled.rounds)
+
+    # RFC-012 Phase 3 freeze boundary: no evidence path is discovered, opened,
+    # parsed, or consumed until the normal decision snapshot histories have a
+    # byte-stable immutable identity.
+    decision_snapshot_freeze = freeze_decision_snapshots(rounds)
+    evidence_paths = (
+        configuration.rfc012_evidence_paths
+        or discover_rfc012_evidence(
+            configuration.rfc012_evidence_root,
+            pattern=configuration.rfc012_evidence_pattern,
+        )
+    )
+    rounds = consume_rfc012_outcomes(
+        rounds,
+        evidence_paths=evidence_paths,
+        decision_snapshot_freeze=decision_snapshot_freeze,
+    )
     observed_outcome_count = sum(
         lifecycle.finalized_outcome_source == "observed"
         for lifecycle in rounds
@@ -153,14 +194,16 @@ def build_replay_dataset(
     ):
         rpc = SolanaRpcClient()
         try:
-            rounds, _ = enrich_rounds(
+            enriched_rounds, _ = enrich_rounds(
                 rpc=rpc,
-                lifecycles=rounds,
+                lifecycles=list(rounds),
                 limit=None,
                 delay_seconds=configuration.enrichment_delay_seconds,
             )
+            rounds = tuple(enriched_rounds)
         finally:
             rpc.close()
+    decision_snapshot_freeze.verify(rounds)
     records = sorted(
         (lifecycle_to_index_record(lifecycle) for lifecycle in rounds),
         key=lambda record: (record.start_slot, record.round_id),
@@ -266,5 +309,6 @@ __all__ = (
     "DatasetInspection",
     "build_replay_dataset",
     "discover_observer_data",
+    "discover_rfc012_evidence",
     "inspect_replay_dataset",
 )

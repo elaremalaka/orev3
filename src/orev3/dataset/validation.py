@@ -207,7 +207,12 @@ def _read_records(
             try:
                 raw = json.loads(line)
                 record = RoundLifecycleIndexRecord.model_validate(raw)
-            except (json.JSONDecodeError, ValidationError, TypeError, ValueError) as exc:
+            except (
+                json.JSONDecodeError,
+                ValidationError,
+                TypeError,
+                ValueError,
+            ) as exc:
                 issues.append(
                     DatasetValidationIssue(
                         "corrupted_record",
@@ -349,6 +354,45 @@ def _validate_record(
             "finalized_outcome_source_mismatch",
             "outcome and outcome source presence are inconsistent",
         )
+    capture_mode = record.finalized_outcome_capture_mode
+    evidence_identities = record.finalized_outcome_evidence_identities
+    if tuple(sorted(set(evidence_identities))) != evidence_identities or any(
+        not isinstance(identity, str)
+        or len(identity) != 64
+        or any(character not in "0123456789abcdef" for character in identity)
+        for identity in evidence_identities
+    ):
+        issue(
+            "finalized_outcome_evidence_identity",
+            "outcome evidence identities are not canonical",
+        )
+    if outcome is None and (capture_mode is not None or evidence_identities):
+        issue(
+            "finalized_outcome_capture_mismatch",
+            "missing outcome cannot have capture provenance",
+        )
+    elif record.finalized_outcome_source == "enriched" and (
+        capture_mode is not None or evidence_identities
+    ):
+        issue(
+            "finalized_outcome_capture_mismatch",
+            "enriched outcome cannot claim local capture provenance",
+        )
+    elif record.finalized_outcome_source == "observed":
+        if capture_mode not in {
+            None,
+            "current_round",
+            "post_transition_predecessor",
+        }:
+            issue(
+                "finalized_outcome_capture_mismatch",
+                "observed outcome capture mode is invalid",
+            )
+        if capture_mode == "post_transition_predecessor" and not evidence_identities:
+            issue(
+                "finalized_outcome_capture_mismatch",
+                "post-transition outcome lacks an evidence identity",
+            )
     if (
         outcome is not None
         and outcome.entropy is not None
