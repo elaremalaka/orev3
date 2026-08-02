@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
 import time
 import uuid
 
@@ -12,6 +14,7 @@ from orev3.data.writer import (
     CollectorEventWriter,
     JsonlSnapshotWriter,
 )
+from orev3.datasets.rfc012_transition import TransitionProcessResult
 from orev3.observer.accounts import (
     BOARD_ADDRESS,
     TREASURY_ADDRESS,
@@ -22,6 +25,12 @@ from orev3.observer.accounts import (
 )
 from orev3.observer.rpc import (
     SolanaRpcClient,
+)
+from orev3.observer.rfc012_runtime import (
+    ContextualObserverSnapshot,
+    Rfc012RuntimeIntegration,
+    create_supported_rfc012_runtime,
+    observer_snapshot_identity,
 )
 
 
@@ -45,6 +54,18 @@ def collect_snapshot(
     is involved.
     """
 
+    return collect_snapshot_with_context(
+        rpc,
+        session_id,
+    ).snapshot
+
+
+def collect_snapshot_with_context(
+    rpc: SolanaRpcClient,
+    session_id: str,
+) -> ContextualObserverSnapshot:
+    """Read a normal snapshot while retaining its exact Board context."""
+
     observed_at_utc = datetime.now(
         timezone.utc
     )
@@ -53,12 +74,29 @@ def collect_snapshot(
 
     # Board and Treasury are fixed addresses,
     # so fetch them in a single RPC request.
-    accounts = rpc.get_multiple_accounts(
+    commitment = "confirmed"
+    accounts_response = rpc.get_multiple_accounts_with_context(
         [
             str(BOARD_ADDRESS),
             str(TREASURY_ADDRESS),
-        ]
+        ],
+        commitment=commitment,
     )
+    response_context = accounts_response.get("context")
+    accounts = accounts_response.get("value")
+    if (
+        not isinstance(response_context, dict)
+        or isinstance(response_context.get("slot"), bool)
+        or not isinstance(response_context.get("slot"), int)
+        or response_context["slot"] < 0
+    ):
+        raise RuntimeError(
+            "ORE Board response context was malformed."
+        )
+    if not isinstance(accounts, list) or len(accounts) != 2:
+        raise RuntimeError(
+            "ORE Board and Treasury response was malformed."
+        )
 
     board_account = accounts[0]
     treasury_account = accounts[1]
@@ -101,7 +139,7 @@ def collect_snapshot(
         round_account
     )
 
-    return ObserverSnapshot(
+    snapshot = ObserverSnapshot(
         schema_version=2,
         collector_session_id=session_id,
         observed_at_utc=observed_at_utc,
@@ -109,6 +147,76 @@ def collect_snapshot(
         board=board,
         treasury=treasury,
         round=round_state,
+    )
+    return ContextualObserverSnapshot(
+        snapshot=snapshot,
+        snapshot_identity=observer_snapshot_identity(snapshot),
+        provider_identity=rpc.provider_identity,
+        board_response_commitment=commitment,
+        board_response_context_slot=response_context["slot"],
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class CollectionIterationResult:
+    """Immutable output of one supported Observer loop iteration."""
+
+    successor: ContextualObserverSnapshot
+    snapshot_path: Path
+    transition_result: TransitionProcessResult
+
+
+def collect_iteration(
+    *,
+    rpc: SolanaRpcClient,
+    session_id: str,
+    writer: JsonlSnapshotWriter,
+    event_writer: CollectorEventWriter,
+    rfc012_runtime: Rfc012RuntimeIntegration,
+    previous_round_id: int | None,
+) -> CollectionIterationResult:
+    """Persist one normal snapshot before invoking completed RFC-012 logic."""
+
+    successor = collect_snapshot_with_context(
+        rpc,
+        session_id,
+    )
+    snapshot = successor.snapshot
+    round_id = snapshot.board.round_id
+    round_changed = (
+        previous_round_id is not None
+        and round_id != previous_round_id
+    )
+
+    # RFC-012 requires a positive durability boundary before any
+    # supplementary predecessor work.  The normal snapshot remains the one
+    # and only successor record written by this iteration.
+    path = writer.write(
+        snapshot,
+        durable=round_changed,
+    )
+
+    if round_changed:
+        event_writer.write(
+            {
+                "event": "round_transition",
+                "timestamp_utc": utc_now_iso(),
+                "collector_session_id": session_id,
+                "from_round_id": previous_round_id,
+                "to_round_id": round_id,
+                "rpc_slot": snapshot.rpc_slot,
+            }
+        )
+
+    transition_result = rfc012_runtime.process_transition(
+        previous_round_id=previous_round_id,
+        successor=successor,
+        successor_durably_persisted=round_changed,
+    )
+    return CollectionIterationResult(
+        successor=successor,
+        snapshot_path=path,
+        transition_result=transition_result,
     )
 
 
@@ -156,6 +264,11 @@ def main() -> None:
     rpc = SolanaRpcClient()
     writer = JsonlSnapshotWriter()
     event_writer = CollectorEventWriter()
+    rfc012_runtime = create_supported_rfc012_runtime(
+        rpc=rpc,
+        snapshot_writer=writer,
+        event_writer=event_writer,
+    )
 
     previous_round_id: int | None = None
 
@@ -206,40 +319,20 @@ def main() -> None:
             started_at = time.monotonic()
 
             try:
-                snapshot = collect_snapshot(
-                    rpc,
-                    session_id,
+                iteration = collect_iteration(
+                    rpc=rpc,
+                    session_id=session_id,
+                    writer=writer,
+                    event_writer=event_writer,
+                    rfc012_runtime=rfc012_runtime,
+                    previous_round_id=previous_round_id,
                 )
-
-                path = writer.write(
-                    snapshot
-                )
+                snapshot = iteration.successor.snapshot
+                path = iteration.snapshot_path
 
                 round_id = (
                     snapshot.board.round_id
                 )
-
-                if (
-                    previous_round_id is not None
-                    and round_id
-                    != previous_round_id
-                ):
-                    event_writer.write(
-                        {
-                            "event":
-                                "round_transition",
-                            "timestamp_utc":
-                                utc_now_iso(),
-                            "collector_session_id":
-                                session_id,
-                            "from_round_id":
-                                previous_round_id,
-                            "to_round_id":
-                                round_id,
-                            "rpc_slot":
-                                snapshot.rpc_slot,
-                        }
-                    )
 
                 previous_round_id = (
                     round_id

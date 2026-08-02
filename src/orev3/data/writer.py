@@ -262,6 +262,8 @@ class JsonlSnapshotWriter:
     def write(
         self,
         snapshot: ObserverSnapshot,
+        *,
+        durable: bool = False,
     ) -> Path:
         path = self._path_for_snapshot(
             snapshot
@@ -280,7 +282,7 @@ class JsonlSnapshotWriter:
         append_json_line(
             path,
             snapshot.model_dump_json(),
-            durable=finalized,
+            durable=(finalized or durable),
         )
 
         if finalized:
@@ -289,6 +291,11 @@ class JsonlSnapshotWriter:
             )
 
         return path
+
+    def has_finalized_round(self, round_id: int) -> bool:
+        """Expose the existing finalized-identity check read-only."""
+
+        return self._finalized_round_exists(round_id)
 
 
 class CollectorEventWriter:

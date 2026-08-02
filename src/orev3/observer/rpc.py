@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 import os
 import random
 import time
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -48,6 +50,17 @@ class SolanaRpcClient:
         )
 
         self._request_id = 0
+
+    @property
+    def provider_identity(self) -> str:
+        """Return a stable identity without URL paths, queries, or secrets."""
+
+        parsed = urlsplit(self.rpc_url)
+        host = (parsed.hostname or "unknown-host").lower()
+        port = parsed.port
+        authority = f"{parsed.scheme.lower()}:{host}:{port or 'default'}"
+        digest = hashlib.sha256(authority.encode("utf-8")).hexdigest()
+        return f"rpc-host-sha256:{digest}"
 
     def _rpc(
         self,
@@ -207,18 +220,26 @@ class SolanaRpcClient:
         self,
         addresses: list[str],
     ) -> list[dict[str, Any] | None]:
-        result = self._rpc(
+        return self.get_multiple_accounts_with_context(addresses)["value"]
+
+    def get_multiple_accounts_with_context(
+        self,
+        addresses: list[str],
+        *,
+        commitment: str = "confirmed",
+    ) -> dict[str, Any]:
+        """Return account values together with their exact response context."""
+
+        return self._rpc(
             "getMultipleAccounts",
             [
                 addresses,
                 {
                     "encoding": "base64",
-                    "commitment": "confirmed",
+                    "commitment": commitment,
                 },
             ],
         )
-
-        return result["value"]
 
     def get_genesis_hash(self) -> str:
         return str(self._rpc("getGenesisHash"))
@@ -228,15 +249,19 @@ class SolanaRpcClient:
         address: str,
         *,
         commitment: str = "finalized",
+        min_context_slot: int | None = None,
     ) -> dict[str, Any]:
+        configuration: dict[str, Any] = {
+            "encoding": "base64",
+            "commitment": commitment,
+        }
+        if min_context_slot is not None:
+            configuration["minContextSlot"] = min_context_slot
         return self._rpc(
             "getAccountInfo",
             [
                 address,
-                {
-                    "encoding": "base64",
-                    "commitment": commitment,
-                },
+                configuration,
             ],
         )
 
