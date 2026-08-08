@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import hashlib
 import json
 import logging
 import os
 from pathlib import Path
+from threading import Lock
 from typing import Any
 
 from orev3.data.models import (
@@ -18,6 +20,49 @@ UNINITIALIZED_SLOT_HASH = "ff" * 32
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+_WARNED_MALFORMED_HISTORICAL_RECORDS: set[
+    tuple[str, int, str]
+] = set()
+_MALFORMED_WARNING_LOCK = Lock()
+
+
+def _warn_malformed_historical_record_once(
+    *,
+    path: Path,
+    line_number: int,
+    line: str,
+    message: str,
+    message_args: tuple[Any, ...] = (),
+) -> None:
+    """Log one warning per malformed source record and process."""
+
+    record_identity = (
+        str(path.absolute()),
+        line_number,
+        hashlib.sha256(
+            line.encode("utf-8")
+        ).hexdigest(),
+    )
+
+    with _MALFORMED_WARNING_LOCK:
+        if (
+            record_identity
+            in _WARNED_MALFORMED_HISTORICAL_RECORDS
+        ):
+            return
+
+        _WARNED_MALFORMED_HISTORICAL_RECORDS.add(
+            record_identity
+        )
+
+    LOGGER.warning(
+        message,
+        path,
+        line_number,
+        *message_args,
+    )
 
 
 def is_finalized_round(
@@ -167,22 +212,28 @@ class JsonlSnapshotWriter:
                     try:
                         payload = json.loads(line)
                     except json.JSONDecodeError as exc:
-                        LOGGER.warning(
-                            "Skipping malformed historical "
-                            "Observer record at %s:%d: %s",
-                            path,
-                            line_number,
-                            exc,
+                        _warn_malformed_historical_record_once(
+                            path=path,
+                            line_number=line_number,
+                            line=line,
+                            message=(
+                                "Skipping malformed historical "
+                                "Observer record at %s:%d: %s"
+                            ),
+                            message_args=(exc,),
                         )
                         continue
 
                     if not isinstance(payload, dict):
-                        LOGGER.warning(
-                            "Skipping malformed historical "
-                            "Observer record at %s:%d: "
-                            "top-level value is not an object",
-                            path,
-                            line_number,
+                        _warn_malformed_historical_record_once(
+                            path=path,
+                            line_number=line_number,
+                            line=line,
+                            message=(
+                                "Skipping malformed historical "
+                                "Observer record at %s:%d: "
+                                "top-level value is not an object"
+                            ),
                         )
                         continue
 
@@ -193,12 +244,15 @@ class JsonlSnapshotWriter:
                         round_payload,
                         dict,
                     ):
-                        LOGGER.warning(
-                            "Skipping malformed historical "
-                            "Observer record at %s:%d: "
-                            "round value is not an object",
-                            path,
-                            line_number,
+                        _warn_malformed_historical_record_once(
+                            path=path,
+                            line_number=line_number,
+                            line=line,
+                            message=(
+                                "Skipping malformed historical "
+                                "Observer record at %s:%d: "
+                                "round value is not an object"
+                            ),
                         )
                         continue
 

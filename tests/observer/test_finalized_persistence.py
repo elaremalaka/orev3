@@ -3,7 +3,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import json
 import logging
+import os
 from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 
@@ -188,6 +191,118 @@ def test_malformed_history_does_not_hide_true_duplicate(
     assert output_path == existing_path
     assert existing_path.read_bytes() == original_bytes
     assert "Skipping malformed historical Observer record" in caplog.text
+
+
+def test_identical_malformed_record_logs_once_per_process(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    malformed_path = (
+        tmp_path / "observer_2026-07-29.jsonl"
+    )
+    malformed_path.write_text(
+        "not-json\n",
+        encoding="utf-8",
+    )
+
+    with caplog.at_level(
+        logging.WARNING,
+        logger="orev3.data.writer",
+    ):
+        for round_id in (41, 42):
+            JsonlSnapshotWriter(
+                tmp_path
+            ).has_finalized_round(round_id)
+
+    warnings = [
+        record
+        for record in caplog.records
+        if "Skipping malformed historical Observer record"
+        in record.getMessage()
+    ]
+    assert len(warnings) == 1
+
+
+def test_distinct_malformed_records_each_log_once(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    malformed_path = (
+        tmp_path / "observer_2026-07-29.jsonl"
+    )
+    malformed_path.write_text(
+        "not-json-one\nnot-json-two\n",
+        encoding="utf-8",
+    )
+
+    with caplog.at_level(
+        logging.WARNING,
+        logger="orev3.data.writer",
+    ):
+        for round_id in (41, 42):
+            JsonlSnapshotWriter(
+                tmp_path
+            ).has_finalized_round(round_id)
+
+    warnings = [
+        record.getMessage()
+        for record in caplog.records
+        if "Skipping malformed historical Observer record"
+        in record.getMessage()
+    ]
+    assert len(warnings) == 2
+    assert any(
+        f"{malformed_path}:1" in warning
+        for warning in warnings
+    )
+    assert any(
+        f"{malformed_path}:2" in warning
+        for warning in warnings
+    )
+
+
+def test_process_restart_clears_malformed_warning_suppression(
+    tmp_path: Path,
+) -> None:
+    malformed_path = (
+        tmp_path / "observer_2026-07-29.jsonl"
+    )
+    malformed_path.write_text(
+        "not-json\n",
+        encoding="utf-8",
+    )
+    source_root = Path(__file__).parents[2] / "src"
+    script = (
+        "import logging\n"
+        "from orev3.data.writer import JsonlSnapshotWriter\n"
+        "logging.basicConfig(level=logging.WARNING)\n"
+        f"output_dir = {str(tmp_path)!r}\n"
+        "for round_id in (41, 42):\n"
+        "    JsonlSnapshotWriter(output_dir).has_finalized_round(round_id)\n"
+    )
+    environment = {
+        **os.environ,
+        "PYTHONPATH": str(source_root),
+    }
+
+    first_process = subprocess.run(
+        [sys.executable, "-c", script],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+    restarted_process = subprocess.run(
+        [sys.executable, "-c", script],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=environment,
+    )
+
+    warning = "Skipping malformed historical Observer record"
+    assert first_process.stderr.count(warning) == 1
+    assert restarted_process.stderr.count(warning) == 1
 
 
 def test_target_round_identity_ambiguity_remains_fail_closed(
