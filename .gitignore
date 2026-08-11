@@ -6,13 +6,22 @@ __pycache__/
 .env
 .env.*
 
+# -----------------------------------------------------------------------------
+# Generated runtime artifacts
+# -----------------------------------------------------------------------------
+
 data/raw/*
 data/processed/*
+data/derived/
+
+# Local runtime logs
+observer.log
 logs/*
 
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !logs/.gitkeep
+
 # ============================================
 # ORE Miner V3 — Secrets & Sensitive Data
 # ============================================
@@ -51,7 +60,7 @@ id_ed25519.pub
 # Local/private configuration
 config.local.*
 *.local.json
-data/derived/
+
 
 # ============================================
 # Local research datasets and generated artifacts
@@ -81,6 +90,18 @@ data/research/baseline_feature_sets_v*.json
 data/research/economic_simulation_results_v*.json
 data/research/economic_assumptions_v*.json
 data/research/economic_strategy_definitions_v*.json
+
+# Reorganized research analyses remain reproducible generated artifacts.
+data/research/analyses/**
+!data/research/analyses/**/
+!data/research/analyses/**/README.md
+
+# Snapshot documentation is reviewable in Git. Dataset payloads and
+# machine-readable metadata remain local unless a separate artifact-storage
+# workflow is explicitly used.
+data/research/snapshots/**/*
+!data/research/snapshots/**/
+!data/research/snapshots/**/README.md
 
 # Participant economic ledgers contain wallet-sensitive local activity.
 data/ledger/
