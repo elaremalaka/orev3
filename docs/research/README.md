@@ -107,6 +107,37 @@ a separately approved artifact-storage workflow is used.
 
 ---
 
+## Glossary
+
+### Round
+
+One complete ORE game identified by a unique `round_id`.
+
+### Observation
+
+One timestamped collection event during a round.
+
+### Snapshot
+
+The recorded Board, Treasury, Round, and collection metadata captured during a
+single observation.
+
+### Replay Round
+
+One reconstructed round in the replay dataset, consisting of an ordered
+sequence of observations plus a separate finalized outcome.
+
+An archived research dataset may contain many replay rounds and snapshots. A
+checkpoint label attached to an archived dataset describes when the archive was
+created; it does not, by itself, define the temporal extent of the cumulative
+replay data.
+
+Within the research workflow above, **research observations** are documented
+findings. They are distinct from the timestamped Observer observations defined
+in this glossary.
+
+---
+
 ## Current Research Program
 
 Completed

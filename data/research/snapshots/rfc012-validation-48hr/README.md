@@ -8,9 +8,21 @@ RFC-012 Validation
 
 2026-08-11
 
-## Collection Period
+## Archive Checkpoint
 
-Approximately 48 hours
+Archived at the approximately 48-hour RFC-012 collection checkpoint.
+
+## Naming Clarification
+
+The name **RFC-012 Validation — 48 Hour** identifies the RFC-012 collection
+checkpoint at which this dataset was archived. It does **not** mean that the
+replay dataset contains only 48 hours of observations.
+
+The replay dataset is cumulative. It spans the complete retained observation
+history available to the Dataset Builder at the archive checkpoint, including
+observations collected before RFC-012. The archived payload covers referenced
+observations from `2026-07-23T04:47:51.776566Z` through
+`2026-08-11T04:51:11.866288Z`.
 
 ## Source
 
@@ -26,7 +38,7 @@ Post-Version-1.0 RFC-012 implementation
 
 ## Purpose
 
-This snapshot was archived as the first exploratory dataset following the
+This dataset was archived as the first exploratory dataset following the
 completion of RFC-012.
 
 It is intended for discovery sessions and early research.
@@ -41,7 +53,7 @@ It is **not** intended to be the final effectiveness dataset.
 The replay payload is a generated 227,867,665-byte artifact and is not an
 ordinary Git commit candidate. Its machine-readable metadata also remains a
 local research artifact because the payload is intentionally excluded from
-source control. This README records the human-readable snapshot identity and
+source control. This README records the human-readable archive identity and
 workflow. A separately approved artifact-storage workflow is required to
 distribute the payload or its metadata.
 
@@ -71,8 +83,10 @@ The local payload's computed SHA-256 matches the local metadata.
 
 ## Known Issues
 
-- Dataset build performance investigation (RB-001) still open.
-- Long-running full dataset builds under investigation.
+- The RB-001 performance investigation chain is complete. It concluded that
+  the primary optimization path is a candidate architectural RFC; RFC-013 has
+  been recommended but is not authorized.
+- Dataset Builder progress reporting remains tracked separately as RB-002.
 
 ## Intended Research Use
 
@@ -93,7 +107,8 @@ Previous Snapshot
 
 None
 
-This is the first archived RFC-012 research dataset.
+This is the first archived RFC-012 research dataset. It is cumulative through
+the 48-hour RFC-012 collection checkpoint.
 
 Next Snapshot
 
