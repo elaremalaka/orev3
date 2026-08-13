@@ -64,6 +64,7 @@ def make_feature_context(*, square_index: int = 7) -> FeatureContext:
 def make_execution_context(*, square_index: int = 7) -> RQ003ExecutionContext:
     return RQ003ExecutionContext.from_feature_context(
         make_feature_context(square_index=square_index),
+        total_miners=777,
         decision_point_configuration_identity="a" * 64,
     )
 
@@ -105,6 +106,7 @@ def test_execution_context_is_deeply_immutable_and_reconstructable() -> None:
     source = make_feature_context()
     context = RQ003ExecutionContext.from_feature_context(
         source,
+        total_miners=777,
         decision_point_configuration_identity="a" * 64,
     )
 
@@ -114,6 +116,7 @@ def test_execution_context_is_deeply_immutable_and_reconstructable() -> None:
     assert context.miner_counts == tuple(
         square.miner_count for square in source.board.squares
     )
+    assert context.total_miners == 777
     context.validate_identities()
     assert context.reconstruct_context_identity() == context.context_identity
     with pytest.raises(FrozenInstanceError):
@@ -128,6 +131,7 @@ def test_execution_context_rejects_mutable_or_noncanonical_source_values() -> No
             structural_candidate_key=0,
             deployed_lamports=[0] * 25,  # type: ignore[arg-type]
             miner_counts=(0,) * 25,
+            total_miners=0,
             decision_point_configuration_identity="a" * 64,
         )
     with pytest.raises(ValueError, match="unsigned 64-bit"):
@@ -137,6 +141,7 @@ def test_execution_context_rejects_mutable_or_noncanonical_source_values() -> No
             structural_candidate_key=0,
             deployed_lamports=(True,) + (0,) * 24,  # type: ignore[arg-type]
             miner_counts=(0,) * 25,
+            total_miners=0,
             decision_point_configuration_identity="a" * 64,
         )
 
@@ -175,6 +180,8 @@ def test_definition_views_expose_only_the_exact_declared_square_field() -> None:
         _ = deployed.square.miner_count
     with pytest.raises(AttributeError, match="undeclared square field"):
         _ = miner.square.deployed_lamports
+    with pytest.raises(AttributeError, match="undeclared context field"):
+        _ = deployed.round
     for prohibited in (
         "board",
         "square_index",
@@ -482,6 +489,7 @@ context = RQ003ExecutionContext(
     structural_candidate_key=7,
     deployed_lamports=tuple(range(25)),
     miner_counts=tuple(range(100, 125)),
+    total_miners=777,
     decision_point_configuration_identity='a' * 64,
 )
 vector = pipeline.compute(context)

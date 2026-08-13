@@ -32,8 +32,8 @@ from orev3.features.rq003_registry import (
 from orev3.features.types import FeatureValues
 
 
-RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION = 1
-RQ003_PATH_SCHEMA_VERSION = 1
+RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION = 2
+RQ003_PATH_SCHEMA_VERSION = 2
 EXECUTABLE_MEASUREMENT_BINDING_SCHEMA_VERSION = 1
 DEFINITION_CONTEXT_VIEW_SCHEMA_VERSION = 1
 MEASUREMENT_VECTOR_SCHEMA_VERSION = 1
@@ -103,6 +103,17 @@ RQ003_PATH_DESCRIPTORS = (
         history_supported=False,
         canonical_encoding_rule="decimal_integer",
     ),
+    PathDescriptor(
+        path="round.total_miners",
+        selected_property="total_miners",
+        scalar_type="integer",
+        nullable=False,
+        semantic_unit="unique_miner_authority_count",
+        candidate_scope="context_wide_replicated",
+        source_cardinality=1,
+        history_supported=False,
+        canonical_encoding_rule="decimal_integer",
+    ),
 )
 
 
@@ -161,6 +172,7 @@ class RQ003ExecutionContext:
     structural_candidate_key: int
     deployed_lamports: tuple[int, ...]
     miner_counts: tuple[int, ...]
+    total_miners: int
     decision_point_configuration_identity: str
     context_schema_version: int = RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION
     path_schema_identity: str = RQ003_PATH_SCHEMA_IDENTITY
@@ -193,6 +205,7 @@ class RQ003ExecutionContext:
             "deployed_lamports", self.deployed_lamports
         )
         miners = _freeze_u64_vector("miner_counts", self.miner_counts)
+        _require_u64("total_miners", self.total_miners)
         object.__setattr__(self, "deployed_lamports", deployed)
         object.__setattr__(self, "miner_counts", miners)
         object.__setattr__(
@@ -216,6 +229,7 @@ class RQ003ExecutionContext:
         cls,
         context: FeatureContext,
         *,
+        total_miners: int,
         decision_point_configuration_identity: str,
     ) -> RQ003ExecutionContext:
         """Defensively freeze the two approved current measurement sources."""
@@ -237,6 +251,7 @@ class RQ003ExecutionContext:
                 square.deployed_lamports for square in board.squares
             ),
             miner_counts=tuple(square.miner_count for square in board.squares),
+            total_miners=total_miners,
             decision_point_configuration_identity=(
                 decision_point_configuration_identity
             ),
@@ -246,6 +261,7 @@ class RQ003ExecutionContext:
         return {
             "deployed_lamports": self.deployed_lamports,
             "miner_counts": self.miner_counts,
+            "total_miners": self.total_miners,
             "observation_index": self.observation_index,
             "path_schema_identity": self.path_schema_identity,
             "structural_round_key": self.structural_round_key,
@@ -307,6 +323,8 @@ class RQ003ExecutionContext:
             return self.deployed_lamports[self.structural_candidate_key]
         if path == "round.miner_counts":
             return self.miner_counts[self.structural_candidate_key]
+        if path == "round.total_miners":
+            return self.total_miners
         raise ValueError(f"context path has no canonical resolver: {path}")
 
 
@@ -332,6 +350,28 @@ class _RestrictedSquareView:
         return f"RestrictedSquareView(fields={tuple(values)})"
 
 
+class _RestrictedRoundView:
+    __slots__ = ("_values",)
+
+    def __init__(self, values: Mapping[str, int]) -> None:
+        object.__setattr__(self, "_values", MappingProxyType(dict(values)))
+
+    def __setattr__(self, name: str, value: object) -> None:
+        raise AttributeError("DefinitionContextView round is immutable")
+
+    def __getattribute__(self, name: str) -> Any:
+        if name in {"__class__", "__repr__"}:
+            return object.__getattribute__(self, name)
+        values = object.__getattribute__(self, "_values")
+        if name in values:
+            return values[name]
+        raise AttributeError(f"undeclared round field is inaccessible: {name}")
+
+    def __repr__(self) -> str:
+        values = object.__getattribute__(self, "_values")
+        return f"RestrictedRoundView(fields={tuple(values)})"
+
+
 class DefinitionContextView(FeatureContext):
     """FeatureContext-compatible facade exposing only declared paths."""
 
@@ -341,6 +381,7 @@ class DefinitionContextView(FeatureContext):
         "_execution_context_identity",
         "_history_identity",
         "_path_schema_identity",
+        "_restricted_round",
         "_restricted_square",
         "_view_identity",
     )
@@ -362,17 +403,22 @@ class DefinitionContextView(FeatureContext):
         declared_paths = metadata.input_fields
         if not declared_paths:
             raise ValueError("definition must declare at least one input path")
-        selected: dict[str, int] = {}
+        selected_round: dict[str, int] = {}
+        selected_square: dict[str, int] = {}
         for path in declared_paths:
             descriptor = _PATH_BY_NAME.get(path)
             if descriptor is None:
                 raise ValueError(
                     f"undeclared or unsupported context path: {path}"
                 )
+            selected = (
+                selected_square if descriptor.candidate_scope == "per_square"
+                else selected_round
+            )
             selected[descriptor.selected_property] = (
                 execution_context._selected_value(path)
             )
-        if len(selected) != len(declared_paths):
+        if len(selected_square) + len(selected_round) != len(declared_paths):
             raise ValueError("declared paths alias the same selected property")
 
         # Base slots are intentionally populated only for isinstance
@@ -383,7 +429,14 @@ class DefinitionContextView(FeatureContext):
         object.__setattr__(self, "square_history", ())
         object.__setattr__(self, "board_history", ())
         object.__setattr__(
-            self, "_restricted_square", _RestrictedSquareView(selected)
+            self,
+            "_restricted_square",
+            _RestrictedSquareView(selected_square),
+        )
+        object.__setattr__(
+            self,
+            "_restricted_round",
+            _RestrictedRoundView(selected_round),
         )
         object.__setattr__(self, "_declared_paths", declared_paths)
         object.__setattr__(
@@ -416,7 +469,19 @@ class DefinitionContextView(FeatureContext):
         }:
             return object.__getattribute__(self, name)
         if name == "square":
-            return object.__getattribute__(self, "_restricted_square")
+            view = object.__getattribute__(self, "_restricted_square")
+            if not object.__getattribute__(view, "_values"):
+                raise AttributeError(
+                    "undeclared context field is inaccessible: square"
+                )
+            return view
+        if name == "round":
+            view = object.__getattribute__(self, "_restricted_round")
+            if not object.__getattribute__(view, "_values"):
+                raise AttributeError(
+                    "undeclared context field is inaccessible: round"
+                )
+            return view
         raise AttributeError(f"undeclared context field is inaccessible: {name}")
 
     def __repr__(self) -> str:
@@ -968,6 +1033,16 @@ def _freeze_u64_vector(name: str, values: object) -> tuple[int, ...]:
         ):
             raise ValueError(f"{name} values must be unsigned 64-bit integers")
     return values
+
+
+def _require_u64(name: str, value: object) -> None:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int)
+        or value < 0
+        or value > (1 << 64) - 1
+    ):
+        raise ValueError(f"{name} must be an unsigned 64-bit integer")
 
 
 def _require_schema(name: str, value: object, expected: int) -> None:
