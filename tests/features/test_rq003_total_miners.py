@@ -46,18 +46,26 @@ from orev3.features import (
     validate_total_miners_definition,
 )
 from orev3.features.rq003_execution import DefinitionContextView
-from orev3.features.context import FeatureContext
-from orev3.features.types import BoardSnapshot, SquareSnapshot
+from orev3.strategy_lab.interfaces import DecisionContext
 
 
 def make_execution_context(total_miners: int) -> RQ003ExecutionContext:
     return RQ003ExecutionContext(
-        structural_round_key=1234,
+        decision_context=DecisionContext(
+            information={
+                "round_id": 1234,
+                "round": {
+                    "round_id": 1234,
+                    "deployed_lamports": tuple(
+                        (index + 1) * 1_000 for index in range(25)
+                    ),
+                    "miner_counts": tuple(index + 1 for index in range(25)),
+                    "total_miners": total_miners,
+                },
+            }
+        ),
         observation_index=3,
         structural_candidate_key=7,
-        deployed_lamports=tuple((index + 1) * 1_000 for index in range(25)),
-        miner_counts=tuple(index + 1 for index in range(25)),
-        total_miners=total_miners,
         decision_point_configuration_identity="a" * 64,
     )
 
@@ -137,20 +145,23 @@ def test_computation_does_not_reconstruct_from_per_square_counts() -> None:
     }
 
 
-def test_context_builder_requires_the_independent_published_value() -> None:
-    squares = tuple(
-        SquareSnapshot(0, index + 1, index, 0, 0)
-        for index in range(25)
-    )
-    legacy_context = FeatureContext(
-        board=BoardSnapshot(1, 0, 1, 10, squares),
-        square_index=4,
-        square_history=(squares[4],),
+def test_context_builder_uses_one_frozen_participant_state_boundary() -> None:
+    source = DecisionContext(
+        information={
+            "round_id": 1,
+            "round": {
+                "round_id": 1,
+                "deployed_lamports": tuple(range(25)),
+                "miner_counts": tuple(index + 1 for index in range(25)),
+                "total_miners": 7,
+            },
+        }
     )
 
-    context = RQ003ExecutionContext.from_feature_context(
-        legacy_context,
-        total_miners=7,
+    context = RQ003ExecutionContext.from_decision_context(
+        source,
+        observation_index=0,
+        structural_candidate_key=4,
         decision_point_configuration_identity="a" * 64,
     )
 
@@ -378,12 +389,17 @@ pipeline = RQ003MeasurementPipeline(
     ),),
 )
 context = RQ003ExecutionContext(
-    structural_round_key=1,
+    decision_context=DecisionContext(information={
+        'round_id': 1,
+        'round': {
+            'round_id': 1,
+            'deployed_lamports': tuple(range(25)),
+            'miner_counts': tuple(range(25)),
+            'total_miners': 777,
+        },
+    }),
     observation_index=0,
     structural_candidate_key=4,
-    deployed_lamports=tuple(range(25)),
-    miner_counts=tuple(range(25)),
-    total_miners=777,
     decision_point_configuration_identity='a' * 64,
 )
 vector = pipeline.compute(context)
@@ -406,7 +422,8 @@ print(json.dumps({
     script = script.replace(
         "import json\n",
         "import json\n"
-        "from orev3.features.rq003_execution import DefinitionContextView\n",
+        "from orev3.features.rq003_execution import DefinitionContextView\n"
+        "from orev3.strategy_lab.interfaces import DecisionContext\n",
     )
 
     outputs = []

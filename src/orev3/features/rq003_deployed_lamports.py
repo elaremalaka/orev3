@@ -7,7 +7,6 @@ baseline, ranking procedure, or protocol-revision signal.
 
 from __future__ import annotations
 
-import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -23,11 +22,16 @@ from orev3.features.rq003_contracts import (
     FeatureHistoryPolicy,
     FeatureMetadata,
     FeatureOutputField,
-    canonical_decode,
     canonical_encode,
     reconstruct_executable_binding_identity,
 )
 from orev3.features.rq003_registry import FeatureDefinition
+from orev3.features.rq003_measurement_support import (
+    domain_identity as _identity,
+    reconstruct_single_u64_output,
+    require_u64,
+    validate_dependency_items,
+)
 from orev3.features.types import FeatureValues
 
 
@@ -41,7 +45,6 @@ DEPLOYED_LAMPORTS_PROTOCOL_SOURCE_REVISION = (
     "3112ab78a64f92892a70d5d4cbd17e1d14b1c2fe"
 )
 
-_U64_MAX = (1 << 64) - 1
 _DEPENDENCY_IDENTITY_DOMAIN = "rq003-deployed-lamports-dependencies-v1"
 _IMPLEMENTATION_IDENTITY_DOMAIN = (
     "rq003-deployed-lamports-implementation-v1"
@@ -108,40 +111,6 @@ _AUTHORITY_REFERENCES = (
 )
 
 
-def _identity(domain: str, material: object) -> str:
-    return hashlib.sha256(
-        canonical_encode({"domain": domain, "material": material})
-    ).hexdigest()
-
-
-def _validate_dependency_items(
-    name: str,
-    items: object,
-) -> None:
-    if not isinstance(items, tuple):
-        raise TypeError(f"{name} must be an immutable tuple")
-    keys: list[str] = []
-    for item in items:
-        if (
-            not isinstance(item, tuple)
-            or len(item) != 2
-            or not isinstance(item[0], str)
-            or not item[0]
-            or not isinstance(item[1], (str, int))
-            or isinstance(item[1], bool)
-        ):
-            raise TypeError(
-                f"{name} must contain canonical key/value tuples"
-            )
-        if not isinstance(item[1], int) and (
-            not item[1] or item[1].strip() != item[1]
-        ):
-            raise ValueError(f"{name} contains a noncanonical value")
-        keys.append(item[0])
-    if len(keys) != len(set(keys)):
-        raise ValueError(f"{name} keys must be unique")
-
-
 def reconstruct_deployed_lamports_dependency_identity(
     protocol_dependencies: tuple[
         tuple[str, str | int], ...
@@ -152,11 +121,11 @@ def reconstruct_deployed_lamports_dependency_identity(
 ) -> str:
     """Reconstruct the canonical protocol/revision dependency identity."""
 
-    _validate_dependency_items(
+    validate_dependency_items(
         "protocol_dependencies",
         protocol_dependencies,
     )
-    _validate_dependency_items(
+    validate_dependency_items(
         "revision_dependencies",
         revision_dependencies,
     )
@@ -179,7 +148,7 @@ def reconstruct_deployed_lamports_implementation_identity(
 ) -> str:
     """Reconstruct the canonical reviewed-implementation identity."""
 
-    _validate_dependency_items(
+    validate_dependency_items(
         "implementation_declaration",
         implementation_declaration,
     )
@@ -313,17 +282,11 @@ class DeployedLamportsMeasurement(Feature):
     def reconstruct_canonical_output(raw: bytes) -> Mapping[str, int]:
         """Validate and reconstruct one canonical measurement output."""
 
-        decoded = canonical_decode(raw)
-        if not isinstance(decoded, dict):
-            raise ValueError("deployed-lamports output must be a mapping")
-        if set(decoded) != {DEPLOYED_LAMPORTS_OUTPUT_NAME}:
-            raise ValueError(
-                "deployed-lamports output must contain exactly its declared "
-                "field"
-            )
-        value = decoded[DEPLOYED_LAMPORTS_OUTPUT_NAME]
-        _validate_deployed_lamports_value(value)
-        return MappingProxyType({DEPLOYED_LAMPORTS_OUTPUT_NAME: value})
+        return reconstruct_single_u64_output(
+            raw,
+            output_name=DEPLOYED_LAMPORTS_OUTPUT_NAME,
+            artifact_name="deployed-lamports",
+        )
 
 
 DEPLOYED_LAMPORTS_MEASUREMENT = DeployedLamportsMeasurement()
@@ -384,15 +347,7 @@ def validate_deployed_lamports_definition() -> None:
 
 
 def _validate_deployed_lamports_value(value: object) -> None:
-    if (
-        isinstance(value, bool)
-        or not isinstance(value, int)
-        or value < 0
-        or value > _U64_MAX
-    ):
-        raise ValueError(
-            "deployed_lamports must be an unsigned 64-bit integer"
-        )
+    require_u64("deployed_lamports", value)
 
 
 validate_deployed_lamports_definition()

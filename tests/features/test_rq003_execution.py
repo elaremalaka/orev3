@@ -22,11 +22,11 @@ from orev3.features import (
     EligibilityCatalog,
     ExecutableMeasurementBinding,
     FeatureEligibilityStatus,
+    FeatureDefinition,
     FrozenFeatureRegistry,
     MeasurementVector,
     RQ003ExecutionContext,
     RQ003MeasurementPipeline,
-    FeatureDefinition,
 )
 from orev3.features.base import Feature
 from orev3.features.context import FeatureContext
@@ -61,10 +61,27 @@ def make_feature_context(*, square_index: int = 7) -> FeatureContext:
     )
 
 
+def make_decision_context(*, total_miners: int = 777) -> DecisionContext:
+    return DecisionContext(
+        information={
+            "round_id": 4321,
+            "round": {
+                "round_id": 4321,
+                "deployed_lamports": tuple(
+                    10_000 + index for index in range(25)
+                ),
+                "miner_counts": tuple(100 + index for index in range(25)),
+                "total_miners": total_miners,
+            },
+        }
+    )
+
+
 def make_execution_context(*, square_index: int = 7) -> RQ003ExecutionContext:
-    return RQ003ExecutionContext.from_feature_context(
-        make_feature_context(square_index=square_index),
-        total_miners=777,
+    return RQ003ExecutionContext.from_decision_context(
+        make_decision_context(),
+        observation_index=4,
+        structural_candidate_key=square_index,
         decision_point_configuration_identity="a" * 64,
     )
 
@@ -103,19 +120,18 @@ def make_pipeline() -> RQ003MeasurementPipeline:
 
 
 def test_execution_context_is_deeply_immutable_and_reconstructable() -> None:
-    source = make_feature_context()
-    context = RQ003ExecutionContext.from_feature_context(
+    source = make_decision_context()
+    context = RQ003ExecutionContext.from_decision_context(
         source,
-        total_miners=777,
+        observation_index=4,
+        structural_candidate_key=7,
         decision_point_configuration_identity="a" * 64,
     )
 
     assert context.deployed_lamports == tuple(
-        square.deployed_lamports for square in source.board.squares
+        10_000 + index for index in range(25)
     )
-    assert context.miner_counts == tuple(
-        square.miner_count for square in source.board.squares
-    )
+    assert context.miner_counts == tuple(100 + index for index in range(25))
     assert context.total_miners == 777
     context.validate_identities()
     assert context.reconstruct_context_identity() == context.context_identity
@@ -123,25 +139,89 @@ def test_execution_context_is_deeply_immutable_and_reconstructable() -> None:
         context.observation_index = 5  # type: ignore[misc]
 
 
-def test_execution_context_rejects_mutable_or_noncanonical_source_values() -> None:
-    with pytest.raises(TypeError, match="immutable tuple"):
-        RQ003ExecutionContext(
-            structural_round_key=1,
-            observation_index=1,
-            structural_candidate_key=0,
-            deployed_lamports=[0] * 25,  # type: ignore[arg-type]
-            miner_counts=(0,) * 25,
-            total_miners=0,
-            decision_point_configuration_identity="a" * 64,
-        )
+def test_execution_context_defensively_freezes_one_decision_source() -> None:
+    mutable_deployments = list(range(25))
+    source = DecisionContext(
+        information={
+            "round_id": 1,
+            "round": {
+                "round_id": 1,
+                "deployed_lamports": mutable_deployments,
+                "miner_counts": tuple(range(25)),
+                "total_miners": 25,
+            },
+        }
+    )
+    mutable_deployments[0] = 999
+    context = RQ003ExecutionContext.from_decision_context(
+        source,
+        observation_index=1,
+        structural_candidate_key=0,
+        decision_point_configuration_identity="a" * 64,
+    )
+
+    assert context.deployed_lamports[0] == 0
+
+
+def test_execution_context_rejects_noncanonical_source_values() -> None:
     with pytest.raises(ValueError, match="unsigned 64-bit"):
         RQ003ExecutionContext(
-            structural_round_key=1,
+            decision_context=DecisionContext(
+                information={
+                    "round_id": 1,
+                    "round": {
+                        "round_id": 1,
+                        "deployed_lamports": (True,) + (0,) * 24,
+                        "miner_counts": (0,) * 25,
+                        "total_miners": 0,
+                    },
+                }
+            ),
             observation_index=1,
             structural_candidate_key=0,
-            deployed_lamports=(True,) + (0,) * 24,  # type: ignore[arg-type]
-            miner_counts=(0,) * 25,
-            total_miners=0,
+            decision_point_configuration_identity="a" * 64,
+        )
+
+
+def test_execution_context_rejects_incoherent_round_identity() -> None:
+    source = DecisionContext(
+        information={
+            "round_id": 1,
+            "round": {
+                "round_id": 2,
+                "deployed_lamports": tuple(range(25)),
+                "miner_counts": tuple(range(25)),
+                "total_miners": 25,
+            },
+        }
+    )
+
+    with pytest.raises(ValueError, match="Round identity is inconsistent"):
+        RQ003ExecutionContext.from_decision_context(
+            source,
+            observation_index=1,
+            structural_candidate_key=0,
+            decision_point_configuration_identity="a" * 64,
+        )
+
+
+def test_execution_context_rejects_incomplete_participant_state() -> None:
+    source = DecisionContext(
+        information={
+            "round_id": 1,
+            "round": {
+                "round_id": 1,
+                "deployed_lamports": tuple(range(25)),
+                "miner_counts": tuple(range(25)),
+            },
+        }
+    )
+
+    with pytest.raises(ValueError, match="round.total_miners"):
+        RQ003ExecutionContext.from_decision_context(
+            source,
+            observation_index=1,
+            structural_candidate_key=0,
             decision_point_configuration_identity="a" * 64,
         )
 
@@ -456,6 +536,7 @@ from orev3.features import (
     RQ003ExecutionContext,
     RQ003MeasurementPipeline,
 )
+from orev3.strategy_lab.interfaces import DecisionContext
 catalog = EligibilityCatalog(
     catalog_schema_version=ELIGIBILITY_CATALOG_SCHEMA_VERSION,
     decisions=(
@@ -484,12 +565,17 @@ pipeline = RQ003MeasurementPipeline(
     ),
 )
 context = RQ003ExecutionContext(
-    structural_round_key=4321,
+    decision_context=DecisionContext(information={
+        'round_id': 4321,
+        'round': {
+            'round_id': 4321,
+            'deployed_lamports': tuple(range(25)),
+            'miner_counts': tuple(range(100, 125)),
+            'total_miners': 777,
+        },
+    }),
     observation_index=4,
     structural_candidate_key=7,
-    deployed_lamports=tuple(range(25)),
-    miner_counts=tuple(range(100, 125)),
-    total_miners=777,
     decision_point_configuration_identity='a' * 64,
 )
 vector = pipeline.compute(context)

@@ -29,7 +29,13 @@ from orev3.features.rq003_registry import (
     FeatureDefinition,
     FrozenFeatureRegistry,
 )
+from orev3.features.rq003_measurement_support import (
+    require_mapping,
+    require_u64,
+    require_u64_vector,
+)
 from orev3.features.types import FeatureValues
+from orev3.strategy_lab.interfaces import DecisionContext
 
 
 RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION = 2
@@ -136,6 +142,8 @@ RQ003_PATH_SCHEMA_IDENTITY = _identity(
 RQ003_CONTEXT_BUILDER_IDENTITY = _identity(
     _CONTEXT_BUILDER_IDENTITY_DOMAIN,
     {
+        # This historical v2 identity label remains stable because the
+        # refactoring changes source ownership, not accepted value semantics.
         "builder": "RQ003ExecutionContext.from_feature_context",
         "execution_context_schema_version": (
             RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION
@@ -163,7 +171,7 @@ _PATH_BY_NAME = MappingProxyType(
 )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, init=False)
 class RQ003ExecutionContext:
     """Deeply immutable state for one candidate at one decision freeze."""
 
@@ -180,6 +188,74 @@ class RQ003ExecutionContext:
     decision_snapshot_identity: str = field(init=False)
     allowed_history_identity: str = field(init=False)
     context_identity: str = field(init=False)
+
+    def __init__(
+        self,
+        *,
+        decision_context: DecisionContext,
+        observation_index: int,
+        structural_candidate_key: int,
+        decision_point_configuration_identity: str,
+    ) -> None:
+        """Atomically project participant state from one frozen decision."""
+
+        if not isinstance(decision_context, DecisionContext):
+            raise TypeError("decision_context must be DecisionContext")
+        information = require_mapping(
+            "decision_context.information", decision_context.information
+        )
+        round_state = require_mapping(
+            "decision_context.information.round", information.get("round")
+        )
+        structural_round_key = information.get("round_id")
+        _require_nonnegative_integer(
+            "decision_context.information.round_id", structural_round_key
+        )
+        if round_state.get("round_id") != structural_round_key:
+            raise ValueError("decision context Round identity is inconsistent")
+
+        object.__setattr__(self, "structural_round_key", structural_round_key)
+        object.__setattr__(self, "observation_index", observation_index)
+        object.__setattr__(
+            self, "structural_candidate_key", structural_candidate_key
+        )
+        object.__setattr__(
+            self,
+            "deployed_lamports",
+            require_u64_vector(
+                "round.deployed_lamports",
+                round_state.get("deployed_lamports"),
+            ),
+        )
+        object.__setattr__(
+            self,
+            "miner_counts",
+            require_u64_vector(
+                "round.miner_counts", round_state.get("miner_counts")
+            ),
+        )
+        object.__setattr__(
+            self,
+            "total_miners",
+            require_u64("round.total_miners", round_state.get("total_miners")),
+        )
+        object.__setattr__(
+            self,
+            "decision_point_configuration_identity",
+            decision_point_configuration_identity,
+        )
+        object.__setattr__(
+            self,
+            "context_schema_version",
+            RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION,
+        )
+        object.__setattr__(
+            self, "path_schema_identity", RQ003_PATH_SCHEMA_IDENTITY
+        )
+        object.__setattr__(
+            self, "context_builder_identity", RQ003_CONTEXT_BUILDER_IDENTITY
+        )
+        self.__post_init__()
 
     def __post_init__(self) -> None:
         _require_schema(
@@ -225,36 +301,21 @@ class RQ003ExecutionContext:
         )
 
     @classmethod
-    def from_feature_context(
+    def from_decision_context(
         cls,
-        context: FeatureContext,
+        context: DecisionContext,
         *,
-        total_miners: int,
+        observation_index: int,
+        structural_candidate_key: int,
         decision_point_configuration_identity: str,
     ) -> RQ003ExecutionContext:
-        """Defensively freeze the two approved current measurement sources."""
+        """Construct from one deeply immutable decision-time source boundary."""
 
-        if not isinstance(context, FeatureContext):
-            raise TypeError("context must be FeatureContext")
-        board = context.board
-        if len(board.squares) != 25:
-            raise ValueError("decision board must contain exactly 25 squares")
-        if context.square_history and context.square_history[-1] is not (
-            context.square
-        ):
-            raise ValueError("feature context does not end at current square")
         return cls(
-            structural_round_key=board.round_id,
-            observation_index=board.observation_index,
-            structural_candidate_key=context.square_index,
-            deployed_lamports=tuple(
-                square.deployed_lamports for square in board.squares
-            ),
-            miner_counts=tuple(square.miner_count for square in board.squares),
-            total_miners=total_miners,
-            decision_point_configuration_identity=(
-                decision_point_configuration_identity
-            ),
+            decision_context=context,
+            observation_index=observation_index,
+            structural_candidate_key=structural_candidate_key,
+            decision_point_configuration_identity=decision_point_configuration_identity,
         )
 
     def decision_snapshot_material(self) -> dict[str, Any]:
