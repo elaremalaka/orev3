@@ -38,8 +38,8 @@ from orev3.features.types import FeatureValues
 from orev3.strategy_lab.interfaces import DecisionContext
 
 
-RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION = 3
-RQ003_PATH_SCHEMA_VERSION = 3
+RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION = 4
+RQ003_PATH_SCHEMA_VERSION = 4
 EXECUTABLE_MEASUREMENT_BINDING_SCHEMA_VERSION = 1
 DEFINITION_CONTEXT_VIEW_SCHEMA_VERSION = 2
 MEASUREMENT_VECTOR_SCHEMA_VERSION = 1
@@ -121,6 +121,17 @@ RQ003_PATH_DESCRIPTORS = (
         canonical_encoding_rule="decimal_integer",
     ),
     PathDescriptor(
+        path="round.motherlode",
+        selected_property="motherlode",
+        scalar_type="integer",
+        nullable=False,
+        semantic_unit="indivisible_ore_units",
+        candidate_scope="context_wide_replicated",
+        source_cardinality=1,
+        history_supported=False,
+        canonical_encoding_rule="decimal_integer",
+    ),
+    PathDescriptor(
         path="board.production_cost_ema",
         selected_property="production_cost_ema",
         scalar_type="integer",
@@ -190,6 +201,7 @@ class RQ003ExecutionContext:
     deployed_lamports: tuple[int, ...]
     miner_counts: tuple[int, ...]
     total_miners: int
+    active_round_motherlode: int
     production_cost_ema: int
     decision_point_configuration_identity: str
     context_schema_version: int = RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION
@@ -254,6 +266,17 @@ class RQ003ExecutionContext:
             "total_miners",
             require_u64("round.total_miners", round_state.get("total_miners")),
         )
+        active_round_motherlode = require_u64(
+            "round.motherlode", round_state.get("motherlode")
+        )
+        if active_round_motherlode != 0:
+            raise ValueError(
+                "round.motherlode must be the pre-finalization decision-time "
+                "value zero"
+            )
+        object.__setattr__(
+            self, "active_round_motherlode", active_round_motherlode
+        )
         object.__setattr__(
             self,
             "production_cost_ema",
@@ -305,6 +328,12 @@ class RQ003ExecutionContext:
         )
         miners = _freeze_u64_vector("miner_counts", self.miner_counts)
         _require_u64("total_miners", self.total_miners)
+        _require_u64("active_round_motherlode", self.active_round_motherlode)
+        if self.active_round_motherlode != 0:
+            raise ValueError(
+                "active_round_motherlode must remain the pre-finalization "
+                "decision-time value zero"
+            )
         _require_u64("production_cost_ema", self.production_cost_ema)
         object.__setattr__(self, "deployed_lamports", deployed)
         object.__setattr__(self, "miner_counts", miners)
@@ -346,6 +375,7 @@ class RQ003ExecutionContext:
         return {
             "deployed_lamports": self.deployed_lamports,
             "miner_counts": self.miner_counts,
+            "active_round_motherlode": self.active_round_motherlode,
             "production_cost_ema": self.production_cost_ema,
             "total_miners": self.total_miners,
             "observation_index": self.observation_index,
@@ -411,6 +441,8 @@ class RQ003ExecutionContext:
             return self.miner_counts[self.structural_candidate_key]
         if path == "round.total_miners":
             return self.total_miners
+        if path == "round.motherlode":
+            return self.active_round_motherlode
         if path == "board.production_cost_ema":
             return self.production_cost_ema
         raise ValueError(f"context path has no canonical resolver: {path}")

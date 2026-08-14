@@ -76,6 +76,7 @@ def make_decision_context(*, total_miners: int = 777) -> DecisionContext:
                 ),
                 "miner_counts": tuple(100 + index for index in range(25)),
                 "total_miners": total_miners,
+                "motherlode": 0,
             },
         }
     )
@@ -154,6 +155,7 @@ def test_execution_context_defensively_freezes_one_decision_source() -> None:
                 "deployed_lamports": mutable_deployments,
                 "miner_counts": tuple(range(25)),
                 "total_miners": 25,
+                "motherlode": 0,
             },
         }
     )
@@ -180,6 +182,7 @@ def test_execution_context_rejects_noncanonical_source_values() -> None:
                         "deployed_lamports": (True,) + (0,) * 24,
                         "miner_counts": (0,) * 25,
                         "total_miners": 0,
+                        "motherlode": 0,
                     },
                 }
             ),
@@ -199,6 +202,7 @@ def test_execution_context_rejects_incoherent_round_identity() -> None:
                 "deployed_lamports": tuple(range(25)),
                 "miner_counts": tuple(range(25)),
                 "total_miners": 25,
+                "motherlode": 0,
             },
         }
     )
@@ -221,6 +225,7 @@ def test_execution_context_rejects_incomplete_participant_state() -> None:
                 "round_id": 1,
                 "deployed_lamports": tuple(range(25)),
                 "miner_counts": tuple(range(25)),
+                "motherlode": 0,
             },
         }
     )
@@ -581,6 +586,7 @@ context = RQ003ExecutionContext(
             'deployed_lamports': tuple(range(25)),
             'miner_counts': tuple(range(100, 125)),
             'total_miners': 777,
+            'motherlode': 0,
         },
     }),
     observation_index=4,

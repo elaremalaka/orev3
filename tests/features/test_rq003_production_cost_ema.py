@@ -71,6 +71,7 @@ def make_execution_context(value: object) -> RQ003ExecutionContext:
                     ),
                     "miner_counts": tuple(index + 1 for index in range(25)),
                     "total_miners": 100,
+                    "motherlode": 0,
                 },
             }
         ),
@@ -182,6 +183,7 @@ def test_execution_context_rejects_inconsistent_board_identity() -> None:
                 "deployed_lamports": tuple(range(25)),
                 "miner_counts": tuple(range(25)),
                 "total_miners": 25,
+                "motherlode": 0,
             },
         }
     )
@@ -473,6 +475,7 @@ context = RQ003ExecutionContext(
             'deployed_lamports': tuple(range(25)),
             'miner_counts': tuple(range(25)),
             'total_miners': 25,
+            'motherlode': 0,
         },
     }),
     observation_index=0,
