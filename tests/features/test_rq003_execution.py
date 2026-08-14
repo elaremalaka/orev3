@@ -78,6 +78,7 @@ def make_decision_context(*, total_miners: int = 777) -> DecisionContext:
                 "miner_counts": tuple(100 + index for index in range(25)),
                 "total_miners": total_miners,
                 "motherlode": 0,
+                "total_vaulted": 123_456,
             },
         }
     )
@@ -139,6 +140,7 @@ def test_execution_context_is_deeply_immutable_and_reconstructable() -> None:
     )
     assert context.miner_counts == tuple(100 + index for index in range(25))
     assert context.total_miners == 777
+    assert context.pre_finalization_total_vaulted == 123_456
     assert context.treasury_motherlode == 987_654
     context.validate_identities()
     assert context.reconstruct_context_identity() == context.context_identity
@@ -159,6 +161,7 @@ def test_execution_context_defensively_freezes_one_decision_source() -> None:
                 "miner_counts": tuple(range(25)),
                 "total_miners": 25,
                 "motherlode": 0,
+                "total_vaulted": 123,
             },
         }
     )
@@ -187,6 +190,7 @@ def test_execution_context_rejects_noncanonical_source_values() -> None:
                         "miner_counts": (0,) * 25,
                         "total_miners": 0,
                         "motherlode": 0,
+                        "total_vaulted": 0,
                     },
                 }
             ),
@@ -208,6 +212,7 @@ def test_execution_context_rejects_incoherent_round_identity() -> None:
                 "miner_counts": tuple(range(25)),
                 "total_miners": 25,
                 "motherlode": 0,
+                "total_vaulted": 123,
             },
         }
     )
@@ -232,6 +237,7 @@ def test_execution_context_rejects_incomplete_participant_state() -> None:
                 "deployed_lamports": tuple(range(25)),
                 "miner_counts": tuple(range(25)),
                 "motherlode": 0,
+                "total_vaulted": 123,
             },
         }
     )
@@ -594,6 +600,7 @@ context = RQ003ExecutionContext(
             'miner_counts': tuple(range(100, 125)),
             'total_miners': 777,
             'motherlode': 0,
+            'total_vaulted': 123456,
         },
     }),
     observation_index=4,

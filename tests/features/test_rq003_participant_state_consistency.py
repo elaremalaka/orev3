@@ -100,13 +100,13 @@ def test_total_miners_changes_only_authority_derived_identity_chain() -> None:
 
 def test_execution_identity_contracts_bind_approved_protocol_state_paths() -> None:
     assert RQ003_CONTEXT_BUILDER_IDENTITY == (
-        "12eba188026ede4c6dd7b6a4440f67b956c87785a33a44ed8b56a1c03ded82d9"
+        "ae7bb2aa8ac72155e0bf1b946c6001af5d692f3f300e6865cd6db0f925d06a1b"
     )
     assert RQ003_PATH_SCHEMA_IDENTITY == (
-        "3dc3c5be3efc87b99eda92f2a69c9935c3e25a7e0fce859f23ff8e81153bb4d2"
+        "2cb467b8b0d30abfdb57baf913b2696453d9d2f35af6773f98e6ab30c2309067"
     )
     assert RQ003_PIPELINE_IMPLEMENTATION_IDENTITY == (
-        "d0fe7591cbe1bffd7ea6a241e11b4b3ba6dee2532c940ab90b76f704376dd394"
+        "8c3d8ddf27c09a99295abf9105560d31861994d06454446c42279620b254bf07"
     )
 
     context = RQ003ExecutionContext.from_decision_context(
@@ -124,6 +124,7 @@ def test_execution_identity_contracts_bind_approved_protocol_state_paths() -> No
                     "miner_counts": tuple(range(100, 125)),
                     "total_miners": 777,
                     "motherlode": 0,
+                    "total_vaulted": 123_456,
                 },
             }
         ),
@@ -132,8 +133,8 @@ def test_execution_identity_contracts_bind_approved_protocol_state_paths() -> No
         decision_point_configuration_identity="a" * 64,
     )
     assert context.decision_snapshot_identity == (
-        "c7e1a14260425fd56806304f3c59cfbef2bcda44047e7aadc3b1455693289ea3"
+        "352d9e0f6ed970277062268b4d78d97afc0e3449e437cf66f34985b73e521d2d"
     )
     assert context.context_identity == (
-        "00ab9591366cbb10d0e4063b2230c75f6cf8924504f1509ac3100a564815dee2"
+        "ba9f8eff8887209ce779b7a2484a884a5e5fb5f2beb12a4954d4ea869b3c65bf"
     )

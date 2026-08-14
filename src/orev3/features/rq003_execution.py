@@ -38,8 +38,8 @@ from orev3.features.types import FeatureValues
 from orev3.strategy_lab.interfaces import DecisionContext
 
 
-RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION = 5
-RQ003_PATH_SCHEMA_VERSION = 5
+RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION = 6
+RQ003_PATH_SCHEMA_VERSION = 6
 EXECUTABLE_MEASUREMENT_BINDING_SCHEMA_VERSION = 1
 DEFINITION_CONTEXT_VIEW_SCHEMA_VERSION = 3
 MEASUREMENT_VECTOR_SCHEMA_VERSION = 1
@@ -132,6 +132,17 @@ RQ003_PATH_DESCRIPTORS = (
         canonical_encoding_rule="decimal_integer",
     ),
     PathDescriptor(
+        path="round.total_vaulted",
+        selected_property="total_vaulted",
+        scalar_type="integer",
+        nullable=False,
+        semantic_unit="lamports",
+        candidate_scope="context_wide_replicated",
+        source_cardinality=1,
+        history_supported=False,
+        canonical_encoding_rule="decimal_integer",
+    ),
+    PathDescriptor(
         path="board.production_cost_ema",
         selected_property="production_cost_ema",
         scalar_type="integer",
@@ -213,6 +224,7 @@ class RQ003ExecutionContext:
     miner_counts: tuple[int, ...]
     total_miners: int
     active_round_motherlode: int
+    pre_finalization_total_vaulted: int
     production_cost_ema: int
     treasury_motherlode: int
     decision_point_configuration_identity: str
@@ -295,6 +307,13 @@ class RQ003ExecutionContext:
         )
         object.__setattr__(
             self,
+            "pre_finalization_total_vaulted",
+            require_u64(
+                "round.total_vaulted", round_state.get("total_vaulted")
+            ),
+        )
+        object.__setattr__(
+            self,
             "production_cost_ema",
             require_u64(
                 "board.production_cost_ema",
@@ -357,6 +376,10 @@ class RQ003ExecutionContext:
                 "active_round_motherlode must remain the pre-finalization "
                 "decision-time value zero"
             )
+        _require_u64(
+            "pre_finalization_total_vaulted",
+            self.pre_finalization_total_vaulted,
+        )
         _require_u64("production_cost_ema", self.production_cost_ema)
         _require_u64("treasury_motherlode", self.treasury_motherlode)
         object.__setattr__(self, "deployed_lamports", deployed)
@@ -400,6 +423,9 @@ class RQ003ExecutionContext:
             "deployed_lamports": self.deployed_lamports,
             "miner_counts": self.miner_counts,
             "active_round_motherlode": self.active_round_motherlode,
+            "pre_finalization_total_vaulted": (
+                self.pre_finalization_total_vaulted
+            ),
             "production_cost_ema": self.production_cost_ema,
             "treasury_motherlode": self.treasury_motherlode,
             "total_miners": self.total_miners,
@@ -468,6 +494,8 @@ class RQ003ExecutionContext:
             return self.total_miners
         if path == "round.motherlode":
             return self.active_round_motherlode
+        if path == "round.total_vaulted":
+            return self.pre_finalization_total_vaulted
         if path == "board.production_cost_ema":
             return self.production_cost_ema
         if path == "treasury.motherlode":

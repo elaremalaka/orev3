@@ -67,6 +67,7 @@ def make_execution_context(total_miners: int) -> RQ003ExecutionContext:
                     "miner_counts": tuple(index + 1 for index in range(25)),
                     "total_miners": total_miners,
                     "motherlode": 0,
+                    "total_vaulted": 123_456,
                 },
             }
         ),
@@ -163,6 +164,7 @@ def test_context_builder_uses_one_frozen_participant_state_boundary() -> None:
                 "miner_counts": tuple(index + 1 for index in range(25)),
                 "total_miners": 7,
                 "motherlode": 0,
+                "total_vaulted": 123,
             },
         }
     )
@@ -408,6 +410,7 @@ context = RQ003ExecutionContext(
             'miner_counts': tuple(range(25)),
             'total_miners': 777,
             'motherlode': 0,
+            'total_vaulted': 123456,
         },
     }),
     observation_index=0,
