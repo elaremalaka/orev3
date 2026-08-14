@@ -69,6 +69,7 @@ def make_decision_context(*, total_miners: int = 777) -> DecisionContext:
                 "round_id": 4321,
                 "production_cost_ema": 55_000,
             },
+            "treasury": {"motherlode": 987_654},
             "round": {
                 "round_id": 4321,
                 "deployed_lamports": tuple(
@@ -138,6 +139,7 @@ def test_execution_context_is_deeply_immutable_and_reconstructable() -> None:
     )
     assert context.miner_counts == tuple(100 + index for index in range(25))
     assert context.total_miners == 777
+    assert context.treasury_motherlode == 987_654
     context.validate_identities()
     assert context.reconstruct_context_identity() == context.context_identity
     with pytest.raises(FrozenInstanceError):
@@ -150,6 +152,7 @@ def test_execution_context_defensively_freezes_one_decision_source() -> None:
         information={
             "round_id": 1,
             "board": {"round_id": 1, "production_cost_ema": 50},
+            "treasury": {"motherlode": 10},
             "round": {
                 "round_id": 1,
                 "deployed_lamports": mutable_deployments,
@@ -177,6 +180,7 @@ def test_execution_context_rejects_noncanonical_source_values() -> None:
                 information={
                     "round_id": 1,
                     "board": {"round_id": 1, "production_cost_ema": 50},
+                    "treasury": {"motherlode": 10},
                     "round": {
                         "round_id": 1,
                         "deployed_lamports": (True,) + (0,) * 24,
@@ -197,6 +201,7 @@ def test_execution_context_rejects_incoherent_round_identity() -> None:
         information={
             "round_id": 1,
             "board": {"round_id": 1, "production_cost_ema": 50},
+            "treasury": {"motherlode": 10},
             "round": {
                 "round_id": 2,
                 "deployed_lamports": tuple(range(25)),
@@ -221,6 +226,7 @@ def test_execution_context_rejects_incomplete_participant_state() -> None:
         information={
             "round_id": 1,
             "board": {"round_id": 1, "production_cost_ema": 50},
+            "treasury": {"motherlode": 10},
             "round": {
                 "round_id": 1,
                 "deployed_lamports": tuple(range(25)),
@@ -581,6 +587,7 @@ context = RQ003ExecutionContext(
     decision_context=DecisionContext(information={
         'round_id': 4321,
         'board': {'round_id': 4321, 'production_cost_ema': 55000},
+        'treasury': {'motherlode': 987654},
         'round': {
             'round_id': 4321,
             'deployed_lamports': tuple(range(25)),

@@ -38,10 +38,10 @@ from orev3.features.types import FeatureValues
 from orev3.strategy_lab.interfaces import DecisionContext
 
 
-RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION = 4
-RQ003_PATH_SCHEMA_VERSION = 4
+RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION = 5
+RQ003_PATH_SCHEMA_VERSION = 5
 EXECUTABLE_MEASUREMENT_BINDING_SCHEMA_VERSION = 1
-DEFINITION_CONTEXT_VIEW_SCHEMA_VERSION = 2
+DEFINITION_CONTEXT_VIEW_SCHEMA_VERSION = 3
 MEASUREMENT_VECTOR_SCHEMA_VERSION = 1
 RQ003_PIPELINE_SCHEMA_VERSION = 1
 
@@ -142,6 +142,17 @@ RQ003_PATH_DESCRIPTORS = (
         history_supported=False,
         canonical_encoding_rule="decimal_integer",
     ),
+    PathDescriptor(
+        path="treasury.motherlode",
+        selected_property="motherlode",
+        scalar_type="integer",
+        nullable=False,
+        semantic_unit="indivisible_ore_units",
+        candidate_scope="context_wide_replicated",
+        source_cardinality=1,
+        history_supported=False,
+        canonical_encoding_rule="decimal_integer",
+    ),
 )
 
 
@@ -203,6 +214,7 @@ class RQ003ExecutionContext:
     total_miners: int
     active_round_motherlode: int
     production_cost_ema: int
+    treasury_motherlode: int
     decision_point_configuration_identity: str
     context_schema_version: int = RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION
     path_schema_identity: str = RQ003_PATH_SCHEMA_IDENTITY
@@ -231,6 +243,10 @@ class RQ003ExecutionContext:
         )
         board_state = require_mapping(
             "decision_context.information.board", information.get("board")
+        )
+        treasury_state = require_mapping(
+            "decision_context.information.treasury",
+            information.get("treasury"),
         )
         structural_round_key = information.get("round_id")
         _require_nonnegative_integer(
@@ -287,6 +303,13 @@ class RQ003ExecutionContext:
         )
         object.__setattr__(
             self,
+            "treasury_motherlode",
+            require_u64(
+                "treasury.motherlode", treasury_state.get("motherlode")
+            ),
+        )
+        object.__setattr__(
+            self,
             "decision_point_configuration_identity",
             decision_point_configuration_identity,
         )
@@ -335,6 +358,7 @@ class RQ003ExecutionContext:
                 "decision-time value zero"
             )
         _require_u64("production_cost_ema", self.production_cost_ema)
+        _require_u64("treasury_motherlode", self.treasury_motherlode)
         object.__setattr__(self, "deployed_lamports", deployed)
         object.__setattr__(self, "miner_counts", miners)
         object.__setattr__(
@@ -377,6 +401,7 @@ class RQ003ExecutionContext:
             "miner_counts": self.miner_counts,
             "active_round_motherlode": self.active_round_motherlode,
             "production_cost_ema": self.production_cost_ema,
+            "treasury_motherlode": self.treasury_motherlode,
             "total_miners": self.total_miners,
             "observation_index": self.observation_index,
             "path_schema_identity": self.path_schema_identity,
@@ -445,6 +470,8 @@ class RQ003ExecutionContext:
             return self.active_round_motherlode
         if path == "board.production_cost_ema":
             return self.production_cost_ema
+        if path == "treasury.motherlode":
+            return self.treasury_motherlode
         raise ValueError(f"context path has no canonical resolver: {path}")
 
 
@@ -514,6 +541,30 @@ class _RestrictedBoardView:
         return f"RestrictedBoardView(fields={tuple(values)})"
 
 
+class _RestrictedTreasuryView:
+    __slots__ = ("_values",)
+
+    def __init__(self, values: Mapping[str, int]) -> None:
+        object.__setattr__(self, "_values", MappingProxyType(dict(values)))
+
+    def __setattr__(self, name: str, value: object) -> None:
+        raise AttributeError("DefinitionContextView treasury is immutable")
+
+    def __getattribute__(self, name: str) -> Any:
+        if name in {"__class__", "__repr__"}:
+            return object.__getattribute__(self, name)
+        values = object.__getattribute__(self, "_values")
+        if name in values:
+            return values[name]
+        raise AttributeError(
+            f"undeclared treasury field is inaccessible: {name}"
+        )
+
+    def __repr__(self) -> str:
+        values = object.__getattribute__(self, "_values")
+        return f"RestrictedTreasuryView(fields={tuple(values)})"
+
+
 class DefinitionContextView(FeatureContext):
     """FeatureContext-compatible facade exposing only declared paths."""
 
@@ -526,6 +577,7 @@ class DefinitionContextView(FeatureContext):
         "_restricted_board",
         "_restricted_round",
         "_restricted_square",
+        "_restricted_treasury",
         "_view_identity",
     )
 
@@ -549,6 +601,7 @@ class DefinitionContextView(FeatureContext):
         selected_board: dict[str, int] = {}
         selected_round: dict[str, int] = {}
         selected_square: dict[str, int] = {}
+        selected_treasury: dict[str, int] = {}
         for path in declared_paths:
             descriptor = _PATH_BY_NAME.get(path)
             if descriptor is None:
@@ -559,13 +612,18 @@ class DefinitionContextView(FeatureContext):
                 selected = selected_square
             elif path.startswith("board."):
                 selected = selected_board
+            elif path.startswith("treasury."):
+                selected = selected_treasury
             else:
                 selected = selected_round
             selected[descriptor.selected_property] = (
                 execution_context._selected_value(path)
             )
         if (
-            len(selected_board) + len(selected_square) + len(selected_round)
+            len(selected_board)
+            + len(selected_square)
+            + len(selected_round)
+            + len(selected_treasury)
             != len(declared_paths)
         ):
             raise ValueError("declared paths alias the same selected property")
@@ -591,6 +649,11 @@ class DefinitionContextView(FeatureContext):
             self,
             "_restricted_round",
             _RestrictedRoundView(selected_round),
+        )
+        object.__setattr__(
+            self,
+            "_restricted_treasury",
+            _RestrictedTreasuryView(selected_treasury),
         )
         object.__setattr__(self, "_declared_paths", declared_paths)
         object.__setattr__(
@@ -641,6 +704,13 @@ class DefinitionContextView(FeatureContext):
             if not object.__getattribute__(view, "_values"):
                 raise AttributeError(
                     "undeclared context field is inaccessible: round"
+                )
+            return view
+        if name == "treasury":
+            view = object.__getattribute__(self, "_restricted_treasury")
+            if not object.__getattribute__(view, "_values"):
+                raise AttributeError(
+                    "undeclared context field is inaccessible: treasury"
                 )
             return view
         raise AttributeError(f"undeclared context field is inaccessible: {name}")

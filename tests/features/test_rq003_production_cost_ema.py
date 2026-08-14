@@ -64,6 +64,7 @@ def make_execution_context(value: object) -> RQ003ExecutionContext:
                     "round_id": 1234,
                     "production_cost_ema": value,
                 },
+                "treasury": {"motherlode": 987_654},
                 "round": {
                     "round_id": 1234,
                     "deployed_lamports": tuple(
@@ -178,6 +179,7 @@ def test_execution_context_rejects_inconsistent_board_identity() -> None:
         information={
             "round_id": 1,
             "board": {"round_id": 2, "production_cost_ema": 50},
+            "treasury": {"motherlode": 10},
             "round": {
                 "round_id": 1,
                 "deployed_lamports": tuple(range(25)),
@@ -470,6 +472,7 @@ context = RQ003ExecutionContext(
     decision_context=DecisionContext(information={
         'round_id': 1,
         'board': {'round_id': 1, 'production_cost_ema': 55000},
+        'treasury': {'motherlode': 987654},
         'round': {
             'round_id': 1,
             'deployed_lamports': tuple(range(25)),

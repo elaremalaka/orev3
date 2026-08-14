@@ -12,22 +12,11 @@ from pathlib import Path
 
 import pytest
 
-import orev3.features.rq003_active_round_motherlode as measurement_module
+import orev3.features.rq003_treasury_motherlode as measurement_module
 from orev3.features import (
     ACTIVE_ROUND_MOTHERLODE_DEFINITION,
-    ACTIVE_ROUND_MOTHERLODE_DEPENDENCY_IDENTITY,
     ACTIVE_ROUND_MOTHERLODE_ELIGIBILITY_DECISION,
-    ACTIVE_ROUND_MOTHERLODE_EXECUTABLE_BINDING_IDENTITY,
-    ACTIVE_ROUND_MOTHERLODE_FEATURE_GROUP,
-    ACTIVE_ROUND_MOTHERLODE_FEATURE_NAME,
-    ACTIVE_ROUND_MOTHERLODE_IMPLEMENTATION_IDENTITY,
     ACTIVE_ROUND_MOTHERLODE_MEASUREMENT,
-    ACTIVE_ROUND_MOTHERLODE_METADATA,
-    ACTIVE_ROUND_MOTHERLODE_OUTPUT_NAME,
-    ACTIVE_ROUND_MOTHERLODE_PROTOCOL_DEPENDENCIES,
-    ACTIVE_ROUND_MOTHERLODE_PROTOCOL_SOURCE_REVISION,
-    ACTIVE_ROUND_MOTHERLODE_REVISION_DEPENDENCIES,
-    ACTIVE_ROUND_MOTHERLODE_SOURCE_PATH,
     DEPLOYED_LAMPORTS_DEFINITION,
     DEPLOYED_LAMPORTS_ELIGIBILITY_DECISION,
     DEPLOYED_LAMPORTS_MEASUREMENT,
@@ -42,6 +31,20 @@ from orev3.features import (
     TOTAL_MINERS_DEFINITION,
     TOTAL_MINERS_ELIGIBILITY_DECISION,
     TOTAL_MINERS_MEASUREMENT,
+    TREASURY_MOTHERLODE_DEFINITION,
+    TREASURY_MOTHERLODE_DEPENDENCY_IDENTITY,
+    TREASURY_MOTHERLODE_ELIGIBILITY_DECISION,
+    TREASURY_MOTHERLODE_EXECUTABLE_BINDING_IDENTITY,
+    TREASURY_MOTHERLODE_FEATURE_GROUP,
+    TREASURY_MOTHERLODE_FEATURE_NAME,
+    TREASURY_MOTHERLODE_IMPLEMENTATION_IDENTITY,
+    TREASURY_MOTHERLODE_MEASUREMENT,
+    TREASURY_MOTHERLODE_METADATA,
+    TREASURY_MOTHERLODE_OUTPUT_NAME,
+    TREASURY_MOTHERLODE_PROTOCOL_DEPENDENCIES,
+    TREASURY_MOTHERLODE_PROTOCOL_SOURCE_REVISION,
+    TREASURY_MOTHERLODE_REVISION_DEPENDENCIES,
+    TREASURY_MOTHERLODE_SOURCE_PATH,
     EligibilityCatalog,
     ExecutableMeasurementBinding,
     FrozenFeatureRegistry,
@@ -49,16 +52,16 @@ from orev3.features import (
     RQ003ExecutionContext,
     RQ003MeasurementPipeline,
     canonical_encode,
-    reconstruct_active_round_motherlode_dependency_identity,
-    reconstruct_active_round_motherlode_implementation_identity,
     reconstruct_executable_binding_identity,
-    validate_active_round_motherlode_definition,
+    reconstruct_treasury_motherlode_dependency_identity,
+    reconstruct_treasury_motherlode_implementation_identity,
+    validate_treasury_motherlode_definition,
 )
 from orev3.features.rq003_execution import DefinitionContextView
 from orev3.strategy_lab.interfaces import DecisionContext
 
 
-def make_execution_context(*, motherlode: object = 0) -> RQ003ExecutionContext:
+def make_execution_context(value: object) -> RQ003ExecutionContext:
     return RQ003ExecutionContext(
         decision_context=DecisionContext(
             information={
@@ -67,7 +70,7 @@ def make_execution_context(*, motherlode: object = 0) -> RQ003ExecutionContext:
                     "round_id": 1234,
                     "production_cost_ema": 55_000,
                 },
-                "treasury": {"motherlode": 987_654},
+                "treasury": {"motherlode": value},
                 "round": {
                     "round_id": 1234,
                     "deployed_lamports": tuple(
@@ -75,7 +78,7 @@ def make_execution_context(*, motherlode: object = 0) -> RQ003ExecutionContext:
                     ),
                     "miner_counts": tuple(index + 1 for index in range(25)),
                     "total_miners": 100,
-                    "motherlode": motherlode,
+                    "motherlode": 0,
                 },
             }
         ),
@@ -87,16 +90,16 @@ def make_execution_context(*, motherlode: object = 0) -> RQ003ExecutionContext:
 
 def make_binding() -> ExecutableMeasurementBinding:
     return ExecutableMeasurementBinding(
-        definition=ACTIVE_ROUND_MOTHERLODE_DEFINITION,
-        terminal_decision=ACTIVE_ROUND_MOTHERLODE_ELIGIBILITY_DECISION,
-        computation=ACTIVE_ROUND_MOTHERLODE_MEASUREMENT,
+        definition=TREASURY_MOTHERLODE_DEFINITION,
+        terminal_decision=TREASURY_MOTHERLODE_ELIGIBILITY_DECISION,
+        computation=TREASURY_MOTHERLODE_MEASUREMENT,
     )
 
 
-def make_view() -> DefinitionContextView:
+def make_view(value: int) -> DefinitionContextView:
     binding = make_binding()
     return DefinitionContextView(
-        execution_context=make_execution_context(),
+        execution_context=make_execution_context(value),
         definition=binding.definition,
         executable_binding_identity=binding.executable_binding_identity,
     )
@@ -105,12 +108,12 @@ def make_view() -> DefinitionContextView:
 def make_pipeline() -> RQ003MeasurementPipeline:
     catalog = EligibilityCatalog(
         catalog_schema_version=ELIGIBILITY_CATALOG_SCHEMA_VERSION,
-        decisions=(ACTIVE_ROUND_MOTHERLODE_ELIGIBILITY_DECISION,),
+        decisions=(TREASURY_MOTHERLODE_ELIGIBILITY_DECISION,),
     )
     registry = FrozenFeatureRegistry(
         registry_schema_version=FROZEN_FEATURE_REGISTRY_SCHEMA_VERSION,
         eligibility_catalog=catalog,
-        definitions=(ACTIVE_ROUND_MOTHERLODE_DEFINITION,),
+        definitions=(TREASURY_MOTHERLODE_DEFINITION,),
     )
     return RQ003MeasurementPipeline(
         registry=registry,
@@ -119,16 +122,16 @@ def make_pipeline() -> RQ003MeasurementPipeline:
 
 
 def test_metadata_is_immutable_direct_and_revision_bound() -> None:
-    metadata = ACTIVE_ROUND_MOTHERLODE_METADATA
+    metadata = TREASURY_MOTHERLODE_METADATA
 
-    assert metadata.feature_name == "active_round_motherlode"
+    assert metadata.feature_name == "treasury_motherlode"
     assert metadata.feature_group == "raw_current_state"
-    assert metadata.input_fields == ("round.motherlode",)
+    assert metadata.input_fields == ("treasury.motherlode",)
     assert metadata.history_policy.mode == "current_observation_only"
     assert metadata.history_policy.maximum_history_length == 1
     assert metadata.output_fields == (
         measurement_module.FeatureOutputField(
-            name="active_round_motherlode",
+            name="treasury_motherlode",
             scalar_type="integer",
             nullable=False,
             semantic_unit="indivisible_ore_units",
@@ -138,67 +141,65 @@ def test_metadata_is_immutable_direct_and_revision_bound() -> None:
         ),
     )
     assert metadata.configuration_identity == (
-        ACTIVE_ROUND_MOTHERLODE_DEPENDENCY_IDENTITY
+        TREASURY_MOTHERLODE_DEPENDENCY_IDENTITY
     )
-    assert ACTIVE_ROUND_MOTHERLODE_PROTOCOL_SOURCE_REVISION not in (
+    assert TREASURY_MOTHERLODE_PROTOCOL_SOURCE_REVISION not in (
         metadata.input_fields
     )
     with pytest.raises(FrozenInstanceError):
         metadata.feature_name = "replacement"  # type: ignore[misc]
 
 
-def test_measurement_returns_exact_published_decision_time_value() -> None:
-    output = ACTIVE_ROUND_MOTHERLODE_MEASUREMENT.compute(make_view())
+@pytest.mark.parametrize("value", (0, 1, 55_000, (1 << 64) - 1))
+def test_measurement_returns_exact_published_treasury_value(value: int) -> None:
+    output = TREASURY_MOTHERLODE_MEASUREMENT.compute(make_view(value))
 
-    assert dict(output) == {"active_round_motherlode": 0}
-    assert tuple(output) == ("active_round_motherlode",)
+    assert dict(output) == {"treasury_motherlode": value}
+    assert output["treasury_motherlode"] is value
     with pytest.raises(TypeError):
-        output["active_round_motherlode"] = 1  # type: ignore[index]
+        output["treasury_motherlode"] = 1  # type: ignore[index]
 
 
-@pytest.mark.parametrize("value", (-1, True, 1 << 64, 1.5, "0", None))
+@pytest.mark.parametrize("value", (-1, True, 1 << 64, 1.5, "1", None))
 def test_execution_context_rejects_non_protocol_values(value: object) -> None:
     with pytest.raises(ValueError, match="unsigned 64-bit integer"):
-        make_execution_context(motherlode=value)
+        make_execution_context(value)
 
 
-def test_execution_context_rejects_finalized_nonzero_outcome_value() -> None:
-    with pytest.raises(ValueError, match="pre-finalization.*zero"):
-        make_execution_context(motherlode=1)
-
-
-def test_context_binds_value_into_frozen_snapshot_identity() -> None:
-    first = make_execution_context()
-    same = make_execution_context()
+def test_context_binds_treasury_value_into_frozen_snapshot_identity() -> None:
+    first = make_execution_context(100)
+    same = make_execution_context(100)
+    changed = make_execution_context(101)
 
     assert first == same
-    assert first.active_round_motherlode == 0
+    assert first.treasury_motherlode == 100
     assert first.decision_snapshot_identity == same.decision_snapshot_identity
     assert first.context_identity == same.context_identity
-    first.validate_identities()
+    assert first.decision_snapshot_identity != changed.decision_snapshot_identity
+    assert first.context_identity != changed.context_identity
 
 
-def test_definition_view_exposes_only_declared_round_value() -> None:
-    view = make_view()
+def test_definition_view_exposes_only_declared_treasury_value() -> None:
+    view = make_view(88)
 
-    assert view.round.motherlode == 0
-    with pytest.raises(AttributeError, match="undeclared round field"):
-        _ = view.round.total_miners
+    assert view.treasury.motherlode == 88
+    with pytest.raises(AttributeError, match="undeclared treasury field"):
+        _ = view.treasury.total_vaulted
     with pytest.raises(AttributeError, match="undeclared context field"):
-        _ = view.square
+        _ = view.round
     with pytest.raises(AttributeError, match="undeclared context field"):
         _ = view.board
-    with pytest.raises(AttributeError, match="round is immutable"):
-        view.round.motherlode = 1
+    with pytest.raises(AttributeError, match="treasury is immutable"):
+        view.treasury.motherlode = 1
 
 
 def test_pipeline_and_vector_reconstruct_deterministically() -> None:
-    vector = make_pipeline().compute(make_execution_context())
+    vector = make_pipeline().compute(make_execution_context(777))
     reconstructed = MeasurementVector.from_canonical_bytes(
         vector.canonical_bytes()
     )
 
-    assert vector.values == {"active_round_motherlode": 0}
+    assert vector.values == {"treasury_motherlode": 777}
     assert reconstructed == vector
     assert reconstructed.vector_identity == vector.vector_identity
 
@@ -210,6 +211,7 @@ def test_measurement_executes_with_existing_library_without_semantic_changes() -
         TOTAL_MINERS_ELIGIBILITY_DECISION,
         PRODUCTION_COST_EMA_ELIGIBILITY_DECISION,
         ACTIVE_ROUND_MOTHERLODE_ELIGIBILITY_DECISION,
+        TREASURY_MOTHERLODE_ELIGIBILITY_DECISION,
     )
     definitions = (
         DEPLOYED_LAMPORTS_DEFINITION,
@@ -217,6 +219,7 @@ def test_measurement_executes_with_existing_library_without_semantic_changes() -
         TOTAL_MINERS_DEFINITION,
         PRODUCTION_COST_EMA_DEFINITION,
         ACTIVE_ROUND_MOTHERLODE_DEFINITION,
+        TREASURY_MOTHERLODE_DEFINITION,
     )
     computations = (
         DEPLOYED_LAMPORTS_MEASUREMENT,
@@ -224,6 +227,7 @@ def test_measurement_executes_with_existing_library_without_semantic_changes() -
         TOTAL_MINERS_MEASUREMENT,
         PRODUCTION_COST_EMA_MEASUREMENT,
         ACTIVE_ROUND_MOTHERLODE_MEASUREMENT,
+        TREASURY_MOTHERLODE_MEASUREMENT,
     )
     catalog = EligibilityCatalog(
         catalog_schema_version=ELIGIBILITY_CATALOG_SCHEMA_VERSION,
@@ -248,7 +252,7 @@ def test_measurement_executes_with_existing_library_without_semantic_changes() -
         ),
     )
 
-    vector = pipeline.compute(make_execution_context())
+    vector = pipeline.compute(make_execution_context(987_654))
 
     assert vector.values == {
         "deployed_lamports": 8_000,
@@ -256,92 +260,85 @@ def test_measurement_executes_with_existing_library_without_semantic_changes() -
         "total_miners": 100,
         "board_production_cost_ema": 55_000,
         "active_round_motherlode": 0,
+        "treasury_motherlode": 987_654,
     }
-    assert tuple(vector.values) == (
-        "deployed_lamports",
-        "miner_count",
-        "total_miners",
-        "board_production_cost_ema",
-        "active_round_motherlode",
-    )
 
 
 def test_canonical_output_round_trips_without_interpretation() -> None:
-    raw = ACTIVE_ROUND_MOTHERLODE_MEASUREMENT.canonical_output(make_view())
+    raw = TREASURY_MOTHERLODE_MEASUREMENT.canonical_output(make_view(12_345))
     reconstructed = (
-        ACTIVE_ROUND_MOTHERLODE_MEASUREMENT.reconstruct_canonical_output(raw)
+        TREASURY_MOTHERLODE_MEASUREMENT.reconstruct_canonical_output(raw)
     )
 
-    assert raw == canonical_encode({"active_round_motherlode": 0})
-    assert dict(reconstructed) == {"active_round_motherlode": 0}
+    assert raw == canonical_encode({"treasury_motherlode": 12_345})
+    assert dict(reconstructed) == {"treasury_motherlode": 12_345}
     with pytest.raises(TypeError):
-        reconstructed["active_round_motherlode"] = 1  # type: ignore[index]
+        reconstructed["treasury_motherlode"] = 0  # type: ignore[index]
 
 
 @pytest.mark.parametrize(
     "invalid_output",
     (
-        {"other": 0},
-        {"active_round_motherlode": -1},
-        {"active_round_motherlode": True},
-        {"active_round_motherlode": 1 << 64},
-        {"active_round_motherlode": 1},
+        {"other": 1},
+        {"treasury_motherlode": -1},
+        {"treasury_motherlode": True},
+        {"treasury_motherlode": 1 << 64},
     ),
 )
 def test_canonical_output_reconstruction_fails_closed(
     invalid_output: dict[str, object],
 ) -> None:
     with pytest.raises(ValueError):
-        ACTIVE_ROUND_MOTHERLODE_MEASUREMENT.reconstruct_canonical_output(
+        TREASURY_MOTHERLODE_MEASUREMENT.reconstruct_canonical_output(
             canonical_encode(invalid_output)
         )
 
 
 def test_all_measurement_identities_reconstruct() -> None:
-    validate_active_round_motherlode_definition()
+    validate_treasury_motherlode_definition()
 
     assert (
-        reconstruct_active_round_motherlode_dependency_identity()
-        == ACTIVE_ROUND_MOTHERLODE_DEPENDENCY_IDENTITY
+        reconstruct_treasury_motherlode_dependency_identity()
+        == TREASURY_MOTHERLODE_DEPENDENCY_IDENTITY
     )
     assert (
-        reconstruct_active_round_motherlode_implementation_identity()
-        == ACTIVE_ROUND_MOTHERLODE_IMPLEMENTATION_IDENTITY
+        reconstruct_treasury_motherlode_implementation_identity()
+        == TREASURY_MOTHERLODE_IMPLEMENTATION_IDENTITY
     )
     assert (
-        ACTIVE_ROUND_MOTHERLODE_METADATA.reconstruct_semantic_identity()
-        == ACTIVE_ROUND_MOTHERLODE_METADATA.semantic_identity
+        TREASURY_MOTHERLODE_METADATA.reconstruct_semantic_identity()
+        == TREASURY_MOTHERLODE_METADATA.semantic_identity
     )
     assert (
-        ACTIVE_ROUND_MOTHERLODE_METADATA.reconstruct_definition_identity()
-        == ACTIVE_ROUND_MOTHERLODE_METADATA.definition_identity
+        TREASURY_MOTHERLODE_METADATA.reconstruct_definition_identity()
+        == TREASURY_MOTHERLODE_METADATA.definition_identity
     )
     assert (
-        ACTIVE_ROUND_MOTHERLODE_ELIGIBILITY_DECISION
+        TREASURY_MOTHERLODE_ELIGIBILITY_DECISION
         .reconstruct_eligibility_decision_identity()
-        == ACTIVE_ROUND_MOTHERLODE_ELIGIBILITY_DECISION
+        == TREASURY_MOTHERLODE_ELIGIBILITY_DECISION
         .eligibility_decision_identity
     )
     assert (
         reconstruct_executable_binding_identity(
-            ACTIVE_ROUND_MOTHERLODE_METADATA,
-            ACTIVE_ROUND_MOTHERLODE_ELIGIBILITY_DECISION,
+            TREASURY_MOTHERLODE_METADATA,
+            TREASURY_MOTHERLODE_ELIGIBILITY_DECISION,
         )
-        == ACTIVE_ROUND_MOTHERLODE_EXECUTABLE_BINDING_IDENTITY
+        == TREASURY_MOTHERLODE_EXECUTABLE_BINDING_IDENTITY
     )
     binding = make_binding()
     binding.validate()
     assert (
         binding.executable_binding_identity
-        == ACTIVE_ROUND_MOTHERLODE_EXECUTABLE_BINDING_IDENTITY
+        == TREASURY_MOTHERLODE_EXECUTABLE_BINDING_IDENTITY
     )
 
 
 def test_dependency_and_implementation_changes_change_identities() -> None:
-    protocol_variant = ACTIVE_ROUND_MOTHERLODE_PROTOCOL_DEPENDENCIES + (
+    protocol_variant = TREASURY_MOTHERLODE_PROTOCOL_DEPENDENCIES + (
         ("extra", "changed"),
     )
-    revision_variant = ACTIVE_ROUND_MOTHERLODE_REVISION_DEPENDENCIES + (
+    revision_variant = TREASURY_MOTHERLODE_REVISION_DEPENDENCIES + (
         ("extra", "changed"),
     )
     implementation_variant = (
@@ -349,15 +346,15 @@ def test_dependency_and_implementation_changes_change_identities() -> None:
         ("implementation", "different"),
     )
 
-    assert reconstruct_active_round_motherlode_dependency_identity(
+    assert reconstruct_treasury_motherlode_dependency_identity(
         protocol_dependencies=protocol_variant,
-    ) != ACTIVE_ROUND_MOTHERLODE_DEPENDENCY_IDENTITY
-    assert reconstruct_active_round_motherlode_dependency_identity(
+    ) != TREASURY_MOTHERLODE_DEPENDENCY_IDENTITY
+    assert reconstruct_treasury_motherlode_dependency_identity(
         revision_dependencies=revision_variant,
-    ) != ACTIVE_ROUND_MOTHERLODE_DEPENDENCY_IDENTITY
-    assert reconstruct_active_round_motherlode_implementation_identity(
+    ) != TREASURY_MOTHERLODE_DEPENDENCY_IDENTITY
+    assert reconstruct_treasury_motherlode_implementation_identity(
         implementation_variant,
-    ) != ACTIVE_ROUND_MOTHERLODE_IMPLEMENTATION_IDENTITY
+    ) != TREASURY_MOTHERLODE_IMPLEMENTATION_IDENTITY
 
 
 def test_definition_validator_rejects_dependency_tampering(
@@ -365,18 +362,18 @@ def test_definition_validator_rejects_dependency_tampering(
 ) -> None:
     monkeypatch.setattr(
         measurement_module,
-        "ACTIVE_ROUND_MOTHERLODE_DEPENDENCY_IDENTITY",
+        "TREASURY_MOTHERLODE_DEPENDENCY_IDENTITY",
         "0" * 64,
     )
 
     with pytest.raises(ValueError, match="dependency identity mismatch"):
-        validate_active_round_motherlode_definition()
+        validate_treasury_motherlode_definition()
 
 
 def test_compute_contains_no_arithmetic_or_interpretive_operation() -> None:
     source = textwrap.dedent(
         inspect.getsource(
-            measurement_module.ActiveRoundMotherlodeMeasurement.compute
+            measurement_module.TreasuryMotherlodeMeasurement.compute
         )
     )
     tree = ast.parse(source)
@@ -392,20 +389,19 @@ def test_compute_contains_no_arithmetic_or_interpretive_operation() -> None:
         ast.GeneratorExp,
     )
     assert not any(isinstance(node, prohibited_nodes) for node in ast.walk(tree))
-    assert source.count("context.round.motherlode") == 1
+    assert source.count("context.treasury.motherlode") == 1
+    assert "context.round" not in source
     assert "context.board" not in source
     assert "context.square" not in source
 
 
 def test_protocol_revision_is_dependency_metadata_not_compute_input() -> None:
-    assert "protocol_revision" not in (
-        ACTIVE_ROUND_MOTHERLODE_METADATA.input_fields
+    assert "protocol_revision" not in TREASURY_MOTHERLODE_METADATA.input_fields
+    assert TREASURY_MOTHERLODE_METADATA.configuration_identity == (
+        TREASURY_MOTHERLODE_DEPENDENCY_IDENTITY
     )
-    assert ACTIVE_ROUND_MOTHERLODE_METADATA.configuration_identity == (
-        ACTIVE_ROUND_MOTHERLODE_DEPENDENCY_IDENTITY
-    )
-    assert ACTIVE_ROUND_MOTHERLODE_MEASUREMENT.compute(make_view()) == {
-        "active_round_motherlode": 0
+    assert TREASURY_MOTHERLODE_MEASUREMENT.compute(make_view(99)) == {
+        "treasury_motherlode": 99
     }
 
 
@@ -414,14 +410,14 @@ def test_hash_seed_does_not_change_identity_output_or_vector() -> None:
     script = """
 import json
 from orev3.features import (
-    ACTIVE_ROUND_MOTHERLODE_DEFINITION,
-    ACTIVE_ROUND_MOTHERLODE_DEPENDENCY_IDENTITY,
-    ACTIVE_ROUND_MOTHERLODE_ELIGIBILITY_DECISION,
-    ACTIVE_ROUND_MOTHERLODE_IMPLEMENTATION_IDENTITY,
-    ACTIVE_ROUND_MOTHERLODE_MEASUREMENT,
-    ACTIVE_ROUND_MOTHERLODE_METADATA,
     ELIGIBILITY_CATALOG_SCHEMA_VERSION,
     FROZEN_FEATURE_REGISTRY_SCHEMA_VERSION,
+    TREASURY_MOTHERLODE_DEFINITION,
+    TREASURY_MOTHERLODE_DEPENDENCY_IDENTITY,
+    TREASURY_MOTHERLODE_ELIGIBILITY_DECISION,
+    TREASURY_MOTHERLODE_IMPLEMENTATION_IDENTITY,
+    TREASURY_MOTHERLODE_MEASUREMENT,
+    TREASURY_MOTHERLODE_METADATA,
     EligibilityCatalog,
     ExecutableMeasurementBinding,
     FrozenFeatureRegistry,
@@ -431,19 +427,19 @@ from orev3.features import (
 from orev3.strategy_lab.interfaces import DecisionContext
 catalog = EligibilityCatalog(
     catalog_schema_version=ELIGIBILITY_CATALOG_SCHEMA_VERSION,
-    decisions=(ACTIVE_ROUND_MOTHERLODE_ELIGIBILITY_DECISION,),
+    decisions=(TREASURY_MOTHERLODE_ELIGIBILITY_DECISION,),
 )
 registry = FrozenFeatureRegistry(
     registry_schema_version=FROZEN_FEATURE_REGISTRY_SCHEMA_VERSION,
     eligibility_catalog=catalog,
-    definitions=(ACTIVE_ROUND_MOTHERLODE_DEFINITION,),
+    definitions=(TREASURY_MOTHERLODE_DEFINITION,),
 )
 pipeline = RQ003MeasurementPipeline(
     registry=registry,
     bindings=(ExecutableMeasurementBinding(
-        definition=ACTIVE_ROUND_MOTHERLODE_DEFINITION,
-        terminal_decision=ACTIVE_ROUND_MOTHERLODE_ELIGIBILITY_DECISION,
-        computation=ACTIVE_ROUND_MOTHERLODE_MEASUREMENT,
+        definition=TREASURY_MOTHERLODE_DEFINITION,
+        terminal_decision=TREASURY_MOTHERLODE_ELIGIBILITY_DECISION,
+        computation=TREASURY_MOTHERLODE_MEASUREMENT,
     ),),
 )
 context = RQ003ExecutionContext(
@@ -465,9 +461,9 @@ context = RQ003ExecutionContext(
 )
 vector = pipeline.compute(context)
 print(json.dumps({
-    'definition_identity': ACTIVE_ROUND_MOTHERLODE_METADATA.definition_identity,
-    'dependency_identity': ACTIVE_ROUND_MOTHERLODE_DEPENDENCY_IDENTITY,
-    'implementation_identity': ACTIVE_ROUND_MOTHERLODE_IMPLEMENTATION_IDENTITY,
+    'definition_identity': TREASURY_MOTHERLODE_METADATA.definition_identity,
+    'dependency_identity': TREASURY_MOTHERLODE_DEPENDENCY_IDENTITY,
+    'implementation_identity': TREASURY_MOTHERLODE_IMPLEMENTATION_IDENTITY,
     'vector': vector.canonical_bytes().hex(),
 }, sort_keys=True))
 """
@@ -490,12 +486,11 @@ print(json.dumps({
     assert json.loads(outputs[0])["vector"]
 
 
-def test_phase_scope_contains_only_active_round_motherlode_measurement() -> None:
+def test_phase_scope_contains_only_treasury_motherlode_measurement() -> None:
     public_names = set(measurement_module.__all__)
     prohibited_fragments = (
-        "treasury",
-        "vaulted",
-        "winnings",
+        "total_vaulted",
+        "total_winnings",
         "derived",
         "feature_set",
         "dataset",
@@ -504,17 +499,11 @@ def test_phase_scope_contains_only_active_round_motherlode_measurement() -> None
         "strategy",
         "economics",
     )
-    required = {
-        ACTIVE_ROUND_MOTHERLODE_FEATURE_NAME,
-        ACTIVE_ROUND_MOTHERLODE_OUTPUT_NAME,
-        "ActiveRoundMotherlodeMeasurement",
-    }
 
-    assert required <= public_names | {
-        ACTIVE_ROUND_MOTHERLODE_METADATA.feature_name,
-    }
-    assert ACTIVE_ROUND_MOTHERLODE_FEATURE_GROUP == "raw_current_state"
-    assert ACTIVE_ROUND_MOTHERLODE_SOURCE_PATH == "round.motherlode"
+    assert "TreasuryMotherlodeMeasurement" in public_names
+    assert TREASURY_MOTHERLODE_FEATURE_GROUP == "raw_current_state"
+    assert TREASURY_MOTHERLODE_OUTPUT_NAME == "treasury_motherlode"
+    assert TREASURY_MOTHERLODE_SOURCE_PATH == "treasury.motherlode"
     assert not any(
         fragment in public_name.lower()
         for fragment in prohibited_fragments

@@ -100,13 +100,13 @@ def test_total_miners_changes_only_authority_derived_identity_chain() -> None:
 
 def test_execution_identity_contracts_bind_approved_protocol_state_paths() -> None:
     assert RQ003_CONTEXT_BUILDER_IDENTITY == (
-        "fd7cec2f5984bcbd55ca1761cc0077c0852d7fc457f56755937f4390ada8b4c2"
+        "12eba188026ede4c6dd7b6a4440f67b956c87785a33a44ed8b56a1c03ded82d9"
     )
     assert RQ003_PATH_SCHEMA_IDENTITY == (
-        "cc589fcea5358e9b53f12c016ba4ff092c9738cdb075c997bf6230782f171c24"
+        "3dc3c5be3efc87b99eda92f2a69c9935c3e25a7e0fce859f23ff8e81153bb4d2"
     )
     assert RQ003_PIPELINE_IMPLEMENTATION_IDENTITY == (
-        "28882b65bb003ee86748db11a5f85202ecec2cb87a835edd31b116e337aebfad"
+        "d0fe7591cbe1bffd7ea6a241e11b4b3ba6dee2532c940ab90b76f704376dd394"
     )
 
     context = RQ003ExecutionContext.from_decision_context(
@@ -117,6 +117,7 @@ def test_execution_identity_contracts_bind_approved_protocol_state_paths() -> No
                     "round_id": 4321,
                     "production_cost_ema": 55_000,
                 },
+                "treasury": {"motherlode": 987_654},
                 "round": {
                     "round_id": 4321,
                     "deployed_lamports": tuple(range(25)),
@@ -131,8 +132,8 @@ def test_execution_identity_contracts_bind_approved_protocol_state_paths() -> No
         decision_point_configuration_identity="a" * 64,
     )
     assert context.decision_snapshot_identity == (
-        "5a17c071c66000ee1db03299efc897d857f80986e9014ca1e6fb0ab23f5ddc28"
+        "c7e1a14260425fd56806304f3c59cfbef2bcda44047e7aadc3b1455693289ea3"
     )
     assert context.context_identity == (
-        "b866ec8fea6d0de8ae7488cb362ce4c3db9cea39f3012463d129928e665e4cbe"
+        "00ab9591366cbb10d0e4063b2230c75f6cf8924504f1509ac3100a564815dee2"
     )
