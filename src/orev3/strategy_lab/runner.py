@@ -183,9 +183,19 @@ def _decision_context_from_replay_point(point: ReplayPoint) -> DecisionContext:
     return DecisionContext(information)
 
 
+def decision_context_from_replay_point(point: ReplayPoint) -> DecisionContext:
+    """Public outcome-free projection of one immutable Replay point."""
+
+    return _decision_context_from_replay_point(point)
+
+
 def _validate_nonnegative_integer(name: str, value: object) -> None:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise ValueError(f"{name} must be a nonnegative integer")
 
 
-__all__ = ["ExperimentConfiguration", "ExperimentRunner"]
+__all__ = [
+    "ExperimentConfiguration",
+    "ExperimentRunner",
+    "decision_context_from_replay_point",
+]
