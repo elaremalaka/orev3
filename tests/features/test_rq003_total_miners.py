@@ -54,6 +54,10 @@ def make_execution_context(total_miners: int) -> RQ003ExecutionContext:
         decision_context=DecisionContext(
             information={
                 "round_id": 1234,
+                "board": {
+                    "round_id": 1234,
+                    "production_cost_ema": 55_000,
+                },
                 "round": {
                     "round_id": 1234,
                     "deployed_lamports": tuple(
@@ -149,6 +153,7 @@ def test_context_builder_uses_one_frozen_participant_state_boundary() -> None:
     source = DecisionContext(
         information={
             "round_id": 1,
+            "board": {"round_id": 1, "production_cost_ema": 50},
             "round": {
                 "round_id": 1,
                 "deployed_lamports": tuple(range(25)),
@@ -391,6 +396,7 @@ pipeline = RQ003MeasurementPipeline(
 context = RQ003ExecutionContext(
     decision_context=DecisionContext(information={
         'round_id': 1,
+        'board': {'round_id': 1, 'production_cost_ema': 50},
         'round': {
             'round_id': 1,
             'deployed_lamports': tuple(range(25)),

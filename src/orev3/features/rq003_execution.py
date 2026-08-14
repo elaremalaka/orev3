@@ -38,10 +38,10 @@ from orev3.features.types import FeatureValues
 from orev3.strategy_lab.interfaces import DecisionContext
 
 
-RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION = 2
-RQ003_PATH_SCHEMA_VERSION = 2
+RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION = 3
+RQ003_PATH_SCHEMA_VERSION = 3
 EXECUTABLE_MEASUREMENT_BINDING_SCHEMA_VERSION = 1
-DEFINITION_CONTEXT_VIEW_SCHEMA_VERSION = 1
+DEFINITION_CONTEXT_VIEW_SCHEMA_VERSION = 2
 MEASUREMENT_VECTOR_SCHEMA_VERSION = 1
 RQ003_PIPELINE_SCHEMA_VERSION = 1
 
@@ -120,6 +120,17 @@ RQ003_PATH_DESCRIPTORS = (
         history_supported=False,
         canonical_encoding_rule="decimal_integer",
     ),
+    PathDescriptor(
+        path="board.production_cost_ema",
+        selected_property="production_cost_ema",
+        scalar_type="integer",
+        nullable=False,
+        semantic_unit="lamports_per_whole_ore",
+        candidate_scope="context_wide_replicated",
+        source_cardinality=1,
+        history_supported=False,
+        canonical_encoding_rule="decimal_integer",
+    ),
 )
 
 
@@ -142,9 +153,7 @@ RQ003_PATH_SCHEMA_IDENTITY = _identity(
 RQ003_CONTEXT_BUILDER_IDENTITY = _identity(
     _CONTEXT_BUILDER_IDENTITY_DOMAIN,
     {
-        # This historical v2 identity label remains stable because the
-        # refactoring changes source ownership, not accepted value semantics.
-        "builder": "RQ003ExecutionContext.from_feature_context",
+        "builder": "RQ003ExecutionContext.from_decision_context",
         "execution_context_schema_version": (
             RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION
         ),
@@ -181,6 +190,7 @@ class RQ003ExecutionContext:
     deployed_lamports: tuple[int, ...]
     miner_counts: tuple[int, ...]
     total_miners: int
+    production_cost_ema: int
     decision_point_configuration_identity: str
     context_schema_version: int = RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION
     path_schema_identity: str = RQ003_PATH_SCHEMA_IDENTITY
@@ -207,12 +217,17 @@ class RQ003ExecutionContext:
         round_state = require_mapping(
             "decision_context.information.round", information.get("round")
         )
+        board_state = require_mapping(
+            "decision_context.information.board", information.get("board")
+        )
         structural_round_key = information.get("round_id")
         _require_nonnegative_integer(
             "decision_context.information.round_id", structural_round_key
         )
         if round_state.get("round_id") != structural_round_key:
             raise ValueError("decision context Round identity is inconsistent")
+        if board_state.get("round_id") != structural_round_key:
+            raise ValueError("decision context Board identity is inconsistent")
 
         object.__setattr__(self, "structural_round_key", structural_round_key)
         object.__setattr__(self, "observation_index", observation_index)
@@ -238,6 +253,14 @@ class RQ003ExecutionContext:
             self,
             "total_miners",
             require_u64("round.total_miners", round_state.get("total_miners")),
+        )
+        object.__setattr__(
+            self,
+            "production_cost_ema",
+            require_u64(
+                "board.production_cost_ema",
+                board_state.get("production_cost_ema"),
+            ),
         )
         object.__setattr__(
             self,
@@ -282,6 +305,7 @@ class RQ003ExecutionContext:
         )
         miners = _freeze_u64_vector("miner_counts", self.miner_counts)
         _require_u64("total_miners", self.total_miners)
+        _require_u64("production_cost_ema", self.production_cost_ema)
         object.__setattr__(self, "deployed_lamports", deployed)
         object.__setattr__(self, "miner_counts", miners)
         object.__setattr__(
@@ -322,6 +346,7 @@ class RQ003ExecutionContext:
         return {
             "deployed_lamports": self.deployed_lamports,
             "miner_counts": self.miner_counts,
+            "production_cost_ema": self.production_cost_ema,
             "total_miners": self.total_miners,
             "observation_index": self.observation_index,
             "path_schema_identity": self.path_schema_identity,
@@ -386,6 +411,8 @@ class RQ003ExecutionContext:
             return self.miner_counts[self.structural_candidate_key]
         if path == "round.total_miners":
             return self.total_miners
+        if path == "board.production_cost_ema":
+            return self.production_cost_ema
         raise ValueError(f"context path has no canonical resolver: {path}")
 
 
@@ -433,6 +460,28 @@ class _RestrictedRoundView:
         return f"RestrictedRoundView(fields={tuple(values)})"
 
 
+class _RestrictedBoardView:
+    __slots__ = ("_values",)
+
+    def __init__(self, values: Mapping[str, int]) -> None:
+        object.__setattr__(self, "_values", MappingProxyType(dict(values)))
+
+    def __setattr__(self, name: str, value: object) -> None:
+        raise AttributeError("DefinitionContextView board is immutable")
+
+    def __getattribute__(self, name: str) -> Any:
+        if name in {"__class__", "__repr__"}:
+            return object.__getattribute__(self, name)
+        values = object.__getattribute__(self, "_values")
+        if name in values:
+            return values[name]
+        raise AttributeError(f"undeclared board field is inaccessible: {name}")
+
+    def __repr__(self) -> str:
+        values = object.__getattribute__(self, "_values")
+        return f"RestrictedBoardView(fields={tuple(values)})"
+
+
 class DefinitionContextView(FeatureContext):
     """FeatureContext-compatible facade exposing only declared paths."""
 
@@ -442,6 +491,7 @@ class DefinitionContextView(FeatureContext):
         "_execution_context_identity",
         "_history_identity",
         "_path_schema_identity",
+        "_restricted_board",
         "_restricted_round",
         "_restricted_square",
         "_view_identity",
@@ -464,6 +514,7 @@ class DefinitionContextView(FeatureContext):
         declared_paths = metadata.input_fields
         if not declared_paths:
             raise ValueError("definition must declare at least one input path")
+        selected_board: dict[str, int] = {}
         selected_round: dict[str, int] = {}
         selected_square: dict[str, int] = {}
         for path in declared_paths:
@@ -472,14 +523,19 @@ class DefinitionContextView(FeatureContext):
                 raise ValueError(
                     f"undeclared or unsupported context path: {path}"
                 )
-            selected = (
-                selected_square if descriptor.candidate_scope == "per_square"
-                else selected_round
-            )
+            if descriptor.candidate_scope == "per_square":
+                selected = selected_square
+            elif path.startswith("board."):
+                selected = selected_board
+            else:
+                selected = selected_round
             selected[descriptor.selected_property] = (
                 execution_context._selected_value(path)
             )
-        if len(selected_square) + len(selected_round) != len(declared_paths):
+        if (
+            len(selected_board) + len(selected_square) + len(selected_round)
+            != len(declared_paths)
+        ):
             raise ValueError("declared paths alias the same selected property")
 
         # Base slots are intentionally populated only for isinstance
@@ -489,6 +545,11 @@ class DefinitionContextView(FeatureContext):
         object.__setattr__(self, "square_index", None)
         object.__setattr__(self, "square_history", ())
         object.__setattr__(self, "board_history", ())
+        object.__setattr__(
+            self,
+            "_restricted_board",
+            _RestrictedBoardView(selected_board),
+        )
         object.__setattr__(
             self,
             "_restricted_square",
@@ -534,6 +595,13 @@ class DefinitionContextView(FeatureContext):
             if not object.__getattribute__(view, "_values"):
                 raise AttributeError(
                     "undeclared context field is inaccessible: square"
+                )
+            return view
+        if name == "board":
+            view = object.__getattribute__(self, "_restricted_board")
+            if not object.__getattribute__(view, "_values"):
+                raise AttributeError(
+                    "undeclared context field is inaccessible: board"
                 )
             return view
         if name == "round":

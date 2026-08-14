@@ -65,6 +65,10 @@ def make_decision_context(*, total_miners: int = 777) -> DecisionContext:
     return DecisionContext(
         information={
             "round_id": 4321,
+            "board": {
+                "round_id": 4321,
+                "production_cost_ema": 55_000,
+            },
             "round": {
                 "round_id": 4321,
                 "deployed_lamports": tuple(
@@ -144,6 +148,7 @@ def test_execution_context_defensively_freezes_one_decision_source() -> None:
     source = DecisionContext(
         information={
             "round_id": 1,
+            "board": {"round_id": 1, "production_cost_ema": 50},
             "round": {
                 "round_id": 1,
                 "deployed_lamports": mutable_deployments,
@@ -169,6 +174,7 @@ def test_execution_context_rejects_noncanonical_source_values() -> None:
             decision_context=DecisionContext(
                 information={
                     "round_id": 1,
+                    "board": {"round_id": 1, "production_cost_ema": 50},
                     "round": {
                         "round_id": 1,
                         "deployed_lamports": (True,) + (0,) * 24,
@@ -187,6 +193,7 @@ def test_execution_context_rejects_incoherent_round_identity() -> None:
     source = DecisionContext(
         information={
             "round_id": 1,
+            "board": {"round_id": 1, "production_cost_ema": 50},
             "round": {
                 "round_id": 2,
                 "deployed_lamports": tuple(range(25)),
@@ -209,6 +216,7 @@ def test_execution_context_rejects_incomplete_participant_state() -> None:
     source = DecisionContext(
         information={
             "round_id": 1,
+            "board": {"round_id": 1, "production_cost_ema": 50},
             "round": {
                 "round_id": 1,
                 "deployed_lamports": tuple(range(25)),
@@ -567,6 +575,7 @@ pipeline = RQ003MeasurementPipeline(
 context = RQ003ExecutionContext(
     decision_context=DecisionContext(information={
         'round_id': 4321,
+        'board': {'round_id': 4321, 'production_cost_ema': 55000},
         'round': {
             'round_id': 4321,
             'deployed_lamports': tuple(range(25)),
