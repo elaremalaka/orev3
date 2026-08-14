@@ -38,8 +38,8 @@ from orev3.features.types import FeatureValues
 from orev3.strategy_lab.interfaces import DecisionContext
 
 
-RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION = 6
-RQ003_PATH_SCHEMA_VERSION = 6
+RQ003_EXECUTION_CONTEXT_SCHEMA_VERSION = 7
+RQ003_PATH_SCHEMA_VERSION = 7
 EXECUTABLE_MEASUREMENT_BINDING_SCHEMA_VERSION = 1
 DEFINITION_CONTEXT_VIEW_SCHEMA_VERSION = 3
 MEASUREMENT_VECTOR_SCHEMA_VERSION = 1
@@ -143,6 +143,17 @@ RQ003_PATH_DESCRIPTORS = (
         canonical_encoding_rule="decimal_integer",
     ),
     PathDescriptor(
+        path="round.total_winnings",
+        selected_property="total_winnings",
+        scalar_type="integer",
+        nullable=False,
+        semantic_unit="lamports",
+        candidate_scope="context_wide_replicated",
+        source_cardinality=1,
+        history_supported=False,
+        canonical_encoding_rule="decimal_integer",
+    ),
+    PathDescriptor(
         path="board.production_cost_ema",
         selected_property="production_cost_ema",
         scalar_type="integer",
@@ -225,6 +236,7 @@ class RQ003ExecutionContext:
     total_miners: int
     active_round_motherlode: int
     pre_finalization_total_vaulted: int
+    pre_finalization_total_winnings: int
     production_cost_ema: int
     treasury_motherlode: int
     decision_point_configuration_identity: str
@@ -314,6 +326,13 @@ class RQ003ExecutionContext:
         )
         object.__setattr__(
             self,
+            "pre_finalization_total_winnings",
+            require_u64(
+                "round.total_winnings", round_state.get("total_winnings")
+            ),
+        )
+        object.__setattr__(
+            self,
             "production_cost_ema",
             require_u64(
                 "board.production_cost_ema",
@@ -380,6 +399,10 @@ class RQ003ExecutionContext:
             "pre_finalization_total_vaulted",
             self.pre_finalization_total_vaulted,
         )
+        _require_u64(
+            "pre_finalization_total_winnings",
+            self.pre_finalization_total_winnings,
+        )
         _require_u64("production_cost_ema", self.production_cost_ema)
         _require_u64("treasury_motherlode", self.treasury_motherlode)
         object.__setattr__(self, "deployed_lamports", deployed)
@@ -425,6 +448,9 @@ class RQ003ExecutionContext:
             "active_round_motherlode": self.active_round_motherlode,
             "pre_finalization_total_vaulted": (
                 self.pre_finalization_total_vaulted
+            ),
+            "pre_finalization_total_winnings": (
+                self.pre_finalization_total_winnings
             ),
             "production_cost_ema": self.production_cost_ema,
             "treasury_motherlode": self.treasury_motherlode,
@@ -496,6 +522,8 @@ class RQ003ExecutionContext:
             return self.active_round_motherlode
         if path == "round.total_vaulted":
             return self.pre_finalization_total_vaulted
+        if path == "round.total_winnings":
+            return self.pre_finalization_total_winnings
         if path == "board.production_cost_ema":
             return self.production_cost_ema
         if path == "treasury.motherlode":

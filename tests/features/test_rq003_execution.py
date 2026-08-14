@@ -79,6 +79,7 @@ def make_decision_context(*, total_miners: int = 777) -> DecisionContext:
                 "total_miners": total_miners,
                 "motherlode": 0,
                 "total_vaulted": 123_456,
+                "total_winnings": 654_321,
             },
         }
     )
@@ -141,6 +142,7 @@ def test_execution_context_is_deeply_immutable_and_reconstructable() -> None:
     assert context.miner_counts == tuple(100 + index for index in range(25))
     assert context.total_miners == 777
     assert context.pre_finalization_total_vaulted == 123_456
+    assert context.pre_finalization_total_winnings == 654_321
     assert context.treasury_motherlode == 987_654
     context.validate_identities()
     assert context.reconstruct_context_identity() == context.context_identity
@@ -162,6 +164,7 @@ def test_execution_context_defensively_freezes_one_decision_source() -> None:
                 "total_miners": 25,
                 "motherlode": 0,
                 "total_vaulted": 123,
+                "total_winnings": 321,
             },
         }
     )
@@ -191,6 +194,7 @@ def test_execution_context_rejects_noncanonical_source_values() -> None:
                         "total_miners": 0,
                         "motherlode": 0,
                         "total_vaulted": 0,
+                        "total_winnings": 0,
                     },
                 }
             ),
@@ -213,6 +217,7 @@ def test_execution_context_rejects_incoherent_round_identity() -> None:
                 "total_miners": 25,
                 "motherlode": 0,
                 "total_vaulted": 123,
+                "total_winnings": 321,
             },
         }
     )
@@ -238,6 +243,7 @@ def test_execution_context_rejects_incomplete_participant_state() -> None:
                 "miner_counts": tuple(range(25)),
                 "motherlode": 0,
                 "total_vaulted": 123,
+                "total_winnings": 321,
             },
         }
     )
@@ -601,6 +607,7 @@ context = RQ003ExecutionContext(
             'total_miners': 777,
             'motherlode': 0,
             'total_vaulted': 123456,
+            'total_winnings': 654321,
         },
     }),
     observation_index=4,

@@ -68,6 +68,7 @@ def make_execution_context(total_miners: int) -> RQ003ExecutionContext:
                     "total_miners": total_miners,
                     "motherlode": 0,
                     "total_vaulted": 123_456,
+                    "total_winnings": 654_321,
                 },
             }
         ),
@@ -165,6 +166,7 @@ def test_context_builder_uses_one_frozen_participant_state_boundary() -> None:
                 "total_miners": 7,
                 "motherlode": 0,
                 "total_vaulted": 123,
+                "total_winnings": 321,
             },
         }
     )
@@ -411,6 +413,7 @@ context = RQ003ExecutionContext(
             'total_miners': 777,
             'motherlode': 0,
             'total_vaulted': 123456,
+            'total_winnings': 654321,
         },
     }),
     observation_index=0,

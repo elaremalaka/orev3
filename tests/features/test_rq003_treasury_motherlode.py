@@ -80,6 +80,7 @@ def make_execution_context(value: object) -> RQ003ExecutionContext:
                     "total_miners": 100,
                     "motherlode": 0,
                     "total_vaulted": 123_456,
+                    "total_winnings": 654_321,
                 },
             }
         ),
@@ -455,6 +456,7 @@ context = RQ003ExecutionContext(
             'total_miners': 25,
             'motherlode': 0,
             'total_vaulted': 123456,
+            'total_winnings': 654321,
         },
     }),
     observation_index=0,
