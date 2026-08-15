@@ -122,15 +122,26 @@ The protocol pins these immutable execution bindings:
 - replay dataset version `replay-dataset-v1`;
 - replay dataset SHA-256
   `7680856bc6a01f9b69be0921d6e66b3f43d5241a38e63b37871b6925c1d59ba7`;
-- Replay identity
-  `e2de7374318bff7d2644b9394106f2ddbf938e9cf8bf4133b3bb5bfe304fe31b`;
 - governing protocol revision identity
   `3112ab78a64f92892a70d5d4cbd17e1d14b1c2fe`;
 - execution-specification revision
-  `rq003-research-execution-specification-v1` with the SHA-256 pinned above;
+  `rq003-research-execution-specification-v2` with the SHA-256 pinned above;
+- execution profile `outcome_blind_characterization_v1`;
+- the immutable Experiment 2A configuration identity;
+- the frozen source-commit provenance identity;
+- the immutable decision-selection configuration identity for the decision
+  rule defined below;
 - canonical replay-round order by ascending immutable round chronology, with
   `round_id` as the deterministic tie-breaker; and
 - canonical candidate order `0` through `24` within each replay round.
+
+Replay identity is a derived identity and must not be embedded as a literal
+protocol constant. It must be reconstructed deterministically from the bound
+execution specification, execution profile, Experiment 2A configuration,
+source commit, replay dataset, decision-selection configuration, and ordered
+Replay population. The reconstructed identity must be recorded in the frozen
+outcome-blind provenance and audit manifest and must reproduce identically
+during validation. Any reconstruction mismatch invalidates the execution.
 
 There is one decision per replay round: the latest valid observation at or
 before `end_slot - 5`. A decision is eligible only when:
