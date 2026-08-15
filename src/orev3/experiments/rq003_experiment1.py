@@ -11,14 +11,13 @@ import argparse
 import hashlib
 import json
 import math
-import os
 import re
-import tempfile
+import subprocess
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 from statistics import mean, median
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 from orev3.datasets.rq003_experiment0 import (
     RQ003_EXPERIMENT0_OUTPUT_NAMES,
@@ -31,18 +30,82 @@ from orev3.features.rq003_deployed_lamports import (
     DEPLOYED_LAMPORTS_DEFINITION,
     DEPLOYED_LAMPORTS_EXECUTABLE_BINDING_IDENTITY,
 )
+from orev3.features.rq003_active_round_motherlode import (
+    ACTIVE_ROUND_MOTHERLODE_DEFINITION,
+    ACTIVE_ROUND_MOTHERLODE_EXECUTABLE_BINDING_IDENTITY,
+)
 from orev3.features.rq003_execution import (
     MeasurementVector,
+    RQ003_PIPELINE_IMPLEMENTATION_IDENTITY,
     RQ003ExecutionContext,
 )
+from orev3.features.rq003_miner_count import (
+    MINER_COUNT_DEFINITION,
+    MINER_COUNT_EXECUTABLE_BINDING_IDENTITY,
+)
+from orev3.features.rq003_production_cost_ema import (
+    PRODUCTION_COST_EMA_DEFINITION,
+    PRODUCTION_COST_EMA_EXECUTABLE_BINDING_IDENTITY,
+)
+from orev3.features.rq003_total_miners import (
+    TOTAL_MINERS_DEFINITION,
+    TOTAL_MINERS_EXECUTABLE_BINDING_IDENTITY,
+)
+from orev3.features.rq003_total_vaulted import (
+    TOTAL_VAULTED_DEFINITION,
+    TOTAL_VAULTED_EXECUTABLE_BINDING_IDENTITY,
+)
+from orev3.features.rq003_total_winnings import (
+    TOTAL_WINNINGS_DEFINITION,
+    TOTAL_WINNINGS_EXECUTABLE_BINDING_IDENTITY,
+)
+from orev3.features.rq003_treasury_motherlode import (
+    TREASURY_MOTHERLODE_DEFINITION,
+    TREASURY_MOTHERLODE_EXECUTABLE_BINDING_IDENTITY,
+)
 from orev3.historical.models import RoundLifecycleIndexRecord
+from orev3.experiments.rq003_execution_specification import (
+    AUDIT_MANIFEST_NAME,
+    EXECUTION_SPECIFICATION_REVISION,
+    EXECUTION_SPECIFICATION_SHA256,
+    OUTCOME_BLIND_PROVENANCE_NAME,
+    ArtifactContract,
+    ArtifactDeclaration,
+    EvaluationDisposition,
+    ExecutionSpecificationBinding,
+    ExperimentAuditManifest,
+    ExperimentProtocolBinding,
+    OutcomeBlindProvenanceBlock,
+    OutcomeJoinAuthorization,
+    PopulationDisposition,
+    ReplayDatasetBinding,
+    ReplayIdentity,
+    SourceCommitProvenance,
+    authorize_outcome_join,
+    bind_source_commit,
+    construct_artifact_contract,
+    file_sha256,
+    freeze_outcome_blind_provenance,
+    identity as execution_identity,
+    open_canonical_outcome_source,
+    seal_audit_manifest,
+    validate_audit_manifest,
+    write_canonical_json_once,
+    write_canonical_jsonl_once,
+)
 from orev3.replay.engine import select_by_slots_remaining
 from orev3.replay.loader import load_round_index
 from orev3.strategy_lab.runner import decision_context_from_replay_point
 
 
 EXPERIMENT1_SCHEMA_VERSION = 1
-EXPERIMENT1_PROTOCOL_REVISION = "3112ab78a64f92892a70d5d4cbd17e1d14b1c2fe"
+EXPERIMENT1_PROTOCOL_REVISION = "3"
+EXPERIMENT1_PROTOCOL_DOCUMENT_SHA256 = (
+    "de65715208d624989e3a45d879a34dfa272a7bb1308b1e95c0ce7c071c576cc1"
+)
+EXPERIMENT1_PROTOCOL_SOURCE_REVISION = (
+    "3112ab78a64f92892a70d5d4cbd17e1d14b1c2fe"
+)
 EXPERIMENT1_DATASET_SHA256 = (
     "7680856bc6a01f9b69be0921d6e66b3f43d5241a38e63b37871b6925c1d59ba7"
 )
@@ -60,7 +123,9 @@ FOLDS_ARTIFACT_NAME = "chronological_folds.json"
 CADENCE_ARTIFACT_NAME = "cadence.json"
 LIFECYCLE_ARTIFACT_NAME = "lifecycle.json"
 PROVENANCE_ARTIFACT_NAME = "provenance.json"
+OBSERVATION_COUNTS_ARTIFACT_NAME = "observation_counts.json"
 EXPERIMENT1_ARTIFACT_NAMES = (
+    OUTCOME_BLIND_PROVENANCE_NAME,
     RANKING_ARTIFACT_NAME,
     EVALUATION_ARTIFACT_NAME,
     METRICS_ARTIFACT_NAME,
@@ -69,6 +134,8 @@ EXPERIMENT1_ARTIFACT_NAMES = (
     CADENCE_ARTIFACT_NAME,
     LIFECYCLE_ARTIFACT_NAME,
     PROVENANCE_ARTIFACT_NAME,
+    OBSERVATION_COUNTS_ARTIFACT_NAME,
+    AUDIT_MANIFEST_NAME,
 )
 
 _FEATURE_SET_DOMAIN = "rq003-experiment-001-feature-set-v1"
@@ -82,7 +149,79 @@ _RANKING_RECORD_DOMAIN = "rq003-experiment-001-ranking-record-v1"
 _EVALUATION_RECORD_DOMAIN = "rq003-experiment-001-evaluation-record-v1"
 _REPORT_DOMAIN = "rq003-experiment-001-report-v1"
 _BOOTSTRAP_DOMAIN = "rq003-experiment-001-moving-block-bootstrap-v1"
+_EXPERIMENT_CONFIGURATION_DOMAIN = "rq003-experiment-001-configuration-v3"
+_REPLAY_DATASET_SCHEMA_DOMAIN = "rq003-replay-dataset-schema-v1"
+_REPLAY_ROUND_DOMAIN = "rq003-experiment-001-replay-round-v1"
+_PROTOCOL_REVISION_POPULATION_DOMAIN = (
+    "rq003-experiment-001-protocol-revision-population-v1"
+)
+_OUTCOME_SOURCE_DOMAIN = "rq003-experiment-001-outcome-source-v1"
+_MEASUREMENT_COMPONENT_SET_DOMAIN = (
+    "rq003-experiment-001-measurement-component-set-v1"
+)
 _SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
+
+_REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+_SOURCE_SCOPES = (
+    "docs/research/experiments/rq003-experiment-001-direct-deployment-ordering.md",
+    "docs/research/specifications/rq003-research-execution-specification.md",
+    "src/orev3",
+)
+
+EXPERIMENT1_SPECIFICATION_BINDING = ExecutionSpecificationBinding(
+    EXECUTION_SPECIFICATION_REVISION,
+    EXECUTION_SPECIFICATION_SHA256,
+)
+
+EXPERIMENT1_DATASET_SCHEMA_IDENTITY = execution_identity(
+    _REPLAY_DATASET_SCHEMA_DOMAIN,
+    {
+        "lifecycle_schema_version": 1,
+        "record_kind": "RoundLifecycleIndexRecord",
+    },
+)
+
+EXPERIMENT1_PROTOCOL_REVISION_POPULATION_IDENTITY = execution_identity(
+    _PROTOCOL_REVISION_POPULATION_DOMAIN,
+    {
+        "dataset_sha256": EXPERIMENT1_DATASET_SHA256,
+        "official_source_revision": EXPERIMENT1_PROTOCOL_SOURCE_REVISION,
+        "scope": "homogeneous_legacy_replay_population",
+    },
+)
+
+_MEASUREMENT_DEFINITIONS = (
+    DEPLOYED_LAMPORTS_DEFINITION,
+    MINER_COUNT_DEFINITION,
+    TOTAL_MINERS_DEFINITION,
+    PRODUCTION_COST_EMA_DEFINITION,
+    ACTIVE_ROUND_MOTHERLODE_DEFINITION,
+    TREASURY_MOTHERLODE_DEFINITION,
+    TOTAL_VAULTED_DEFINITION,
+    TOTAL_WINNINGS_DEFINITION,
+)
+_MEASUREMENT_EXECUTABLE_BINDING_IDENTITIES = (
+    DEPLOYED_LAMPORTS_EXECUTABLE_BINDING_IDENTITY,
+    MINER_COUNT_EXECUTABLE_BINDING_IDENTITY,
+    TOTAL_MINERS_EXECUTABLE_BINDING_IDENTITY,
+    PRODUCTION_COST_EMA_EXECUTABLE_BINDING_IDENTITY,
+    ACTIVE_ROUND_MOTHERLODE_EXECUTABLE_BINDING_IDENTITY,
+    TREASURY_MOTHERLODE_EXECUTABLE_BINDING_IDENTITY,
+    TOTAL_VAULTED_EXECUTABLE_BINDING_IDENTITY,
+    TOTAL_WINNINGS_EXECUTABLE_BINDING_IDENTITY,
+)
+EXPERIMENT1_MEASUREMENT_COMPONENT_SET_IDENTITY = execution_identity(
+    _MEASUREMENT_COMPONENT_SET_DOMAIN,
+    {
+        "ordered_definition_identities": tuple(
+            definition.definition_identity for definition in _MEASUREMENT_DEFINITIONS
+        ),
+        "ordered_executable_binding_identities": (
+            _MEASUREMENT_EXECUTABLE_BINDING_IDENTITIES
+        ),
+        "pipeline_implementation_identity": RQ003_PIPELINE_IMPLEMENTATION_IDENTITY,
+    },
+)
 
 EXPERIMENT1_FEATURE_SET_IDENTITY = hashlib.sha256(
     canonical_encode(
@@ -162,18 +301,27 @@ class Experiment1Configuration:
     expected_dataset_sha256: str = EXPERIMENT1_DATASET_SHA256
     requested_slots_remaining: int = EXPERIMENT1_REQUESTED_SLOTS_REMAINING
     max_slot_distance: int | None = None
+    source_commit_sha: str | None = None
+    repository_root: Path = _REPOSITORY_ROOT
     decision_configuration_identity: str = field(init=False)
+    experiment_configuration_identity: str = field(init=False)
 
     def __post_init__(self) -> None:
         dataset = Path(self.replay_dataset_path)
         output = Path(self.output_directory)
+        repository_root = Path(self.repository_root).resolve()
         _require_sha256("expected_dataset_sha256", self.expected_dataset_sha256)
+        if self.source_commit_sha is not None and not re.fullmatch(
+            r"[0-9a-f]{40}|[0-9a-f]{64}", self.source_commit_sha
+        ):
+            raise ValueError("source_commit_sha must be a full Git commit identity")
         if self.requested_slots_remaining != EXPERIMENT1_REQUESTED_SLOTS_REMAINING:
             raise ValueError("Experiment 1 requires requested_slots_remaining=5")
         if self.max_slot_distance is not None:
             raise ValueError("Experiment 1 does not permit a maximum slot distance")
         object.__setattr__(self, "replay_dataset_path", dataset)
         object.__setattr__(self, "output_directory", output)
+        object.__setattr__(self, "repository_root", repository_root)
         experiment0_configuration = RQ003Experiment0Configuration(
             replay_dataset_path=dataset,
             output_path=output / RANKING_ARTIFACT_NAME,
@@ -185,6 +333,44 @@ class Experiment1Configuration:
             "decision_configuration_identity",
             experiment0_configuration.decision_point_configuration_identity,
         )
+        object.__setattr__(
+            self,
+            "experiment_configuration_identity",
+            execution_identity(
+                _EXPERIMENT_CONFIGURATION_DOMAIN,
+                {
+                    "artifact_names": EXPERIMENT1_ARTIFACT_NAMES,
+                    "ascending_ranking_identity": (
+                        EXPERIMENT1_ASCENDING_RANKING_IDENTITY
+                    ),
+                    "bootstrap_confidence": EXPERIMENT1_BOOTSTRAP_CONFIDENCE,
+                    "bootstrap_replicates": EXPERIMENT1_BOOTSTRAP_REPLICATES,
+                    "candidate_order": tuple(range(25)),
+                    "dataset_sha256": self.expected_dataset_sha256,
+                    "decision_configuration_identity": (
+                        experiment0_configuration.decision_point_configuration_identity
+                    ),
+                    "deterministic_baseline_identity": (
+                        EXPERIMENT1_DETERMINISTIC_BASELINE_IDENTITY
+                    ),
+                    "feature_set_identity": EXPERIMENT1_FEATURE_SET_IDENTITY,
+                    "fold_count": EXPERIMENT1_FOLD_COUNT,
+                    "measurement_component_set_identity": (
+                        EXPERIMENT1_MEASUREMENT_COMPONENT_SET_IDENTITY
+                    ),
+                    "primary_ranking_identity": (
+                        EXPERIMENT1_PRIMARY_RANKING_IDENTITY
+                    ),
+                    "protocol_revision": EXPERIMENT1_PROTOCOL_REVISION,
+                    "protocol_source_revision": (
+                        EXPERIMENT1_PROTOCOL_SOURCE_REVISION
+                    ),
+                    "seeded_random_baseline_identity": (
+                        EXPERIMENT1_SEEDED_RANDOM_BASELINE_IDENTITY
+                    ),
+                },
+            ),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -192,6 +378,10 @@ class Experiment1Result:
     """Deterministic execution summary without scientific interpretation."""
 
     dataset_sha256: str
+    replay_identity: str
+    audit_manifest_identity: str
+    audit_manifest_sha256: str
+    source_commit_sha: str
     replay_rounds: int
     ranked_decisions: int
     primary_evaluations: int
@@ -214,39 +404,6 @@ def _canonical_json(material: object) -> str:
         separators=(",", ":"),
         sort_keys=True,
     )
-
-
-def _file_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def _atomic_write_lines(path: Path, lines: Iterable[str]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(
-        prefix=path.name + ".", suffix=".tmp", dir=path.parent
-    )
-    temporary = Path(temporary_name)
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
-            for line in lines:
-                if "\n" in line:
-                    raise ValueError("canonical JSONL records cannot contain newlines")
-                handle.write(line)
-                handle.write("\n")
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temporary, path)
-    except Exception:
-        temporary.unlink(missing_ok=True)
-        raise
-
-
-def _atomic_write_json(path: Path, material: Mapping[str, Any]) -> None:
-    _atomic_write_lines(path, (_canonical_json(material),))
 
 
 def _average_ranks(values: Sequence[int], *, descending: bool) -> tuple[float, ...]:
@@ -437,73 +594,148 @@ def _validate_ranking_record(record: Mapping[str, Any]) -> None:
         )
 
 
-def _freeze_rankings(
+def _load_outcome_blind_round_index(
+    path: Path,
+) -> dict[int, RoundLifecycleIndexRecord]:
+    """Load only the replay-side projection of lifecycle records."""
+
+    rounds: dict[int, RoundLifecycleIndexRecord] = {}
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            try:
+                raw = json.loads(line)
+            except json.JSONDecodeError as error:
+                raise ValueError(
+                    f"replay line {line_number} is malformed"
+                ) from error
+            if not isinstance(raw, dict):
+                raise ValueError(f"replay line {line_number} is not an object")
+            projected = dict(raw)
+            projected["finalized_outcome"] = None
+            projected["finalized_outcome_source"] = None
+            projected["finalized_outcome_capture_mode"] = None
+            projected["finalized_outcome_evidence_identities"] = []
+            quality = projected.get("quality")
+            if isinstance(quality, dict):
+                quality = dict(quality)
+                quality["finalized_state_observed"] = False
+                projected["quality"] = quality
+            record = RoundLifecycleIndexRecord.model_validate(projected)
+            if record.round_id in rounds:
+                raise ValueError(f"duplicate replay round: {record.round_id}")
+            rounds[record.round_id] = record
+    return rounds
+
+
+def _replay_round_identity(lifecycle: RoundLifecycleIndexRecord) -> str:
+    return execution_identity(
+        _REPLAY_ROUND_DOMAIN,
+        {
+            "end_slot": lifecycle.end_slot,
+            "observation_count": lifecycle.observation_count,
+            "observation_references": tuple(
+                {
+                    "observed_at_utc": reference.observed_at_utc.isoformat(),
+                    "rpc_slot": reference.rpc_slot,
+                    "source_file": reference.source_file,
+                    "source_line_number": reference.source_line_number,
+                }
+                for reference in lifecycle.observation_references
+            ),
+            "round_id": lifecycle.round_id,
+            "start_slot": lifecycle.start_slot,
+        },
+    )
+
+
+def _outcome_source_identity(
+    lifecycle: RoundLifecycleIndexRecord,
+    dataset_identity: str,
+) -> str:
+    if lifecycle.finalized_outcome is None:
+        raise ValueError("missing outcome cannot have an outcome source identity")
+    return execution_identity(
+        _OUTCOME_SOURCE_DOMAIN,
+        {
+            "capture_mode": lifecycle.finalized_outcome_capture_mode,
+            "dataset_identity": dataset_identity,
+            "evidence_identities": (
+                lifecycle.finalized_outcome_evidence_identities
+            ),
+            "outcome": lifecycle.finalized_outcome.model_dump(mode="json"),
+            "outcome_source": lifecycle.finalized_outcome_source,
+            "round_id": lifecycle.round_id,
+        },
+    )
+
+
+def _build_rankings(
     configuration: Experiment1Configuration,
     lifecycles: Sequence[RoundLifecycleIndexRecord],
-    ranking_path: Path,
-) -> tuple[dict[str, Any], ...]:
-    """Freeze rankings without reading any finalized outcome field."""
+) -> tuple[tuple[dict[str, Any], ...], tuple[dict[str, Any], ...]]:
+    """Construct rankings without receiving any finalized outcome capability."""
 
     pipeline = build_fundamental_measurement_pipeline()
     deployed_index = RQ003_EXPERIMENT0_OUTPUT_NAMES.index("deployed_lamports")
     selection_audit: list[dict[str, Any]] = []
+    records: list[dict[str, Any]] = []
 
-    def lines() -> Iterable[str]:
-        for lifecycle in lifecycles:
-            try:
-                selection = select_by_slots_remaining(
-                    lifecycle,
-                    requested_slots_remaining=(
-                        configuration.requested_slots_remaining
-                    ),
-                    max_slot_distance=configuration.max_slot_distance,
-                )
-            except ValueError as error:
-                message = str(error)
-                if message.startswith("No observation for round"):
-                    reason = "no_predeclared_decision_observation"
-                elif "has no usable end_slot" in message:
-                    reason = "no_usable_end_slot"
-                else:
-                    raise
-                selection_audit.append(
-                    {"round_id": lifecycle.round_id, "status": reason}
-                )
-                continue
-            point = selection.replay_point
-            if selection.slot_distance is None:
-                raise ValueError("selected replay point lacks slot distance")
-            observation_index = _selected_observation_index(
-                lifecycle, point.source_file, point.source_line_number
+    for lifecycle in lifecycles:
+        if lifecycle.finalized_outcome is not None:
+            raise ValueError("outcome-blind lifecycle exposes a finalized outcome")
+        try:
+            selection = select_by_slots_remaining(
+                lifecycle,
+                requested_slots_remaining=configuration.requested_slots_remaining,
+                max_slot_distance=configuration.max_slot_distance,
             )
-            decision_context = decision_context_from_replay_point(point)
-            vectors: list[MeasurementVector] = []
-            deployed: list[int] = []
-            decision_identity: str | None = None
-            for square in range(25):
-                context = RQ003ExecutionContext(
-                    decision_context=decision_context,
-                    observation_index=observation_index,
-                    structural_candidate_key=square,
-                    decision_point_configuration_identity=(
-                        configuration.decision_configuration_identity
-                    ),
-                )
-                vector = pipeline.compute(context)
-                if MeasurementVector.from_canonical_bytes(vector.canonical_bytes()) != vector:
-                    raise ValueError("MeasurementVector does not reconstruct")
-                if decision_identity is None:
-                    decision_identity = context.decision_snapshot_identity
-                elif context.decision_snapshot_identity != decision_identity:
-                    raise ValueError("candidate decision identities are inconsistent")
-                value = vector.ordered_values[deployed_index]
-                if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-                    raise ValueError("deployed_lamports output is invalid")
-                vectors.append(vector)
-                deployed.append(value)
+        except ValueError as error:
+            message = str(error)
+            if message.startswith("No observation for round"):
+                reason = "no_predeclared_decision_observation"
+            elif "has no usable end_slot" in message:
+                reason = "no_usable_end_slot"
+            else:
+                raise
+            selection_audit.append(
+                {"round_id": lifecycle.round_id, "status": reason}
+            )
+            continue
+        point = selection.replay_point
+        if selection.slot_distance is None:
+            raise ValueError("selected replay point lacks slot distance")
+        observation_index = _selected_observation_index(
+            lifecycle, point.source_file, point.source_line_number
+        )
+        decision_context = decision_context_from_replay_point(point)
+        vectors: list[MeasurementVector] = []
+        deployed: list[int] = []
+        decision_identity: str | None = None
+        for square in range(25):
+            context = RQ003ExecutionContext(
+                decision_context=decision_context,
+                observation_index=observation_index,
+                structural_candidate_key=square,
+                decision_point_configuration_identity=(
+                    configuration.decision_configuration_identity
+                ),
+            )
+            vector = pipeline.compute(context)
+            if MeasurementVector.from_canonical_bytes(vector.canonical_bytes()) != vector:
+                raise ValueError("MeasurementVector does not reconstruct")
             if decision_identity is None:
-                raise ValueError("decision identity was not constructed")
-            record = _ranking_record(
+                decision_identity = context.decision_snapshot_identity
+            elif context.decision_snapshot_identity != decision_identity:
+                raise ValueError("candidate decision identities are inconsistent")
+            value = vector.ordered_values[deployed_index]
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValueError("deployed_lamports output is invalid")
+            vectors.append(vector)
+            deployed.append(value)
+        if decision_identity is None:
+            raise ValueError("decision identity was not constructed")
+        records.append(
+            _ranking_record(
                 lifecycle=lifecycle,
                 observation_index=observation_index,
                 selected_rpc_slot=point.rpc_slot,
@@ -515,13 +747,13 @@ def _freeze_rankings(
                     configuration.decision_configuration_identity
                 ),
             )
-            selection_audit.append(
-                {"round_id": lifecycle.round_id, "status": "ranked"}
-            )
-            yield _canonical_json(record)
-
-    _atomic_write_lines(ranking_path, lines())
-    return tuple(selection_audit)
+        )
+        selection_audit.append(
+            {"round_id": lifecycle.round_id, "status": "ranked"}
+        )
+    if not records:
+        raise ValueError("ranking artifact contains no decisions")
+    return tuple(records), tuple(selection_audit)
 
 
 def _evaluation_record(
@@ -587,22 +819,59 @@ def _evaluation_record(
 
 def _join_outcomes(
     ranking_records: Sequence[Mapping[str, Any]],
-    lifecycle_by_round: Mapping[int, RoundLifecycleIndexRecord],
-    evaluation_path: Path,
-) -> tuple[dict[str, Any], ...]:
+    replay_dataset_path: Path,
+    authorization: OutcomeJoinAuthorization,
+    ranking_contract: ArtifactContract,
+    round_identity_by_id: Mapping[int, str],
+    dataset_identity: str,
+) -> tuple[
+    tuple[dict[str, Any], ...],
+    dict[int, RoundLifecycleIndexRecord],
+    tuple[EvaluationDisposition, ...],
+]:
+    if not isinstance(authorization, OutcomeJoinAuthorization) or (
+        authorization.ranking_artifact_contract_identity
+        != ranking_contract.artifact_contract_identity
+    ):
+        raise ValueError("outcome join is not authorized by the ranking freeze")
+    lifecycle_by_round = load_round_index(replay_dataset_path)
     evaluations: list[dict[str, Any]] = []
+    dispositions: list[EvaluationDisposition] = []
     for ranking in ranking_records:
         lifecycle = lifecycle_by_round.get(ranking["round_id"])
         if lifecycle is None:
             raise ValueError("ranking round is absent from replay dataset")
+        round_identity = round_identity_by_id.get(lifecycle.round_id)
+        if round_identity is None:
+            raise ValueError("outcome round is absent from Replay identity")
         if lifecycle.finalized_outcome is None:
+            dispositions.append(
+                EvaluationDisposition(
+                    round_identity=round_identity,
+                    round_reference=str(lifecycle.round_id),
+                    status="excluded",
+                    reason="missing_outcome",
+                    outcome_source_identity=None,
+                )
+            )
             continue
         evaluations.append(_evaluation_record(ranking, lifecycle))
-    _atomic_write_lines(
-        evaluation_path,
-        (_canonical_json(record) for record in evaluations),
-    )
-    return tuple(evaluations)
+        dispositions.append(
+            EvaluationDisposition(
+                round_identity=round_identity,
+                round_reference=str(lifecycle.round_id),
+                status="evaluated",
+                reason=(
+                    "primary"
+                    if lifecycle.quality.coverage_status == "complete"
+                    else "lifecycle_sensitivity"
+                ),
+                outcome_source_identity=_outcome_source_identity(
+                    lifecycle, dataset_identity
+                ),
+            )
+        )
+    return tuple(evaluations), lifecycle_by_round, tuple(dispositions)
 
 
 def _load_evaluation_artifact(path: Path) -> tuple[dict[str, Any], ...]:
@@ -654,15 +923,23 @@ def _load_report(path: Path, expected_kind: str) -> dict[str, Any]:
     report["artifact_identity"] = identity
     if report.get("kind") != expected_kind:
         raise ValueError(f"{path.name} report kind is inconsistent")
-    if report.get("protocol_revision") != EXPERIMENT1_PROTOCOL_REVISION:
-        raise ValueError(f"{path.name} protocol revision is inconsistent")
+    if report.get("experiment_protocol_revision") != EXPERIMENT1_PROTOCOL_REVISION:
+        raise ValueError(f"{path.name} experiment protocol revision is inconsistent")
+    if (
+        report.get("protocol_source_revision")
+        != EXPERIMENT1_PROTOCOL_SOURCE_REVISION
+    ):
+        raise ValueError(f"{path.name} protocol source revision is inconsistent")
     return report
 
 
 def validate_experiment1_artifacts(
     output_directory: str | Path,
+    *,
+    replay_dataset_path: str | Path,
+    expected_manifest: ExperimentAuditManifest | None = None,
 ) -> tuple[tuple[str, Path, str], ...]:
-    """Fail closed while reconstructing all persisted Experiment 1 artifacts."""
+    """Fail closed while reconstructing the complete execution artifact graph."""
 
     output = Path(output_directory)
     actual_names = tuple(
@@ -699,13 +976,16 @@ def validate_experiment1_artifacts(
         PROVENANCE_ARTIFACT_NAME: _load_report(
             output / PROVENANCE_ARTIFACT_NAME, "provenance"
         ),
+        OBSERVATION_COUNTS_ARTIFACT_NAME: _load_report(
+            output / OBSERVATION_COUNTS_ARTIFACT_NAME, "observation_counts"
+        ),
     }
     metrics = reports[METRICS_ARTIFACT_NAME]
-    if metrics.get("ranking_artifact_sha256") != _file_sha256(
+    if metrics.get("ranking_artifact_sha256") != file_sha256(
         output / RANKING_ARTIFACT_NAME
     ):
         raise ValueError("metrics ranking artifact hash is inconsistent")
-    if metrics.get("evaluation_artifact_sha256") != _file_sha256(
+    if metrics.get("evaluation_artifact_sha256") != file_sha256(
         output / EVALUATION_ARTIFACT_NAME
     ):
         raise ValueError("metrics evaluation artifact hash is inconsistent")
@@ -713,8 +993,86 @@ def validate_experiment1_artifacts(
         raise ValueError("metrics ranked decision count is inconsistent")
     if metrics.get("evaluation_record_count") != len(evaluations):
         raise ValueError("metrics evaluation record count is inconsistent")
+    manifest_material = validate_audit_manifest(
+        output / AUDIT_MANIFEST_NAME,
+        expected=expected_manifest,
+    )
+    provenance_material = _load_canonical_json_material(
+        output / OUTCOME_BLIND_PROVENANCE_NAME
+    )
+    if (
+        manifest_material["outcome_blind_provenance"]
+        != provenance_material
+    ):
+        raise ValueError("manifest provenance block differs from frozen artifact")
+    stored_contracts = {
+        entry["name"]: entry["contract"]
+        for entry in manifest_material["artifact_contracts"]
+    }
+    if len(stored_contracts) != len(manifest_material["artifact_contracts"]):
+        raise ValueError("manifest artifact contracts are duplicated")
+    declarations = _experiment_artifact_declarations()
+    records_by_name: dict[str, tuple[dict[str, Any], ...]] = {
+        OUTCOME_BLIND_PROVENANCE_NAME: (provenance_material,),
+        RANKING_ARTIFACT_NAME: rankings,
+        EVALUATION_ARTIFACT_NAME: evaluations,
+        **{name: (report,) for name, report in reports.items()},
+        "source_replay_dataset": _load_canonical_jsonl_material(
+            Path(replay_dataset_path)
+        ),
+    }
+    path_by_name = {
+        name: output / name for name in records_by_name if name != "source_replay_dataset"
+    }
+    path_by_name["source_replay_dataset"] = Path(replay_dataset_path)
+    expected_contract_names = set(records_by_name)
+    if set(stored_contracts) != expected_contract_names:
+        raise ValueError("manifest artifact contract coverage is incomplete")
+    for name in sorted(expected_contract_names):
+        stored = stored_contracts[name]
+        dependencies = stored.get("upstream_dependency_identities")
+        if not isinstance(dependencies, list):
+            raise ValueError(f"artifact dependencies are malformed: {name}")
+        reconstructed = construct_artifact_contract(
+            path_by_name[name],
+            (
+                declarations[name]
+                if name != OUTCOME_BLIND_PROVENANCE_NAME
+                else ArtifactDeclaration(
+                    artifact_kind="outcome_blind_provenance",
+                    schema_version=1,
+                    container="json",
+                    record_ordering="single_canonical_record",
+                )
+            ),
+            records_by_name[name],
+            tuple(dependencies),
+        )
+        if _canonical_json(reconstructed.to_dict()) != _canonical_json(stored):
+            raise ValueError(f"artifact contract does not reconstruct: {name}")
+
+    block_dispositions = provenance_material["population_dispositions"]
+    replay_round_identities = provenance_material["replay"][
+        "ordered_replay_round_identities"
+    ]
+    if [item["round_identity"] for item in block_dispositions] != (
+        replay_round_identities
+    ):
+        raise ValueError("pre-outcome population accounting is inconsistent")
+    eligible = [
+        item for item in block_dispositions if item["status"] == "eligible"
+    ]
+    if [item["decision_identity"] for item in eligible] != [
+        record["decision_identity"] for record in rankings
+    ]:
+        raise ValueError("ranking artifact differs from eligible-round accounting")
+    evaluation_dispositions = manifest_material["evaluation_dispositions"]
+    if [item["round_identity"] for item in evaluation_dispositions] != [
+        item["round_identity"] for item in eligible
+    ]:
+        raise ValueError("post-outcome dispositions do not reconcile")
     return tuple(
-        (name, output / name, _file_sha256(output / name))
+        (name, output / name, file_sha256(output / name))
         for name in EXPERIMENT1_ARTIFACT_NAMES
     )
 
@@ -797,8 +1155,9 @@ def _top_k_rate(ranks: Sequence[float], k: int) -> float | None:
 def _report(kind: str, material: Mapping[str, Any]) -> dict[str, Any]:
     report: dict[str, Any] = {
         "experiment": "rq003-experiment-001-direct-deployment-ordering",
+        "experiment_protocol_revision": EXPERIMENT1_PROTOCOL_REVISION,
         "kind": kind,
-        "protocol_revision": EXPERIMENT1_PROTOCOL_REVISION,
+        "protocol_source_revision": EXPERIMENT1_PROTOCOL_SOURCE_REVISION,
         "schema_version": EXPERIMENT1_SCHEMA_VERSION,
         **material,
     }
@@ -985,6 +1344,98 @@ def _cadence_category(record: Mapping[str, Any]) -> str:
     raise ValueError("evaluation slot distance is invalid")
 
 
+def _cadence_report(
+    ranking_records: Sequence[Mapping[str, Any]],
+    primary: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    outcome_blind_counts = Counter(
+        _cadence_category(record) for record in ranking_records
+    )
+    primary_report = _group_report(
+        "cadence", primary, _cadence_category, ("0", "1", "2", "3+")
+    )
+    material = dict(primary_report)
+    material.pop("artifact_identity")
+    material["definition"] = (
+        "(end_slot - 5) - selected_observation_slot"
+    )
+    material["outcome_blind_population_counts"] = {
+        category: outcome_blind_counts.get(category, 0)
+        for category in ("0", "1", "2", "3+")
+    }
+    material["primary_labeled_population_count"] = len(primary)
+    material["ranked_outcome_blind_population_count"] = len(ranking_records)
+    return _report("cadence", material)
+
+
+def _count_distribution(
+    lifecycles: Sequence[RoundLifecycleIndexRecord],
+) -> dict[str, int]:
+    return dict(
+        sorted(
+            Counter(str(lifecycle.observation_count) for lifecycle in lifecycles).items(),
+            key=lambda item: int(item[0]),
+        )
+    )
+
+
+def _observation_counts_report(
+    lifecycles: Sequence[RoundLifecycleIndexRecord],
+    selection_audit: Sequence[Mapping[str, Any]],
+    primary: Sequence[Mapping[str, Any]],
+    evaluation_dispositions: Sequence[EvaluationDisposition],
+) -> dict[str, Any]:
+    lifecycle_by_round = {lifecycle.round_id: lifecycle for lifecycle in lifecycles}
+    selection_by_round = {
+        int(entry["round_id"]): str(entry["status"])
+        for entry in selection_audit
+    }
+    if tuple(selection_by_round) != tuple(lifecycle_by_round):
+        raise ValueError("selection audit order does not match Replay order")
+    eligible = tuple(
+        lifecycle
+        for lifecycle in lifecycles
+        if selection_by_round[lifecycle.round_id] == "ranked"
+    )
+    primary_round_ids = {int(record["round_id"]) for record in primary}
+    primary_lifecycles = tuple(
+        lifecycle for lifecycle in eligible if lifecycle.round_id in primary_round_ids
+    )
+    missing_round_ids = {
+        int(disposition.round_reference)
+        for disposition in evaluation_dispositions
+        if disposition.status == "excluded" and disposition.reason == "missing_outcome"
+    }
+    missing = tuple(
+        lifecycle for lifecycle in eligible if lifecycle.round_id in missing_round_ids
+    )
+    excluded: dict[str, dict[str, int]] = {}
+    for reason in sorted(
+        {status for status in selection_by_round.values() if status != "ranked"}
+    ):
+        excluded[reason] = _count_distribution(
+            tuple(
+                lifecycle
+                for lifecycle in lifecycles
+                if selection_by_round[lifecycle.round_id] == reason
+            )
+        )
+    return _report(
+        "observation_counts",
+        {
+            "definition": (
+                "ordered normal replay observations before outcome attachment; "
+                "RFC-012 evidence and finalized or enriched outcome records excluded"
+            ),
+            "eligible_missing_outcome": _count_distribution(missing),
+            "outcome_blind_eligible": _count_distribution(eligible),
+            "pre_ranking_excluded_by_reason": excluded,
+            "primary_labeled_evaluation": _count_distribution(primary_lifecycles),
+            "replay_bound": _count_distribution(lifecycles),
+        },
+    )
+
+
 def _provenance_category(record: Mapping[str, Any]) -> str:
     if record["outcome_source"] == "enriched":
         return "enriched"
@@ -1072,15 +1523,224 @@ def _metrics_report(
     )
 
 
+def _bind_execution_source(
+    configuration: Experiment1Configuration,
+) -> SourceCommitProvenance:
+    commit_sha = configuration.source_commit_sha
+    if commit_sha is None:
+        commit_sha = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=configuration.repository_root,
+            text=True,
+        ).strip()
+    return bind_source_commit(
+        configuration.repository_root,
+        commit_sha,
+        _SOURCE_SCOPES,
+    )
+
+
+def _experiment_binding(
+    configuration: Experiment1Configuration,
+) -> ExperimentProtocolBinding:
+    return ExperimentProtocolBinding(
+        experiment_identifier=(
+            "rq003-experiment-001-direct-deployment-ordering"
+        ),
+        protocol_revision=EXPERIMENT1_PROTOCOL_REVISION,
+        protocol_document_sha256=EXPERIMENT1_PROTOCOL_DOCUMENT_SHA256,
+        specification=EXPERIMENT1_SPECIFICATION_BINDING,
+        experiment_configuration_identity=(
+            configuration.experiment_configuration_identity
+        ),
+    )
+
+
+def _dataset_binding(path: Path, sha256: str) -> ReplayDatasetBinding:
+    return ReplayDatasetBinding(
+        dataset_version="replay-dataset-v1",
+        schema_identity=EXPERIMENT1_DATASET_SCHEMA_IDENTITY,
+        byte_count=path.stat().st_size,
+        sha256=sha256,
+    )
+
+
+def _artifact_declaration(
+    kind: str,
+    *,
+    container: str,
+    ordering: str,
+) -> ArtifactDeclaration:
+    return ArtifactDeclaration(
+        artifact_kind=kind,
+        schema_version=EXPERIMENT1_SCHEMA_VERSION,
+        container=container,
+        record_ordering=ordering,
+    )
+
+
+def _experiment_artifact_declarations() -> dict[str, ArtifactDeclaration]:
+    report_names = (
+        METRICS_ARTIFACT_NAME,
+        BOOTSTRAP_ARTIFACT_NAME,
+        FOLDS_ARTIFACT_NAME,
+        CADENCE_ARTIFACT_NAME,
+        LIFECYCLE_ARTIFACT_NAME,
+        PROVENANCE_ARTIFACT_NAME,
+        OBSERVATION_COUNTS_ARTIFACT_NAME,
+    )
+    declarations = {
+        RANKING_ARTIFACT_NAME: _artifact_declaration(
+            "ranking", container="jsonl", ordering="start_slot_then_round_id"
+        ),
+        EVALUATION_ARTIFACT_NAME: _artifact_declaration(
+            "evaluation", container="jsonl", ordering="start_slot_then_round_id"
+        ),
+        "source_replay_dataset": _artifact_declaration(
+            "outcome_source",
+            container="jsonl",
+            ordering="start_slot_then_round_id",
+        ),
+        AUDIT_MANIFEST_NAME: _artifact_declaration(
+            "experiment_audit_manifest",
+            container="json",
+            ordering="single_canonical_record",
+        ),
+    }
+    for name in report_names:
+        declarations[name] = _artifact_declaration(
+            name.removesuffix(".json"),
+            container="json",
+            ordering="single_canonical_record",
+        )
+    return declarations
+
+
+def _component_identities() -> tuple[tuple[str, str], ...]:
+    identities = [
+                ("ascending_ranking", EXPERIMENT1_ASCENDING_RANKING_IDENTITY),
+                (
+                    "deterministic_baseline",
+                    EXPERIMENT1_DETERMINISTIC_BASELINE_IDENTITY,
+                ),
+                ("feature_set", EXPERIMENT1_FEATURE_SET_IDENTITY),
+                ("primary_ranking", EXPERIMENT1_PRIMARY_RANKING_IDENTITY),
+                (
+                    "seeded_random_baseline",
+                    EXPERIMENT1_SEEDED_RANDOM_BASELINE_IDENTITY,
+                ),
+                (
+                    "measurement_component_set",
+                    EXPERIMENT1_MEASUREMENT_COMPONENT_SET_IDENTITY,
+                ),
+                (
+                    "measurement_pipeline_implementation",
+                    RQ003_PIPELINE_IMPLEMENTATION_IDENTITY,
+                ),
+    ]
+    identities.extend(
+        (
+            f"measurement_definition_{index:02d}",
+            definition.definition_identity,
+        )
+        for index, definition in enumerate(_MEASUREMENT_DEFINITIONS)
+    )
+    identities.extend(
+        (f"measurement_binding_{index:02d}", binding_identity)
+        for index, binding_identity in enumerate(
+            _MEASUREMENT_EXECUTABLE_BINDING_IDENTITIES
+        )
+    )
+    return tuple(sorted(identities))
+
+
+def _population_dispositions(
+    lifecycles: Sequence[RoundLifecycleIndexRecord],
+    selection_audit: Sequence[Mapping[str, Any]],
+    ranking_records: Sequence[Mapping[str, Any]],
+    round_identity_by_id: Mapping[int, str],
+) -> tuple[PopulationDisposition, ...]:
+    selection_by_round = {
+        int(entry["round_id"]): str(entry["status"])
+        for entry in selection_audit
+    }
+    ranking_by_round = {
+        int(record["round_id"]): record for record in ranking_records
+    }
+    dispositions: list[PopulationDisposition] = []
+    for lifecycle in lifecycles:
+        status = selection_by_round.get(lifecycle.round_id)
+        if status is None:
+            raise ValueError("selection audit does not cover every Replay round")
+        if status == "ranked":
+            ranking = ranking_by_round.get(lifecycle.round_id)
+            if ranking is None:
+                raise ValueError("eligible round lacks a ranking record")
+            dispositions.append(
+                PopulationDisposition(
+                    round_identity=round_identity_by_id[lifecycle.round_id],
+                    round_reference=str(lifecycle.round_id),
+                    status="eligible",
+                    reason=None,
+                    decision_identity=str(ranking["decision_identity"]),
+                )
+            )
+        else:
+            dispositions.append(
+                PopulationDisposition(
+                    round_identity=round_identity_by_id[lifecycle.round_id],
+                    round_reference=str(lifecycle.round_id),
+                    status="excluded",
+                    reason=status,
+                    decision_identity=None,
+                )
+            )
+    return tuple(dispositions)
+
+
+def _load_canonical_jsonl_material(path: Path) -> tuple[dict[str, Any], ...]:
+    records: list[dict[str, Any]] = []
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.endswith("\n"):
+                raise ValueError(f"{path.name} line {line_number} lacks newline")
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError as error:
+                raise ValueError(f"{path.name} is malformed") from error
+            if not isinstance(record, dict) or _canonical_json(record) + "\n" != line:
+                raise ValueError(f"{path.name} is not canonical")
+            records.append(record)
+    return tuple(records)
+
+
+def _load_canonical_json_material(path: Path) -> dict[str, Any]:
+    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+    if len(lines) != 1 or not lines[0].endswith("\n"):
+        raise ValueError(f"{path.name} must contain one canonical record")
+    try:
+        material = json.loads(lines[0])
+    except json.JSONDecodeError as error:
+        raise ValueError(f"{path.name} is malformed") from error
+    if not isinstance(material, dict) or _canonical_json(material) + "\n" != lines[0]:
+        raise ValueError(f"{path.name} is not canonical")
+    return material
+
+
 def execute_experiment1(configuration: Experiment1Configuration) -> Experiment1Result:
-    """Execute and persist the exact eight governing-protocol artifacts."""
+    """Execute Experiment 1 through the shared RQ-003 execution lifecycle."""
 
     if not isinstance(configuration, Experiment1Configuration):
         raise TypeError("configuration must be Experiment1Configuration")
-    dataset_sha256 = _file_sha256(configuration.replay_dataset_path)
+    source_commit = _bind_execution_source(configuration)
+    dataset_sha256 = file_sha256(configuration.replay_dataset_path)
     if dataset_sha256 != configuration.expected_dataset_sha256:
         raise ValueError("replay dataset SHA-256 does not match the governing protocol")
-    lifecycle_by_round = load_round_index(configuration.replay_dataset_path)
+    dataset = _dataset_binding(configuration.replay_dataset_path, dataset_sha256)
+    experiment = _experiment_binding(configuration)
+    lifecycle_by_round = _load_outcome_blind_round_index(
+        configuration.replay_dataset_path
+    )
     lifecycles = tuple(
         sorted(
             lifecycle_by_round.values(),
@@ -1089,27 +1749,122 @@ def execute_experiment1(configuration: Experiment1Configuration) -> Experiment1R
     )
     if not lifecycles:
         raise ValueError("replay dataset contains no rounds")
-    output = configuration.output_directory
-    output.mkdir(parents=True, exist_ok=True)
-    ranking_path = output / RANKING_ARTIFACT_NAME
-    selection_audit = _freeze_rankings(configuration, lifecycles, ranking_path)
-    ranking_sha256 = _file_sha256(ranking_path)
-    ranking_records = _load_ranking_artifact(ranking_path)
-
-    evaluation_path = output / EVALUATION_ARTIFACT_NAME
-    evaluations = _join_outcomes(
-        ranking_records, lifecycle_by_round, evaluation_path
+    round_identity_by_id = {
+        lifecycle.round_id: _replay_round_identity(lifecycle)
+        for lifecycle in lifecycles
+    }
+    replay = ReplayIdentity(
+        specification_identity=(
+            EXPERIMENT1_SPECIFICATION_BINDING.specification_identity
+        ),
+        experiment_binding_identity=experiment.experiment_binding_identity,
+        experiment_configuration_identity=(
+            configuration.experiment_configuration_identity
+        ),
+        source_commit_provenance_identity=(
+            source_commit.source_commit_provenance_identity
+        ),
+        dataset=dataset,
+        protocol_revision_identity=(
+            EXPERIMENT1_PROTOCOL_REVISION_POPULATION_IDENTITY
+        ),
+        decision_selection_configuration_identity=(
+            configuration.decision_configuration_identity
+        ),
+        ordered_replay_round_identities=tuple(
+            round_identity_by_id[lifecycle.round_id] for lifecycle in lifecycles
+        ),
+        canonical_candidate_order=tuple(range(25)),
     )
-    evaluation_sha256 = _file_sha256(evaluation_path)
+    ranking_records, selection_audit = _build_rankings(
+        configuration, lifecycles
+    )
+    dispositions = _population_dispositions(
+        lifecycles,
+        selection_audit,
+        ranking_records,
+        round_identity_by_id,
+    )
+    declarations = _experiment_artifact_declarations()
+    block = OutcomeBlindProvenanceBlock(
+        specification=EXPERIMENT1_SPECIFICATION_BINDING,
+        experiment=experiment,
+        source_commit=source_commit,
+        replay=replay,
+        component_identities=_component_identities(),
+        population_dispositions=dispositions,
+        upstream_artifact_contracts=(),
+        downstream_artifact_declarations=tuple(sorted(declarations.items())),
+    )
+    output = configuration.output_directory
+    if output.exists() and any(output.iterdir()):
+        raise ValueError("output directory must be absent or empty")
+    output.mkdir(parents=True, exist_ok=True)
+    provenance_path = output / OUTCOME_BLIND_PROVENANCE_NAME
+    provenance_contract = freeze_outcome_blind_provenance(
+        provenance_path, block
+    )
+
+    ranking_path = output / RANKING_ARTIFACT_NAME
+    write_canonical_jsonl_once(ranking_path, ranking_records)
+    ranking_contract = construct_artifact_contract(
+        ranking_path,
+        declarations[RANKING_ARTIFACT_NAME],
+        ranking_records,
+        (block.provenance_block_identity,),
+    )
+    authorization = authorize_outcome_join(block, ranking_contract)
+    ranking_sha256 = file_sha256(ranking_path)
+    if _canonical_json(_load_ranking_artifact(ranking_path)) != _canonical_json(
+        ranking_records
+    ):
+        raise ValueError("ranking artifact does not reconstruct exactly")
+
+    if file_sha256(configuration.replay_dataset_path) != dataset.sha256:
+        raise ValueError("outcome source changed after ranking freeze")
+    outcome_source_records = open_canonical_outcome_source(
+        configuration.replay_dataset_path,
+        authorization,
+    )
+    outcome_source_contract = construct_artifact_contract(
+        configuration.replay_dataset_path,
+        declarations["source_replay_dataset"],
+        outcome_source_records,
+        (dataset.dataset_identity,),
+    )
+    evaluations, full_lifecycle_by_round, evaluation_dispositions = _join_outcomes(
+        ranking_records,
+        configuration.replay_dataset_path,
+        authorization,
+        ranking_contract,
+        round_identity_by_id,
+        dataset.dataset_identity,
+    )
+    evaluation_path = output / EVALUATION_ARTIFACT_NAME
+    write_canonical_jsonl_once(evaluation_path, evaluations)
+    evaluation_contract = construct_artifact_contract(
+        evaluation_path,
+        declarations[EVALUATION_ARTIFACT_NAME],
+        evaluations,
+        (
+            ranking_contract.artifact_contract_identity,
+            outcome_source_contract.artifact_contract_identity,
+        ),
+    )
+    evaluation_sha256 = file_sha256(evaluation_path)
     primary = tuple(
         record for record in evaluations if record["population"] == "primary"
     )
     if not primary:
         raise ValueError("primary evaluation population is empty")
 
+    full_lifecycles = tuple(
+        full_lifecycle_by_round[lifecycle.round_id] for lifecycle in lifecycles
+    )
+
     reports = {
         METRICS_ARTIFACT_NAME: _metrics_report(
-            lifecycles,
+            full_lifecycles,
             ranking_records,
             primary,
             len(evaluations),
@@ -1119,11 +1874,9 @@ def execute_experiment1(configuration: Experiment1Configuration) -> Experiment1R
         ),
         BOOTSTRAP_ARTIFACT_NAME: _bootstrap(primary),
         FOLDS_ARTIFACT_NAME: _fold_report(primary),
-        CADENCE_ARTIFACT_NAME: _group_report(
-            "cadence", primary, _cadence_category, ("0", "1", "2", "3+")
-        ),
+        CADENCE_ARTIFACT_NAME: _cadence_report(ranking_records, primary),
         LIFECYCLE_ARTIFACT_NAME: _lifecycle_report(
-            lifecycles, selection_audit, evaluations
+            full_lifecycles, selection_audit, evaluations
         ),
         PROVENANCE_ARTIFACT_NAME: _group_report(
             "provenance",
@@ -1136,22 +1889,60 @@ def execute_experiment1(configuration: Experiment1Configuration) -> Experiment1R
                 "observed_legacy_unspecified",
             ),
         ),
+        OBSERVATION_COUNTS_ARTIFACT_NAME: _observation_counts_report(
+            lifecycles,
+            selection_audit,
+            primary,
+            evaluation_dispositions,
+        ),
     }
+    report_contracts: dict[str, ArtifactContract] = {}
     for name, report in reports.items():
-        _atomic_write_json(output / name, report)
+        write_canonical_json_once(output / name, report)
+        report_contracts[name] = construct_artifact_contract(
+            output / name,
+            declarations[name],
+            (report,),
+            (evaluation_contract.artifact_contract_identity,),
+        )
 
-    artifacts = validate_experiment1_artifacts(output)
+    artifact_contracts = {
+        OUTCOME_BLIND_PROVENANCE_NAME: provenance_contract,
+        RANKING_ARTIFACT_NAME: ranking_contract,
+        "source_replay_dataset": outcome_source_contract,
+        EVALUATION_ARTIFACT_NAME: evaluation_contract,
+        **report_contracts,
+    }
+    manifest = ExperimentAuditManifest(
+        outcome_blind_provenance=block,
+        artifact_contracts=tuple(sorted(artifact_contracts.items())),
+        evaluation_dispositions=evaluation_dispositions,
+        execution_conformance_result="passed",
+    )
+    manifest_sha256, _manifest_byte_count = seal_audit_manifest(
+        output / AUDIT_MANIFEST_NAME, manifest
+    )
+
+    artifacts = validate_experiment1_artifacts(
+        output,
+        replay_dataset_path=configuration.replay_dataset_path,
+        expected_manifest=manifest,
+    )
     sensitivity_count = sum(
         record["population"] == "lifecycle_sensitivity" for record in evaluations
     )
     return Experiment1Result(
         dataset_sha256=dataset_sha256,
+        replay_identity=replay.replay_identity,
+        audit_manifest_identity=manifest.audit_manifest_identity,
+        audit_manifest_sha256=manifest_sha256,
+        source_commit_sha=source_commit.commit_sha,
         replay_rounds=len(lifecycles),
         ranked_decisions=len(ranking_records),
         primary_evaluations=len(primary),
         lifecycle_sensitivity_evaluations=sensitivity_count,
         missing_outcomes=sum(
-            lifecycle.finalized_outcome is None for lifecycle in lifecycles
+            lifecycle.finalized_outcome is None for lifecycle in full_lifecycles
         ),
         artifacts=artifacts,
     )
@@ -1181,6 +1972,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                     name: {"path": str(path), "sha256": digest}
                     for name, path, digest in result.artifacts
                 },
+                "audit_manifest_identity": result.audit_manifest_identity,
+                "audit_manifest_sha256": result.audit_manifest_sha256,
                 "dataset_sha256": result.dataset_sha256,
                 "lifecycle_sensitivity_evaluations": (
                     result.lifecycle_sensitivity_evaluations
@@ -1188,7 +1981,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "missing_outcomes": result.missing_outcomes,
                 "primary_evaluations": result.primary_evaluations,
                 "ranked_decisions": result.ranked_decisions,
+                "replay_identity": result.replay_identity,
                 "replay_rounds": result.replay_rounds,
+                "source_commit_sha": result.source_commit_sha,
             }
         )
     )

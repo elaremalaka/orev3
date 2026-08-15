@@ -22,6 +22,11 @@ from orev3.experiments.rq003_experiment1 import (
     _load_ranking_artifact,
     _seeded_random_ranks,
     execute_experiment1,
+    validate_experiment1_artifacts,
+)
+from orev3.experiments.rq003_execution_specification import (
+    SourceCommitProvenance,
+    SourceScopeBinding,
 )
 from orev3.historical.models import (
     FinalizedRoundOutcome,
@@ -90,6 +95,7 @@ def test_end_to_end_freezes_rankings_before_outcome_join(
     dataset = _write_dataset(tmp_path)
     output = tmp_path / "artifacts"
     monkeypatch.setattr(experiment1_module, "EXPERIMENT1_BOOTSTRAP_REPLICATES", 20)
+    _bind_frozen_test_source(monkeypatch)
 
     result = execute_experiment1(_configuration(dataset, output))
 
@@ -98,6 +104,9 @@ def test_end_to_end_freezes_rankings_before_outcome_join(
     assert result.primary_evaluations == 3
     assert result.lifecycle_sensitivity_evaluations == 1
     assert result.missing_outcomes == 2
+    assert result.source_commit_sha == "a" * 40
+    assert len(result.replay_identity) == 64
+    assert len(result.audit_manifest_identity) == 64
     assert tuple(sorted(path.name for path in output.iterdir())) == tuple(
         sorted(EXPERIMENT1_ARTIFACT_NAMES)
     )
@@ -144,6 +153,21 @@ def test_end_to_end_freezes_rankings_before_outcome_join(
         "enriched",
         "observed_legacy_unspecified",
     }
+    observation_counts = _load_json(output / "observation_counts.json")
+    assert observation_counts["replay_bound"] == {"2": 6}
+    assert observation_counts["outcome_blind_eligible"] == {"2": 6}
+    assert observation_counts["primary_labeled_evaluation"] == {"2": 3}
+    assert observation_counts["eligible_missing_outcome"] == {"2": 2}
+    provenance = _load_json(output / "outcome_blind_provenance.json")
+    manifest = _load_json(output / "experiment_audit_manifest.json")
+    assert provenance["replay"]["replay_identity"] == result.replay_identity
+    assert manifest["audit_manifest_identity"] == result.audit_manifest_identity
+    assert manifest["outcome_blind_provenance"] == provenance
+    assert provenance["experiment"]["protocol_revision"] == "3"
+    assert (
+        provenance["experiment"]["specification"]["revision"]
+        == "rq003-research-execution-specification-v1"
+    )
 
 
 def test_regeneration_is_byte_deterministic(
@@ -151,6 +175,7 @@ def test_regeneration_is_byte_deterministic(
 ) -> None:
     dataset = _write_dataset(tmp_path)
     monkeypatch.setattr(experiment1_module, "EXPERIMENT1_BOOTSTRAP_REPLICATES", 20)
+    _bind_frozen_test_source(monkeypatch)
 
     first = execute_experiment1(_configuration(dataset, tmp_path / "first"))
     second = execute_experiment1(_configuration(dataset, tmp_path / "second"))
@@ -171,9 +196,20 @@ def test_execution_is_hash_seed_deterministic(tmp_path: Path) -> None:
     script = """
 import sys
 from pathlib import Path
+import orev3.experiments.rq003_experiment1 as experiment1_module
+from orev3.experiments.rq003_execution_specification import (
+    SourceCommitProvenance,
+    SourceScopeBinding,
+)
 from orev3.experiments.rq003_experiment1 import (
     Experiment1Configuration,
     execute_experiment1,
+)
+experiment1_module._bind_execution_source = lambda configuration: (
+    SourceCommitProvenance(
+        "a" * 40,
+        (SourceScopeBinding("src/orev3", "b" * 40),),
+    )
 )
 result = execute_experiment1(
     Experiment1Configuration(
@@ -232,9 +268,12 @@ def test_ranking_loader_rejects_outcome_fields(tmp_path: Path) -> None:
         _load_ranking_artifact(path)
 
 
-def test_dataset_identity_fails_closed(tmp_path: Path) -> None:
+def test_dataset_identity_fails_closed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     dataset = _write_dataset(tmp_path)
     output = tmp_path / "output"
+    _bind_frozen_test_source(monkeypatch)
 
     with pytest.raises(ValueError, match="SHA-256"):
         execute_experiment1(
@@ -245,6 +284,24 @@ def test_dataset_identity_fails_closed(tmp_path: Path) -> None:
             )
         )
     assert not output.exists()
+
+
+def test_artifact_validator_rejects_mutation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    dataset = _write_dataset(tmp_path)
+    output = tmp_path / "output"
+    monkeypatch.setattr(experiment1_module, "EXPERIMENT1_BOOTSTRAP_REPLICATES", 20)
+    _bind_frozen_test_source(monkeypatch)
+    execute_experiment1(_configuration(dataset, output))
+    ranking = output / "ranking_artifact.jsonl"
+    ranking.write_bytes(ranking.read_bytes() + b"{}\n")
+
+    with pytest.raises(ValueError):
+        validate_experiment1_artifacts(
+            output,
+            replay_dataset_path=dataset,
+        )
 
 
 def test_phase_scope_has_no_strategy_model_or_economics_dependency() -> None:
@@ -266,6 +323,18 @@ def _configuration(dataset: Path, output: Path) -> Experiment1Configuration:
         replay_dataset_path=dataset,
         output_directory=output,
         expected_dataset_sha256=hashlib.sha256(dataset.read_bytes()).hexdigest(),
+    )
+
+
+def _bind_frozen_test_source(monkeypatch: pytest.MonkeyPatch) -> None:
+    provenance = SourceCommitProvenance(
+        "a" * 40,
+        (SourceScopeBinding("src/orev3", "b" * 40),),
+    )
+    monkeypatch.setattr(
+        experiment1_module,
+        "_bind_execution_source",
+        lambda configuration: provenance,
     )
 
 
@@ -403,7 +472,14 @@ def _write_dataset(tmp_path: Path) -> Path:
     )
     index_path.write_text(
         "".join(
-            json.dumps(record.model_dump(mode="json"), sort_keys=True) + "\n"
+            json.dumps(
+                record.model_dump(mode="json"),
+                allow_nan=False,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
+            + "\n"
             for record in lifecycles
         ),
         encoding="utf-8",
