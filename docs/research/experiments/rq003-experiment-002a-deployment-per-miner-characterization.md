@@ -26,10 +26,12 @@ This protocol is governed by:
 
 The reusable artifact, identity, population-accounting, and reconstruction
 mechanics are governed by the
-[RQ-003 Research Execution Specification v1](../specifications/rq003-research-execution-specification.md).
+[RQ-003 Research Execution Specification v2](../specifications/rq003-research-execution-specification-v2.md).
 Its pinned SHA-256 is
-`3f7da6977f3a4f7c31766c856fc9cc000ed6a6a0d4dffcbf6e5cd0193d948eb2`.
-This protocol adds no outcome-bearing artifact to those mechanics.
+`75597ab27d2d2867c68be886785c1884db83b9a26c0428c337ff23d218ef9497`.
+The experiment binds execution profile
+`outcome_blind_characterization_v1`. This protocol adds no outcome-bearing
+artifact to those mechanics.
 
 ## 1. Purpose
 
