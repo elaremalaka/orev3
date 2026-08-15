@@ -605,7 +605,7 @@ def construct_artifact_contract(
     if declaration.artifact_kind in _EXTERNAL_SOURCE_ARTIFACT_KINDS:
         if declaration.container != "jsonl":
             raise ValueError("external outcome source must use JSONL")
-        persisted_records = _read_external_source_records(artifact_path)
+        persisted_records = read_external_source_records(artifact_path)
         if canonical_encode(persisted_records) != canonical_encode(tuple(records)):
             raise ValueError(
                 f"external source logical content differs: {artifact_path.name}"
@@ -828,13 +828,18 @@ def open_canonical_outcome_source(
 
     if not isinstance(authorization, OutcomeJoinAuthorization):
         raise TypeError("outcome source requires OutcomeJoinAuthorization")
-    return _read_external_source_records(Path(path))
+    return read_external_source_records(path)
 
 
-def _read_external_source_records(path: Path) -> tuple[dict[str, Any], ...]:
+def read_external_source_records(
+    path: str | Path,
+) -> tuple[dict[str, Any], ...]:
+    """Read deterministic logical records from an external JSONL artifact."""
+
+    artifact_path = Path(path)
     records: list[dict[str, Any]] = []
     try:
-        persisted_text = path.read_bytes().decode("utf-8")
+        persisted_text = artifact_path.read_bytes().decode("utf-8")
     except UnicodeDecodeError as error:
         raise ValueError("outcome source is not UTF-8") from error
     for line_number, line in enumerate(
@@ -1487,6 +1492,7 @@ __all__ = (
     "freeze_outcome_blind_provenance",
     "identity",
     "open_canonical_outcome_source",
+    "read_external_source_records",
     "seal_audit_manifest",
     "validate_audit_manifest",
     "validate_population_accounting",

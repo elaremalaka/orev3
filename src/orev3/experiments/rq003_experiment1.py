@@ -88,6 +88,7 @@ from orev3.experiments.rq003_execution_specification import (
     freeze_outcome_blind_provenance,
     identity as execution_identity,
     open_canonical_outcome_source,
+    read_external_source_records,
     seal_audit_manifest,
     validate_audit_manifest,
     write_canonical_json_once,
@@ -1017,8 +1018,8 @@ def validate_experiment1_artifacts(
         RANKING_ARTIFACT_NAME: rankings,
         EVALUATION_ARTIFACT_NAME: evaluations,
         **{name: (report,) for name, report in reports.items()},
-        "source_replay_dataset": _load_canonical_jsonl_material(
-            Path(replay_dataset_path)
+        "source_replay_dataset": read_external_source_records(
+            replay_dataset_path
         ),
     }
     path_by_name = {
@@ -1696,22 +1697,6 @@ def _population_dispositions(
                 )
             )
     return tuple(dispositions)
-
-
-def _load_canonical_jsonl_material(path: Path) -> tuple[dict[str, Any], ...]:
-    records: list[dict[str, Any]] = []
-    with path.open("r", encoding="utf-8") as handle:
-        for line_number, line in enumerate(handle, start=1):
-            if not line.endswith("\n"):
-                raise ValueError(f"{path.name} line {line_number} lacks newline")
-            try:
-                record = json.loads(line)
-            except json.JSONDecodeError as error:
-                raise ValueError(f"{path.name} is malformed") from error
-            if not isinstance(record, dict) or _canonical_json(record) + "\n" != line:
-                raise ValueError(f"{path.name} is not canonical")
-            records.append(record)
-    return tuple(records)
 
 
 def _load_canonical_json_material(path: Path) -> dict[str, Any]:

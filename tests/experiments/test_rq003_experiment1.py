@@ -170,6 +170,61 @@ def test_end_to_end_freezes_rankings_before_outcome_join(
     )
 
 
+def test_final_validation_accepts_external_source_bytes_and_keeps_generated_strict(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    dataset = _write_dataset(tmp_path)
+    dataset_records = _load_jsonl(dataset)
+    dataset.write_text(
+        "".join(
+            json.dumps(
+                dict(reversed(tuple(record.items()))),
+                allow_nan=False,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            + "\n"
+            for record in dataset_records
+        ),
+        encoding="utf-8",
+    )
+    assert dataset.read_text(encoding="utf-8").splitlines()[0] != json.dumps(
+        dataset_records[0],
+        allow_nan=False,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+
+    output = tmp_path / "artifacts"
+    monkeypatch.setattr(experiment1_module, "EXPERIMENT1_BOOTSTRAP_REPLICATES", 20)
+    _bind_frozen_test_source(monkeypatch)
+
+    result = execute_experiment1(_configuration(dataset, output))
+    assert validate_experiment1_artifacts(
+        output,
+        replay_dataset_path=dataset,
+    ) == result.artifacts
+
+    metrics_path = output / "metrics.json"
+    metrics = _load_json(metrics_path)
+    metrics_path.write_text(
+        json.dumps(
+            dict(reversed(tuple(metrics.items()))),
+            allow_nan=False,
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="metrics.json is not canonical"):
+        validate_experiment1_artifacts(
+            output,
+            replay_dataset_path=dataset,
+        )
+
+
 def test_regeneration_is_byte_deterministic(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
