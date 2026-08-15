@@ -56,6 +56,7 @@ _ARTIFACT_CONTRACT_DOMAIN = "rq003-artifact-contract-v1"
 _PROVENANCE_BLOCK_DOMAIN = "rq003-outcome-blind-provenance-v1"
 _OUTCOME_AUTHORIZATION_DOMAIN = "rq003-outcome-join-authorization-v1"
 _AUDIT_MANIFEST_DOMAIN = "rq003-experiment-audit-manifest-v1"
+_EXTERNAL_SOURCE_ARTIFACT_KINDS = frozenset({"outcome_source"})
 
 
 def identity(domain: str, material: object) -> str:
@@ -585,7 +586,13 @@ def construct_artifact_contract(
     records: Sequence[Mapping[str, Any]],
     upstream_dependency_identities: tuple[str, ...],
 ) -> ArtifactContract:
-    """Validate persisted canonical records and construct their contract."""
+    """Validate persisted records and construct their immutable contract.
+
+    Framework-generated artifacts must use the framework's exact canonical
+    persisted representation.  Immutable external sources retain their
+    original bytes; their parsed logical records are canonicalized only for
+    content identity construction.
+    """
 
     artifact_path = Path(path)
     if not artifact_path.is_file():
@@ -594,12 +601,21 @@ def construct_artifact_contract(
         raise ValueError("JSON artifact must contain exactly one logical record")
     if declaration.artifact_kind == "ranking":
         _validate_outcome_blind_records(records)
-    expected = "".join(canonical_json(record) + "\n" for record in records).encode(
-        "utf-8"
-    )
     actual = artifact_path.read_bytes()
-    if actual != expected:
-        raise ValueError(f"artifact is not canonical: {artifact_path.name}")
+    if declaration.artifact_kind in _EXTERNAL_SOURCE_ARTIFACT_KINDS:
+        if declaration.container != "jsonl":
+            raise ValueError("external outcome source must use JSONL")
+        persisted_records = _read_external_source_records(artifact_path)
+        if canonical_encode(persisted_records) != canonical_encode(tuple(records)):
+            raise ValueError(
+                f"external source logical content differs: {artifact_path.name}"
+            )
+    else:
+        expected = "".join(
+            canonical_json(record) + "\n" for record in records
+        ).encode("utf-8")
+        if actual != expected:
+            raise ValueError(f"artifact is not canonical: {artifact_path.name}")
     content_identity = identity(
         _ARTIFACT_CONTENT_DOMAIN,
         {
@@ -808,27 +824,63 @@ def open_canonical_outcome_source(
     path: str | Path,
     authorization: OutcomeJoinAuthorization,
 ) -> tuple[dict[str, Any], ...]:
-    """Open one canonical JSONL outcome source after ranking authorization."""
+    """Open deterministic logical records from an immutable outcome source."""
 
     if not isinstance(authorization, OutcomeJoinAuthorization):
         raise TypeError("outcome source requires OutcomeJoinAuthorization")
+    return _read_external_source_records(Path(path))
+
+
+def _read_external_source_records(path: Path) -> tuple[dict[str, Any], ...]:
     records: list[dict[str, Any]] = []
-    with Path(path).open("r", encoding="utf-8") as handle:
-        for line_number, line in enumerate(handle, start=1):
-            if not line.endswith("\n"):
-                raise ValueError(f"outcome source line {line_number} lacks newline")
-            try:
-                record = json.loads(line)
-            except json.JSONDecodeError as error:
-                raise ValueError(
-                    f"outcome source line {line_number} is malformed"
-                ) from error
-            if not isinstance(record, dict) or canonical_json(record) + "\n" != line:
-                raise ValueError("outcome source is not canonical")
-            records.append(record)
+    try:
+        persisted_text = path.read_bytes().decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise ValueError("outcome source is not UTF-8") from error
+    for line_number, line in enumerate(
+        persisted_text.splitlines(keepends=True), start=1
+    ):
+        if not line.endswith("\n"):
+            raise ValueError(f"outcome source line {line_number} lacks newline")
+        try:
+            record = json.loads(
+                line,
+                object_pairs_hook=_unique_json_object,
+                parse_constant=_reject_json_constant,
+            )
+        except (json.JSONDecodeError, ValueError) as error:
+            raise ValueError(
+                f"outcome source line {line_number} is malformed"
+            ) from error
+        if not isinstance(record, dict):
+            raise ValueError(f"outcome source line {line_number} is not an object")
+        logical_encoding = canonical_json(record)
+        reparsed = json.loads(
+            logical_encoding,
+            object_pairs_hook=_unique_json_object,
+            parse_constant=_reject_json_constant,
+        )
+        if reparsed != record or canonical_json(reparsed) != logical_encoding:
+            raise ValueError(
+                f"outcome source line {line_number} is nondeterministic"
+            )
+        records.append(record)
     if not records:
         raise ValueError("outcome source contains no records")
     return tuple(records)
+
+
+def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    material: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in material:
+            raise ValueError(f"duplicate JSON field: {key}")
+        material[key] = value
+    return material
+
+
+def _reject_json_constant(value: str) -> None:
+    raise ValueError(f"non-finite JSON value: {value}")
 
 
 @dataclass(frozen=True, slots=True)

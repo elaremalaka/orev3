@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from dataclasses import FrozenInstanceError
@@ -149,6 +150,103 @@ def test_outcome_source_requires_frozen_ranking_authorization(tmp_path: Path) ->
         open_canonical_outcome_source(source, object())  # type: ignore[arg-type]
 
 
+def test_external_source_preserves_bytes_and_canonicalizes_logical_content(
+    tmp_path: Path,
+) -> None:
+    declaration = ArtifactDeclaration(
+        "outcome_source", 1, "jsonl", "replay_order"
+    )
+    records = ({"a": 2, "z": 1}, {"a": 4, "z": 3})
+    unsorted_path = tmp_path / "unsorted.jsonl"
+    sorted_path = tmp_path / "sorted.jsonl"
+    unsorted_bytes = b'{"z":1,"a":2}\n{"z":3,"a":4}\n'
+    sorted_bytes = b'{"a":2,"z":1}\n{"a":4,"z":3}\n'
+    unsorted_path.write_bytes(unsorted_bytes)
+    sorted_path.write_bytes(sorted_bytes)
+
+    unsorted_contract = construct_artifact_contract(
+        unsorted_path, declaration, records, ("a" * 64,)
+    )
+    sorted_contract = construct_artifact_contract(
+        sorted_path, declaration, records, ("a" * 64,)
+    )
+
+    assert unsorted_contract.canonical_content_identity == (
+        sorted_contract.canonical_content_identity
+    )
+    assert unsorted_contract.persisted_sha256 == hashlib.sha256(
+        unsorted_bytes
+    ).hexdigest()
+    assert sorted_contract.persisted_sha256 == hashlib.sha256(
+        sorted_bytes
+    ).hexdigest()
+    assert unsorted_contract.persisted_sha256 != sorted_contract.persisted_sha256
+    assert unsorted_contract.artifact_contract_identity != (
+        sorted_contract.artifact_contract_identity
+    )
+    assert unsorted_contract.byte_count == len(unsorted_bytes)
+    assert unsorted_contract.record_count == 2
+
+
+def test_generated_artifact_still_requires_canonical_persisted_bytes(
+    tmp_path: Path,
+) -> None:
+    declaration = ArtifactDeclaration("ranking", 1, "jsonl", "replay_order")
+    records = ({"a": 2, "z": 1},)
+    path = tmp_path / "ranking.jsonl"
+    path.write_bytes(b'{"z":1,"a":2}\n')
+
+    with pytest.raises(ValueError, match="artifact is not canonical"):
+        construct_artifact_contract(path, declaration, records, ("a" * 64,))
+
+
+@pytest.mark.parametrize(
+    ("persisted", "message"),
+    (
+        (b'{"a":1}', "lacks newline"),
+        (b'{"a":1,,}\n', "malformed"),
+        (b'{"a":1,"a":2}\n', "malformed"),
+        (b'{"a":NaN}\n', "malformed"),
+        (b'[1,2,3]\n', "not an object"),
+        (b'\xff\n', "not UTF-8"),
+    ),
+)
+def test_external_source_parsing_fails_closed(
+    tmp_path: Path, persisted: bytes, message: str
+) -> None:
+    path = tmp_path / "outcomes.jsonl"
+    path.write_bytes(persisted)
+    declaration = ArtifactDeclaration(
+        "outcome_source", 1, "jsonl", "replay_order"
+    )
+
+    with pytest.raises(ValueError, match=message):
+        construct_artifact_contract(
+            path,
+            declaration,
+            ({"a": 1},),
+            ("a" * 64,),
+        )
+
+
+def test_external_source_contract_rejects_logical_or_order_mismatch(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "outcomes.jsonl"
+    path.write_bytes(b'{"round":1}\n{"round":2}\n')
+    declaration = ArtifactDeclaration(
+        "outcome_source", 1, "jsonl", "replay_order"
+    )
+
+    with pytest.raises(ValueError, match="logical content differs"):
+        construct_artifact_contract(
+            path,
+            declaration,
+            ({"round": 2}, {"round": 1}),
+            ("a" * 64,),
+        )
+
+
 def test_generic_lifecycle_regenerates_byte_identically(tmp_path: Path) -> None:
     first = tmp_path / "first"
     second = tmp_path / "second"
@@ -279,7 +377,7 @@ def _execute_generic_lifecycle(root: Path) -> ExperimentAuditManifest:
     authorization = authorize_outcome_join(block, ranking_contract)
     outcome_records = ({"outcome": 3, "round_reference": "1"},)
     outcome_path = root / "outcomes.jsonl"
-    write_canonical_jsonl_once(outcome_path, outcome_records)
+    outcome_path.write_bytes(b'{"round_reference":"1","outcome":3}\n')
     opened_outcomes = open_canonical_outcome_source(outcome_path, authorization)
     outcome_contract = construct_artifact_contract(
         outcome_path,
