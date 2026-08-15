@@ -71,18 +71,23 @@ participant economics, or practical mining value.
 Before implementation or execution, this protocol must bind:
 
 - the immutable identity of a valid Experiment 2A characterization;
+- its immutable Finding 002 identity;
 - its source dataset and Replay identities;
 - its derived-measurement semantic and definition identities;
 - its eligible and excluded population manifest identities;
-- its strict-reordering count; and
+- its average-rank-vector classification counts;
+- its theoretical maximum achievable population MRR improvement;
+- its prospectively approved minimum potential effect-size threshold and
+  governance identity; and
 - its successful continuation-gate disposition.
 
 Those bindings must be frozen without outcome access. Experiment 2B may not
 change the Deployment-per-Miner definition, zero-miner rules, decision point,
 or population rule after inspecting Experiment 2A or outcome data.
 
-If Experiment 2A is invalid or reports fewer than 100 strict-reordering
-decisions, Experiment 2B is unauthorized under this protocol.
+If Experiment 2A is invalid, lacks a prospectively approved minimum potential
+effect-size threshold, or does not satisfy that threshold, Experiment 2B is
+unauthorized under this protocol.
 
 ## 6. Required measurements and derived measurement
 

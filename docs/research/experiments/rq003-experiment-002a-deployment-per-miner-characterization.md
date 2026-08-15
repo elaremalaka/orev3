@@ -18,6 +18,7 @@ This protocol is governed by:
 - [RQ-003](../questions/RQ-003-winning-square-predictability.md);
 - [RFC-010](../../rfcs/RFC-010-STRATEGY-LAB.md);
 - [RFC-014](../../../rfcs/RFC-014-PROTOCOL-REVISION-PROVENANCE.md);
+- the [RQ-003 minimum scientifically relevant effect governance policy](../governance/rq003-minimum-scientifically-relevant-effect.md);
 - the [RQ-003 Measurement Catalog](../investigations/rq003-measurement-catalog.md);
 - the RQ-003 Fundamental Measurement Library;
 - [Experiment 0B](../notebook/experiment-000-characterization.md); and
@@ -26,6 +27,8 @@ This protocol is governed by:
 The reusable artifact, identity, population-accounting, and reconstruction
 mechanics are governed by the
 [RQ-003 Research Execution Specification v1](../specifications/rq003-research-execution-specification.md).
+Its pinned SHA-256 is
+`3f7da6977f3a4f7c31766c856fc9cc000ed6a6a0d4dffcbf6e5cd0193d948eb2`.
 This protocol adds no outcome-bearing artifact to those mechanics.
 
 ## 1. Purpose
@@ -35,8 +38,9 @@ induced by raw deployed lamports. It characterizes the derived measurement as
 an observable mathematical transformation of frozen decision-time state.
 
 It does not ask whether either ordering ranks the eventual winning square
-well. Outcomes, labels, Mean Reciprocal Rank, predictive baselines, and
-superiority tests are prohibited.
+well. Outcomes, labels, realized or outcome-joined Mean Reciprocal Rank,
+predictive baselines, and superiority tests are prohibited. The outcome-blind
+theoretical MRR bound required by Section 9 is not a predictive evaluation.
 
 ## 2. Characterization question
 
@@ -111,6 +115,21 @@ The source is the immutable replay dataset used by Experiment 0 and Finding
 execution specification. A byte-different replay source is a different
 population and cannot be substituted silently.
 
+The protocol pins these immutable execution bindings:
+
+- replay dataset version `replay-dataset-v1`;
+- replay dataset SHA-256
+  `7680856bc6a01f9b69be0921d6e66b3f43d5241a38e63b37871b6925c1d59ba7`;
+- Replay identity
+  `e2de7374318bff7d2644b9394106f2ddbf938e9cf8bf4133b3bb5bfe304fe31b`;
+- governing protocol revision identity
+  `3112ab78a64f92892a70d5d4cbd17e1d14b1c2fe`;
+- execution-specification revision
+  `rq003-research-execution-specification-v1` with the SHA-256 pinned above;
+- canonical replay-round order by ascending immutable round chronology, with
+  `round_id` as the deterministic tie-breaker; and
+- canonical candidate order `0` through `24` within each replay round.
+
 There is one decision per replay round: the latest valid observation at or
 before `end_slot - 5`. A decision is eligible only when:
 
@@ -139,18 +158,24 @@ measurement tie.
 
 ## 8. Mutually exclusive ordering classifications
 
-For every unordered candidate pair `{i, j}`, record the sign of the raw value
-difference and the sign of the exact derived-value difference. Each decision
-is assigned exactly one classification:
+For each decision, construct the ordered 25-element average-rank vector under
+each procedure. Vector equality means element-by-element exact equality in
+canonical candidate-square order. Also record, for every unordered candidate
+pair `{i, j}`, the sign of the raw value difference and the sign of the exact
+derived-value difference. Each decision is assigned exactly one
+classification:
 
-1. **Identical ordering:** every pair has the same sign in both orderings.
-2. **Tie-only change:** at least one pair changes between a tie and a strict
-   relation, but no pair with strict relations in both orderings reverses sign.
-3. **Strict reordering:** at least one pair has nonzero signs in both orderings
-   and those signs are opposite.
+1. **Identical average-rank vectors:** the two average-rank vectors are exactly
+   equal.
+2. **Tie-only change:** the average-rank vectors differ and at least one pair
+   changes between a tie and a strict relation, but no pair with strict
+   relations in both orderings reverses sign.
+3. **Strict ordering change:** the average-rank vectors differ and at least one
+   pair has nonzero signs in both orderings with opposite signs.
 
-The classes are mutually exclusive and exhaustive. A tie-only change is not a
-strict reversal and does not satisfy the continuation gate in Section 12.
+The classes are mutually exclusive and exhaustive. Both tie-only and strict
+ordering changes can alter a candidate's reciprocal rank and therefore
+contribute to the potential-effect calculation in Section 9.
 
 ## 9. Magnitude and distribution reporting
 
@@ -161,16 +186,46 @@ For each decision, report:
 - tie-to-strict and strict-to-tie changes out of 300;
 - absolute average-rank displacement for every candidate;
 - mean and maximum absolute rank displacement;
-- total rank displacement;
+- total rank displacement, defined as the sum of the 25 absolute candidate
+  average-rank displacements;
 - whether top-1, top-3, and top-5 membership changes, using average rank
   `<= k`; and
-- raw and derived tie-group counts and sizes.
+- raw and derived tie-group counts and sizes; and
+- the number of candidates using the canonical `0 / 1` empty-square extension.
 
-Across the full eligible population, report counts, proportions, exact value
-distributions, and the minimum, maximum, median, and predeclared quartiles of
-each magnitude. Report the complete distribution where the value domain is
-small; otherwise report a deterministic histogram whose bin edges are frozen
-before execution.
+For each decision `r` and candidate `s`, let `R_raw(r,s)` and
+`R_dpm(r,s)` be the respective exact average ranks. Compute the greatest
+possible directional MRR improvement attributable to that decision without
+accessing its outcome:
+
+```text
+U_r = max_s((1 / R_dpm(r,s)) - (1 / R_raw(r,s)))
+```
+
+Compute the theoretical maximum achievable population MRR improvement as:
+
+```text
+U = (1 / N) * sum_r(U_r)
+```
+
+where `N` is the number of eligible decisions. The maximization treats each
+candidate in turn as a hypothetical winner; it does not read, infer, or join
+the actual winning square. Report `U_r` exactly for every decision and report
+the exact aggregate `U` together with its deterministic canonical encoding.
+Identical average-rank vectors necessarily contribute zero. Tie-only and
+strict ordering changes contribute according to their actual rank-vector
+differences rather than their class label alone.
+
+Across the full eligible population, report the exact empirical frequency
+distribution of every classification and per-decision scalar magnitude. Each
+distribution is an exact-value, count, and proportion table ordered by the
+exact value in canonical ascending numeric order and serialized with canonical
+encoding. Binning, interpolation, quantile estimation, and histogram
+construction are prohibited.
+
+For the canonical `0 / 1` empty-square extension, also report the total number
+and proportion of candidate instances using it and the total number and
+proportion of eligible decisions containing at least one such instance.
 
 No winner identity or outcome metric may be joined to these summaries.
 
@@ -188,10 +243,12 @@ outcome-blind characteristics from the same frozen observation:
 - range of positive per-square miner counts; and
 - raw deployed-lamport tie-group count and largest tie-group size.
 
-Reporting is descriptive: counts and the same deterministic distribution
-summaries from Section 9. No outcome correlation, regression, statistical
-superiority test, causal explanation, post hoc stratum selection, or
-predictive interpretation is permitted.
+Reporting is descriptive: use exact empirical frequency tables, ordered by
+the board-characteristic value in canonical ascending numeric order and then
+by the canonical ordering-change class, consistently with Section 9. Binning,
+interpolation, and quantile estimation are prohibited. No outcome correlation,
+regression, statistical superiority test, causal explanation, post hoc stratum
+selection, or predictive interpretation is permitted.
 
 ## 11. Controls and validation
 
@@ -215,24 +272,43 @@ characterization. Failures are not coerced into the identical-ordering class.
 
 ## 12. Continuation gate for Experiment 2B
 
-Experiment 2B may proceed only after a valid Experiment 2A execution shows
-strict reordering in at least 100 eligible decisions.
+The continuation gate shall compare the theoretical maximum achievable
+population MRR improvement `U` from Section 9 with a prospectively approved
+minimum potential effect-size threshold `delta_min`:
 
-This threshold is a prospective minimum-support rule. It does not assert that
-100 decisions are predictive, statistically sufficient for a positive result,
-or economically meaningful. It prevents a predictive experiment whose only
-difference from raw deployment is sparse or tie-only behavior.
+```text
+proceed only if U >= delta_min
+```
 
-The following do not satisfy the gate:
+The threshold must express the smallest potential MRR improvement that
+research governance considers sufficient to justify an outcome-bearing
+predictive evaluation. For an execution that will apply the continuation
+gate, `delta_min` and its governance identity must be approved and frozen
+prospectively before that gate-bearing execution and before any outcome is
+accessed. It cannot be selected from the characterization governed by that
+execution or from Experiment 2B results.
 
-- identical ordering;
-- tie-only changes;
-- invalid decisions;
-- post hoc pooling across different protocol revisions; or
-- any ordering difference discovered with outcome access.
+No existing repository-governance document establishes a scientifically
+justified numeric value for `delta_min`. RQ-003 explicitly leaves numeric
+effect-size thresholds to a reviewed experiment protocol. Selecting
+`delta_min` is therefore an unresolved future research-governance question,
+not an authorized constant in this protocol.
 
-Passing the gate authorizes only the already specified Experiment 2B question.
-It does not constitute predictive evidence.
+Experiment 2A may execute descriptively without `delta_min`, characterize and
+report rank-vector differences and `U`, and produce Finding 002. Such an
+execution must record `research-governance decision required`; its continuation
+gate cannot pass, and Experiment 2B remains unauthorized. Its observed result
+cannot be used to select `delta_min` and then retroactively pass that execution.
+
+Experiment 2B remains unauthorized until a prospectively approved `delta_min`
+and governance identity exist and a gate-bearing Experiment 2A execution
+satisfies `U >= delta_min`. In that execution, identical vectors, tie-only
+changes, and strict ordering changes all contribute only through their exact
+effect on `U`; no count threshold or class label may substitute for the
+potential-effect calculation.
+
+Passing the completed gate will authorize only the already specified
+Experiment 2B question. It will not constitute predictive evidence.
 
 ## 13. Required characterization artifacts
 
@@ -246,21 +322,49 @@ A conformant execution must produce immutable, reconstructable artifacts for:
 - per-decision ordering class and magnitude values;
 - aggregate class counts and distributions;
 - predeclared descriptive board-characteristic reports;
-- continuation-gate result; and
+- per-decision and aggregate theoretical maximum MRR improvement;
+- the approved minimum potential effect-size threshold and its governance
+  identity, when one exists;
+- continuation-gate result or unresolved-governance disposition; and
 - deterministic regeneration and conformance validation.
 
 No artifact may contain a winning square, label, outcome provenance, outcome
-availability indicator, MRR, predictive baseline, or evaluation result.
+availability indicator, realized or outcome-joined MRR, predictive baseline,
+or evaluation result. The theoretical potential-effect bound defined in
+Section 9 is required and contains no outcome information.
 
-## 14. Interpretation and completion
+## 14. Finding 002
 
-Experiment 2A has one of three dispositions:
+Every valid Experiment 2A execution shall produce an immutable Finding 002
+that preserves at minimum:
 
-- **Meaningful ordering differences:** valid execution and at least 100
-  eligible decisions with strict reordering; Experiment 2B may proceed.
-- **Insufficient strict ordering differences:** valid execution but fewer than
-  100 eligible decisions with strict reordering; Experiment 2B must not
-  proceed under its current protocol.
+- characterization validity;
+- average-rank-vector class counts;
+- pairwise divergence summaries;
+- rank-displacement summaries;
+- Top-k membership-change summaries;
+- tie statistics;
+- canonical `0 / 1` empty-square-extension frequency;
+- theoretical maximum achievable population MRR improvement `U`;
+- `delta_min` governance status and governance identity, when one exists; and
+- continuation disposition.
+
+Finding 002 is a descriptive characterization finding. It must not choose
+`delta_min`, authorize Experiment 2B, reinterpret the characterization, add an
+outcome-bearing analysis, or convert the theoretical bound into observed
+predictive evidence. Authorization of Experiment 2B remains owned by the
+prospectively governed continuation gate.
+
+## 15. Interpretation and completion
+
+Experiment 2A has one of four dispositions:
+
+- **Minimum potential effect satisfied:** valid execution, prospectively
+  approved `delta_min`, and `U >= delta_min`; Experiment 2B may proceed.
+- **Minimum potential effect not satisfied:** valid execution, prospectively
+  approved `delta_min`, and `U < delta_min`; Experiment 2B must not proceed.
+- **Research-governance decision required:** valid characterization but no
+  prospectively approved `delta_min`; Experiment 2B remains unauthorized.
 - **Invalid characterization:** any required control, identity, population,
   arithmetic, artifact, or reconstruction requirement fails.
 
