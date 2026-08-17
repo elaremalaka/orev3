@@ -103,6 +103,11 @@ data/research/snapshots/**/*
 !data/research/snapshots/**/
 !data/research/snapshots/**/README.md
 
+# Experiment Execution Readiness dependency artifacts are locally retained,
+# content-addressed runtime inputs.  Git tracks only their authority manifest.
+data/research/readiness/wheels/
+data/research/readiness/dependency-roots/
+
 # Participant economic ledgers contain wallet-sensitive local activity.
 data/ledger/
 participant_ledger_v*.sqlite

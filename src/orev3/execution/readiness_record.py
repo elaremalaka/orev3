@@ -110,6 +110,45 @@ PHASE2_SCHEMA_DOCUMENT_POLICY = {
         "921938ec88ede21282bdbff191ab361751f127c27649d51d0eae28fc76c5ceb5",
     ),
 }
+PHASE3A_SCHEMA_REGISTRY_IDENTIFIER = "readiness-phase3a-schema-registry-v1"
+PHASE3A_SCHEMA_POLICY = {
+    **PHASE2_SCHEMA_POLICY,
+    "adapter-declaration": (
+        "adapter-declaration-v1",
+        "src/orev3/execution/schemas/v1/adapter-declaration.schema.json",
+    ),
+    "adapter-registry": (
+        "adapter-registry-v1",
+        "src/orev3/execution/schemas/v1/adapter-registry.schema.json",
+    ),
+    "offline-artifact-manifest": (
+        "offline-artifact-manifest-v1",
+        "src/orev3/execution/schemas/v1/offline-artifact-manifest.schema.json",
+    ),
+    "runtime-contract": (
+        "runtime-contract-v1",
+        "src/orev3/execution/schemas/v1/runtime-contract.schema.json",
+    ),
+}
+PHASE3A_SCHEMA_DOCUMENT_POLICY = {
+    **PHASE2_SCHEMA_DOCUMENT_POLICY,
+    "adapter-declaration": (
+        "orev3://schemas/execution-readiness/v1/adapter-declaration",
+        "215ac7835918c2c9eb541bae3ed410d639522111f05eb6f17a9ccaccdfbdf4d3",
+    ),
+    "adapter-registry": (
+        "orev3://schemas/execution-readiness/v1/adapter-registry",
+        "27303c90d1339cd79c1a6621a8888463175dd0ba8007775721c3221cb8b374c4",
+    ),
+    "offline-artifact-manifest": (
+        "orev3://schemas/execution-readiness/v1/offline-artifact-manifest",
+        "cfa3606e0c5737fe0679f1152b7c5fbde123fb9ccb834d57d80b18a15416fd53",
+    ),
+    "runtime-contract": (
+        "orev3://schemas/execution-readiness/v1/runtime-contract",
+        "d67aa372c7913051051b09cf35138a7c17d34e6f06f13c16c4ca522e376bb00e",
+    ),
+}
 
 _SAFE_IDENTIFIER = re.compile(r"[a-z][a-z0-9_.-]*")
 _FULL_REF = re.compile(r"refs/heads/[A-Za-z0-9._/-]+")

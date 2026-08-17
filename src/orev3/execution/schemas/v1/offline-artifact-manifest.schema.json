@@ -1,0 +1,35 @@
+{
+  "$id": "orev3://schemas/execution-readiness/v1/offline-artifact-manifest",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "artifact_manifest_identifier": {"const": "experiment-execution-readiness-offline-artifacts-v1", "type": "string"},
+    "artifact_manifest_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "artifacts": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "filename": {"pattern": "^[^/\\\\\\u0000]+\\.whl$", "type": "string"},
+          "package_name": {"pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "type": "string"},
+          "relative_store_path": {"pattern": "^sha256/[0-9a-f]{64}\\.whl$", "type": "string"},
+          "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+          "version": {"minLength": 1, "maxLength": 128, "type": "string"}
+        },
+        "required": ["filename", "package_name", "relative_store_path", "sha256", "version"],
+        "type": "object"
+      },
+      "minItems": 1,
+      "maxItems": 4096,
+      "type": "array",
+      "uniqueItems": true,
+      "x-canonical-order": ["package_name"],
+      "x-unique-key": ["package_name", "sha256", "relative_store_path"]
+    },
+    "dependency_lock_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "schema_version": {"const": 1, "type": "integer"},
+    "store_layout": {"const": "sha256-content-addressed-wheel-store-v1", "type": "string"}
+  },
+  "required": ["artifact_manifest_identifier", "artifact_manifest_identity", "artifacts", "dependency_lock_sha256", "schema_version", "store_layout"],
+  "title": "OfflineArtifactManifestV1",
+  "type": "object"
+}

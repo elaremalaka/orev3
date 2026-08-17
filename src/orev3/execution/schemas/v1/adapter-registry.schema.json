@@ -1,0 +1,32 @@
+{
+    "$id": "orev3://schemas/execution-readiness/v1/adapter-registry",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+        "adapter_registry_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "descriptors": {
+            "items": {
+                "additionalProperties": false,
+                "properties": {
+                    "adapter_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                    "descriptor_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                    "descriptor_path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+                    "descriptor_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                    "experiment_identifier": {"pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "type": "string"}
+                },
+                "required": ["adapter_identifier", "descriptor_identity", "descriptor_path", "descriptor_sha256", "experiment_identifier"],
+                "type": "object"
+            },
+            "maxItems": 4096,
+            "type": "array",
+            "uniqueItems": true,
+            "x-canonical-order": ["experiment_identifier"],
+            "x-unique-key": ["experiment_identifier", "adapter_identifier", "descriptor_path"]
+        },
+        "registry_identifier": {"const": "experiment-execution-readiness-adapter-registry-v1", "type": "string"},
+        "schema_version": {"const": 1, "type": "integer"}
+    },
+    "required": ["adapter_registry_identity", "descriptors", "registry_identifier", "schema_version"],
+    "title": "AdapterRegistryV1",
+    "type": "object"
+}

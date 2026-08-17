@@ -1,0 +1,132 @@
+{
+    "$id": "orev3://schemas/execution-readiness/v1/adapter-declaration",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+        "adapter_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+        "adapter_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "adapter_readiness_tests": {"items": {"minLength": 1, "maxLength": 512, "type": "string"}, "maxItems": 1024, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+        "artifacts": {
+            "additionalProperties": false,
+            "properties": {
+                "declarations": {
+                    "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                            "artifact_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                            "artifact_kind": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                            "declaration_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                            "dependency_roles": {"items": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"}, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+                            "relative_path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"}
+                        },
+                        "required": ["artifact_identifier", "artifact_kind", "declaration_identity", "dependency_roles", "relative_path"],
+                        "type": "object"
+                    },
+                    "maxItems": 4096,
+                    "type": "array",
+                    "uniqueItems": true,
+                    "x-canonical-order": ["artifact_identifier"],
+                    "x-unique-key": ["artifact_identifier"]
+                }
+            },
+            "required": ["declarations"],
+            "type": "object"
+        },
+        "attempt_output_declaration_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "configuration": {
+            "additionalProperties": false,
+            "properties": {
+                "decision_selection_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                "experiment_configuration_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+            },
+            "required": ["decision_selection_identity", "experiment_configuration_identity"],
+            "type": "object"
+        },
+        "execution_profile": {
+            "additionalProperties": false,
+            "properties": {
+                "profile_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                "profile_name": {"enum": ["outcome_aware_v1", "outcome_blind_characterization_v1"], "type": "string"}
+            },
+            "required": ["profile_identity", "profile_name"],
+            "type": "object"
+        },
+        "execution_specification": {
+            "additionalProperties": false,
+            "properties": {
+                "path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+                "revision": {"minLength": 1, "maxLength": 256, "type": "string"},
+                "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                "specification_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+            },
+            "required": ["path", "revision", "sha256", "specification_identity"],
+            "type": "object"
+        },
+        "experiment_identifier": {"pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "type": "string"},
+        "external_inputs": {
+            "additionalProperties": false,
+            "properties": {
+                "declarations": {
+                    "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                            "external_input_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                            "external_input_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                            "input_kind": {"enum": ["ordered_file_collection", "regular_file"], "type": "string"},
+                            "members": {
+                                "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "byte_count": {"minimum": 0, "type": "integer"},
+                                        "member_path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+                                        "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+                                    },
+                                    "required": ["byte_count", "member_path", "sha256"],
+                                    "type": "object"
+                                },
+                                "minItems": 1,
+                                "maxItems": 4096,
+                                "type": "array",
+                                "uniqueItems": true,
+                                "x-unique-key": ["member_path"]
+                            },
+                            "parser_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                            "role": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                            "schema_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+                        },
+                        "required": ["external_input_identifier", "external_input_identity", "input_kind", "members", "parser_identity", "role", "schema_identity"],
+                        "type": "object",
+                        "x-input-member-cardinality": true
+                    },
+                    "maxItems": 4096,
+                    "type": "array",
+                    "uniqueItems": true,
+                    "x-order-semantics": "role-then-member-paths-then-identifier",
+                    "x-unique-key": ["external_input_identifier"]
+                }
+            },
+            "required": ["declarations"],
+            "type": "object"
+        },
+        "governed_scope_paths": {"items": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"}, "minItems": 1, "maxItems": 4096, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+        "implementation_binding_path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+        "implementation_entry_point": {"pattern": "^[A-Za-z_][A-Za-z0-9_.]*:[A-Za-z_][A-Za-z0-9_]*$", "type": "string"},
+        "outcome_policy": {"enum": ["outcome_aware_authorized_only", "prohibited_and_not_performed"], "type": "string"},
+        "protocol": {
+            "additionalProperties": false,
+            "properties": {
+                "path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+                "revision": {"minLength": 1, "maxLength": 256, "type": "string"},
+                "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+            },
+            "required": ["path", "revision", "sha256"],
+            "type": "object"
+        },
+        "replay_preparation_contract_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "replay_preparation_entry_point": {"pattern": "^[A-Za-z_][A-Za-z0-9_.]*:[A-Za-z_][A-Za-z0-9_]*$", "type": "string"},
+        "schema_version": {"const": 1, "type": "integer"}
+    },
+    "required": ["adapter_identifier", "adapter_identity", "adapter_readiness_tests", "artifacts", "attempt_output_declaration_identity", "configuration", "execution_profile", "execution_specification", "experiment_identifier", "external_inputs", "governed_scope_paths", "implementation_binding_path", "implementation_entry_point", "outcome_policy", "protocol", "replay_preparation_contract_identity", "replay_preparation_entry_point", "schema_version"],
+    "title": "AdapterDeclarationV1",
+    "type": "object"
+}

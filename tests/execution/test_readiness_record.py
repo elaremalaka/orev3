@@ -290,11 +290,15 @@ def test_launch_snapshot_reconstructs_and_has_no_execution_state() -> None:
 def test_machine_schemas_are_strict_null_free_documents() -> None:
     schema_root = Path("src/orev3/execution/schemas/v1")
     expected = {
+        "adapter-declaration.schema.json",
+        "adapter-registry.schema.json",
         "implementation-binding.schema.json",
         "launch-authority-snapshot.schema.json",
+        "offline-artifact-manifest.schema.json",
         "readiness-record.schema.json",
         "readiness-test-policy.schema.json",
         "repository-authority.schema.json",
+        "runtime-contract.schema.json",
         "source-scope.schema.json",
     }
     assert {path.name for path in schema_root.glob("*.json")} == expected

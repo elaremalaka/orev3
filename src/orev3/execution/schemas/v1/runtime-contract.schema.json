@@ -1,0 +1,160 @@
+{
+  "$id": "orev3://schemas/execution-readiness/v1/runtime-contract",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "allowed_executables": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "executable_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+          "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+        },
+        "required": ["executable_identifier", "sha256"],
+        "type": "object"
+      },
+      "minItems": 4,
+      "maxItems": 16,
+      "type": "array",
+      "uniqueItems": true,
+      "x-canonical-order": ["executable_identifier"],
+      "x-unique-key": ["executable_identifier"]
+    },
+    "dependency_lock": {
+      "additionalProperties": false,
+      "properties": {
+        "closed_environment_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "format": {"const": "pep751-pylock-v1", "type": "string"},
+        "git_blob_binding": {"const": "exact_blob_at_source_commit", "type": "string"},
+        "lock_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "offline_artifact_manifest": {
+          "additionalProperties": false,
+          "properties": {
+            "identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+            "path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+            "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+          },
+          "required": ["identity", "path", "sha256"],
+          "type": "object"
+        },
+        "path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+        "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+      },
+      "required": ["closed_environment_identity", "format", "git_blob_binding", "lock_identity", "offline_artifact_manifest", "path", "sha256"],
+      "type": "object"
+    },
+    "environment": {
+      "additionalProperties": false,
+      "properties": {
+        "bytecode_policy": {"const": "disabled", "type": "string"},
+        "cwd_policy": {"const": "detached_source_root", "type": "string"},
+        "hash_seed": {"const": "0", "type": "string"},
+        "locale": {"const": "C", "type": "string"},
+        "network_policy": {"const": "prohibited", "type": "string"},
+        "pytest_plugin_autoload": {"const": "disabled", "type": "string"},
+        "python_utf8": {"const": "1", "type": "string"},
+        "pythonpath_policy": {"const": "prohibited", "type": "string"},
+        "timezone": {"const": "UTC", "type": "string"},
+        "user_site_policy": {"const": "disabled", "type": "string"}
+      },
+      "required": ["bytecode_policy", "cwd_policy", "hash_seed", "locale", "network_policy", "pytest_plugin_autoload", "python_utf8", "pythonpath_policy", "timezone", "user_site_policy"],
+      "type": "object"
+    },
+    "host_system": {
+      "additionalProperties": false,
+      "properties": {
+        "architecture": {"minLength": 1, "maxLength": 64, "type": "string"},
+        "darwin_release": {"minLength": 1, "maxLength": 128, "type": "string"},
+        "dynamic_links": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "compatibility_version": {"minLength": 1, "maxLength": 64, "type": "string"},
+              "consumer": {"minLength": 1, "maxLength": 1024, "type": "string"},
+              "current_version": {"minLength": 1, "maxLength": 64, "type": "string"},
+              "install_name": {"minLength": 1, "maxLength": 2048, "type": "string"},
+              "resolved_sha256": {"pattern": "^(?:|[0-9a-f]{64})$", "type": "string"}
+            },
+            "required": ["compatibility_version", "consumer", "current_version", "install_name", "resolved_sha256"],
+            "type": "object"
+          },
+          "maxItems": 16384,
+          "type": "array",
+          "uniqueItems": true,
+          "x-canonical-order": ["consumer", "install_name"]
+        },
+        "host_system_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "macos_build": {"minLength": 1, "maxLength": 128, "type": "string"},
+        "macos_version": {"pattern": "^[0-9]+(?:\\.[0-9]+){1,2}$", "type": "string"},
+        "operating_system": {"const": "macOS", "type": "string"}
+      },
+      "required": ["architecture", "darwin_release", "dynamic_links", "host_system_identity", "macos_build", "macos_version", "operating_system"],
+      "type": "object"
+    },
+    "import_policy": {
+      "additionalProperties": false,
+      "properties": {
+        "dependency_import_probes": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "distribution": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+              "module": {"pattern": "^[A-Za-z_][A-Za-z0-9_.]*$", "type": "string"}
+            },
+            "required": ["distribution", "module"],
+            "type": "object"
+          },
+          "minItems": 1,
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true,
+          "x-canonical-order": ["distribution", "module"],
+          "x-unique-key": ["distribution", "module"]
+        },
+        "dependency_modules": {"const": "closed_identity_bound_root_only", "type": "string"},
+        "project_modules": {"const": "detached_source_only", "type": "string"}
+      },
+      "required": ["dependency_import_probes", "dependency_modules", "project_modules"],
+      "type": "object"
+    },
+    "network_isolation": {
+      "additionalProperties": false,
+      "properties": {
+        "executable_identifier": {"const": "sandbox-exec", "type": "string"},
+        "mechanism": {"const": "macos-seatbelt-deny-network-v1", "type": "string"},
+        "profile_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+      },
+      "required": ["executable_identifier", "mechanism", "profile_identity"],
+      "type": "object"
+    },
+    "python": {
+      "additionalProperties": false,
+      "properties": {
+        "abi_tag": {"minLength": 1, "maxLength": 128, "type": "string"},
+        "cache_tag": {"minLength": 1, "maxLength": 128, "type": "string"},
+        "implementation": {"const": "CPython", "type": "string"},
+        "platform_tag": {"minLength": 1, "maxLength": 128, "type": "string"},
+        "runtime_bundle_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "version": {"pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$", "type": "string"}
+      },
+      "required": ["abi_tag", "cache_tag", "implementation", "platform_tag", "runtime_bundle_identity", "version"],
+      "type": "object"
+    },
+    "runtime_contract_identifier": {"const": "experiment-execution-readiness-runtime-v1", "type": "string"},
+    "runtime_contract_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "schema_version": {"const": 1, "type": "integer"},
+    "test_runner": {
+      "additionalProperties": false,
+      "properties": {
+        "distribution": {"const": "pytest", "type": "string"},
+        "module": {"const": "pytest", "type": "string"},
+        "version": {"pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$", "type": "string"}
+      },
+      "required": ["distribution", "module", "version"],
+      "type": "object"
+    }
+  },
+  "required": ["allowed_executables", "dependency_lock", "environment", "host_system", "import_policy", "network_isolation", "python", "runtime_contract_identifier", "runtime_contract_identity", "schema_version", "test_runner"],
+  "title": "RuntimeContractV1",
+  "type": "object"
+}
