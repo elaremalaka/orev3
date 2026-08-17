@@ -1,0 +1,773 @@
+{
+    "$id": "orev3://schemas/execution-readiness/v1/readiness-record",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+        "artifacts": {
+            "$ref": "#/$defs/artifacts"
+        },
+        "attempt_policy": {
+            "$ref": "#/$defs/attemptPolicy"
+        },
+        "configuration": {
+            "$ref": "#/$defs/configuration"
+        },
+        "control_plane": {
+            "$ref": "#/$defs/controlPlane"
+        },
+        "execution_profile": {
+            "$ref": "#/$defs/profile"
+        },
+        "execution_specification": {
+            "$ref": "#/$defs/documentBinding"
+        },
+        "experiment": {
+            "$ref": "#/$defs/experiment"
+        },
+        "external_inputs": {
+            "$ref": "#/$defs/externalInputs"
+        },
+        "git_authority": {
+            "$ref": "#/$defs/gitAuthority"
+        },
+        "implementation": {
+            "$ref": "#/$defs/implementation"
+        },
+        "outcome_policy": {
+            "$ref": "#/$defs/outcomePolicy"
+        },
+        "protocol": {
+            "$ref": "#/$defs/protocolBinding"
+        },
+        "readiness_identity": {
+            "$ref": "#/$defs/sha256"
+        },
+        "readiness_specification": {
+            "$ref": "#/$defs/documentBinding"
+        },
+        "replay": {
+            "$ref": "#/$defs/replay"
+        },
+        "runtime": {
+            "$ref": "#/$defs/runtime"
+        },
+        "schema": {
+            "$ref": "#/$defs/schemaRegistry"
+        },
+        "source_scopes": {
+            "items": {
+                "$ref": "source-scope.schema.json"
+            },
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true,
+            "x-canonical-order": [
+                "repository_path",
+                "role"
+            ],
+            "x-unique-key": [
+                "repository_path"
+            ]
+        },
+        "validation": {
+            "$ref": "#/$defs/validation"
+        }
+    },
+    "required": [
+        "artifacts",
+        "attempt_policy",
+        "configuration",
+        "control_plane",
+        "execution_profile",
+        "execution_specification",
+        "experiment",
+        "external_inputs",
+        "git_authority",
+        "implementation",
+        "outcome_policy",
+        "protocol",
+        "readiness_identity",
+        "readiness_specification",
+        "replay",
+        "runtime",
+        "schema",
+        "source_scopes",
+        "validation"
+    ],
+    "title": "ReadinessRecordV1",
+    "type": "object",
+    "$defs": {
+        "artifact": {
+            "additionalProperties": false,
+            "properties": {
+                "artifact_identifier": {
+                    "$ref": "#/$defs/safeIdentifier"
+                },
+                "artifact_kind": {
+                    "$ref": "#/$defs/safeIdentifier"
+                },
+                "declaration_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "dependency_roles": {
+                    "items": {
+                        "$ref": "#/$defs/safeIdentifier"
+                    },
+                    "type": "array",
+                    "uniqueItems": true,
+                    "x-canonical-order": [
+                        "value"
+                    ]
+                },
+                "relative_path": {
+                    "$ref": "#/$defs/repositoryPath"
+                }
+            },
+            "required": [
+                "artifact_identifier",
+                "artifact_kind",
+                "declaration_identity",
+                "dependency_roles",
+                "relative_path"
+            ],
+            "type": "object"
+        },
+        "artifacts": {
+            "additionalProperties": false,
+            "properties": {
+                "declarations": {
+                    "items": {
+                        "$ref": "#/$defs/artifact"
+                    },
+                    "type": "array",
+                    "uniqueItems": true,
+                    "x-canonical-order": [
+                        "artifact_identifier"
+                    ],
+                    "x-unique-key": [
+                        "artifact_identifier"
+                    ]
+                }
+            },
+            "required": [
+                "declarations"
+            ],
+            "type": "object"
+        },
+        "attemptPolicy": {
+            "additionalProperties": false,
+            "properties": {
+                "allocator_contract_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "attempt_identity_domain": {
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "collision_policy": {
+                    "const": "reject_any_existing_path",
+                    "type": "string"
+                },
+                "output_policy_identity": {
+                    "$ref": "#/$defs/sha256"
+                }
+            },
+            "required": [
+                "allocator_contract_identity",
+                "attempt_identity_domain",
+                "collision_policy",
+                "output_policy_identity"
+            ],
+            "type": "object"
+        },
+        "component": {
+            "additionalProperties": false,
+            "properties": {
+                "component_identifier": {
+                    "$ref": "#/$defs/safeIdentifier"
+                },
+                "component_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "git_object_identity": {
+                    "$ref": "#/$defs/gitObject"
+                },
+                "path": {
+                    "$ref": "#/$defs/repositoryPath"
+                },
+                "role": {
+                    "enum": [
+                        "adapter",
+                        "adapter_registry",
+                        "allocator_client",
+                        "allocator_contract",
+                        "canonical_serializer",
+                        "official_orchestrator",
+                        "outcome_gate",
+                        "readiness_validator"
+                    ],
+                    "type": "string"
+                },
+                "sha256": {
+                    "$ref": "#/$defs/sha256"
+                }
+            },
+            "required": [
+                "component_identifier",
+                "component_identity",
+                "git_object_identity",
+                "path",
+                "role",
+                "sha256"
+            ],
+            "type": "object"
+        },
+        "configuration": {
+            "additionalProperties": false,
+            "properties": {
+                "decision_selection_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "experiment_configuration_identity": {
+                    "$ref": "#/$defs/sha256"
+                }
+            },
+            "required": [
+                "decision_selection_identity",
+                "experiment_configuration_identity"
+            ],
+            "type": "object"
+        },
+        "controlPlane": {
+            "additionalProperties": false,
+            "properties": {
+                "components": {
+                    "items": {
+                        "$ref": "#/$defs/component"
+                    },
+                    "minItems": 8,
+                    "maxItems": 8,
+                    "type": "array",
+                    "uniqueItems": true,
+                    "x-canonical-order": [
+                        "component_identifier"
+                    ],
+                    "x-unique-key": [
+                        "component_identifier",
+                        "role"
+                    ]
+                }
+            },
+            "required": [
+                "components"
+            ],
+            "type": "object"
+        },
+        "documentBinding": {
+            "additionalProperties": false,
+            "properties": {
+                "byte_count": {
+                    "minimum": 0,
+                    "type": "integer"
+                },
+                "git_blob_identity": {
+                    "$ref": "#/$defs/gitObject"
+                },
+                "path": {
+                    "$ref": "#/$defs/repositoryPath"
+                },
+                "revision": {
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "sha256": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "specification_identity": {
+                    "$ref": "#/$defs/sha256"
+                }
+            },
+            "required": [
+                "byte_count",
+                "git_blob_identity",
+                "path",
+                "revision",
+                "sha256",
+                "specification_identity"
+            ],
+            "type": "object"
+        },
+        "experiment": {
+            "additionalProperties": false,
+            "properties": {
+                "canonical_record_path": {
+                    "$ref": "#/$defs/repositoryPath"
+                },
+                "experiment_configuration_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "experiment_identifier": {
+                    "pattern": "^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*$",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "canonical_record_path",
+                "experiment_configuration_identity",
+                "experiment_identifier"
+            ],
+            "type": "object"
+        },
+        "externalInput": {
+            "additionalProperties": false,
+            "properties": {
+                "external_input_identifier": {
+                    "$ref": "#/$defs/safeIdentifier"
+                },
+                "external_input_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "input_kind": {
+                    "enum": [
+                        "ordered_file_collection",
+                        "regular_file"
+                    ],
+                    "type": "string"
+                },
+                "members": {
+                    "items": {
+                        "$ref": "#/$defs/inputMember"
+                    },
+                    "maxItems": 16384,
+                    "minItems": 1,
+                    "type": "array",
+                    "x-order-semantics": "identity-bearing"
+                },
+                "parser_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "role": {
+                    "$ref": "#/$defs/safeIdentifier"
+                },
+                "schema_identity": {
+                    "$ref": "#/$defs/sha256"
+                }
+            },
+            "required": [
+                "external_input_identifier",
+                "external_input_identity",
+                "input_kind",
+                "members",
+                "parser_identity",
+                "role",
+                "schema_identity"
+            ],
+            "type": "object",
+            "x-input-member-cardinality": true
+        },
+        "externalInputs": {
+            "additionalProperties": false,
+            "properties": {
+                "declarations": {
+                    "items": {
+                        "$ref": "#/$defs/externalInput"
+                    },
+                    "maxItems": 16384,
+                    "type": "array",
+                    "uniqueItems": true,
+                    "x-order-semantics": "role-then-member-paths-then-identifier",
+                    "x-unique-key": [
+                        "external_input_identifier"
+                    ]
+                }
+            },
+            "required": [
+                "declarations"
+            ],
+            "type": "object"
+        },
+        "gitAuthority": {
+            "additionalProperties": false,
+            "properties": {
+                "approved_branch_ref": {
+                    "pattern": "^refs/heads/[A-Za-z0-9._/-]+$",
+                    "type": "string"
+                },
+                "repository_authority_identifier": {
+                    "$ref": "#/$defs/safeIdentifier"
+                },
+                "source_commit": {
+                    "$ref": "#/$defs/gitObject"
+                }
+            },
+            "required": [
+                "approved_branch_ref",
+                "repository_authority_identifier",
+                "source_commit"
+            ],
+            "type": "object"
+        },
+        "gitObject": {
+            "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+            "type": "string"
+        },
+        "implementation": {
+            "additionalProperties": false,
+            "properties": {
+                "adapter_identifier": {
+                    "$ref": "#/$defs/safeIdentifier"
+                },
+                "entry_point": {
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_.]*:[A-Za-z_][A-Za-z0-9_.]*$",
+                    "type": "string"
+                },
+                "implementation_git_blob_identity": {
+                    "$ref": "#/$defs/gitObject"
+                },
+                "implementation_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "implementation_path": {
+                    "$ref": "#/$defs/repositoryPath"
+                },
+                "implementation_sha256": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "protocol_binding_byte_count": {
+                    "maximum": 1048576,
+                    "minimum": 0,
+                    "type": "integer"
+                },
+                "protocol_binding_git_blob_identity": {
+                    "$ref": "#/$defs/gitObject"
+                },
+                "protocol_binding_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "protocol_binding_path": {
+                    "$ref": "#/$defs/repositoryPath"
+                },
+                "protocol_binding_sha256": {
+                    "$ref": "#/$defs/sha256"
+                }
+            },
+            "required": [
+                "adapter_identifier",
+                "entry_point",
+                "implementation_git_blob_identity",
+                "implementation_identity",
+                "implementation_path",
+                "implementation_sha256",
+                "protocol_binding_byte_count",
+                "protocol_binding_git_blob_identity",
+                "protocol_binding_identity",
+                "protocol_binding_path",
+                "protocol_binding_sha256"
+            ],
+            "type": "object"
+        },
+        "inputMember": {
+            "additionalProperties": false,
+            "properties": {
+                "byte_count": {
+                    "minimum": 0,
+                    "type": "integer"
+                },
+                "member_path": {
+                    "$ref": "#/$defs/repositoryPath"
+                },
+                "sha256": {
+                    "$ref": "#/$defs/sha256"
+                }
+            },
+            "required": [
+                "byte_count",
+                "member_path",
+                "sha256"
+            ],
+            "type": "object"
+        },
+        "outcomePolicy": {
+            "additionalProperties": false,
+            "properties": {
+                "authorization_contract_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "outcome_capability": {
+                    "enum": [
+                        "outcome_aware_authorized_only",
+                        "prohibited_and_not_performed"
+                    ],
+                    "type": "string"
+                },
+                "policy_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "profile_name": {
+                    "$ref": "#/$defs/safeIdentifier"
+                }
+            },
+            "required": [
+                "authorization_contract_identity",
+                "outcome_capability",
+                "policy_identity",
+                "profile_name"
+            ],
+            "type": "object"
+        },
+        "profile": {
+            "additionalProperties": false,
+            "properties": {
+                "profile_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "profile_name": {
+                    "$ref": "#/$defs/safeIdentifier"
+                }
+            },
+            "required": [
+                "profile_identity",
+                "profile_name"
+            ],
+            "type": "object"
+        },
+        "protocolBinding": {
+            "additionalProperties": false,
+            "properties": {
+                "byte_count": {
+                    "minimum": 0,
+                    "type": "integer"
+                },
+                "git_blob_identity": {
+                    "$ref": "#/$defs/gitObject"
+                },
+                "identifier": {
+                    "$ref": "#/$defs/safeIdentifier"
+                },
+                "path": {
+                    "$ref": "#/$defs/repositoryPath"
+                },
+                "protocol_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "revision": {
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "sha256": {
+                    "$ref": "#/$defs/sha256"
+                }
+            },
+            "required": [
+                "byte_count",
+                "git_blob_identity",
+                "identifier",
+                "path",
+                "protocol_identity",
+                "revision",
+                "sha256"
+            ],
+            "type": "object"
+        },
+        "replay": {
+            "additionalProperties": false,
+            "properties": {
+                "candidate_order": {
+                    "items": {
+                        "type": "integer"
+                    },
+                    "minItems": 1,
+                    "type": "array",
+                    "uniqueItems": true,
+                    "x-order-semantics": "identity-bearing"
+                },
+                "construction_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "decision_selection_order": {
+                    "items": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array",
+                    "uniqueItems": true,
+                    "x-order-semantics": "identity-bearing"
+                },
+                "population_accounting_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "replay_identity": {
+                    "$ref": "#/$defs/sha256"
+                }
+            },
+            "required": [
+                "candidate_order",
+                "construction_identity",
+                "decision_selection_order",
+                "population_accounting_identity",
+                "replay_identity"
+            ],
+            "type": "object"
+        },
+        "repositoryPath": {
+            "minLength": 1,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\).+$",
+            "type": "string"
+        },
+        "runtime": {
+            "additionalProperties": false,
+            "properties": {
+                "dependency_manifest_git_blob_identity": {
+                    "$ref": "#/$defs/gitObject"
+                },
+                "dependency_manifest_path": {
+                    "$ref": "#/$defs/repositoryPath"
+                },
+                "dependency_manifest_sha256": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "environment_contract_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "python_implementation": {
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "python_version": {
+                    "minLength": 1,
+                    "type": "string"
+                },
+                "runtime_identity": {
+                    "$ref": "#/$defs/sha256"
+                }
+            },
+            "required": [
+                "dependency_manifest_git_blob_identity",
+                "dependency_manifest_path",
+                "dependency_manifest_sha256",
+                "environment_contract_identity",
+                "python_implementation",
+                "python_version",
+                "runtime_identity"
+            ],
+            "type": "object"
+        },
+        "safeIdentifier": {
+            "pattern": "^[a-z][a-z0-9_.-]*$",
+            "type": "string"
+        },
+        "schemaDeclaration": {
+            "additionalProperties": false,
+            "properties": {
+                "byte_count": {
+                    "minimum": 0,
+                    "type": "integer"
+                },
+                "git_blob_identity": {
+                    "$ref": "#/$defs/gitObject"
+                },
+                "object_kind": {
+                    "$ref": "#/$defs/safeIdentifier"
+                },
+                "path": {
+                    "$ref": "#/$defs/repositoryPath"
+                },
+                "schema_identifier": {
+                    "$ref": "#/$defs/safeIdentifier"
+                },
+                "sha256": {
+                    "$ref": "#/$defs/sha256"
+                }
+            },
+            "required": [
+                "byte_count",
+                "git_blob_identity",
+                "object_kind",
+                "path",
+                "schema_identifier",
+                "sha256"
+            ],
+            "type": "object"
+        },
+        "schemaRegistry": {
+            "additionalProperties": false,
+            "properties": {
+                "canonical_encoding_revision": {
+                    "const": "readiness-v1-canonical-json",
+                    "type": "string"
+                },
+                "declarations": {
+                    "items": {
+                        "$ref": "#/$defs/schemaDeclaration"
+                    },
+                    "maxItems": 6,
+                    "minItems": 6,
+                    "type": "array",
+                    "uniqueItems": true,
+                    "x-canonical-order": [
+                        "object_kind"
+                    ],
+                    "x-unique-key": [
+                        "object_kind"
+                    ]
+                },
+                "schema_registry_identifier": {
+                    "const": "readiness-phase2-schema-registry-v1",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "canonical_encoding_revision",
+                "declarations",
+                "schema_registry_identifier"
+            ],
+            "type": "object"
+        },
+        "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "validation": {
+            "additionalProperties": false,
+            "properties": {
+                "compile_passed": {
+                    "type": "boolean"
+                },
+                "import_passed": {
+                    "type": "boolean"
+                },
+                "reconstruction_passed": {
+                    "type": "boolean"
+                },
+                "test_policy_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "test_results_identity": {
+                    "$ref": "#/$defs/sha256"
+                },
+                "test_selectors": {
+                    "items": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array",
+                    "uniqueItems": true,
+                    "x-canonical-order": [
+                        "value"
+                    ]
+                }
+            },
+            "required": [
+                "compile_passed",
+                "import_passed",
+                "reconstruction_passed",
+                "test_policy_identity",
+                "test_results_identity",
+                "test_selectors"
+            ],
+            "type": "object"
+        }
+    }
+}

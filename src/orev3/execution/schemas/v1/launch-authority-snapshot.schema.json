@@ -1,0 +1,20 @@
+{
+  "$id": "orev3://schemas/execution-readiness/v1/launch-authority-snapshot",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "approved_branch_ref": {"pattern": "^refs/heads/[A-Za-z0-9._/-]+$", "type": "string"},
+    "canonical_readiness_record_path": {"minLength": 1, "type": "string"},
+    "launch_authority_snapshot_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "readiness_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "readiness_record_blob_identity": {"pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$", "type": "string"},
+    "readiness_seal_commit": {"pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$", "type": "string"},
+    "remote_head_commit": {"pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$", "type": "string"},
+    "repository_authority_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+    "schema_version": {"const": 1, "type": "integer"},
+    "source_commit": {"pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$", "type": "string"}
+  },
+  "required": ["approved_branch_ref", "canonical_readiness_record_path", "launch_authority_snapshot_identity", "readiness_identity", "readiness_record_blob_identity", "readiness_seal_commit", "remote_head_commit", "repository_authority_identifier", "schema_version", "source_commit"],
+  "title": "LaunchAuthoritySnapshotV1",
+  "type": "object"
+}

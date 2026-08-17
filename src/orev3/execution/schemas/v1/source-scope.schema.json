@@ -1,0 +1,39 @@
+{
+  "$id": "orev3://schemas/execution-readiness/v1/source-scope",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "properties": {
+        "git_object_identity": {"pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$", "type": "string"},
+        "git_mode": {"pattern": "^[0-7]{6}$", "type": "string"},
+        "nesting": {"enum": ["top_level", "contains_declared_children"], "type": "string"},
+        "repository_path": {"$ref": "#/$defs/repositoryPath"},
+        "role": {"$ref": "#/$defs/role"}
+      },
+      "required": ["git_mode", "git_object_identity", "nesting", "repository_path", "role"],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "git_object_identity": {"pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$", "type": "string"},
+        "git_mode": {"pattern": "^[0-7]{6}$", "type": "string"},
+        "nesting": {"const": "nested", "type": "string"},
+        "parent_path": {"$ref": "#/$defs/repositoryPath"},
+        "repository_path": {"$ref": "#/$defs/repositoryPath"},
+        "role": {"$ref": "#/$defs/role"}
+      },
+      "required": ["git_mode", "git_object_identity", "nesting", "parent_path", "repository_path", "role"],
+      "type": "object"
+    }
+  ],
+  "$defs": {
+    "repositoryPath": {"minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\).+$", "type": "string"},
+    "role": {
+      "enum": ["configuration", "control_plane", "dependency_manifest", "execution_specification", "implementation", "protocol", "readiness_schema", "readiness_specification", "readiness_test_policy", "readiness_tests", "repository_authority", "runtime_manifest", "source_tree"],
+      "type": "string"
+    }
+  },
+  "title": "SourceScopeDeclarationV1"
+}

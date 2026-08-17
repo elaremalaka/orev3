@@ -1,0 +1,44 @@
+{
+  "$id": "orev3://schemas/execution-readiness/v1/implementation-binding",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "adapter_identifier": {"$ref": "#/$defs/safeIdentifier"},
+    "entry_point": {"pattern": "^[A-Za-z_][A-Za-z0-9_.]*:[A-Za-z_][A-Za-z0-9_.]*$", "type": "string"},
+    "execution_specification_identity": {"$ref": "#/$defs/sha256"},
+    "experiment_configuration_identity": {"$ref": "#/$defs/sha256"},
+    "experiment_identifier": {"pattern": "^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*$", "type": "string"},
+    "implementation": {
+      "additionalProperties": false,
+      "properties": {
+        "git_blob_identity": {"$ref": "#/$defs/gitObject"},
+        "path": {"$ref": "#/$defs/repositoryPath"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "required": ["git_blob_identity", "path", "sha256"],
+      "type": "object"
+    },
+    "profile_identity": {"$ref": "#/$defs/sha256"},
+    "protocol": {
+      "additionalProperties": false,
+      "properties": {
+        "identifier": {"$ref": "#/$defs/safeIdentifier"},
+        "revision": {"minLength": 1, "type": "string"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "required": ["identifier", "revision", "sha256"],
+      "type": "object"
+    },
+    "protocol_binding_identity": {"$ref": "#/$defs/sha256"},
+    "schema_version": {"const": 1, "type": "integer"}
+  },
+  "required": ["adapter_identifier", "entry_point", "execution_specification_identity", "experiment_configuration_identity", "experiment_identifier", "implementation", "profile_identity", "protocol", "protocol_binding_identity", "schema_version"],
+  "type": "object",
+  "$defs": {
+    "gitObject": {"pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$", "type": "string"},
+    "repositoryPath": {"minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\).+$", "type": "string"},
+    "safeIdentifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+    "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+  },
+  "title": "ImplementationProtocolBindingV1"
+}

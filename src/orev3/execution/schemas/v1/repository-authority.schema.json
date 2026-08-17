@@ -1,0 +1,29 @@
+{
+  "$id": "orev3://schemas/execution-readiness/v1/repository-authority",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "approved_branch_ref": {"pattern": "^refs/heads/[A-Za-z0-9._/-]+$", "type": "string"},
+    "canonical_fetch_endpoints": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "canonical_endpoint": {"minLength": 1, "type": "string"},
+          "transport": {"enum": ["https", "ssh"], "type": "string"}
+        },
+        "required": ["canonical_endpoint", "transport"],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true,
+      "x-canonical-order": ["canonical_endpoint"]
+    },
+    "git_object_format": {"enum": ["sha1", "sha256"], "type": "string"},
+    "repository_authority_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+    "schema_version": {"const": 1, "type": "integer"}
+  },
+  "required": ["approved_branch_ref", "canonical_fetch_endpoints", "git_object_format", "repository_authority_identifier", "schema_version"],
+  "title": "RepositoryAuthorityV1",
+  "type": "object"
+}
