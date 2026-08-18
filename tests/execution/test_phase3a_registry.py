@@ -25,10 +25,12 @@ def descriptor() -> dict[str, object]:
     material: dict[str, object] = {
         "adapter_identifier": "synthetic-prospective-adapter",
         "adapter_identity": ZERO,
+        "adapter_readiness_test_nodes": ["tests/execution/test_synthetic.py::test_synthetic_ready"],
         "adapter_readiness_tests": ["tests/execution/test_synthetic.py"],
         "artifacts": {"declarations": []},
         "attempt_output_declaration_identity": ONE,
         "configuration": {"decision_selection_identity": ZERO, "experiment_configuration_identity": ONE},
+        "evidence_preparation": {"dataset_contracts": [], "decision_selection": {"configuration_identity": ZERO, "permitted_exclusion_reasons": [], "replay_preparer_identifier": "canonical-replay-preparer-v1", "selector_identifier": "latest-eligible-observation-selector-v1", "selector_revision": "1", "target_observation_rule": "latest-eligible-observation", "tie_behavior": "reject-duplicate-observation-index", "tolerance_contract": "exact"}, "profile_contract_declarations": [], "resource_policy_identity": ZERO},
         "execution_profile": {"profile_identity": ZERO, "profile_name": "outcome_blind_characterization_v1"},
         "execution_specification": {"path": "docs/research/specifications/execution-v2.md", "revision": "execution-v2", "sha256": ZERO, "specification_identity": ZERO},
         "experiment_identifier": "synthetic-prospective",
@@ -59,6 +61,7 @@ def registry_for(material: dict[str, object]) -> dict[str, object]:
             "descriptor_sha256": hashlib.sha256(raw).hexdigest(),
             "experiment_identifier": material["experiment_identifier"],
         }],
+        "projection_contracts": [],
         "registry_identifier": "experiment-execution-readiness-adapter-registry-v1",
         "schema_version": 1,
     }
@@ -124,7 +127,7 @@ def test_input_and_artifact_declarations_are_identity_bearing() -> None:
         "external_input_identifier": "synthetic-dataset",
         "external_input_identity": ZERO,
         "input_kind": "regular_file",
-        "members": [{"byte_count": 3, "member_path": "data/synthetic.bin", "sha256": ZERO}],
+            "members": [{"byte_count": 3, "logical_identifier": "only", "member_path": "data/synthetic.bin", "sha256": ZERO}],
         "parser_identity": ZERO,
         "role": "dataset",
         "schema_identity": ONE,
@@ -136,15 +139,22 @@ def test_input_and_artifact_declarations_are_identity_bearing() -> None:
     artifact = {
         "artifact_identifier": "ranking",
         "artifact_kind": "outcome_blind_ranking",
+        "container": "json",
         "declaration_identity": ZERO,
+        "dependencies": [],
         "dependency_roles": ["replay"],
+        "execution_phase": "ranking",
+        "profile_applicability": "outcome_blind_characterization_v1",
         "relative_path": "ranking.json",
+        "schema_identity": ONE,
     }
     artifact["declaration_identity"] = domain_identity(
         ARTIFACT_DECLARATION_DOMAIN,
         {key: value for key, value in artifact.items() if key != "declaration_identity"},
     )
     material["external_inputs"] = {"declarations": [external]}
+    material["governed_scope_paths"] = sorted([*material["governed_scope_paths"], "config/research/readiness/synthetic-projection-schema.json", "config/research/readiness/synthetic-raw-schema.json", "src/orev3/execution/dataset_validation.py"])
+    material["evidence_preparation"]["dataset_contracts"] = [{"candidate_order": [1], "container": "canonical_jsonl", "dataset_validator_identifier": "canonical-jsonl-dataset-validator-v1", "dataset_version": "synthetic-v1", "external_input_identifier": "synthetic-dataset", "projection_contract_identifier": "synthetic-projection-v1", "projection_required": False, "projection_schema_identifier": "synthetic-projection-schema-v1", "projection_schema_identity": ONE, "projection_schema_path": "config/research/readiness/synthetic-projection-schema.json", "projection_schema_sha256": ONE, "projector_identifier": "canonical-jsonl-outcome-blind-projector-v1", "protocol_revision": "1", "raw_parser_identifier": "canonical-jsonl-raw-parser-v1", "raw_schema_identifier": "synthetic-raw-schema-v1", "raw_schema_path": "config/research/readiness/synthetic-raw-schema.json", "raw_schema_sha256": ONE, "record_ordering": "source_order", "source_class": "outcome_blind"}]  # type: ignore[index]
     material["artifacts"] = {"declarations": [artifact]}
     identity_material = dict(material)
     del identity_material["adapter_identity"]
@@ -160,3 +170,13 @@ def test_input_and_artifact_declarations_are_identity_bearing() -> None:
         load_adapter_declaration_bytes(
             canonical_bytes(material), schema=schema("adapter-declaration.schema.json")
         )
+
+
+def test_phase3b_v1_fails_closed_on_ordered_collection_declaration() -> None:
+    material = descriptor()
+    external = {"external_input_identifier": "collection", "external_input_identity": ZERO, "input_kind": "ordered_file_collection", "members": [{"byte_count": 1, "logical_identifier": "a", "member_path": "data/a", "sha256": ZERO}, {"byte_count": 1, "logical_identifier": "b", "member_path": "data/b", "sha256": ONE}], "parser_identity": ZERO, "role": "dataset", "schema_identity": ONE}
+    external["external_input_identity"] = domain_identity(EXTERNAL_INPUT_DECLARATION_DOMAIN, {key: value for key, value in external.items() if key != "external_input_identity"})
+    material["external_inputs"] = {"declarations": [external]}
+    material["adapter_identity"] = domain_identity(ADAPTER_DOMAIN, {key: value for key, value in material.items() if key != "adapter_identity"})
+    with pytest.raises(CanonicalControlError):
+        load_adapter_declaration_bytes(canonical_bytes(material), schema=schema("adapter-declaration.schema.json"))

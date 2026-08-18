@@ -43,6 +43,7 @@ class AdapterRegistryV1:
     material: Mapping[str, Any]
     registry_identity: str
     descriptors_by_experiment: Mapping[str, Mapping[str, Any]]
+    projection_contracts_by_identifier: Mapping[str, Mapping[str, Any]]
 
     def descriptor_reference(self, experiment_identifier: str) -> Mapping[str, Any]:
         identifier = normalize_experiment_identifier(experiment_identifier)
@@ -50,6 +51,12 @@ class AdapterRegistryV1:
             return self.descriptors_by_experiment[identifier]
         except KeyError as exc:
             raise CanonicalControlError("prospective adapter is not registered") from exc
+
+    def projection_contract(self, identifier: str) -> Mapping[str, Any]:
+        try:
+            return self.projection_contracts_by_identifier[identifier]
+        except KeyError as exc:
+            raise CanonicalControlError("projection contract is not repository-governed") from exc
 
 
 def load_adapter_declaration_bytes(
@@ -76,6 +83,26 @@ def load_adapter_declaration_bytes(
         validate_repository_path(declaration["relative_path"])
         if _identity(ARTIFACT_DECLARATION_DOMAIN, declaration, "declaration_identity") != declaration["declaration_identity"]:
             raise CanonicalControlError("artifact declaration identity does not reconstruct")
+    evidence = material["evidence_preparation"]
+    if evidence["decision_selection"]["configuration_identity"] != material["configuration"]["decision_selection_identity"]:
+        raise CanonicalControlError("Phase-3B decision-selection configuration differs from adapter configuration")
+    input_identifiers = {item["external_input_identifier"] for item in material["external_inputs"]["declarations"]}
+    dataset_identifiers = [item["external_input_identifier"] for item in evidence["dataset_contracts"]]
+    if set(dataset_identifiers) != input_identifiers or len(dataset_identifiers) != len(set(dataset_identifiers)):
+        raise CanonicalControlError("Phase-3B dataset contracts differ from external inputs")
+    for contract in evidence["dataset_contracts"]:
+        for path_field in ("raw_schema_path", "projection_schema_path"):
+            validate_repository_path(contract[path_field])
+            if contract[path_field] not in material["governed_scope_paths"]:
+                raise CanonicalControlError("Phase-3B dataset contract path is not governed")
+        if contract["protocol_revision"] != material["protocol"]["revision"]:
+            raise CanonicalControlError("Phase-3B dataset protocol revision differs")
+        if contract["source_class"] == "combined_outcome_bearing" and not contract["projection_required"]:
+            raise CanonicalControlError("outcome-bearing input lacks an outcome-blind projection contract")
+    for declaration in evidence["profile_contract_declarations"]:
+        validate_repository_path(declaration["path"])
+        if declaration["path"] not in material["governed_scope_paths"]:
+            raise CanonicalControlError("profile contract is not governed")
     return AdapterDeclarationV1(
         material, identifier, material["adapter_identifier"], material["adapter_identity"]
     )
@@ -92,6 +119,7 @@ def load_adapter_registry_bytes(
     by_experiment: dict[str, Mapping[str, Any]] = {}
     adapter_ids: set[str] = set()
     descriptor_paths: set[str] = set()
+    descriptor_order: list[str] = []
     for reference in material["descriptors"]:
         identifier = normalize_experiment_identifier(reference["experiment_identifier"])
         validate_repository_path(reference["descriptor_path"])
@@ -104,7 +132,26 @@ def load_adapter_registry_bytes(
         by_experiment[identifier] = reference
         adapter_ids.add(reference["adapter_identifier"])
         descriptor_paths.add(reference["descriptor_path"])
-    return AdapterRegistryV1(material, material["adapter_registry_identity"], by_experiment)
+        descriptor_order.append(identifier)
+    if descriptor_order != sorted(descriptor_order):
+        raise CanonicalControlError("adapter registry descriptors are not canonically ordered")
+    projection_contracts: dict[str, Mapping[str, Any]] = {}
+    projection_paths: set[str] = set()
+    projection_order: list[str] = []
+    for contract in material["projection_contracts"]:
+        identifier = contract["projection_contract_identifier"]
+        if identifier in projection_contracts:
+            raise CanonicalControlError("duplicate projection contract identifier")
+        validate_repository_path(contract["raw_schema_path"])
+        validate_repository_path(contract["projection_schema_path"])
+        if contract["projection_schema_path"] in projection_paths:
+            raise CanonicalControlError("duplicate projection schema path")
+        projection_paths.add(contract["projection_schema_path"])
+        projection_order.append(identifier)
+        projection_contracts[identifier] = contract
+    if projection_order != sorted(projection_order):
+        raise CanonicalControlError("projection contracts are not canonically ordered")
+    return AdapterRegistryV1(material, material["adapter_registry_identity"], by_experiment, projection_contracts)
 
 
 def load_adapter_declaration(path: str | Path, *, schema: Mapping[str, Any]) -> AdapterDeclarationV1:

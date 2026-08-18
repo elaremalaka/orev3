@@ -1,0 +1,198 @@
+{
+    "$id": "orev3://schemas/execution-readiness/v1/evidence-preparation-policy",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+        "limits": {
+            "additionalProperties": false,
+            "properties": {
+                "max_aggregate_collection_bytes": {
+                    "minimum": 1,
+                    "type": "integer"
+                },
+                "max_collection_members": {
+                    "minimum": 1,
+                    "type": "integer"
+                },
+                "max_file_bytes": {
+                    "minimum": 1,
+                    "type": "integer"
+                },
+                "max_open_files": {
+                    "minimum": 1,
+                    "type": "integer"
+                },
+                "max_processes": {
+                    "minimum": 1,
+                    "type": "integer"
+                },
+                "max_projection_bytes": {
+                    "minimum": 1,
+                    "type": "integer"
+                },
+                "max_replay_units": {
+                    "minimum": 1,
+                    "type": "integer"
+                },
+                "max_stderr_bytes": {
+                    "minimum": 1,
+                    "type": "integer"
+                },
+                "max_stdout_bytes": {
+                    "minimum": 1,
+                    "type": "integer"
+                },
+                "max_subprocess_seconds": {
+                    "minimum": 1,
+                    "type": "integer"
+                },
+                "max_temporary_disk_bytes": {
+                    "minimum": 1,
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "max_aggregate_collection_bytes",
+                "max_collection_members",
+                "max_file_bytes",
+                "max_open_files",
+                "max_processes",
+                "max_projection_bytes",
+                "max_replay_units",
+                "max_stderr_bytes",
+                "max_stdout_bytes",
+                "max_subprocess_seconds",
+                "max_temporary_disk_bytes"
+            ],
+            "type": "object"
+        },
+        "policy_identifier": {
+            "const": "experiment-evidence-preparation-policy-v1",
+            "type": "string"
+        },
+        "policy_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "profile_renderer_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "schema_version": {
+            "const": 1,
+            "type": "integer"
+        },
+        "worker_profiles": {
+            "items": {
+                "additionalProperties": false,
+                "properties": {
+                    "allowed_read_roles": {
+                        "items": {
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        "minItems": 1,
+                        "type": "array",
+                        "uniqueItems": true,
+                        "x-canonical-order": [
+                            "value"
+                        ]
+                    },
+                    "allowed_write_roles": {
+                        "items": {
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        "minItems": 1,
+                        "type": "array",
+                        "uniqueItems": true,
+                        "x-canonical-order": [
+                            "value"
+                        ]
+                    },
+                    "commands": {
+                        "items": {
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        "minItems": 1,
+                        "type": "array",
+                        "uniqueItems": true,
+                        "x-canonical-order": [
+                            "value"
+                        ]
+                    },
+                    "denied_roles": {
+                        "items": {
+                            "minLength": 1,
+                            "type": "string"
+                        },
+                        "minItems": 1,
+                        "type": "array",
+                        "uniqueItems": true,
+                        "x-canonical-order": [
+                            "value"
+                        ]
+                    },
+                    "module": {
+                        "pattern": "^src/orev3/execution/[a-z0-9_]+\\.py$",
+                        "type": "string"
+                    },
+                    "network_policy": {
+                        "const": "prohibited",
+                        "type": "string"
+                    },
+                    "sandbox_template_identity": {
+                        "pattern": "^[0-9a-f]{64}$",
+                        "type": "string"
+                    },
+                    "sandbox_template_revision": {
+                        "enum": [
+                            "macos-seatbelt-capability-v4",
+                            "phase3a-network-sandbox-v1"
+                        ],
+                        "type": "string"
+                    },
+                    "worker_kind": {
+                        "enum": [
+                            "INPUT_PROJECTOR",
+                            "PHASE3A_VALIDATOR",
+                            "READINESS_TEST",
+                            "REPLAY_PREPARATION"
+                        ],
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "allowed_read_roles",
+                    "allowed_write_roles",
+                    "commands",
+                    "denied_roles",
+                    "module",
+                    "network_policy",
+                    "sandbox_template_identity",
+                    "sandbox_template_revision",
+                    "worker_kind"
+                ],
+                "type": "object"
+            },
+            "maxItems": 4,
+            "minItems": 4,
+            "type": "array",
+            "uniqueItems": true,
+            "x-canonical-order": [
+                "worker_kind"
+            ]
+        }
+    },
+    "required": [
+        "limits",
+        "policy_identifier",
+        "policy_identity",
+        "profile_renderer_identity",
+        "schema_version",
+        "worker_profiles"
+    ],
+    "title": "EvidencePreparationPolicyV1",
+    "type": "object"
+}

@@ -107,6 +107,9 @@ data/research/snapshots/**/*
 # content-addressed runtime inputs.  Git tracks only their authority manifest.
 data/research/readiness/wheels/
 data/research/readiness/dependency-roots/
+data/research/readiness/inputs/
+data/research/readiness/projections/
+data/research/readiness/preparation/
 
 # Participant economic ledgers contain wallet-sensitive local activity.
 data/ledger/

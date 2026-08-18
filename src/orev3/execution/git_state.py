@@ -12,7 +12,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 from urllib.parse import urlsplit, urlunsplit
 
 from orev3.execution.canonical import (
@@ -160,6 +160,7 @@ def _run_bounded_process(
     environment: dict[str, str],
     timeout_seconds: float,
     max_output_bytes: int,
+    periodic_guard: Callable[[], None] | None = None,
 ) -> subprocess.CompletedProcess[bytes]:
     """Run one non-shell command while bounding both pipes during capture."""
 
@@ -180,6 +181,8 @@ def _run_bounded_process(
     deadline = time.monotonic() + timeout_seconds
     try:
         while selector.get_map():
+            if periodic_guard is not None:
+                periodic_guard()
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 _terminate_process_group(process)

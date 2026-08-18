@@ -99,7 +99,7 @@ PHASE2_SCHEMA_DOCUMENT_POLICY = {
     ),
     "readiness-test-policy": (
         "orev3://schemas/execution-readiness/v1/readiness-test-policy",
-        "ff76640e1e460f9b5d63d9c8f455ba6955a0b25642d92f0c5c07a312066d1410",
+        "1aac9f934c4d58274578519098d1b1762637a3e77902d0b43dd2fef4866f8886",
     ),
     "repository-authority": (
         "orev3://schemas/execution-readiness/v1/repository-authority",
@@ -134,11 +134,11 @@ PHASE3A_SCHEMA_DOCUMENT_POLICY = {
     **PHASE2_SCHEMA_DOCUMENT_POLICY,
     "adapter-declaration": (
         "orev3://schemas/execution-readiness/v1/adapter-declaration",
-        "215ac7835918c2c9eb541bae3ed410d639522111f05eb6f17a9ccaccdfbdf4d3",
+        "55fccfb6984b2a565f2d02abc913f76306f774f4e7445ff31c1cb74ffb418cc4",
     ),
     "adapter-registry": (
         "orev3://schemas/execution-readiness/v1/adapter-registry",
-        "27303c90d1339cd79c1a6621a8888463175dd0ba8007775721c3221cb8b374c4",
+        "012b5f0f874a350987e21f53937d5994d52a7c213456c6ce3818f526884d318a",
     ),
     "offline-artifact-manifest": (
         "orev3://schemas/execution-readiness/v1/offline-artifact-manifest",
@@ -148,6 +148,63 @@ PHASE3A_SCHEMA_DOCUMENT_POLICY = {
         "orev3://schemas/execution-readiness/v1/runtime-contract",
         "d67aa372c7913051051b09cf35138a7c17d34e6f06f13c16c4ca522e376bb00e",
     ),
+}
+PHASE3B_SCHEMA_REGISTRY_IDENTIFIER = "readiness-phase3b-schema-registry-v1"
+PHASE3B_SCHEMA_POLICY = {
+    **PHASE3A_SCHEMA_POLICY,
+    "artifact-declaration-evidence": (
+        "artifact-declaration-evidence-v1",
+        "src/orev3/execution/schemas/v1/artifact-declaration-evidence.schema.json",
+    ),
+    "dataset-validation-evidence": (
+        "dataset-validation-evidence-v1",
+        "src/orev3/execution/schemas/v1/dataset-validation-evidence.schema.json",
+    ),
+    "evidence-preparation-policy": (
+        "evidence-preparation-policy-v1",
+        "src/orev3/execution/schemas/v1/evidence-preparation-policy.schema.json",
+    ),
+    "evidence-preparation": (
+        "evidence-preparation-v1",
+        "src/orev3/execution/schemas/v1/evidence-preparation.schema.json",
+    ),
+    "immutable-input-snapshot": (
+        "immutable-input-snapshot-v1",
+        "src/orev3/execution/schemas/v1/immutable-input-snapshot.schema.json",
+    ),
+    "outcome-blind-projection-evidence": (
+        "outcome-blind-projection-evidence-v1",
+        "src/orev3/execution/schemas/v1/outcome-blind-projection-evidence.schema.json",
+    ),
+    "population-accounting-evidence": (
+        "population-accounting-evidence-v1",
+        "src/orev3/execution/schemas/v1/population-accounting-evidence.schema.json",
+    ),
+    "profile-conformance-evidence": (
+        "profile-conformance-evidence-v1",
+        "src/orev3/execution/schemas/v1/profile-conformance-evidence.schema.json",
+    ),
+    "readiness-test-evidence": (
+        "readiness-test-evidence-v1",
+        "src/orev3/execution/schemas/v1/readiness-test-evidence.schema.json",
+    ),
+    "replay-evidence": (
+        "replay-evidence-v1",
+        "src/orev3/execution/schemas/v1/replay-evidence.schema.json",
+    ),
+}
+PHASE3B_SCHEMA_DOCUMENT_POLICY = {
+    **PHASE3A_SCHEMA_DOCUMENT_POLICY,
+    "artifact-declaration-evidence": ("orev3://schemas/execution-readiness/v1/artifact-declaration-evidence", "8e003c64196398d9880a68c77d228dd6cb4938edab2a2971ad3354c7c4127c4d"),
+    "dataset-validation-evidence": ("orev3://schemas/execution-readiness/v1/dataset-validation-evidence", "a79ebbdeb2f3822354b910808bde88e56ff55b39cce476ab540695c48d03d7a8"),
+    "evidence-preparation-policy": ("orev3://schemas/execution-readiness/v1/evidence-preparation-policy", "315cdf396c03098678235b558b8e5569973e1221b2dc878b52d8bab3ebc98b81"),
+    "evidence-preparation": ("orev3://schemas/execution-readiness/v1/evidence-preparation", "15538013df0b35a9514756963cb591b875101169cd98b04cf37b53290fc14731"),
+    "immutable-input-snapshot": ("orev3://schemas/execution-readiness/v1/immutable-input-snapshot", "173e943980c87d27a4e27acdefc915fd5b5cd43a121b0058388f3072c6b81ce9"),
+    "outcome-blind-projection-evidence": ("orev3://schemas/execution-readiness/v1/outcome-blind-projection-evidence", "44725f9357d2361ca1185eac74468e1cfe382cf418145198f88d342a753bfb75"),
+    "population-accounting-evidence": ("orev3://schemas/execution-readiness/v1/population-accounting-evidence", "115edbf8775f334cb7d60f2174e72a043ac05112d5b53ebaf3cfeacfd1257384"),
+    "profile-conformance-evidence": ("orev3://schemas/execution-readiness/v1/profile-conformance-evidence", "7778a2d0cab2ca491452e89162ddb99da952a9f34cbf1192f4356ee0590684bc"),
+    "readiness-test-evidence": ("orev3://schemas/execution-readiness/v1/readiness-test-evidence", "58b73eeade341e47d812f855b73958bd3d469c3dab47c1f942d7de829dd2b01f"),
+    "replay-evidence": ("orev3://schemas/execution-readiness/v1/replay-evidence", "a2666f32cc87d824c9e357cbb03534bfeaf5ac6c9f7ebd16e38ee38621b6d4d0"),
 }
 
 _SAFE_IDENTIFIER = re.compile(r"[a-z][a-z0-9_.-]*")
@@ -1126,15 +1183,23 @@ def validate_readiness_test_policy(material: Mapping[str, Any]) -> None:
     validate_exact_fields(
         material,
         {
+            "collection_policy",
+            "collection_affecting_paths",
+            "expected_mandatory_collection_identity",
+            "expected_mandatory_node_count",
             "policy_identifier",
             "policy_identity",
             "required_selectors",
+            "result_policy",
             "schema_version",
+            "warning_policy",
         },
         label="readiness test policy",
     )
     if material["schema_version"] != 1:
         raise CanonicalControlError("readiness test policy version is unsupported")
+    if material["collection_policy"] != "double_fresh_collection_exact_match" or material["result_policy"] != "all_collected_nodes_pass" or material["warning_policy"] != "reject_any_warning":
+        raise CanonicalControlError("readiness test policy semantics are unsupported")
     policy_identifier = require_string(
         "policy_identifier", material["policy_identifier"], pattern=_SAFE_IDENTIFIER
     )
@@ -1158,6 +1223,13 @@ def validate_readiness_test_policy(material: Mapping[str, Any]) -> None:
         raise CanonicalControlError(
             "readiness test policy selector length exceeds the schema maximum"
         )
+    require_sha256("expected mandatory collection identity", material["expected_mandatory_collection_identity"])
+    count = require_integer("expected mandatory node count", material["expected_mandatory_node_count"])
+    if count < 1 or count > 16384:
+        raise CanonicalControlError("readiness test policy expected node count is invalid")
+    paths = require_sorted_unique("collection affecting paths", material["collection_affecting_paths"], key=lambda item: item)
+    for path in paths:
+        validate_repository_path(path)
     require_sha256("policy_identity", material["policy_identity"])
     identity_material = dict(material)
     stored = identity_material.pop("policy_identity")
@@ -1181,6 +1253,12 @@ __all__ = [
     "PHASE2_SCHEMA_POLICY",
     "PHASE2_SCHEMA_DOCUMENT_POLICY",
     "PHASE2_SCHEMA_REGISTRY_IDENTIFIER",
+    "PHASE3A_SCHEMA_POLICY",
+    "PHASE3A_SCHEMA_DOCUMENT_POLICY",
+    "PHASE3A_SCHEMA_REGISTRY_IDENTIFIER",
+    "PHASE3B_SCHEMA_POLICY",
+    "PHASE3B_SCHEMA_DOCUMENT_POLICY",
+    "PHASE3B_SCHEMA_REGISTRY_IDENTIFIER",
     "PROTOCOL_BINDING_DOMAIN",
     "ReadinessRecordV1",
     "RepositoryAuthorityV1",

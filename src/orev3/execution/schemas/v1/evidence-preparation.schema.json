@@ -1,0 +1,128 @@
+{
+    "$id": "orev3://schemas/execution-readiness/v1/evidence-preparation",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+        "adapter_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "artifact_evidence_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "capability_policy_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "dataset_evidence_identities": {
+            "items": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true,
+            "x-canonical-order": [
+                "value"
+            ]
+        },
+        "dependency_environment_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "evidence_preparation_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "input_snapshot_identities": {
+            "items": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true,
+            "x-canonical-order": [
+                "value"
+            ]
+        },
+        "population_evidence_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "profile_evidence_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "projection_evidence_identities": {
+            "items": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true,
+            "x-canonical-order": [
+                "value"
+            ]
+        },
+        "readiness_test_evidence_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "replay_evidence_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "runtime_contract_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "semantic_component_identities": {
+            "items": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+            "minItems": 7,
+            "type": "array",
+            "uniqueItems": true,
+            "x-canonical-order": ["value"]
+        },
+        "schema_version": {
+            "const": 1,
+            "type": "integer"
+        },
+        "source_commit": {
+            "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+            "type": "string"
+        },
+        "worker_evidence_identities": {
+            "items": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+            },
+            "minItems": 4,
+            "type": "array",
+            "uniqueItems": true,
+            "x-canonical-order": [
+                "value"
+            ]
+        }
+    },
+    "required": [
+        "adapter_identity",
+        "artifact_evidence_identity",
+        "capability_policy_identity",
+        "dataset_evidence_identities",
+        "dependency_environment_identity",
+        "evidence_preparation_identity",
+        "input_snapshot_identities",
+        "population_evidence_identity",
+        "profile_evidence_identity",
+        "projection_evidence_identities",
+        "readiness_test_evidence_identity",
+        "replay_evidence_identity",
+        "runtime_contract_identity",
+        "semantic_component_identities",
+        "schema_version",
+        "source_commit",
+        "worker_evidence_identities"
+    ],
+    "title": "EvidencePreparationV1",
+    "type": "object"
+}

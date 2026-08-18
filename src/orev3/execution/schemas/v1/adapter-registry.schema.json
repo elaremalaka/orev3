@@ -23,10 +23,37 @@
             "x-canonical-order": ["experiment_identifier"],
             "x-unique-key": ["experiment_identifier", "adapter_identifier", "descriptor_path"]
         },
+        "projection_contracts": {
+            "items": {
+                "additionalProperties": false,
+                "properties": {
+                    "dataset_validator_identifier": {"const": "canonical-jsonl-dataset-validator-v1", "type": "string"},
+                    "output_container": {"const": "canonical_jsonl", "type": "string"},
+                    "projection_contract_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                    "projection_schema_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                    "projection_schema_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                    "projection_schema_path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+                    "projection_schema_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                    "projector_identifier": {"const": "canonical-jsonl-outcome-blind-projector-v1", "type": "string"},
+                    "raw_parser_identifier": {"const": "canonical-jsonl-raw-parser-v1", "type": "string"},
+                    "raw_schema_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                    "raw_schema_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                    "raw_schema_path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+                    "raw_schema_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+                },
+                "required": ["dataset_validator_identifier", "output_container", "projection_contract_identifier", "projection_schema_identifier", "projection_schema_identity", "projection_schema_path", "projection_schema_sha256", "projector_identifier", "raw_parser_identifier", "raw_schema_identifier", "raw_schema_identity", "raw_schema_path", "raw_schema_sha256"],
+                "type": "object"
+            },
+            "maxItems": 4096,
+            "type": "array",
+            "uniqueItems": true,
+            "x-canonical-order": ["projection_contract_identifier"],
+            "x-unique-key": ["projection_contract_identifier", "projection_schema_path"]
+        },
         "registry_identifier": {"const": "experiment-execution-readiness-adapter-registry-v1", "type": "string"},
         "schema_version": {"const": 1, "type": "integer"}
     },
-    "required": ["adapter_registry_identity", "descriptors", "registry_identifier", "schema_version"],
+    "required": ["adapter_registry_identity", "descriptors", "projection_contracts", "registry_identifier", "schema_version"],
     "title": "AdapterRegistryV1",
     "type": "object"
 }

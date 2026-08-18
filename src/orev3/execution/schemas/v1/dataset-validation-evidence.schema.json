@@ -1,0 +1,69 @@
+{
+    "$id": "orev3://schemas/execution-readiness/v1/dataset-validation-evidence",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+        "dataset_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "dataset_validation_evidence_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "dataset_version": {
+            "minLength": 1,
+            "type": "string"
+        },
+        "dataset_content_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "input_snapshot_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "ordered_record_count": {
+            "minimum": 0,
+            "type": "integer"
+        },
+        "parser_component_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "schema_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "schema_version": {
+            "const": 1,
+            "type": "integer"
+        },
+        "source_class": {
+            "enum": [
+                "combined_outcome_bearing",
+                "outcome_blind"
+            ],
+            "type": "string"
+        },
+        "validator_component_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        }
+    },
+    "required": [
+        "dataset_identity",
+        "dataset_validation_evidence_identity",
+        "dataset_version",
+        "dataset_content_identity",
+        "input_snapshot_identity",
+        "ordered_record_count",
+        "parser_component_identity",
+        "schema_identity",
+        "schema_version",
+        "source_class",
+        "validator_component_identity"
+    ],
+    "title": "DatasetValidationEvidenceV1",
+    "type": "object"
+}

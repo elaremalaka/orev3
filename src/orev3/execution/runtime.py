@@ -32,7 +32,7 @@ from orev3.execution.canonical import (
     validate_json_schema_instance,
     validate_repository_path,
 )
-from orev3.execution.git_state import GitAuthorityError, GitRepository, _run_bounded_process
+from orev3.execution.git_state import GitAuthorityError, GitDiagnosticCode, GitRepository, _run_bounded_process
 
 RUNTIME_CONTRACT_DOMAIN = "orev3:readiness-runtime-contract:v1\n"
 RUNTIME_BUNDLE_DOMAIN = "orev3:readiness-python-runtime-bundle:v1\n"
@@ -41,16 +41,35 @@ DEPENDENCY_LOCK_DOMAIN = "orev3:readiness-dependency-lock:v1\n"
 OFFLINE_ARTIFACT_MANIFEST_DOMAIN = "orev3:readiness-offline-artifact-manifest:v1\n"
 HOST_SYSTEM_DOMAIN = "orev3:readiness-host-system:v1\n"
 NETWORK_SANDBOX_DOMAIN = "orev3:readiness-network-sandbox:v1\n"
+PHASE3B_PROFILE_RENDERER_DOMAIN = "orev3:phase3b-seatbelt-profile-renderer:v1\n"
+PHASE3B_WORKER_EVIDENCE_DOMAIN = "orev3:phase3b-worker-evidence:v1\n"
 MAX_RUNTIME_CONTRACT_BYTES = 262_144
 MAX_ARTIFACT_MANIFEST_BYTES = 1_048_576
 MAX_DEPENDENCY_LOCK_BYTES = 8 * 1024 * 1024
 MAX_WORKER_OUTPUT_BYTES = 1_048_576
 WORKER_TIMEOUT_SECONDS = 180
 SAFE_WORKER_COMMANDS = frozenset({"validate_imports", "validate_runtime"})
+SAFE_PHASE3B_WORKERS = frozenset({
+    "input_projection_worker.py",
+    "readiness_test_worker.py",
+    "replay_preparation_worker.py",
+})
+PHASE3B_CONTROLLER = "evidence_preparation_worker.py"
 MACOS_SANDBOX_EXEC = Path("/usr/bin/sandbox-exec")
 OTOOL = Path("/usr/bin/otool")
 SW_VERS = Path("/usr/bin/sw_vers")
 NETWORK_SANDBOX_PROFILE = "(version 1)\n(allow default)\n(deny network*)\n"
+PHASE3B_PROFILE_RENDERER_IDENTITY = domain_identity(
+    PHASE3B_PROFILE_RENDERER_DOMAIN,
+    {
+        "filesystem_policy": "default_deny_named_capability_roots",
+        "network_policy": "deny_network_star",
+        "renderer_revision": "macos-seatbelt-capability-renderer-v4",
+        "python_framework_app_runtime": "allowed_if_present_beneath_bound_base_prefix",
+        "system_base_profile": "system.sb",
+    },
+)
+PHASE3A_SANDBOX_TEMPLATE_IDENTITY = "e55dba9a5ec1fb87d8237cd95c8a29dd49c0919fc7380c38678ee6669a3ed7bc"
 _NORMALIZED_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 _LOCK_FILENAME = re.compile(r"^pylock(?:\.[a-z0-9][a-z0-9.-]*)?\.toml$")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -103,6 +122,14 @@ class RuntimeContractV1:
 class PreparationWorkerEvidence:
     command: str
     material: Mapping[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class Phase3BWorkerEvidence:
+    worker_kind: str
+    evidence_identity: str
+    material: Mapping[str, Any]
+    result: Mapping[str, Any]
 
 
 def _normalized_distribution_name(value: str) -> str:
@@ -555,6 +582,392 @@ def sanitized_worker_environment(temp_root: Path) -> dict[str, str]:
     return {"HOME": str(temp_root / "home"), "LANG": "C", "LC_ALL": "C", "PATH": "/usr/bin:/bin", "PYTHONDONTWRITEBYTECODE": "1", "PYTHONHASHSEED": "0", "PYTHONNOUSERSITE": "1", "PYTHONUTF8": "1", "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1", "TMPDIR": str(temp_root / "tmp"), "TZ": "UTC"}
 
 
+def _seatbelt_path(path: Path) -> tuple[Path, str]:
+    resolved = path.resolve(strict=True)
+    value = str(resolved)
+    if any(character in value for character in ('"', "\\", "\n", "\r", "\x00")):
+        raise CanonicalControlError("sandbox capability path cannot be represented safely")
+    return resolved, f'"{value}"'
+
+
+def render_phase3b_sandbox_profile(
+    *,
+    policy: Mapping[str, Any],
+    worker_kind: str,
+    worker_name: str,
+    command: str,
+    source_root: Path,
+    dependency_root: Path,
+    request_path: Path,
+    temporary_root: Path,
+    read_files: tuple[Path, ...] = (),
+    read_roots: tuple[Path, ...] = (),
+    write_roots: tuple[Path, ...] = (),
+    interpreter: Path | None = None,
+) -> tuple[str, Mapping[str, Any]]:
+    """Render one default-deny profile from a governed worker-kind policy."""
+
+    if policy.get("profile_renderer_identity") != PHASE3B_PROFILE_RENDERER_IDENTITY:
+        raise CanonicalControlError("Phase-3B profile renderer identity differs")
+    workers = policy.get("worker_profiles")
+    if not isinstance(workers, list):
+        raise CanonicalControlError("Phase-3B worker profile policy is absent")
+    matches = [item for item in workers if item.get("worker_kind") == worker_kind]
+    if len(matches) != 1:
+        raise CanonicalControlError("Phase-3B worker kind is missing or duplicated")
+    declaration = matches[0]
+    expected_module = f"src/orev3/execution/{worker_name}"
+    if declaration.get("module") != expected_module or command not in declaration.get("commands", ()):
+        raise CanonicalControlError("Phase-3B worker mapping or command differs from policy")
+    if declaration.get("network_policy") != "prohibited" or declaration.get("sandbox_template_revision") != "macos-seatbelt-capability-v4":
+        raise CanonicalControlError("Phase-3B sandbox policy is weakened")
+    template_material = {
+        "allowed_read_roles": declaration.get("allowed_read_roles"),
+        "allowed_write_roles": declaration.get("allowed_write_roles"),
+        "commands": declaration.get("commands"),
+        "denied_roles": declaration.get("denied_roles"),
+        "module": declaration.get("module"),
+        "network_policy": declaration.get("network_policy"),
+        "sandbox_template_revision": declaration.get("sandbox_template_revision"),
+        "worker_kind": declaration.get("worker_kind"),
+    }
+    if domain_identity(PHASE3B_PROFILE_RENDERER_DOMAIN, template_material) != declaration.get("sandbox_template_identity"):
+        raise CanonicalControlError("Phase-3B sandbox template identity differs")
+
+    interpreter_path = (interpreter or Path(sys.executable)).resolve(strict=True)
+    base_prefix = Path(sys.base_prefix).resolve(strict=True)
+    fixed_read_roots = tuple(path for path in (
+        source_root,
+        dependency_root,
+        temporary_root,
+        base_prefix,
+        Path("/System"),
+        Path("/usr/lib"),
+        Path("/private/var/db/dyld"),
+        Path("/private/etc"),
+        Path("/dev"),
+    ) if path.exists())
+    normalized_read_roots = sorted({_seatbelt_path(path)[0] for path in (*fixed_read_roots, *read_roots)}, key=str)
+    normalized_write_roots = sorted({
+        _seatbelt_path(path)[0]
+        for path in (temporary_root / "home", temporary_root / "tmp", *write_roots)
+    }, key=str)
+    exact_read_paths: set[Path] = set()
+    for path in (request_path, *read_files):
+        resolved = _seatbelt_path(path)[0]
+        exact_read_paths.add(resolved)
+        # Descriptor-relative no-follow traversal needs directory descriptors
+        # for the lexical ancestor chain.  Literal directory capabilities do
+        # not grant access to sibling children (unlike a Seatbelt subpath).
+        exact_read_paths.update(resolved.parents)
+    normalized_read_files = sorted(exact_read_paths, key=str)
+    _, interpreter_literal = _seatbelt_path(interpreter_path)
+    process_executables = [interpreter_literal]
+    app_runtime = base_prefix / "Resources/Python.app/Contents/MacOS/Python"
+    if app_runtime.exists():
+        process_executables.append(_seatbelt_path(app_runtime)[1])
+    lines = [
+        "(version 1)",
+        "(deny default)",
+        '(import "system.sb")',
+        "(allow process-exec " + " ".join(f"(literal {value})" for value in process_executables) + ")",
+        "(allow process-info*)",
+        "(allow sysctl-read)",
+        "(allow mach-lookup)",
+        "(allow ipc-posix*)",
+        "(allow file-read-metadata)",
+    ]
+    for root in normalized_read_roots:
+        lines.append(f'(allow file-read* (subpath "{root}"))')
+    for path in normalized_read_files:
+        lines.append(f'(allow file-read* (literal "{path}"))')
+    for root in normalized_write_roots:
+        lines.append(f'(allow file-write* (subpath "{root}"))')
+    lines.append("(deny network*)")
+    profile = "\n".join(lines) + "\n"
+    rendered = {
+        "sandbox_template_identity": declaration["sandbox_template_identity"],
+        "worker_kind": worker_kind,
+    }
+    return profile, rendered
+
+
+def _enforce_temporary_disk_limit(roots: tuple[Path, ...], limit: int) -> None:
+    total = 0
+    entries = 0
+    pending = list(roots)
+    seen: set[tuple[int, int]] = set()
+    while pending:
+        root = pending.pop()
+        try:
+            opened = os.lstat(root)
+        except FileNotFoundError:
+            continue
+        identity = (opened.st_dev, opened.st_ino)
+        if identity in seen:
+            continue
+        seen.add(identity); entries += 1
+        if entries > 100_000:
+            raise CanonicalControlError("RESOURCE_LIMIT_EXCEEDED")
+        if stat.S_ISREG(opened.st_mode):
+            total += opened.st_size
+        elif stat.S_ISDIR(opened.st_mode):
+            with os.scandir(root) as directory:
+                pending.extend(Path(item.path) for item in directory)
+        if total > limit:
+            raise CanonicalControlError("RESOURCE_LIMIT_EXCEEDED")
+
+
+def _readiness_test_code_paths(
+    repository: GitRepository, source_commit: str, selectors: object
+) -> tuple[str, ...]:
+    """Return the exact committed code/configuration capability for pytest.
+
+    Phase-3B v1 intentionally supports exact test-file selectors only.  This
+    makes collection authority finite and prevents pytest from discovering or
+    importing unrelated experiment, parser, Replay, or outcome-capable code.
+    """
+
+    if not isinstance(selectors, list) or not selectors:
+        raise CanonicalControlError("readiness-test selectors are absent")
+    selected: set[str] = set()
+    for selector in selectors:
+        if not isinstance(selector, str):
+            raise CanonicalControlError("readiness-test selector is invalid")
+        path = validate_repository_path(selector.split("::", 1)[0])
+        if not path.startswith("tests/") or not path.endswith(".py"):
+            raise CanonicalControlError("Phase-3B v1 requires exact readiness-test files")
+        entry = repository.tree_entry(source_commit, path)
+        if entry.object_type != "blob" or entry.mode not in {"100644", "100755"}:
+            raise CanonicalControlError("readiness-test selector is not an ordinary committed file")
+        selected.add(path)
+
+        parts = path.split("/")[:-1]
+        for index in range(1, len(parts) + 1):
+            parent = "/".join(parts[:index])
+            for candidate in (f"{parent}/conftest.py", f"{parent}/__init__.py"):
+                if repository.optional_tree_entry(source_commit, candidate) is not None:
+                    selected.add(candidate)
+
+    for candidate in ("pyproject.toml", "pytest.ini", "setup.cfg", "tox.ini"):
+        if repository.optional_tree_entry(source_commit, candidate) is not None:
+            selected.add(candidate)
+    return tuple(sorted(selected))
+
+
+def run_phase3b_worker(
+    source_root: Path,
+    source_commit: str,
+    worker_kind: str,
+    worker_name: str,
+    request_material: Mapping[str, Any],
+    *,
+    dependency_root: Path,
+    runtime_contract_identity: str,
+    dependency_environment_identity: str,
+    capability_policy: Mapping[str, Any],
+    invocation_identifier: str = "single",
+    input_capability_identities: tuple[str, ...] = (),
+    read_files: tuple[Path, ...] = (),
+    read_roots: tuple[Path, ...] = (),
+    write_roots: tuple[Path, ...] = (),
+    timeout_seconds: int = WORKER_TIMEOUT_SECONDS,
+    max_output_bytes: int = MAX_WORKER_OUTPUT_BYTES,
+    interpreter: Path | None = None,
+) -> Phase3BWorkerEvidence:
+    """Run one fixed Phase-3B worker; returned material is evidence, not authority."""
+
+    if worker_name not in SAFE_PHASE3B_WORKERS:
+        raise CanonicalControlError("Phase-3B worker is not permitted")
+    if not invocation_identifier or len(invocation_identifier) > 64 or not all(
+        character.islower() or character.isdigit() or character in "-_" for character in invocation_identifier
+    ):
+        raise CanonicalControlError("Phase-3B worker invocation identifier is invalid")
+    temporary_root = Path(tempfile.mkdtemp(prefix="orev3-evidence-worker-"))
+    try:
+        (temporary_root / "home").mkdir()
+        (temporary_root / "tmp").mkdir()
+        repository = GitRepository(source_root)
+        module_path = f"src/orev3/execution/{worker_name}"
+        module_identity = repository.tree_entry(source_commit, module_path).object_identity
+        execution_source = source_root
+        code_closure_identities: list[str] = []
+        if worker_kind in {"READINESS_TEST", "INPUT_PROJECTOR", "REPLAY_PREPARATION"}:
+            from orev3.execution.phase3b_components import WORKER_CODE_CLOSURES
+            try:
+                code_paths = list(WORKER_CODE_CLOSURES[worker_kind])
+            except KeyError as exc:
+                raise CanonicalControlError("Phase-3B code capability is absent") from exc
+            if worker_kind == "READINESS_TEST":
+                code_paths.extend(
+                    _readiness_test_code_paths(
+                        repository, source_commit, request_material.get("selectors")
+                    )
+                )
+            execution_source = temporary_root / "code-capability"
+            for relative in sorted(set(code_paths)):
+                entry = repository.tree_entry(source_commit, relative)
+                raw = repository.object_bytes(entry.object_identity, max_bytes=1_048_576)
+                target = execution_source / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(raw)
+                code_closure_identities.append(entry.object_identity)
+        request = dict(request_material)
+        limits = capability_policy.get("limits", {})
+        request["resource_limits"] = {
+            "max_open_files": limits.get("max_open_files", 256),
+            "max_processes": limits.get("max_processes", 16),
+            "max_temporary_disk_bytes": limits.get("max_temporary_disk_bytes", 1_073_741_824),
+        }
+        request["source_root"] = str(execution_source.resolve())
+        request["dependency_root"] = str(dependency_root.resolve())
+        request_path = temporary_root / "request.json"
+        request_path.write_text(json.dumps(request, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        worker = execution_source / "src/orev3/execution" / worker_name
+        profile, profile_material = render_phase3b_sandbox_profile(
+            policy=capability_policy,
+            worker_kind=worker_kind,
+            worker_name=worker_name,
+            command=str(request_material.get("command", "")),
+            source_root=execution_source,
+            dependency_root=dependency_root,
+            request_path=request_path,
+            temporary_root=temporary_root,
+            read_files=read_files,
+            read_roots=read_roots,
+            write_roots=write_roots,
+            interpreter=interpreter,
+        )
+        try:
+            completed = _run_bounded_process(
+                (str(MACOS_SANDBOX_EXEC), "-p", profile, str((interpreter or Path(sys.executable)).resolve()), "-I", "-S", str(worker), str(request_path)),
+                cwd=execution_source,
+                environment=sanitized_worker_environment(temporary_root),
+                timeout_seconds=timeout_seconds,
+                max_output_bytes=max_output_bytes,
+                periodic_guard=lambda: _enforce_temporary_disk_limit(
+                    (temporary_root, *write_roots),
+                    int(limits.get("max_temporary_disk_bytes", 1_073_741_824)),
+                ),
+            )
+        except GitAuthorityError as exc:
+            if exc.code == GitDiagnosticCode.GIT_COMMAND_TIMEOUT:
+                raise CanonicalControlError("WORKER_TIMEOUT") from exc
+            if exc.code == GitDiagnosticCode.GIT_OUTPUT_LIMIT_EXCEEDED:
+                raise CanonicalControlError("WORKER_OUTPUT_LIMIT_EXCEEDED") from exc
+            raise
+        if completed.returncode != 0:
+            default_code = {
+                "INPUT_PROJECTOR": "PROJECTION_INVALID",
+                "READINESS_TEST": "READINESS_TEST_FAILED",
+                "REPLAY_PREPARATION": "REPLAY_IDENTITY_MISMATCH",
+            }.get(worker_kind, "EVIDENCE_PREPARATION_INTERNAL_REJECTED")
+            stable_code = default_code
+            try:
+                rejection = json.loads(completed.stdout.decode("utf-8", errors="strict"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                rejection = None
+            permitted_failure_codes = {
+                "INPUT_MISMATCH",
+                "INPUT_MUTATED",
+                "INPUT_SCHEMA_MISMATCH",
+                "OUTCOME_ISOLATION_VIOLATION",
+                "POPULATION_MISMATCH",
+                "PROJECTION_INVALID",
+                "READINESS_TEST_FAILED",
+                "REPLAY_IDENTITY_MISMATCH",
+                "RESOURCE_LIMIT_EXCEEDED",
+            }
+            if (
+                isinstance(rejection, dict)
+                and rejection.get("status") == "evidence_rejected"
+                and rejection.get("failure_code") in permitted_failure_codes
+                and set(rejection) == {"failure_code", "status"}
+            ):
+                stable_code = rejection["failure_code"]
+            raise CanonicalControlError(stable_code)
+        try:
+            result = json.loads(completed.stdout.decode("utf-8", errors="strict"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise CanonicalControlError("Phase-3B worker result is malformed") from exc
+        if not isinstance(result, dict) or result.get("status") != "evidence_passed":
+            raise CanonicalControlError("Phase-3B worker did not return evidence")
+        result_identity = domain_identity(PHASE3B_WORKER_EVIDENCE_DOMAIN, result)
+        material = {
+            "capability_policy_identity": capability_policy["policy_identity"],
+            "closed_dependency_identity": dependency_environment_identity,
+            "command_identity": domain_identity(
+                PHASE3B_WORKER_EVIDENCE_DOMAIN,
+                {
+                    "command": request_material["command"],
+                    "invocation_identifier": invocation_identifier,
+                    "worker_kind": worker_kind,
+                },
+            ),
+            "code_capability_git_identities": sorted(code_closure_identities),
+            "input_capability_identities": list(sorted(input_capability_identities)),
+            "output_identity": result_identity,
+            "runtime_contract_identity": runtime_contract_identity,
+            "sandbox_template_identity": profile_material["sandbox_template_identity"],
+            "source_commit": source_commit,
+            "successful_worker_disposition": "evidence_passed",
+            "worker_kind": worker_kind,
+            "worker_module_git_identity": module_identity,
+        }
+        evidence_identity = domain_identity(PHASE3B_WORKER_EVIDENCE_DOMAIN, material)
+        return Phase3BWorkerEvidence(worker_kind, evidence_identity, {**material, "worker_evidence_identity": evidence_identity}, result)
+    finally:
+        shutil.rmtree(temporary_root, ignore_errors=True)
+
+
+def run_phase3b_controller(
+    source_root: Path,
+    request_material: Mapping[str, Any],
+    *,
+    timeout_seconds: int,
+    max_output_bytes: int,
+    interpreter: Path | None = None,
+) -> Mapping[str, Any]:
+    """Launch the fixed detached-S controller without Seatbelt so it can create sibling sandboxes."""
+
+    temporary_root = Path(tempfile.mkdtemp(prefix="orev3-evidence-controller-"))
+    try:
+        (temporary_root / "home").mkdir()
+        (temporary_root / "tmp").mkdir()
+        request = dict(request_material)
+        request["source_root"] = str(source_root.resolve())
+        request_path = temporary_root / "request.json"
+        request_path.write_text(json.dumps(request, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        controller = source_root / "src/orev3/execution" / PHASE3B_CONTROLLER
+        try:
+            completed = _run_bounded_process(
+                (str((interpreter or Path(sys.executable)).resolve()), "-I", "-S", str(controller), str(request_path)),
+                cwd=source_root,
+                environment=sanitized_worker_environment(temporary_root),
+                timeout_seconds=timeout_seconds,
+                max_output_bytes=max_output_bytes,
+            )
+        except GitAuthorityError as exc:
+            if exc.code == GitDiagnosticCode.GIT_COMMAND_TIMEOUT:
+                raise CanonicalControlError("WORKER_TIMEOUT") from exc
+            if exc.code == GitDiagnosticCode.GIT_OUTPUT_LIMIT_EXCEEDED:
+                raise CanonicalControlError("WORKER_OUTPUT_LIMIT_EXCEEDED") from exc
+            raise
+        if completed.returncode != 0:
+            raise CanonicalControlError(
+                f"detached Phase-3B controller rejected evidence (code {completed.returncode})"
+            )
+        try:
+            result = json.loads(completed.stdout.decode("utf-8", errors="strict"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise CanonicalControlError("detached Phase-3B controller result is malformed") from exc
+        if not isinstance(result, dict) or result.get("status") != "controller_evidence_passed":
+            raise CanonicalControlError("detached Phase-3B controller did not return evidence")
+        return result
+    finally:
+        shutil.rmtree(temporary_root, ignore_errors=True)
+
+
 class DetachedSource(AbstractContextManager[Path]):
     """Temporary detached Git worktree at an exact committed S."""
 
@@ -626,5 +1039,5 @@ def _run_preparation_worker(source_root: Path, command: str, request_material: M
 
 
 __all__ = [
-    "ClosedDependencyRoot", "DependencyLockV1", "DetachedSource", "LockedWheel", "NETWORK_SANDBOX_PROFILE", "OfflineArtifactManifestV1", "PreparationWorkerEvidence", "RuntimeContractV1", "SAFE_WORKER_COMMANDS", "construct_closed_dependency_root", "load_offline_artifact_manifest_bytes", "load_runtime_contract_bytes", "reconstruct_host_system_material", "reconstruct_offline_artifact_manifest_identity", "reconstruct_runtime_bundle_identity", "reconstruct_runtime_contract_identity", "sanitized_worker_environment", "validate_closed_dependency_imports", "validate_dependency_lock", "validate_host_runtime",
+    "ClosedDependencyRoot", "DependencyLockV1", "DetachedSource", "LockedWheel", "NETWORK_SANDBOX_PROFILE", "OfflineArtifactManifestV1", "PHASE3A_SANDBOX_TEMPLATE_IDENTITY", "PHASE3B_CONTROLLER", "PHASE3B_PROFILE_RENDERER_IDENTITY", "PHASE3B_WORKER_EVIDENCE_DOMAIN", "Phase3BWorkerEvidence", "PreparationWorkerEvidence", "RuntimeContractV1", "SAFE_PHASE3B_WORKERS", "SAFE_WORKER_COMMANDS", "construct_closed_dependency_root", "load_offline_artifact_manifest_bytes", "load_runtime_contract_bytes", "reconstruct_host_system_material", "reconstruct_offline_artifact_manifest_identity", "reconstruct_runtime_bundle_identity", "reconstruct_runtime_contract_identity", "render_phase3b_sandbox_profile", "run_phase3b_controller", "run_phase3b_worker", "sanitized_worker_environment", "validate_closed_dependency_imports", "validate_dependency_lock", "validate_host_runtime",
 ]

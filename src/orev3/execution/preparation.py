@@ -296,7 +296,16 @@ def _validate_detached_preparation_environment(request: Mapping[str, Any]) -> Ma
     if not required_descriptor_paths.issubset(set(descriptor["governed_scope_paths"])):
         raise CanonicalControlError("adapter governed scopes omit a bound authority object")
     _require_phase3a_scope_closure(scopes, descriptor, reference["descriptor_path"], implementation_path, runtime.dependency_lock_path, runtime.artifact_manifest_path, mandatory_test_paths)
-    dependency_root_path = Path(tempfile.mkdtemp(prefix="closed-dependencies-", dir=os.environ["TMPDIR"]))
+    if request.get("phase3b_controller") is True:
+        dependency_root_path = Path(request["closed_dependency_root_path"]).resolve()
+        temporary_root = Path(request["controller_temporary_root"]).resolve()
+        try:
+            dependency_root_path.parent.relative_to(temporary_root)
+        except ValueError as exc:
+            raise CanonicalControlError("Phase-3B dependency root escapes the controller temporary root") from exc
+        dependency_root_path.mkdir(mode=0o700)
+    else:
+        dependency_root_path = Path(tempfile.mkdtemp(prefix="closed-dependencies-", dir=os.environ["TMPDIR"]))
     dependency_root = construct_closed_dependency_root(dependency_lock, artifact_manifest, Path(request["artifact_store_root"]), dependency_root_path)
     validate_host_runtime(runtime, dependency_root)
     if dict(dependency_root.distributions).get(runtime.material["test_runner"]["distribution"]) != runtime.material["test_runner"]["version"]:
@@ -311,7 +320,7 @@ def _validate_detached_preparation_environment(request: Mapping[str, Any]) -> Ma
             module_origins.append(origin.relative_to(source_root).as_posix())
         except ValueError as exc:
             raise CanonicalControlError("trust-bearing project module escaped detached S") from exc
-    return {
+    result = {
         "adapter_identity": adapter.adapter_identity,
         "adapter_registry_identity": registry.registry_identity,
         "closed_dependency_environment_identity": dependency_root.identity,
@@ -322,6 +331,9 @@ def _validate_detached_preparation_environment(request: Mapping[str, Any]) -> Ma
         "runtime_contract_identity": runtime.runtime_contract_identity,
         "source_commit": source,
     }
+    if request.get("phase3b_controller") is True:
+        result["closed_dependency_root_path"] = str(dependency_root.path)
+    return result
 
 
 def _discover_requirements(repository: GitRepository, source: str, experiment_identifier: str) -> SourceCandidateRequirements:
@@ -356,6 +368,8 @@ def _discover_requirements(repository: GitRepository, source: str, experiment_id
     for path in descriptor["adapter_readiness_tests"]:
         if not any(path == parent or path.startswith(parent + "/") for parent in policy["required_selectors"]):
             scopes[path] = ("readiness_tests", "top_level", "")
+    for path in _collection_affecting_paths(repository, source, (*policy["required_selectors"], *descriptor["adapter_readiness_tests"])):
+        scopes[path] = ("readiness_tests", "top_level", "")
     required_objects: list[RequiredCommittedObject] = []
     for path in sorted(scopes):
         entry = repository.tree_entry(source, path)
@@ -363,6 +377,29 @@ def _discover_requirements(repository: GitRepository, source: str, experiment_id
         required_objects.append(RequiredCommittedObject(path, expected_sha, entry.object_type))
     governed = tuple((path, role, nesting, parent) for path, (role, nesting, parent) in sorted(scopes.items()))
     return SourceCandidateRequirements(experiment_identifier, tuple(required_objects), governed)
+
+
+def _collection_affecting_paths(repository: GitRepository, source: str, selectors: tuple[str, ...]) -> tuple[str, ...]:
+    candidates = {"pyproject.toml", "pytest.ini", "setup.cfg", "tox.ini"}
+    for selector in selectors:
+        base = selector.split("::", 1)[0]
+        parts = base.split("/")
+        if parts and "." in parts[-1]:
+            parts = parts[:-1]
+        for index in range(1, len(parts) + 1):
+            parent = "/".join(parts[:index])
+            candidates.add(f"{parent}/conftest.py")
+            candidates.add(f"{parent}/__init__.py")
+    existing: list[str] = []
+    for path in sorted(candidates):
+        try:
+            repository.tree_entry(source, path)
+        except GitAuthorityError as exc:
+            if exc.code == GitDiagnosticCode.OBJECT_NOT_FOUND:
+                continue
+            raise
+        existing.append(path)
+    return tuple(existing)
 
 
 def _collect_preparation_environment_evidence(

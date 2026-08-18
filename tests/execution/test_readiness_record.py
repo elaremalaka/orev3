@@ -15,6 +15,7 @@ from orev3.execution.canonical import (
 from orev3.execution.readiness_record import (
     PHASE2_SCHEMA_DOCUMENT_POLICY,
     PHASE2_SCHEMA_POLICY,
+    PHASE3B_SCHEMA_POLICY,
     READINESS_SPECIFICATION_SHA256,
     TEST_POLICY_DOMAIN,
     build_launch_authority_snapshot,
@@ -203,9 +204,9 @@ def readiness_record_material(
             "compile_passed": True,
             "import_passed": True,
             "reconstruction_passed": True,
-            "test_policy_identity": "29f5ef59ef1083bc45c371e6be9f643792bc08d1b12823254b18911f40ff7335",
+            "test_policy_identity": "e2eff3859d6400ca7b4dde0528900055b377cc40c4561fece8ec259af7d34720",
             "test_results_identity": ONE_SHA,
-            "test_selectors": ["tests/execution"],
+            "test_selectors": ["tests/execution/test_readiness_mandatory_v1.py"],
         },
     }
     for component in material["control_plane"]["components"]:  # type: ignore[index]
@@ -289,18 +290,7 @@ def test_launch_snapshot_reconstructs_and_has_no_execution_state() -> None:
 
 def test_machine_schemas_are_strict_null_free_documents() -> None:
     schema_root = Path("src/orev3/execution/schemas/v1")
-    expected = {
-        "adapter-declaration.schema.json",
-        "adapter-registry.schema.json",
-        "implementation-binding.schema.json",
-        "launch-authority-snapshot.schema.json",
-        "offline-artifact-manifest.schema.json",
-        "readiness-record.schema.json",
-        "readiness-test-policy.schema.json",
-        "repository-authority.schema.json",
-        "runtime-contract.schema.json",
-        "source-scope.schema.json",
-    }
+    expected = {Path(path).name for _, path in PHASE3B_SCHEMA_POLICY.values()}
     assert {path.name for path in schema_root.glob("*.json")} == expected
     for path in schema_root.glob("*.json"):
         material = json.loads(path.read_text(encoding="utf-8"))
@@ -454,10 +444,16 @@ def _readiness_test_policy_material(
     *, policy_identifier: str = "policy", selectors: list[str] | None = None
 ) -> dict[str, object]:
     material: dict[str, object] = {
+        "collection_affecting_paths": [],
+        "collection_policy": "double_fresh_collection_exact_match",
+        "expected_mandatory_collection_identity": "1" * 64,
+        "expected_mandatory_node_count": 1,
         "policy_identifier": policy_identifier,
         "policy_identity": ZERO_SHA,
         "required_selectors": selectors or ["tests/execution"],
+        "result_policy": "all_collected_nodes_pass",
         "schema_version": 1,
+        "warning_policy": "reject_any_warning",
     }
     identity_material = dict(material)
     del identity_material["policy_identity"]

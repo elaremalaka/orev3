@@ -105,10 +105,12 @@ def synthetic_repository(tmp_path: Path, *, defect: str = "") -> tuple[GitReposi
     descriptor: dict[str, object] = {
         "adapter_identifier": "synthetic-prospective-adapter",
         "adapter_identity": ZERO,
+        "adapter_readiness_test_nodes": ["tests/execution/test_synthetic_adapter.py::test_synthetic_adapter"],
         "adapter_readiness_tests": ["tests/execution/test_synthetic_adapter.py"],
         "artifacts": {"declarations": []},
         "attempt_output_declaration_identity": ONE,
         "configuration": {"decision_selection_identity": ZERO, "experiment_configuration_identity": ONE},
+        "evidence_preparation": {"dataset_contracts": [], "decision_selection": {"configuration_identity": ZERO, "permitted_exclusion_reasons": [], "replay_preparer_identifier": "canonical-replay-preparer-v1", "selector_identifier": "latest-eligible-observation-selector-v1", "selector_revision": "1", "target_observation_rule": "latest-eligible-observation", "tie_behavior": "reject-duplicate-observation-index", "tolerance_contract": "exact"}, "profile_contract_declarations": [], "resource_policy_identity": ZERO},
         "execution_profile": {"profile_identity": ZERO, "profile_name": "outcome_blind_characterization_v1"},
         "execution_specification": {"path": specification_path, "revision": "execution-v2", "sha256": ONE if defect == "execution-spec" else specification_sha, "specification_identity": specification_binding["specification_identity"]},
         "experiment_identifier": "synthetic-prospective",
@@ -128,6 +130,7 @@ def synthetic_repository(tmp_path: Path, *, defect: str = "") -> tuple[GitReposi
     registry: dict[str, object] = {
         "adapter_registry_identity": ZERO,
         "descriptors": [{"adapter_identifier": descriptor["adapter_identifier"], "descriptor_identity": descriptor["adapter_identity"], "descriptor_path": descriptor_path, "descriptor_sha256": hashlib.sha256(descriptor_raw).hexdigest(), "experiment_identifier": descriptor["experiment_identifier"]}],
+        "projection_contracts": [],
         "registry_identifier": "experiment-execution-readiness-adapter-registry-v1",
         "schema_version": 1,
     }
@@ -196,8 +199,13 @@ def _resolved_worker_request(repository: GitRepository, authority: RepositoryAut
 def test_detached_worker_rejects_governance_omission(tmp_path: Path, omission: str) -> None:
     repository, authority, descriptor_path, _ = synthetic_repository(tmp_path)
     candidate, request, _ = _resolved_worker_request(repository, authority, descriptor_path)
-    omitted = descriptor_path if omission == "descriptor" else "tests/execution"
-    request["source_scopes"] = [item for item in request["source_scopes"] if item["repository_path"] != omitted]
+    omitted = {descriptor_path} if omission == "descriptor" else {
+        "tests/execution",
+        "tests/execution/test_readiness_mandatory_v1.py",
+    }
+    request["source_scopes"] = [
+        item for item in request["source_scopes"] if item["repository_path"] not in omitted
+    ]
     with DetachedSource(repository, candidate.source_commit) as detached:
         with pytest.raises(Exception, match="rejected"):
             _run_preparation_worker(detached, "validate_runtime", request)

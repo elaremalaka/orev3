@@ -1,0 +1,86 @@
+{
+    "$id": "orev3://schemas/execution-readiness/v1/replay-evidence",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+        "candidate_order": {
+            "items": {
+                "type": "integer"
+            },
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true,
+            "x-order-semantics": "identity-bearing"
+        },
+        "decision_selection_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "ordered_decision_identities": {
+            "items": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+            },
+            "type": "array",
+            "x-order-semantics": "identity-bearing"
+        },
+        "ordered_replay_unit_identities": {
+            "items": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true,
+            "x-order-semantics": "identity-bearing"
+        },
+        "ordered_source_unit_identities": {
+            "items": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+            },
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true,
+            "x-order-semantics": "identity-bearing"
+        },
+        "projection_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "replay_preparer_component_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "replay_evidence_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "replay_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        },
+        "schema_version": {
+            "const": 1,
+            "type": "integer"
+        },
+        "selector_component_identity": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        }
+    },
+    "required": [
+        "candidate_order",
+        "decision_selection_identity",
+        "ordered_decision_identities",
+        "ordered_replay_unit_identities",
+        "ordered_source_unit_identities",
+        "projection_identity",
+        "replay_preparer_component_identity",
+        "replay_evidence_identity",
+        "replay_identity",
+        "schema_version",
+        "selector_component_identity"
+    ],
+    "title": "ReplayEvidenceV1",
+    "type": "object"
+}
