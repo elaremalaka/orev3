@@ -33,6 +33,10 @@ class CanonicalControlError(ValueError):
     """A readiness-v1 control object is malformed or noncanonical."""
 
 
+class _SchemaInstanceMismatch(CanonicalControlError):
+    """A valid schema assertion did not match the instance under evaluation."""
+
+
 def _reject_float(value: str) -> NoReturn:
     raise CanonicalControlError(
         f"floating-point and exponent numbers are prohibited: {value}"
@@ -295,6 +299,15 @@ def validate_json_schema_instance(
     are enforced rather than treated as comments.
     """
 
+    if not isinstance(schema_registry, Mapping):
+        raise CanonicalControlError("schema registry is malformed")
+    _validate_schema_definition(
+        schema,
+        root_schema=schema,
+        schema_registry=schema_registry,
+        location="$",
+        visited=set(),
+    )
     _validate_schema_node(
         instance,
         schema,
@@ -311,20 +324,27 @@ _SUPPORTED_SCHEMA_KEYWORDS = frozenset(
         "$ref",
         "$schema",
         "additionalProperties",
+        "allOf",
         "const",
+        "contains",
         "enum",
+        "if",
         "items",
+        "maxContains",
         "maxItems",
         "maxLength",
         "maximum",
+        "minContains",
         "minItems",
         "minLength",
         "minimum",
         "oneOf",
         "pattern",
+        "prefixItems",
         "properties",
         "required",
         "title",
+        "then",
         "type",
         "uniqueItems",
         "x-canonical-order",
@@ -333,6 +353,212 @@ _SUPPORTED_SCHEMA_KEYWORDS = frozenset(
         "x-unique-key",
     }
 )
+
+_SUPPORTED_SCHEMA_TYPES = frozenset(
+    {"array", "boolean", "integer", "object", "string"}
+)
+_NONNEGATIVE_INTEGER_SCHEMA_KEYWORDS = (
+    "maxContains",
+    "maxItems",
+    "maxLength",
+    "minContains",
+    "minItems",
+    "minLength",
+)
+
+
+def _validate_schema_definition(
+    schema: Any,
+    *,
+    root_schema: Mapping[str, Any],
+    schema_registry: Mapping[str, Mapping[str, Any]],
+    location: str,
+    visited: set[tuple[int, int]],
+) -> None:
+    """Validate the complete supported schema language before matching."""
+
+    if not isinstance(schema, Mapping):
+        raise CanonicalControlError(f"schema at {location} is malformed")
+    marker = (id(root_schema), id(schema))
+    if marker in visited:
+        return
+    visited.add(marker)
+
+    unknown = set(schema) - _SUPPORTED_SCHEMA_KEYWORDS
+    if unknown:
+        raise CanonicalControlError(
+            f"schema at {location} uses unsupported keywords: {sorted(unknown)}"
+        )
+
+    if "$ref" in schema:
+        if len(schema) != 1:
+            raise CanonicalControlError(f"schema $ref at {location} must stand alone")
+        target, target_root = _resolve_schema_reference(
+            schema["$ref"], root_schema, schema_registry
+        )
+        _validate_schema_definition(
+            target,
+            root_schema=target_root,
+            schema_registry=schema_registry,
+            location=f"{location}.$ref",
+            visited=visited,
+        )
+        return
+
+    if "$schema" in schema and schema["$schema"] != (
+        "https://json-schema.org/draft/2020-12/schema"
+    ):
+        raise CanonicalControlError(f"$schema at {location} is unsupported")
+    for keyword in ("$id", "title", "x-order-semantics"):
+        if keyword in schema and (
+            not isinstance(schema[keyword], str) or not schema[keyword]
+        ):
+            raise CanonicalControlError(f"{keyword} at {location} is malformed")
+
+    if "type" in schema and (
+        not isinstance(schema["type"], str)
+        or schema["type"] not in _SUPPORTED_SCHEMA_TYPES
+    ):
+        raise CanonicalControlError(f"type at {location} is unsupported")
+    if "const" in schema:
+        try:
+            validate_value(schema["const"])
+        except CanonicalControlError as exc:
+            raise CanonicalControlError(f"const at {location} is malformed") from exc
+    if "enum" in schema:
+        values = schema["enum"]
+        if not isinstance(values, list) or not values:
+            raise CanonicalControlError(f"enum at {location} is malformed")
+        try:
+            encoded = [canonical_bytes(value) for value in values]
+        except CanonicalControlError as exc:
+            raise CanonicalControlError(f"enum at {location} is malformed") from exc
+        if len(encoded) != len(set(encoded)):
+            raise CanonicalControlError(f"enum at {location} is not unique")
+
+    for keyword in ("minimum", "maximum"):
+        if keyword in schema and (
+            not isinstance(schema[keyword], int)
+            or isinstance(schema[keyword], bool)
+        ):
+            raise CanonicalControlError(f"{keyword} at {location} is malformed")
+    for keyword in _NONNEGATIVE_INTEGER_SCHEMA_KEYWORDS:
+        if keyword in schema and (
+            not isinstance(schema[keyword], int)
+            or isinstance(schema[keyword], bool)
+            or schema[keyword] < 0
+        ):
+            raise CanonicalControlError(f"{keyword} at {location} is malformed")
+    if "pattern" in schema:
+        pattern = schema["pattern"]
+        if not isinstance(pattern, str):
+            raise CanonicalControlError(f"pattern at {location} is malformed")
+        try:
+            re.compile(pattern)
+        except re.error as exc:
+            raise CanonicalControlError(
+                f"pattern at {location} is malformed"
+            ) from exc
+    if "uniqueItems" in schema and not isinstance(schema["uniqueItems"], bool):
+        raise CanonicalControlError(f"uniqueItems at {location} is malformed")
+    if "additionalProperties" in schema and not isinstance(
+        schema["additionalProperties"], bool
+    ):
+        raise CanonicalControlError(
+            f"additionalProperties at {location} is malformed"
+        )
+    if "x-input-member-cardinality" in schema and not isinstance(
+        schema["x-input-member-cardinality"], bool
+    ):
+        raise CanonicalControlError(
+            f"x-input-member-cardinality at {location} is malformed"
+        )
+
+    required = schema.get("required")
+    if required is not None and (
+        not isinstance(required, list)
+        or any(not isinstance(name, str) for name in required)
+        or len(required) != len(set(required))
+    ):
+        raise CanonicalControlError(f"required at {location} is malformed")
+
+    for keyword in ("x-canonical-order", "x-unique-key"):
+        fields = schema.get(keyword)
+        if fields is not None and (
+            not isinstance(fields, list)
+            or not fields
+            or any(not isinstance(field, str) or not field for field in fields)
+            or len(fields) != len(set(fields))
+        ):
+            raise CanonicalControlError(f"{keyword} at {location} is malformed")
+
+    for keyword in ("$defs", "properties"):
+        children = schema.get(keyword)
+        if children is None:
+            continue
+        if not isinstance(children, Mapping) or any(
+            not isinstance(name, str) for name in children
+        ):
+            raise CanonicalControlError(f"{keyword} at {location} is malformed")
+        for name, child in children.items():
+            _validate_schema_definition(
+                child,
+                root_schema=root_schema,
+                schema_registry=schema_registry,
+                location=f"{location}.{keyword}.{name}",
+                visited=visited,
+            )
+
+    if "items" in schema:
+        items = schema["items"]
+        if items is not False and not isinstance(items, Mapping):
+            raise CanonicalControlError(f"items at {location} is malformed")
+        if isinstance(items, Mapping):
+            _validate_schema_definition(
+                items,
+                root_schema=root_schema,
+                schema_registry=schema_registry,
+                location=f"{location}.items",
+                visited=visited,
+            )
+
+    prefix_items = schema.get("prefixItems")
+    if prefix_items is not None:
+        if not isinstance(prefix_items, list):
+            raise CanonicalControlError(f"prefixItems at {location} is malformed")
+        for index, child in enumerate(prefix_items):
+            _validate_schema_definition(
+                child,
+                root_schema=root_schema,
+                schema_registry=schema_registry,
+                location=f"{location}.prefixItems[{index}]",
+                visited=visited,
+            )
+
+    for keyword in ("contains", "if", "then"):
+        if keyword in schema:
+            _validate_schema_definition(
+                schema[keyword],
+                root_schema=root_schema,
+                schema_registry=schema_registry,
+                location=f"{location}.{keyword}",
+                visited=visited,
+            )
+
+    for keyword in ("oneOf", "allOf"):
+        branches = schema.get(keyword)
+        if branches is None:
+            continue
+        if not isinstance(branches, list) or not branches:
+            raise CanonicalControlError(f"{keyword} at {location} is malformed")
+        for index, branch in enumerate(branches):
+            _validate_schema_definition(
+                branch,
+                root_schema=root_schema,
+                schema_registry=schema_registry,
+                location=f"{location}.{keyword}[{index}]",
+                visited=visited,
+            )
 
 
 def _validate_schema_node(
@@ -343,6 +569,8 @@ def _validate_schema_node(
     schema_registry: Mapping[str, Mapping[str, Any]],
     location: str,
 ) -> None:
+    if not isinstance(schema, Mapping):
+        raise CanonicalControlError(f"schema at {location} is malformed")
     unknown = set(schema) - _SUPPORTED_SCHEMA_KEYWORDS
     if unknown:
         raise CanonicalControlError(
@@ -376,52 +604,150 @@ def _validate_schema_node(
                     schema_registry=schema_registry,
                     location=location,
                 )
-            except CanonicalControlError:
+            except _SchemaInstanceMismatch:
                 continue
             matches += 1
         if matches != 1:
-            raise CanonicalControlError(
+            raise _SchemaInstanceMismatch(
                 f"value at {location} matches {matches} oneOf branches"
             )
         return
+    if "allOf" in schema:
+        branches = schema["allOf"]
+        if not isinstance(branches, list) or not branches:
+            raise CanonicalControlError(f"allOf at {location} is malformed")
+        for branch in branches:
+            _validate_schema_node(
+                instance,
+                branch,
+                root_schema=root_schema,
+                schema_registry=schema_registry,
+                location=location,
+            )
+    if "if" in schema:
+        try:
+            _validate_schema_node(
+                instance,
+                schema["if"],
+                root_schema=root_schema,
+                schema_registry=schema_registry,
+                location=location,
+            )
+        except _SchemaInstanceMismatch:
+            pass
+        else:
+            if "then" in schema:
+                _validate_schema_node(
+                    instance,
+                    schema["then"],
+                    root_schema=root_schema,
+                    schema_registry=schema_registry,
+                    location=location,
+                )
 
     if "const" in schema and instance != schema["const"]:
-        raise CanonicalControlError(f"value at {location} violates const")
+        raise _SchemaInstanceMismatch(f"value at {location} violates const")
     if "enum" in schema and instance not in schema["enum"]:
-        raise CanonicalControlError(f"value at {location} is outside enum")
+        raise _SchemaInstanceMismatch(f"value at {location} is outside enum")
     expected_type = schema.get("type")
     if expected_type is not None and not _schema_type_matches(instance, expected_type):
-        raise CanonicalControlError(f"value at {location} has the wrong type")
+        raise _SchemaInstanceMismatch(f"value at {location} has the wrong type")
 
     if isinstance(instance, str):
         if len(instance) < schema.get("minLength", 0):
-            raise CanonicalControlError(f"string at {location} is too short")
+            raise _SchemaInstanceMismatch(f"string at {location} is too short")
         if "maxLength" in schema and len(instance) > schema["maxLength"]:
-            raise CanonicalControlError(f"string at {location} is too long")
+            raise _SchemaInstanceMismatch(f"string at {location} is too long")
         if "pattern" in schema and re.search(schema["pattern"], instance) is None:
-            raise CanonicalControlError(f"string at {location} violates pattern")
+            raise _SchemaInstanceMismatch(f"string at {location} violates pattern")
     if isinstance(instance, int) and not isinstance(instance, bool):
         if "minimum" in schema and instance < schema["minimum"]:
-            raise CanonicalControlError(f"integer at {location} is below minimum")
+            raise _SchemaInstanceMismatch(f"integer at {location} is below minimum")
         if "maximum" in schema and instance > schema["maximum"]:
-            raise CanonicalControlError(f"integer at {location} exceeds maximum")
+            raise _SchemaInstanceMismatch(f"integer at {location} exceeds maximum")
     if isinstance(instance, list):
         if len(instance) < schema.get("minItems", 0):
-            raise CanonicalControlError(f"array at {location} is too short")
+            raise _SchemaInstanceMismatch(f"array at {location} is too short")
         if "maxItems" in schema and len(instance) > schema["maxItems"]:
-            raise CanonicalControlError(f"array at {location} is too long")
+            raise _SchemaInstanceMismatch(f"array at {location} is too long")
         if schema.get("uniqueItems"):
-            encoded = [canonical_bytes(item) for item in instance]
+            try:
+                encoded = [canonical_bytes(item) for item in instance]
+            except CanonicalControlError as exc:
+                raise _SchemaInstanceMismatch(
+                    f"array at {location} contains a noncanonical item"
+                ) from exc
             if len(encoded) != len(set(encoded)):
-                raise CanonicalControlError(f"array at {location} is not unique")
+                raise _SchemaInstanceMismatch(f"array at {location} is not unique")
+        prefix_items = schema.get("prefixItems", [])
+        if not isinstance(prefix_items, list):
+            raise CanonicalControlError(f"prefixItems at {location} is malformed")
+        for index, member_schema in enumerate(prefix_items[: len(instance)]):
+            _validate_schema_node(
+                instance[index],
+                member_schema,
+                root_schema=root_schema,
+                schema_registry=schema_registry,
+                location=f"{location}[{index}]",
+            )
         if "items" in schema:
-            for index, member in enumerate(instance):
+            item_schema = schema["items"]
+            if item_schema is False and len(instance) > len(prefix_items):
+                raise _SchemaInstanceMismatch(f"array at {location} has extra items")
+            if item_schema is not False and not isinstance(item_schema, Mapping):
+                raise CanonicalControlError(f"items at {location} is malformed")
+            for index, member in enumerate(instance[len(prefix_items) :], len(prefix_items)):
+                if item_schema is False:
+                    break
                 _validate_schema_node(
                     member,
-                    schema["items"],
+                    item_schema,
                     root_schema=root_schema,
                     schema_registry=schema_registry,
                     location=f"{location}[{index}]",
+                )
+        if "contains" in schema:
+            contains_schema = schema["contains"]
+            if not isinstance(contains_schema, Mapping):
+                raise CanonicalControlError(f"contains at {location} is malformed")
+            minimum_contains = schema.get("minContains", 1)
+            maximum_contains = schema.get("maxContains")
+            if (
+                not isinstance(minimum_contains, int)
+                or isinstance(minimum_contains, bool)
+                or minimum_contains < 0
+            ):
+                raise CanonicalControlError(
+                    f"minContains at {location} is malformed"
+                )
+            if maximum_contains is not None and (
+                not isinstance(maximum_contains, int)
+                or isinstance(maximum_contains, bool)
+                or maximum_contains < 0
+            ):
+                raise CanonicalControlError(
+                    f"maxContains at {location} is malformed"
+                )
+            matches = 0
+            for index, member in enumerate(instance):
+                try:
+                    _validate_schema_node(
+                        member,
+                        contains_schema,
+                        root_schema=root_schema,
+                        schema_registry=schema_registry,
+                        location=f"{location}[{index}]",
+                    )
+                except _SchemaInstanceMismatch:
+                    continue
+                matches += 1
+            if matches < minimum_contains:
+                raise _SchemaInstanceMismatch(
+                    f"array at {location} has too few matches"
+                )
+            if maximum_contains is not None and matches > maximum_contains:
+                raise _SchemaInstanceMismatch(
+                    f"array at {location} has too many matches"
                 )
         _validate_schema_collection_extensions(instance, schema, location)
     if isinstance(instance, dict):
@@ -431,12 +757,12 @@ def _validate_schema_node(
             raise CanonicalControlError(f"object schema at {location} is malformed")
         missing = set(required) - set(instance)
         if missing:
-            raise CanonicalControlError(
+            raise _SchemaInstanceMismatch(
                 f"object at {location} is missing fields: {sorted(missing)}"
             )
         unknown_fields = set(instance) - set(properties)
         if unknown_fields and schema.get("additionalProperties") is False:
-            raise CanonicalControlError(
+            raise _SchemaInstanceMismatch(
                 f"object at {location} has unknown fields: {sorted(unknown_fields)}"
             )
         for key, member in instance.items():
@@ -450,7 +776,7 @@ def _validate_schema_node(
                 )
         if schema.get("x-input-member-cardinality") is True:
             if instance.get("input_kind") == "regular_file" and len(instance.get("members", [])) != 1:
-                raise CanonicalControlError(
+                raise _SchemaInstanceMismatch(
                     f"regular-file input at {location} must have exactly one member"
                 )
 
@@ -503,17 +829,19 @@ def _validate_schema_collection_extensions(
             raise CanonicalControlError(f"canonical order at {location} is malformed")
         keys = [_schema_collection_key(item, order) for item in values]
         if keys != sorted(keys):
-            raise CanonicalControlError(f"array at {location} is not canonically ordered")
+            raise _SchemaInstanceMismatch(
+                f"array at {location} is not canonically ordered"
+            )
     if schema.get("x-order-semantics") == "role-then-member-paths-then-identifier":
         keys = []
         for item in values:
             if not isinstance(item, dict):
-                raise CanonicalControlError(
+                raise _SchemaInstanceMismatch(
                     f"external input declaration at {location} is not an object"
                 )
             members = item.get("members")
             if not isinstance(members, list):
-                raise CanonicalControlError(
+                raise _SchemaInstanceMismatch(
                     f"external input members at {location} are malformed"
                 )
             keys.append(
@@ -528,7 +856,7 @@ def _validate_schema_collection_extensions(
                 )
             )
         if keys != sorted(keys):
-            raise CanonicalControlError(
+            raise _SchemaInstanceMismatch(
                 f"external inputs at {location} are not canonically ordered"
             )
     unique = schema.get("x-unique-key")
@@ -537,7 +865,7 @@ def _validate_schema_collection_extensions(
             raise CanonicalControlError(f"unique key at {location} is malformed")
         keys = [_schema_collection_key(item, unique) for item in values]
         if len(keys) != len(set(keys)):
-            raise CanonicalControlError(
+            raise _SchemaInstanceMismatch(
                 f"array at {location} has duplicate stable identifiers"
             )
 
@@ -545,14 +873,20 @@ def _validate_schema_collection_extensions(
 def _schema_collection_key(item: Any, fields: list[Any]) -> tuple[Any, ...]:
     if fields == ["value"]:
         if isinstance(item, (dict, list)):
-            raise CanonicalControlError("value ordering requires scalar array members")
+            raise _SchemaInstanceMismatch(
+                "value ordering requires scalar array members"
+            )
         return (item,)
     if not isinstance(item, dict):
-        raise CanonicalControlError("field ordering requires object array members")
+        raise _SchemaInstanceMismatch(
+            "field ordering requires object array members"
+        )
     result: list[Any] = []
     for field in fields:
-        if not isinstance(field, str) or field not in item:
-            raise CanonicalControlError("schema collection key is unavailable")
+        if not isinstance(field, str):
+            raise CanonicalControlError("schema collection key is malformed")
+        if field not in item:
+            raise _SchemaInstanceMismatch("schema collection key is unavailable")
         result.append(item[field])
     return tuple(result)
 

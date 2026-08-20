@@ -1,0 +1,906 @@
+{
+  "$defs": {
+    "absentPredecessor": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "absent",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "type": "object"
+    },
+    "ambiguousFailureEvidence": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/conflictingFailureEvidence"
+        },
+        {
+          "$ref": "#/$defs/indeterminateFailureEvidence"
+        }
+      ]
+    },
+    "coherentHistory": {
+      "additionalProperties": false,
+      "properties": {
+        "common_prefix_record_identities": {
+          "items": {
+            "$ref": "#/$defs/sha256"
+          },
+          "type": "array",
+          "uniqueItems": true,
+          "x-order-semantics": "derived-control-chain-order"
+        },
+        "control_history_kind": {
+          "const": "coherent",
+          "type": "string"
+        },
+        "observed_control_objects": {
+          "items": {
+            "$ref": "#/$defs/validatedControlRecord"
+          },
+          "type": "array",
+          "uniqueItems": true,
+          "x-canonical-order": [
+            "authority_sequence"
+          ],
+          "x-unique-key": [
+            "authority_sequence"
+          ]
+        }
+      },
+      "required": [
+        "common_prefix_record_identities",
+        "control_history_kind",
+        "observed_control_objects"
+      ],
+      "type": "object"
+    },
+    "conflictingControlSlot": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "authority_sequence": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "normalized_slot_fact": {
+              "const": "malformed_only",
+              "type": "string"
+            },
+            "object_kind": {
+              "const": "conflicting_control_slot",
+              "type": "string"
+            },
+            "validated_records": {
+              "maxItems": 0,
+              "type": "array"
+            }
+          },
+          "required": [
+            "authority_sequence",
+            "normalized_slot_fact",
+            "object_kind",
+            "validated_records"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "authority_sequence": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "normalized_slot_fact": {
+              "const": "duplicate_valid_record",
+              "type": "string"
+            },
+            "object_kind": {
+              "const": "conflicting_control_slot",
+              "type": "string"
+            },
+            "validated_records": {
+              "items": {
+                "$ref": "#/$defs/validatedRecordEntry"
+              },
+              "maxItems": 1,
+              "minItems": 1,
+              "type": "array",
+              "uniqueItems": true,
+              "x-canonical-order": [
+                "control_record_identity"
+              ],
+              "x-unique-key": [
+                "control_record_identity"
+              ]
+            }
+          },
+          "required": [
+            "authority_sequence",
+            "normalized_slot_fact",
+            "object_kind",
+            "validated_records"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "authority_sequence": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "normalized_slot_fact": {
+              "const": "multiple_valid_records",
+              "type": "string"
+            },
+            "object_kind": {
+              "const": "conflicting_control_slot",
+              "type": "string"
+            },
+            "validated_records": {
+              "items": {
+                "$ref": "#/$defs/validatedRecordEntry"
+              },
+              "minItems": 2,
+              "type": "array",
+              "uniqueItems": true,
+              "x-canonical-order": [
+                "control_record_identity"
+              ],
+              "x-unique-key": [
+                "control_record_identity"
+              ]
+            }
+          },
+          "required": [
+            "authority_sequence",
+            "normalized_slot_fact",
+            "object_kind",
+            "validated_records"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "authority_sequence": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "normalized_slot_fact": {
+              "const": "valid_and_malformed",
+              "type": "string"
+            },
+            "object_kind": {
+              "const": "conflicting_control_slot",
+              "type": "string"
+            },
+            "validated_records": {
+              "items": {
+                "$ref": "#/$defs/validatedRecordEntry"
+              },
+              "minItems": 1,
+              "type": "array",
+              "uniqueItems": true,
+              "x-canonical-order": [
+                "control_record_identity"
+              ],
+              "x-unique-key": [
+                "control_record_identity"
+              ]
+            }
+          },
+          "required": [
+            "authority_sequence",
+            "normalized_slot_fact",
+            "object_kind",
+            "validated_records"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "conflictingFailureEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "control_history": {
+          "$ref": "#/$defs/conflictingHistory"
+        },
+        "failure_boundary": {
+          "$ref": "#/$defs/failureBoundary"
+        },
+        "failure_class": {
+          "const": "ambiguous_state",
+          "type": "string"
+        },
+        "last_durable_control_state": {
+          "$ref": "#/$defs/lastDurableControlState"
+        },
+        "normalized_failure_fact": {
+          "const": "conflicting_authoritative_control_records",
+          "type": "string"
+        },
+        "scientific_invalidity_established": {
+          "const": false,
+          "type": "boolean"
+        },
+        "scientific_validity_established": {
+          "const": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "control_history",
+        "failure_boundary",
+        "failure_class",
+        "last_durable_control_state",
+        "normalized_failure_fact",
+        "scientific_invalidity_established",
+        "scientific_validity_established"
+      ],
+      "type": "object"
+    },
+    "conflictingHistory": {
+      "additionalProperties": false,
+      "properties": {
+        "common_prefix_record_identities": {
+          "items": {
+            "$ref": "#/$defs/sha256"
+          },
+          "type": "array",
+          "uniqueItems": true,
+          "x-order-semantics": "derived-control-chain-order"
+        },
+        "control_history_kind": {
+          "const": "conflicting",
+          "type": "string"
+        },
+        "observed_control_objects": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/validatedControlRecord"
+              },
+              {
+                "$ref": "#/$defs/conflictingControlSlot"
+              }
+            ]
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true,
+          "x-canonical-order": [
+            "authority_sequence"
+          ],
+          "x-unique-key": [
+            "authority_sequence"
+          ]
+        }
+      },
+      "required": [
+        "common_prefix_record_identities",
+        "control_history_kind",
+        "observed_control_objects"
+      ],
+      "type": "object"
+    },
+    "failedConflictingRecoveryTerminal": {
+      "additionalProperties": false,
+      "properties": {
+        "failure_control_evidence": {
+          "$ref": "#/$defs/conflictingFailureEvidence"
+        },
+        "final_control_disposition": {
+          "const": "FAILED",
+          "type": "string"
+        },
+        "no_live_owner_evidence": {
+          "$ref": "#/$defs/noLiveOwnerEvidence"
+        },
+        "recovery_mode": {
+          "const": "recovery_no_live_owner_established",
+          "type": "string"
+        }
+      },
+      "required": [
+        "failure_control_evidence",
+        "final_control_disposition",
+        "no_live_owner_evidence",
+        "recovery_mode"
+      ],
+      "type": "object"
+    },
+    "failedRecoveryTerminal": {
+      "additionalProperties": false,
+      "properties": {
+        "failure_control_evidence": {
+          "$ref": "#/$defs/nonConflictingFailureControlEvidence"
+        },
+        "final_control_disposition": {
+          "const": "FAILED",
+          "type": "string"
+        },
+        "no_live_owner_evidence": {
+          "$ref": "#/$defs/noLiveOwnerEvidence"
+        },
+        "recovery_mode": {
+          "const": "recovery_no_live_owner_established",
+          "type": "string"
+        }
+      },
+      "required": [
+        "failure_control_evidence",
+        "final_control_disposition",
+        "no_live_owner_evidence",
+        "recovery_mode"
+      ],
+      "type": "object"
+    },
+    "failedTerminal": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/failedWithoutRecoveryTerminal"
+        },
+        {
+          "$ref": "#/$defs/failedRecoveryTerminal"
+        },
+        {
+          "$ref": "#/$defs/failedConflictingRecoveryTerminal"
+        }
+      ]
+    },
+    "failedWithoutRecoveryTerminal": {
+      "additionalProperties": false,
+      "properties": {
+        "failure_control_evidence": {
+          "$ref": "#/$defs/nonConflictingFailureControlEvidence"
+        },
+        "final_control_disposition": {
+          "const": "FAILED",
+          "type": "string"
+        },
+        "no_live_owner_evidence": {
+          "const": "absent",
+          "type": "string"
+        },
+        "recovery_mode": {
+          "const": "not_recovery_generated",
+          "type": "string"
+        }
+      },
+      "required": [
+        "failure_control_evidence",
+        "final_control_disposition",
+        "no_live_owner_evidence",
+        "recovery_mode"
+      ],
+      "type": "object"
+    },
+    "failureBoundary": {
+      "enum": [
+        "post_allocation_pre_start",
+        "post_start_pre_ranking_freeze",
+        "post_ranking_freeze_pre_authorization",
+        "post_authorization_pre_terminal",
+        "terminalization"
+      ],
+      "type": "string"
+    },
+    "failureControlEvidence": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/conflictingFailureEvidence"
+        },
+        {
+          "$ref": "#/$defs/nonConflictingFailureControlEvidence"
+        }
+      ]
+    },
+    "gitObject": {
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+      "type": "string"
+    },
+    "incompleteTerminal": {
+      "additionalProperties": false,
+      "properties": {
+        "final_control_disposition": {
+          "const": "INCOMPLETE",
+          "type": "string"
+        }
+      },
+      "required": [
+        "final_control_disposition"
+      ],
+      "type": "object"
+    },
+    "indeterminateFailureEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "control_history": {
+          "$ref": "#/$defs/coherentHistory"
+        },
+        "failure_boundary": {
+          "$ref": "#/$defs/failureBoundary"
+        },
+        "failure_class": {
+          "const": "ambiguous_state",
+          "type": "string"
+        },
+        "last_durable_control_state": {
+          "$ref": "#/$defs/lastDurableControlState"
+        },
+        "normalized_failure_fact": {
+          "const": "indeterminate_authoritative_control_state",
+          "type": "string"
+        },
+        "scientific_invalidity_established": {
+          "const": false,
+          "type": "boolean"
+        },
+        "scientific_validity_established": {
+          "const": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "control_history",
+        "failure_boundary",
+        "failure_class",
+        "last_durable_control_state",
+        "normalized_failure_fact",
+        "scientific_invalidity_established",
+        "scientific_validity_established"
+      ],
+      "type": "object"
+    },
+    "infrastructureFailureEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "control_history": {
+          "$ref": "#/$defs/coherentHistory"
+        },
+        "failure_boundary": {
+          "$ref": "#/$defs/failureBoundary"
+        },
+        "failure_class": {
+          "const": "infrastructure_failure",
+          "type": "string"
+        },
+        "last_durable_control_state": {
+          "$ref": "#/$defs/lastDurableControlState"
+        },
+        "normalized_failure_fact": {
+          "enum": [
+            "shared_control_storage_failure",
+            "execution_infrastructure_failure"
+          ],
+          "type": "string"
+        },
+        "scientific_invalidity_established": {
+          "const": false,
+          "type": "boolean"
+        },
+        "scientific_validity_established": {
+          "const": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "control_history",
+        "failure_boundary",
+        "failure_class",
+        "last_durable_control_state",
+        "normalized_failure_fact",
+        "scientific_invalidity_established",
+        "scientific_validity_established"
+      ],
+      "type": "object"
+    },
+    "interruptionFailureEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "control_history": {
+          "$ref": "#/$defs/coherentHistory"
+        },
+        "failure_boundary": {
+          "$ref": "#/$defs/failureBoundary"
+        },
+        "failure_class": {
+          "const": "interruption",
+          "type": "string"
+        },
+        "last_durable_control_state": {
+          "$ref": "#/$defs/lastDurableControlState"
+        },
+        "normalized_failure_fact": {
+          "enum": [
+            "governed_owner_terminated",
+            "governed_owner_unavailable"
+          ],
+          "type": "string"
+        },
+        "scientific_invalidity_established": {
+          "const": false,
+          "type": "boolean"
+        },
+        "scientific_validity_established": {
+          "const": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "control_history",
+        "failure_boundary",
+        "failure_class",
+        "last_durable_control_state",
+        "normalized_failure_fact",
+        "scientific_invalidity_established",
+        "scientific_validity_established"
+      ],
+      "type": "object"
+    },
+    "invalidTerminal": {
+      "additionalProperties": false,
+      "properties": {
+        "final_control_disposition": {
+          "const": "INVALID",
+          "type": "string"
+        },
+        "governing_invalidity_evidence_identity": {
+          "$ref": "#/$defs/sha256"
+        },
+        "governing_invalidity_evidence_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "required_scientific_manifest_bindings": {
+          "items": {
+            "$ref": "#/$defs/manifestBinding"
+          },
+          "type": "array",
+          "uniqueItems": true,
+          "x-canonical-order": [
+            "manifest_identifier"
+          ],
+          "x-unique-key": [
+            "manifest_identifier"
+          ]
+        }
+      },
+      "required": [
+        "final_control_disposition",
+        "governing_invalidity_evidence_identity",
+        "governing_invalidity_evidence_sha256",
+        "required_scientific_manifest_bindings"
+      ],
+      "type": "object"
+    },
+    "knownPredecessor": {
+      "additionalProperties": false,
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/sha256"
+        },
+        "status": {
+          "const": "known",
+          "type": "string"
+        }
+      },
+      "required": [
+        "identity",
+        "status"
+      ],
+      "type": "object"
+    },
+    "lastDurableControlState": {
+      "enum": [
+        "ALLOCATED",
+        "STARTED"
+      ],
+      "type": "string"
+    },
+    "manifestBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "manifest_identifier": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "manifest_identity": {
+          "$ref": "#/$defs/sha256"
+        },
+        "manifest_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "manifest_identifier",
+        "manifest_identity",
+        "manifest_sha256"
+      ],
+      "type": "object"
+    },
+    "noLiveOwnerEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "allocation_authority_identity": {
+          "$ref": "#/$defs/sha256"
+        },
+        "no_live_owner_established": {
+          "const": true,
+          "type": "boolean"
+        },
+        "recovery_component_identity": {
+          "$ref": "#/$defs/sha256"
+        },
+        "recovery_operation": {
+          "const": "atomic_compare_no_live_owner_and_append_failed",
+          "type": "string"
+        },
+        "recovery_policy_identity": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "allocation_authority_identity",
+        "no_live_owner_established",
+        "recovery_component_identity",
+        "recovery_operation",
+        "recovery_policy_identity"
+      ],
+      "type": "object"
+    },
+    "nonConflictingFailureControlEvidence": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/indeterminateFailureEvidence"
+        },
+        {
+          "$ref": "#/$defs/infrastructureFailureEvidence"
+        },
+        {
+          "$ref": "#/$defs/interruptionFailureEvidence"
+        },
+        {
+          "$ref": "#/$defs/validityNotEstablishedFailureEvidence"
+        }
+      ]
+    },
+    "predecessor": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/absentPredecessor"
+        },
+        {
+          "$ref": "#/$defs/knownPredecessor"
+        }
+      ]
+    },
+    "safeIdentifier": {
+      "pattern": "^[a-z][a-z0-9_.-]*$",
+      "type": "string"
+    },
+    "sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "validTerminal": {
+      "additionalProperties": false,
+      "properties": {
+        "experiment_audit_manifest_identity": {
+          "$ref": "#/$defs/sha256"
+        },
+        "experiment_audit_manifest_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "final_control_disposition": {
+          "const": "VALID",
+          "type": "string"
+        }
+      },
+      "required": [
+        "experiment_audit_manifest_identity",
+        "experiment_audit_manifest_sha256",
+        "final_control_disposition"
+      ],
+      "type": "object"
+    },
+    "validatedControlRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_sequence": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "control_record_identity": {
+          "$ref": "#/$defs/sha256"
+        },
+        "declared_control_sequence": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "object_kind": {
+          "const": "validated_control_record",
+          "type": "string"
+        },
+        "predecessor_control_record_identity": {
+          "$ref": "#/$defs/predecessor"
+        }
+      },
+      "required": [
+        "authority_sequence",
+        "control_record_identity",
+        "declared_control_sequence",
+        "object_kind",
+        "predecessor_control_record_identity"
+      ],
+      "type": "object"
+    },
+    "validatedRecordEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "control_record_identity": {
+          "$ref": "#/$defs/sha256"
+        },
+        "declared_control_sequence": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "predecessor_control_record_identity": {
+          "$ref": "#/$defs/predecessor"
+        }
+      },
+      "required": [
+        "control_record_identity",
+        "declared_control_sequence",
+        "predecessor_control_record_identity"
+      ],
+      "type": "object"
+    },
+    "validityNotEstablishedFailureEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "control_history": {
+          "$ref": "#/$defs/coherentHistory"
+        },
+        "failure_boundary": {
+          "$ref": "#/$defs/failureBoundary"
+        },
+        "failure_class": {
+          "const": "validity_not_established",
+          "type": "string"
+        },
+        "last_durable_control_state": {
+          "$ref": "#/$defs/lastDurableControlState"
+        },
+        "normalized_failure_fact": {
+          "enum": [
+            "premature_outcome_access",
+            "terminal_scientific_authority_not_established"
+          ],
+          "type": "string"
+        },
+        "scientific_invalidity_established": {
+          "const": false,
+          "type": "boolean"
+        },
+        "scientific_validity_established": {
+          "const": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "control_history",
+        "failure_boundary",
+        "failure_class",
+        "last_durable_control_state",
+        "normalized_failure_fact",
+        "scientific_invalidity_established",
+        "scientific_validity_established"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "orev3://schemas/execution-readiness/v1/execution-control-manifest",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "allocation_receipt_identity": {
+      "$ref": "#/$defs/sha256"
+    },
+    "attempt_identity": {
+      "$ref": "#/$defs/sha256"
+    },
+    "attempt_kind": {
+      "enum": [
+        "official",
+        "reproduction"
+      ],
+      "type": "string"
+    },
+    "control_record_identities": {
+      "items": {
+        "$ref": "#/$defs/sha256"
+      },
+      "type": "array",
+      "uniqueItems": true,
+      "x-order-semantics": "append-only-control-sequence"
+    },
+    "execution_control_manifest_identity": {
+      "$ref": "#/$defs/sha256"
+    },
+    "external_input_snapshot_identities": {
+      "items": {
+        "$ref": "#/$defs/sha256"
+      },
+      "type": "array",
+      "uniqueItems": true,
+      "x-order-semantics": "validated-input-declaration-order"
+    },
+    "launch_authority_snapshot_identity": {
+      "$ref": "#/$defs/sha256"
+    },
+    "ordinal": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "profile_identity": {
+      "$ref": "#/$defs/sha256"
+    },
+    "readiness_identity": {
+      "$ref": "#/$defs/sha256"
+    },
+    "readiness_seal_commit": {
+      "$ref": "#/$defs/gitObject"
+    },
+    "remote_head_commit": {
+      "$ref": "#/$defs/gitObject"
+    },
+    "schema_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "source_commit": {
+      "$ref": "#/$defs/gitObject"
+    },
+    "terminal": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/incompleteTerminal"
+        },
+        {
+          "$ref": "#/$defs/validTerminal"
+        },
+        {
+          "$ref": "#/$defs/invalidTerminal"
+        },
+        {
+          "$ref": "#/$defs/failedTerminal"
+        }
+      ]
+    }
+  },
+  "required": [
+    "allocation_receipt_identity",
+    "attempt_identity",
+    "attempt_kind",
+    "control_record_identities",
+    "execution_control_manifest_identity",
+    "external_input_snapshot_identities",
+    "launch_authority_snapshot_identity",
+    "ordinal",
+    "profile_identity",
+    "readiness_identity",
+    "readiness_seal_commit",
+    "remote_head_commit",
+    "schema_version",
+    "source_commit",
+    "terminal"
+  ],
+  "title": "ExecutionControlManifestV1",
+  "type": "object"
+}

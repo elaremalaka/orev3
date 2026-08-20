@@ -1,0 +1,767 @@
+{
+  "$defs": {
+    "availabilityGit": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "const": "absent",
+              "type": "string"
+            }
+          },
+          "required": [
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "const": "known",
+              "type": "string"
+            },
+            "value": {
+              "$ref": "#/$defs/gitObject"
+            }
+          },
+          "required": [
+            "status",
+            "value"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "availabilityIdentity": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "const": "absent",
+              "type": "string"
+            }
+          },
+          "required": [
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "const": "known",
+              "type": "string"
+            },
+            "value": {
+              "$ref": "#/$defs/sha256"
+            }
+          },
+          "required": [
+            "status",
+            "value"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "checkStatus": {
+      "enum": [
+        "passed",
+        "failed",
+        "not_evaluated",
+        "not_applicable"
+      ],
+      "type": "string"
+    },
+    "gitObject": {
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+      "type": "string"
+    },
+    "nonReadyDisposition": {
+      "enum": [
+        "READINESS_UNRESOLVED_REMOTE",
+        "READINESS_AMBIGUOUS",
+        "READINESS_INVALID_RECORD",
+        "READINESS_ORPHANED",
+        "SUPERSEDED",
+        "READINESS_STALE",
+        "READINESS_INPUT_MISMATCH",
+        "READINESS_BLOCKED_INPUT_UNAVAILABLE"
+      ],
+      "type": "string"
+    },
+    "sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
+  "$id": "orev3://schemas/execution-readiness/v1/readiness-failure-receipt",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "receipt_class": {
+            "const": "READINESS_REJECTED"
+          }
+        },
+        "required": [
+          "receipt_class"
+        ]
+      },
+      "then": {
+        "properties": {
+          "current_readiness_disposition": {
+            "const": "not_applicable"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "receipt_class": {
+            "const": "CURRENT_READINESS"
+          }
+        },
+        "required": [
+          "receipt_class"
+        ]
+      },
+      "then": {
+        "properties": {
+          "current_readiness_disposition": {
+            "$ref": "#/$defs/nonReadyDisposition"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "receipt_class": {
+            "const": "LAUNCH_REJECTED"
+          }
+        },
+        "required": [
+          "receipt_class"
+        ]
+      },
+      "then": {
+        "properties": {
+          "current_readiness_disposition": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/nonReadyDisposition"
+              },
+              {
+                "const": "EXECUTION_READY",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "approved_branch_ref": {
+      "pattern": "^refs/heads/[A-Za-z0-9._/-]+$",
+      "type": "string"
+    },
+    "candidate_source_commit": {
+      "$ref": "#/$defs/availabilityGit"
+    },
+    "check_statuses": {
+        "contains": {
+          "properties": {
+            "status": {
+              "const": "failed"
+            }
+          },
+          "required": [
+            "status"
+          ]
+        },
+      "items": false,
+      "maxContains": 1,
+      "maxItems": 27,
+      "minContains": 1,
+      "minItems": 27,
+      "prefixItems": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "schema_registry",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "experiment",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "git_authority",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "readiness_specification",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "control_plane",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "source_scopes",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "protocol",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "implementation",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "execution_specification",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "execution_profile",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "runtime",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "configuration",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "external_inputs",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "replay",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "artifacts",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "outcome_policy",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "validation",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "attempt_policy",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "canonical_readiness_record",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "readiness_seal_and_ancestry",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "current_external_inputs",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "launch_authority_snapshot",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "launch_input_snapshots",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "control_storage",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "output_namespace",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "launch_smoke",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check_identifier": {
+              "const": "second_fetch",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/checkStatus"
+            }
+          },
+          "required": [
+            "check_identifier",
+            "status"
+          ],
+          "type": "object"
+        }
+      ],
+      "type": "array",
+      "uniqueItems": true,
+      "x-order-semantics": "fixed-v1.1-invariant-serialization-order",
+      "x-unique-key": [
+        "check_identifier"
+      ]
+    },
+    "current_readiness_disposition": {
+      "enum": [
+        "not_applicable",
+        "READINESS_UNRESOLVED_REMOTE",
+        "READINESS_AMBIGUOUS",
+        "READINESS_INVALID_RECORD",
+        "READINESS_ORPHANED",
+        "SUPERSEDED",
+        "READINESS_STALE",
+        "READINESS_INPUT_MISMATCH",
+        "READINESS_BLOCKED_INPUT_UNAVAILABLE",
+        "EXECUTION_READY"
+      ],
+      "type": "string"
+    },
+    "experiment_identifier": {
+      "pattern": "^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*$",
+      "type": "string"
+    },
+    "failed_invariant_identifier": {
+      "enum": [
+        "schema_registry",
+        "experiment",
+        "git_authority",
+        "readiness_specification",
+        "control_plane",
+        "source_scopes",
+        "protocol",
+        "implementation",
+        "execution_specification",
+        "execution_profile",
+        "runtime",
+        "configuration",
+        "external_inputs",
+        "replay",
+        "artifacts",
+        "outcome_policy",
+        "validation",
+        "attempt_policy",
+        "canonical_readiness_record",
+        "readiness_seal_and_ancestry",
+        "current_external_inputs",
+        "launch_authority_snapshot",
+        "launch_input_snapshots",
+        "control_storage",
+        "output_namespace",
+        "launch_smoke",
+        "second_fetch"
+      ],
+      "type": "string"
+    },
+    "failure_receipt_identity": {
+      "$ref": "#/$defs/sha256"
+    },
+    "launch_authority_snapshot_identity": {
+      "$ref": "#/$defs/availabilityIdentity"
+    },
+    "readiness_identity": {
+      "$ref": "#/$defs/availabilityIdentity"
+    },
+    "receipt_class": {
+      "enum": [
+        "READINESS_REJECTED",
+        "CURRENT_READINESS",
+        "LAUNCH_REJECTED"
+      ],
+      "type": "string"
+    },
+    "repository_authority_identifier": {
+      "pattern": "^[a-z][a-z0-9_.-]*$",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "scientific_execution_started": {
+      "const": false,
+      "type": "boolean"
+    },
+    "scientific_outcome_evidence": {
+      "const": "absent",
+      "type": "string"
+    }
+  },
+  "required": [
+    "approved_branch_ref",
+    "candidate_source_commit",
+    "check_statuses",
+    "current_readiness_disposition",
+    "experiment_identifier",
+    "failed_invariant_identifier",
+    "failure_receipt_identity",
+    "launch_authority_snapshot_identity",
+    "readiness_identity",
+    "receipt_class",
+    "repository_authority_identifier",
+    "schema_version",
+    "scientific_execution_started",
+    "scientific_outcome_evidence"
+  ],
+  "title": "ReadinessFailureReceiptV1",
+  "type": "object"
+}

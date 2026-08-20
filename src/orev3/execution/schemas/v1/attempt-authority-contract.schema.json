@@ -1,0 +1,128 @@
+{
+  "$defs": {
+    "allocationAuthorityIdentityMaterial": {
+      "additionalProperties": false,
+      "properties": {
+        "allocation_authority_identifier": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "type": "string"
+        },
+        "allocation_authority_schema_revision": {
+          "const": "allocation-authority-identity-material-v1",
+          "type": "string"
+        },
+        "repository_authority_identifier": {
+          "$ref": "#/$defs/safeIdentifier"
+        }
+      },
+      "required": [
+        "allocation_authority_identifier",
+        "allocation_authority_schema_revision",
+        "repository_authority_identifier"
+      ],
+      "type": "object"
+    },
+    "safeIdentifier": {
+      "pattern": "^[a-z][a-z0-9_.-]*$",
+      "type": "string"
+    },
+    "sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
+  "$id": "orev3://schemas/execution-readiness/v1/attempt-authority-contract",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "allocation_authority_identity": {
+      "$ref": "#/$defs/sha256"
+    },
+    "allocation_authority_identity_material": {
+      "$ref": "#/$defs/allocationAuthorityIdentityMaterial"
+    },
+    "allocation_receipt_policy": {
+      "const": "immutable_write_once",
+      "type": "string"
+    },
+    "allocator_client_identifier": {
+      "$ref": "#/$defs/safeIdentifier"
+    },
+    "allocator_implementation_identifier": {
+      "$ref": "#/$defs/safeIdentifier"
+    },
+    "atomicity_semantics": {
+      "const": "atomic_compare_and_create",
+      "type": "string"
+    },
+    "allocator_contract_identity": {
+      "$ref": "#/$defs/sha256"
+    },
+    "collision_policy": {
+      "const": "reject_any_existing_path",
+      "type": "string"
+    },
+    "contract_revision": {
+      "const": "attempt-authority-v1",
+      "type": "string"
+    },
+    "control_storage_contract_identity": {
+      "$ref": "#/$defs/sha256"
+    },
+    "ordinal_consumption_policy": {
+      "const": "permanent_once_allocated",
+      "type": "string"
+    },
+    "ordinal_scope": {
+      "const": "experiment_and_attempt_kind",
+      "type": "string"
+    },
+    "output_namespace_identity_policy": {
+      "const": "output-namespace-identity-material-v1",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "supported_attempt_kinds": {
+      "enum": [
+        [
+          "official"
+        ],
+        [
+          "official",
+          "reproduction"
+        ],
+        [
+          "reproduction"
+        ]
+      ],
+      "type": "array",
+      "x-canonical-order": [
+        "value"
+      ]
+    }
+  },
+  "required": [
+    "allocation_authority_identity",
+    "allocation_authority_identity_material",
+    "allocation_receipt_policy",
+    "allocator_client_identifier",
+    "allocator_implementation_identifier",
+    "atomicity_semantics",
+    "allocator_contract_identity",
+    "collision_policy",
+    "contract_revision",
+    "control_storage_contract_identity",
+    "ordinal_consumption_policy",
+    "ordinal_scope",
+    "output_namespace_identity_policy",
+    "schema_version",
+    "supported_attempt_kinds"
+  ],
+  "title": "AttemptAuthorityContractV1",
+  "type": "object"
+}

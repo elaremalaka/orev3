@@ -206,6 +206,132 @@ PHASE3B_SCHEMA_DOCUMENT_POLICY = {
     "readiness-test-evidence": ("orev3://schemas/execution-readiness/v1/readiness-test-evidence", "58b73eeade341e47d812f855b73958bd3d469c3dab47c1f942d7de829dd2b01f"),
     "replay-evidence": ("orev3://schemas/execution-readiness/v1/replay-evidence", "a2666f32cc87d824c9e357cbb03534bfeaf5ac6c9f7ebd16e38ee38621b6d4d0"),
 }
+READINESS_V1_1_SCHEMA_REGISTRY_IDENTIFIER = "readiness-v1-schema-registry-v1"
+READINESS_V1_1_SCHEMA_POLICY = dict(
+    sorted(
+        {
+            **PHASE3B_SCHEMA_POLICY,
+            "attempt-allocation": (
+                "attempt-allocation-v1",
+                "src/orev3/execution/schemas/v1/attempt-allocation.schema.json",
+            ),
+            "attempt-authority-contract": (
+                "attempt-authority-contract-v1",
+                "src/orev3/execution/schemas/v1/attempt-authority-contract.schema.json",
+            ),
+            "attempt-control-record": (
+                "attempt-control-record-v1",
+                "src/orev3/execution/schemas/v1/attempt-control-record.schema.json",
+            ),
+            "attempt-identity-material": (
+                "attempt-identity-material-v1",
+                "src/orev3/execution/schemas/v1/attempt-identity-material.schema.json",
+            ),
+            "execution-control-manifest": (
+                "execution-control-manifest-v1",
+                "src/orev3/execution/schemas/v1/execution-control-manifest.schema.json",
+            ),
+            "outcome-authorization": (
+                "outcome-authorization-v1",
+                "src/orev3/execution/schemas/v1/outcome-authorization.schema.json",
+            ),
+            "output-namespace-identity-material": (
+                "output-namespace-identity-material-v1",
+                "src/orev3/execution/schemas/v1/output-namespace-identity-material.schema.json",
+            ),
+            "profile-contract": (
+                "profile-contract-v1",
+                "src/orev3/execution/schemas/v1/profile-contract.schema.json",
+            ),
+            "readiness-failure-receipt": (
+                "readiness-failure-receipt-v1",
+                "src/orev3/execution/schemas/v1/readiness-failure-receipt.schema.json",
+            ),
+        }.items()
+    )
+)
+READINESS_V1_1_SCHEMA_DOCUMENT_POLICY = dict(
+    sorted(
+        {
+            **PHASE3B_SCHEMA_DOCUMENT_POLICY,
+            "attempt-allocation": (
+                "orev3://schemas/execution-readiness/v1/attempt-allocation",
+                "57d38f63b0fd8196d8d5cef207cf7481d164421ba59496f0e38149b46881ffaf",
+            ),
+            "attempt-authority-contract": (
+                "orev3://schemas/execution-readiness/v1/attempt-authority-contract",
+                "9e7c4a086e81f6f8e131191e877324060be5b67a8428fd1d721c1a9fbde605c1",
+            ),
+            "attempt-control-record": (
+                "orev3://schemas/execution-readiness/v1/attempt-control-record",
+                "76b48b204325589cc3014f0f8335311fab09ee8fdf95913127a5f990848c2310",
+            ),
+            "attempt-identity-material": (
+                "orev3://schemas/execution-readiness/v1/attempt-identity-material",
+                "ce2b69e1b0466318c54350f2237d52529f1b43ac14820138e05a2a3db63e71fa",
+            ),
+            "execution-control-manifest": (
+                "orev3://schemas/execution-readiness/v1/execution-control-manifest",
+                "9464054245b0d85bb39fd2c8cb3549ef346bfc68612a5b709b4ee7b32bfa018f",
+            ),
+            "outcome-authorization": (
+                "orev3://schemas/execution-readiness/v1/outcome-authorization",
+                "a5b6dd23c5f82d9fc2c3690935809479f07d764725fbdc058ba2ae4cafc7e426",
+            ),
+            "output-namespace-identity-material": (
+                "orev3://schemas/execution-readiness/v1/output-namespace-identity-material",
+                "deb02a2375d3479b0bb2129bda15e3aa9992713a22d944f4e78fa4b7a5b283c3",
+            ),
+            "profile-contract": (
+                "orev3://schemas/execution-readiness/v1/profile-contract",
+                "117e0d32b9afcf4b76763842a3b9b9d7ed36d5a21c8f5b90d227f57338ae9298",
+            ),
+            "readiness-failure-receipt": (
+                "orev3://schemas/execution-readiness/v1/readiness-failure-receipt",
+                "00e5d18b39e2a7f0e42536647c39b2478e946caca51773258feb337b2e5a54ad",
+            ),
+        }.items()
+    )
+)
+READINESS_V1_1_SCHEMA_KIND_ORDER = (
+    "adapter-declaration",
+    "adapter-registry",
+    "artifact-declaration-evidence",
+    "attempt-allocation",
+    "attempt-authority-contract",
+    "attempt-control-record",
+    "attempt-identity-material",
+    "dataset-validation-evidence",
+    "evidence-preparation",
+    "evidence-preparation-policy",
+    "execution-control-manifest",
+    "implementation-binding",
+    "immutable-input-snapshot",
+    "launch-authority-snapshot",
+    "offline-artifact-manifest",
+    "outcome-authorization",
+    "outcome-blind-projection-evidence",
+    "output-namespace-identity-material",
+    "population-accounting-evidence",
+    "profile-conformance-evidence",
+    "profile-contract",
+    "readiness-failure-receipt",
+    "readiness-record",
+    "readiness-test-evidence",
+    "readiness-test-policy",
+    "replay-evidence",
+    "repository-authority",
+    "runtime-contract",
+    "source-scope",
+)
+READINESS_V1_1_SCHEMA_POLICY = {
+    kind: READINESS_V1_1_SCHEMA_POLICY[kind]
+    for kind in READINESS_V1_1_SCHEMA_KIND_ORDER
+}
+READINESS_V1_1_SCHEMA_DOCUMENT_POLICY = {
+    kind: READINESS_V1_1_SCHEMA_DOCUMENT_POLICY[kind]
+    for kind in READINESS_V1_1_SCHEMA_KIND_ORDER
+}
 
 _SAFE_IDENTIFIER = re.compile(r"[a-z][a-z0-9_.-]*")
 _FULL_REF = re.compile(r"refs/heads/[A-Za-z0-9._/-]+")
@@ -1249,6 +1375,10 @@ __all__ = [
     "READINESS_SPECIFICATION_REVISION",
     "READINESS_SPECIFICATION_SHA256",
     "READINESS_TEST_POLICY_PATH",
+    "READINESS_V1_1_SCHEMA_DOCUMENT_POLICY",
+    "READINESS_V1_1_SCHEMA_KIND_ORDER",
+    "READINESS_V1_1_SCHEMA_POLICY",
+    "READINESS_V1_1_SCHEMA_REGISTRY_IDENTIFIER",
     "REPOSITORY_AUTHORITY_PATH",
     "PHASE2_SCHEMA_POLICY",
     "PHASE2_SCHEMA_DOCUMENT_POLICY",

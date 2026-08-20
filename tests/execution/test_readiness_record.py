@@ -16,6 +16,7 @@ from orev3.execution.readiness_record import (
     PHASE2_SCHEMA_DOCUMENT_POLICY,
     PHASE2_SCHEMA_POLICY,
     PHASE3B_SCHEMA_POLICY,
+    READINESS_V1_1_SCHEMA_POLICY,
     READINESS_SPECIFICATION_SHA256,
     TEST_POLICY_DOMAIN,
     build_launch_authority_snapshot,
@@ -290,7 +291,7 @@ def test_launch_snapshot_reconstructs_and_has_no_execution_state() -> None:
 
 def test_machine_schemas_are_strict_null_free_documents() -> None:
     schema_root = Path("src/orev3/execution/schemas/v1")
-    expected = {Path(path).name for _, path in PHASE3B_SCHEMA_POLICY.values()}
+    expected = {Path(path).name for _, path in READINESS_V1_1_SCHEMA_POLICY.values()}
     assert {path.name for path in schema_root.glob("*.json")} == expected
     for path in schema_root.glob("*.json"):
         material = json.loads(path.read_text(encoding="utf-8"))
