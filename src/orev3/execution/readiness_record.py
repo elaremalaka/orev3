@@ -54,6 +54,9 @@ REPOSITORY_AUTHORITY_PATH = (
 READINESS_TEST_POLICY_PATH = (
     "config/research/readiness/readiness-test-policy-v1.json"
 )
+READINESS_TEST_POLICY_V2_PATH = (
+    "config/research/readiness/readiness-test-policy-v2.json"
+)
 READINESS_SPECIFICATION_PATH = (
     "docs/research/specifications/experiment-execution-readiness-v1.md"
 )
@@ -206,11 +209,63 @@ PHASE3B_SCHEMA_DOCUMENT_POLICY = {
     "readiness-test-evidence": ("orev3://schemas/execution-readiness/v1/readiness-test-evidence", "58b73eeade341e47d812f855b73958bd3d469c3dab47c1f942d7de829dd2b01f"),
     "replay-evidence": ("orev3://schemas/execution-readiness/v1/replay-evidence", "a2666f32cc87d824c9e357cbb03534bfeaf5ac6c9f7ebd16e38ee38621b6d4d0"),
 }
+PROSPECTIVE_PHASE2_SCHEMA_POLICY = {
+    **PHASE2_SCHEMA_POLICY,
+    "readiness-test-policy": (
+        "readiness-test-policy-v2",
+        "src/orev3/execution/schemas/v1/readiness-test-policy-v2.schema.json",
+    ),
+}
+PROSPECTIVE_PHASE2_SCHEMA_DOCUMENT_POLICY = {
+    **PHASE2_SCHEMA_DOCUMENT_POLICY,
+    "readiness-test-policy": (
+        "orev3://schemas/execution-readiness/v1/readiness-test-policy-v2",
+        "2c09e2088c116b4fd2b2ee2cb60f193d5923c01a9c21e38766f3a3326d17b11b",
+    ),
+}
+PROSPECTIVE_PHASE3A_SCHEMA_POLICY = {
+    **PHASE3A_SCHEMA_POLICY,
+    "adapter-declaration": (
+        "adapter-declaration-v2",
+        "src/orev3/execution/schemas/v1/adapter-declaration-v2.schema.json",
+    ),
+    "readiness-test-policy": PROSPECTIVE_PHASE2_SCHEMA_POLICY[
+        "readiness-test-policy"
+    ],
+}
+PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY = {
+    **PHASE3A_SCHEMA_DOCUMENT_POLICY,
+    "adapter-declaration": (
+        "orev3://schemas/execution-readiness/v1/adapter-declaration-v2",
+        "a58a5596ae30355657a994873134e1696e6cb614b51c21555314cd663e9bebd0",
+    ),
+    "readiness-test-policy": PROSPECTIVE_PHASE2_SCHEMA_DOCUMENT_POLICY[
+        "readiness-test-policy"
+    ],
+}
+PROSPECTIVE_PHASE3B_SCHEMA_POLICY = {
+    **PHASE3B_SCHEMA_POLICY,
+    "adapter-declaration": PROSPECTIVE_PHASE3A_SCHEMA_POLICY[
+        "adapter-declaration"
+    ],
+    "readiness-test-policy": PROSPECTIVE_PHASE2_SCHEMA_POLICY[
+        "readiness-test-policy"
+    ],
+}
+PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY = {
+    **PHASE3B_SCHEMA_DOCUMENT_POLICY,
+    "adapter-declaration": PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY[
+        "adapter-declaration"
+    ],
+    "readiness-test-policy": PROSPECTIVE_PHASE2_SCHEMA_DOCUMENT_POLICY[
+        "readiness-test-policy"
+    ],
+}
 READINESS_V1_1_SCHEMA_REGISTRY_IDENTIFIER = "readiness-v1-schema-registry-v1"
 READINESS_V1_1_SCHEMA_POLICY = dict(
     sorted(
         {
-            **PHASE3B_SCHEMA_POLICY,
+            **PROSPECTIVE_PHASE3B_SCHEMA_POLICY,
             "attempt-allocation": (
                 "attempt-allocation-v1",
                 "src/orev3/execution/schemas/v1/attempt-allocation.schema.json",
@@ -253,14 +308,14 @@ READINESS_V1_1_SCHEMA_POLICY = dict(
 READINESS_V1_1_SCHEMA_DOCUMENT_POLICY = dict(
     sorted(
         {
-            **PHASE3B_SCHEMA_DOCUMENT_POLICY,
+            **PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY,
             "attempt-allocation": (
                 "orev3://schemas/execution-readiness/v1/attempt-allocation",
                 "57d38f63b0fd8196d8d5cef207cf7481d164421ba59496f0e38149b46881ffaf",
             ),
             "attempt-authority-contract": (
                 "orev3://schemas/execution-readiness/v1/attempt-authority-contract",
-                "9e7c4a086e81f6f8e131191e877324060be5b67a8428fd1d721c1a9fbde605c1",
+                "81b6baff7d3776d3891134bd3e26a3c791f4eadd14ab534bbd797752786ab677",
             ),
             "attempt-control-record": (
                 "orev3://schemas/execution-readiness/v1/attempt-control-record",
@@ -1363,6 +1418,106 @@ def validate_readiness_test_policy(material: Mapping[str, Any]) -> None:
         raise CanonicalControlError("readiness test policy identity does not reconstruct")
 
 
+def validate_readiness_test_policy_v2(material: Mapping[str, Any]) -> None:
+    validate_exact_fields(
+        material,
+        {
+            "collection_policy",
+            "collection_affecting_paths",
+            "expected_mandatory_collection_identity",
+            "expected_mandatory_node_count",
+            "launch_smoke_selectors",
+            "policy_identifier",
+            "policy_identity",
+            "required_selectors",
+            "result_policy",
+            "schema_version",
+            "warning_policy",
+        },
+        label="readiness test policy v2",
+    )
+    if material["schema_version"] != 2:
+        raise CanonicalControlError("readiness test policy v2 version is unsupported")
+    if (
+        material["collection_policy"] != "double_fresh_collection_exact_match"
+        or material["result_policy"] != "all_collected_nodes_pass"
+        or material["warning_policy"] != "reject_any_warning"
+    ):
+        raise CanonicalControlError("readiness test policy v2 semantics are unsupported")
+    policy_identifier = require_string(
+        "policy_identifier", material["policy_identifier"], pattern=_SAFE_IDENTIFIER
+    )
+    if len(policy_identifier) > MAX_READINESS_TEST_POLICY_IDENTIFIER_CODEPOINTS:
+        raise CanonicalControlError(
+            "readiness test policy v2 identifier exceeds the schema maximum"
+        )
+    selectors = require_sorted_unique(
+        "required selectors", material["required_selectors"], key=lambda item: item
+    )
+    if not selectors or any(not isinstance(item, str) or not item for item in selectors):
+        raise CanonicalControlError("readiness test policy v2 selectors are invalid")
+    launch_selectors = require_sorted_unique(
+        "launch smoke selectors",
+        material["launch_smoke_selectors"],
+        key=lambda item: item,
+    )
+    if not set(launch_selectors).issubset(selectors):
+        raise CanonicalControlError(
+            "readiness test policy v2 launch selectors are not a mandatory subset"
+        )
+    for label, selected in (
+        ("required", selectors),
+        ("launch smoke", launch_selectors),
+    ):
+        if len(selected) > MAX_READINESS_TEST_SELECTORS:
+            raise CanonicalControlError(
+                f"readiness test policy v2 {label} selector count exceeds the schema maximum"
+            )
+        if any(
+            not isinstance(selector, str)
+            or not selector
+            or len(selector) > MAX_READINESS_TEST_SELECTOR_CODEPOINTS
+            for selector in selected
+        ):
+            raise CanonicalControlError(
+                f"readiness test policy v2 {label} selector is invalid"
+            )
+    for selector in launch_selectors:
+        if selector.startswith("-") or "\\" in selector or "\x00" in selector:
+            raise CanonicalControlError("readiness test policy v2 launch selector is unsafe")
+        selector_path = selector.split("::", 1)[0]
+        validate_repository_path(selector_path)
+        if not selector_path.startswith("tests/"):
+            raise CanonicalControlError(
+                "readiness test policy v2 launch selector escapes governed tests"
+            )
+    require_sha256(
+        "expected mandatory collection identity",
+        material["expected_mandatory_collection_identity"],
+    )
+    count = require_integer(
+        "expected mandatory node count", material["expected_mandatory_node_count"]
+    )
+    if count < 1 or count > 16384:
+        raise CanonicalControlError(
+            "readiness test policy v2 expected node count is invalid"
+        )
+    paths = require_sorted_unique(
+        "collection affecting paths",
+        material["collection_affecting_paths"],
+        key=lambda item: item,
+    )
+    for path in paths:
+        validate_repository_path(path)
+    require_sha256("policy_identity", material["policy_identity"])
+    identity_material = dict(material)
+    stored = identity_material.pop("policy_identity")
+    if domain_identity(TEST_POLICY_DOMAIN, identity_material) != stored:
+        raise CanonicalControlError(
+            "readiness test policy v2 identity does not reconstruct"
+        )
+
+
 __all__ = [
     "CANONICAL_ENCODING_REVISION",
     "CONTROL_COMPONENT_DOMAIN",
@@ -1375,6 +1530,7 @@ __all__ = [
     "READINESS_SPECIFICATION_REVISION",
     "READINESS_SPECIFICATION_SHA256",
     "READINESS_TEST_POLICY_PATH",
+    "READINESS_TEST_POLICY_V2_PATH",
     "READINESS_V1_1_SCHEMA_DOCUMENT_POLICY",
     "READINESS_V1_1_SCHEMA_KIND_ORDER",
     "READINESS_V1_1_SCHEMA_POLICY",
@@ -1389,6 +1545,12 @@ __all__ = [
     "PHASE3B_SCHEMA_POLICY",
     "PHASE3B_SCHEMA_DOCUMENT_POLICY",
     "PHASE3B_SCHEMA_REGISTRY_IDENTIFIER",
+    "PROSPECTIVE_PHASE2_SCHEMA_DOCUMENT_POLICY",
+    "PROSPECTIVE_PHASE2_SCHEMA_POLICY",
+    "PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY",
+    "PROSPECTIVE_PHASE3A_SCHEMA_POLICY",
+    "PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY",
+    "PROSPECTIVE_PHASE3B_SCHEMA_POLICY",
     "PROTOCOL_BINDING_DOMAIN",
     "ReadinessRecordV1",
     "RepositoryAuthorityV1",
@@ -1407,5 +1569,6 @@ __all__ = [
     "validate_readiness_record",
     "validate_repository_authority",
     "validate_readiness_test_policy",
+    "validate_readiness_test_policy_v2",
     "validate_source_scope",
 ]

@@ -220,7 +220,33 @@ def _representatives() -> dict[str, dict[str, Any]]:
             "allocator_contract_identity": SHA,
             "collision_policy": "reject_any_existing_path",
             "contract_revision": "attempt-authority-v1",
+            "control_storage_component": {
+                "component_identifier": "shared-control-storage-v1",
+                "component_identity": SHA,
+                "git_object_identity": GIT,
+                "path": "src/orev3/execution/control_storage.py",
+                "role": "control_storage",
+                "sha256": SHA,
+            },
             "control_storage_contract_identity": SHA,
+            "control_storage_contract_identity_material": {
+                "attempt_control_record_schema_identifier": (
+                    "attempt-control-record-v1"
+                ),
+                "control_storage_component_identity": SHA,
+                "control_storage_contract_schema_revision": (
+                    "control-storage-contract-identity-material-v1"
+                ),
+                "execution_control_manifest_schema_identifier": (
+                    "execution-control-manifest-v1"
+                ),
+                "persistence_contract_revision": (
+                    "shared-append-only-control-history-v1"
+                ),
+                "recovery_contract_revision": (
+                    "atomic-no-live-owner-fence-and-append-failed-v1"
+                ),
+            },
             "ordinal_consumption_policy": "permanent_once_allocated",
             "ordinal_scope": "experiment_and_attempt_kind",
             "output_namespace_identity_policy": (

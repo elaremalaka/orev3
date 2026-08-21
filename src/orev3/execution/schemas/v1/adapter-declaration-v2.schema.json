@@ -1,0 +1,196 @@
+{
+    "$id": "orev3://schemas/execution-readiness/v1/adapter-declaration-v2",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+        "adapter_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+        "adapter_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "adapter_readiness_tests": {"items": {"minLength": 1, "maxLength": 512, "type": "string"}, "maxItems": 1024, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+        "adapter_readiness_test_nodes": {"items": {"minLength": 1, "maxLength": 1024, "type": "string"}, "maxItems": 8192, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+        "artifacts": {
+            "additionalProperties": false,
+            "properties": {
+                "declarations": {
+                    "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                            "artifact_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                            "artifact_kind": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                            "container": {"enum": ["json", "jsonl", "text"], "type": "string"},
+                            "declaration_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                            "dependencies": {"items": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"}, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+                            "dependency_roles": {"items": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"}, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+                            "execution_phase": {"enum": ["characterization", "evaluation", "ranking"], "type": "string"},
+                            "profile_applicability": {"enum": ["all_profiles", "outcome_aware_v1", "outcome_blind_characterization_v1"], "type": "string"},
+                            "relative_path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+                            "schema_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+                        },
+                        "required": ["artifact_identifier", "artifact_kind", "container", "declaration_identity", "dependencies", "dependency_roles", "execution_phase", "profile_applicability", "relative_path", "schema_identity"],
+                        "type": "object"
+                    },
+                    "maxItems": 4096,
+                    "type": "array",
+                    "uniqueItems": true,
+                    "x-canonical-order": ["artifact_identifier"],
+                    "x-unique-key": ["artifact_identifier"]
+                }
+            },
+            "required": ["declarations"],
+            "type": "object"
+        },
+        "attempt_output_declaration_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "attempt_output_declaration_identity_material": {
+            "additionalProperties": false,
+            "properties": {
+                "adapter_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                "allocation_authority_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                "allocator_contract_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                "artifact_declaration_identities": {"items": {"pattern": "^[0-9a-f]{64}$", "type": "string"}, "maxItems": 4096, "type": "array", "uniqueItems": true, "x-order-semantics": "artifact-identifier-order"},
+                "attempt_output_declaration_schema_revision": {"const": "attempt-output-declaration-identity-material-v1", "type": "string"},
+                "control_storage_contract_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                "experiment_identifier": {"pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "type": "string"},
+                "output_namespace_identity_policy": {"const": "output-namespace-identity-material-v1", "type": "string"},
+                "output_policy_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                "output_policy_revision": {"const": "readiness-v1-output-policy", "type": "string"}
+            },
+            "required": ["adapter_identifier", "allocation_authority_identity", "allocator_contract_identity", "artifact_declaration_identities", "attempt_output_declaration_schema_revision", "control_storage_contract_identity", "experiment_identifier", "output_namespace_identity_policy", "output_policy_identity", "output_policy_revision"],
+            "type": "object"
+        },
+        "configuration": {
+            "additionalProperties": false,
+            "properties": {
+                "decision_selection_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                "experiment_configuration_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+            },
+            "required": ["decision_selection_identity", "experiment_configuration_identity"],
+            "type": "object"
+        },
+        "execution_profile": {
+            "additionalProperties": false,
+            "properties": {
+                "profile_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                "profile_name": {"enum": ["outcome_aware_v1", "outcome_blind_characterization_v1"], "type": "string"}
+            },
+            "required": ["profile_identity", "profile_name"],
+            "type": "object"
+        },
+        "execution_specification": {
+            "additionalProperties": false,
+            "properties": {
+                "path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+                "revision": {"minLength": 1, "maxLength": 256, "type": "string"},
+                "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                "specification_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+            },
+            "required": ["path", "revision", "sha256", "specification_identity"],
+            "type": "object"
+        },
+        "experiment_identifier": {"pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "type": "string"},
+        "evidence_preparation": {
+            "additionalProperties": false,
+            "properties": {
+                "dataset_contracts": {"items": {"additionalProperties": false, "properties": {
+                    "candidate_order": {"items": {"minimum": 0, "type": "integer"}, "minItems": 1, "type": "array", "uniqueItems": true, "x-order-semantics": "identity-bearing"},
+                    "container": {"const": "canonical_jsonl", "type": "string"},
+                    "dataset_validator_identifier": {"const": "canonical-jsonl-dataset-validator-v1", "type": "string"},
+                    "dataset_version": {"minLength": 1, "maxLength": 256, "type": "string"},
+                    "external_input_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                    "projection_contract_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                    "projection_required": {"type": "boolean"},
+                    "projection_schema_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                    "projection_schema_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                    "projection_schema_path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+                    "projection_schema_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                    "projector_identifier": {"const": "canonical-jsonl-outcome-blind-projector-v1", "type": "string"},
+                    "protocol_revision": {"minLength": 1, "maxLength": 256, "type": "string"},
+                    "raw_parser_identifier": {"const": "canonical-jsonl-raw-parser-v1", "type": "string"},
+                    "raw_schema_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                    "raw_schema_path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+                    "raw_schema_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                    "record_ordering": {"enum": ["source_order"], "type": "string"},
+                    "source_class": {"enum": ["combined_outcome_bearing", "outcome_blind"], "type": "string"}
+                }, "required": ["candidate_order", "container", "dataset_validator_identifier", "dataset_version", "external_input_identifier", "projection_contract_identifier", "projection_required", "projection_schema_identifier", "projection_schema_identity", "projection_schema_path", "projection_schema_sha256", "projector_identifier", "protocol_revision", "raw_parser_identifier", "raw_schema_identifier", "raw_schema_path", "raw_schema_sha256", "record_ordering", "source_class"], "type": "object"}, "type": "array", "x-canonical-order": ["external_input_identifier"], "x-unique-key": ["external_input_identifier"]},
+                "decision_selection": {"additionalProperties": false, "properties": {
+                    "configuration_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                    "permitted_exclusion_reasons": {"items": {"minLength": 1, "type": "string"}, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+                    "replay_preparer_identifier": {"const": "canonical-replay-preparer-v1", "type": "string"},
+                    "selector_identifier": {"const": "latest-eligible-observation-selector-v1", "type": "string"},
+                    "selector_revision": {"const": "1", "type": "string"},
+                    "target_observation_rule": {"minLength": 1, "maxLength": 256, "type": "string"},
+                    "tie_behavior": {"minLength": 1, "maxLength": 256, "type": "string"},
+                    "tolerance_contract": {"minLength": 1, "maxLength": 256, "type": "string"}
+                }, "required": ["configuration_identity", "permitted_exclusion_reasons", "replay_preparer_identifier", "selector_identifier", "selector_revision", "target_observation_rule", "tie_behavior", "tolerance_contract"], "type": "object"},
+                "profile_contract_declarations": {"items": {"additionalProperties": false, "properties": {"contract_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"}, "identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"}, "path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"}, "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}}, "required": ["contract_identifier", "identity", "path", "sha256"], "type": "object"}, "type": "array", "x-canonical-order": ["contract_identifier"], "x-unique-key": ["contract_identifier"]},
+                "resource_policy_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+            },
+            "required": ["dataset_contracts", "decision_selection", "profile_contract_declarations", "resource_policy_identity"],
+            "type": "object"
+        },
+        "external_inputs": {
+            "additionalProperties": false,
+            "properties": {
+                "declarations": {
+                    "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                            "external_input_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                            "external_input_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                            "input_kind": {"const": "regular_file", "type": "string"},
+                            "members": {
+                                "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "byte_count": {"minimum": 0, "type": "integer"},
+                                        "logical_identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                                        "member_path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+                                        "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+                                    },
+                                    "required": ["byte_count", "logical_identifier", "member_path", "sha256"],
+                                    "type": "object"
+                                },
+                                "minItems": 1,
+                                "maxItems": 1,
+                                "type": "array",
+                                "uniqueItems": true,
+                                "x-unique-key": ["member_path"]
+                            },
+                            "parser_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+                            "role": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+                            "schema_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+                        },
+                        "required": ["external_input_identifier", "external_input_identity", "input_kind", "members", "parser_identity", "role", "schema_identity"],
+                        "type": "object",
+                        "x-input-member-cardinality": true
+                    },
+                    "maxItems": 4096,
+                    "type": "array",
+                    "uniqueItems": true,
+                    "x-order-semantics": "role-then-member-paths-then-identifier",
+                    "x-unique-key": ["external_input_identifier"]
+                }
+            },
+            "required": ["declarations"],
+            "type": "object"
+        },
+        "governed_scope_paths": {"items": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"}, "minItems": 1, "maxItems": 4096, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+        "implementation_binding_path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+        "implementation_entry_point": {"pattern": "^[A-Za-z_][A-Za-z0-9_.]*:[A-Za-z_][A-Za-z0-9_]*$", "type": "string"},
+        "outcome_policy": {"enum": ["outcome_aware_authorized_only", "prohibited_and_not_performed"], "type": "string"},
+        "protocol": {
+            "additionalProperties": false,
+            "properties": {
+                "path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+                "revision": {"minLength": 1, "maxLength": 256, "type": "string"},
+                "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+            },
+            "required": ["path", "revision", "sha256"],
+            "type": "object"
+        },
+        "replay_preparation_contract_identity": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "replay_preparation_entry_point": {"pattern": "^[A-Za-z_][A-Za-z0-9_.]*:[A-Za-z_][A-Za-z0-9_]*$", "type": "string"},
+        "schema_version": {"const": 2, "type": "integer"}
+    },
+    "required": ["adapter_identifier", "adapter_identity", "adapter_readiness_test_nodes", "adapter_readiness_tests", "artifacts", "attempt_output_declaration_identity", "attempt_output_declaration_identity_material", "configuration", "evidence_preparation", "execution_profile", "execution_specification", "experiment_identifier", "external_inputs", "governed_scope_paths", "implementation_binding_path", "implementation_entry_point", "outcome_policy", "protocol", "replay_preparation_contract_identity", "replay_preparation_entry_point", "schema_version"],
+    "title": "AdapterDeclarationV2",
+    "type": "object"
+}

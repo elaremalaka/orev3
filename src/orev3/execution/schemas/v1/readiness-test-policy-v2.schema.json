@@ -1,0 +1,105 @@
+{
+    "$defs": {
+        "identifier": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9_.-]*$",
+            "type": "string"
+        },
+        "selector": {
+            "maxLength": 512,
+            "minLength": 1,
+            "type": "string"
+        },
+        "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+        }
+    },
+    "$id": "orev3://schemas/execution-readiness/v1/readiness-test-policy-v2",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+        "collection_affecting_paths": {
+            "items": {
+                "maxLength": 512,
+                "minLength": 1,
+                "type": "string"
+            },
+            "maxItems": 1024,
+            "type": "array",
+            "uniqueItems": true,
+            "x-canonical-order": [
+                "value"
+            ]
+        },
+        "collection_policy": {
+            "const": "double_fresh_collection_exact_match",
+            "type": "string"
+        },
+        "expected_mandatory_collection_identity": {
+            "$ref": "#/$defs/sha256"
+        },
+        "expected_mandatory_node_count": {
+            "maximum": 16384,
+            "minimum": 1,
+            "type": "integer"
+        },
+        "launch_smoke_selectors": {
+            "items": {
+                "$ref": "#/$defs/selector"
+            },
+            "maxItems": 1024,
+            "type": "array",
+            "uniqueItems": true,
+            "x-canonical-order": [
+                "value"
+            ]
+        },
+        "policy_identifier": {
+            "$ref": "#/$defs/identifier"
+        },
+        "policy_identity": {
+            "$ref": "#/$defs/sha256"
+        },
+        "required_selectors": {
+            "items": {
+                "$ref": "#/$defs/selector"
+            },
+            "maxItems": 1024,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true,
+            "x-canonical-order": [
+                "value"
+            ]
+        },
+        "result_policy": {
+            "const": "all_collected_nodes_pass",
+            "type": "string"
+        },
+        "schema_version": {
+            "const": 2,
+            "type": "integer"
+        },
+        "warning_policy": {
+            "const": "reject_any_warning",
+            "type": "string"
+        }
+    },
+    "required": [
+        "collection_affecting_paths",
+        "collection_policy",
+        "expected_mandatory_collection_identity",
+        "expected_mandatory_node_count",
+        "launch_smoke_selectors",
+        "policy_identifier",
+        "policy_identity",
+        "required_selectors",
+        "result_policy",
+        "schema_version",
+        "warning_policy"
+    ],
+    "title": "ReadinessTestPolicyV2",
+    "type": "object"
+}

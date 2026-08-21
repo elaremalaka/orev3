@@ -24,6 +24,85 @@
       ],
       "type": "object"
     },
+    "controlStorageComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "component_identifier": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "component_identity": {
+          "$ref": "#/$defs/sha256"
+        },
+        "git_object_identity": {
+          "$ref": "#/$defs/gitObject"
+        },
+        "path": {
+          "$ref": "#/$defs/repositoryPath"
+        },
+        "role": {
+          "const": "control_storage",
+          "type": "string"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "component_identifier",
+        "component_identity",
+        "git_object_identity",
+        "path",
+        "role",
+        "sha256"
+      ],
+      "type": "object"
+    },
+    "controlStorageContractIdentityMaterial": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt_control_record_schema_identifier": {
+          "const": "attempt-control-record-v1",
+          "type": "string"
+        },
+        "control_storage_component_identity": {
+          "$ref": "#/$defs/sha256"
+        },
+        "control_storage_contract_schema_revision": {
+          "const": "control-storage-contract-identity-material-v1",
+          "type": "string"
+        },
+        "execution_control_manifest_schema_identifier": {
+          "const": "execution-control-manifest-v1",
+          "type": "string"
+        },
+        "persistence_contract_revision": {
+          "const": "shared-append-only-control-history-v1",
+          "type": "string"
+        },
+        "recovery_contract_revision": {
+          "const": "atomic-no-live-owner-fence-and-append-failed-v1",
+          "type": "string"
+        }
+      },
+      "required": [
+        "attempt_control_record_schema_identifier",
+        "control_storage_component_identity",
+        "control_storage_contract_schema_revision",
+        "execution_control_manifest_schema_identifier",
+        "persistence_contract_revision",
+        "recovery_contract_revision"
+      ],
+      "type": "object"
+    },
+    "gitObject": {
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+      "type": "string"
+    },
+    "repositoryPath": {
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\\\).+$",
+      "type": "string"
+    },
     "safeIdentifier": {
       "pattern": "^[a-z][a-z0-9_.-]*$",
       "type": "string"
@@ -71,6 +150,12 @@
     "control_storage_contract_identity": {
       "$ref": "#/$defs/sha256"
     },
+    "control_storage_component": {
+      "$ref": "#/$defs/controlStorageComponent"
+    },
+    "control_storage_contract_identity_material": {
+      "$ref": "#/$defs/controlStorageContractIdentityMaterial"
+    },
     "ordinal_consumption_policy": {
       "const": "permanent_once_allocated",
       "type": "string"
@@ -117,6 +202,8 @@
     "collision_policy",
     "contract_revision",
     "control_storage_contract_identity",
+    "control_storage_component",
+    "control_storage_contract_identity_material",
     "ordinal_consumption_policy",
     "ordinal_scope",
     "output_namespace_identity_policy",

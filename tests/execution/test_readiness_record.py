@@ -292,7 +292,15 @@ def test_launch_snapshot_reconstructs_and_has_no_execution_state() -> None:
 def test_machine_schemas_are_strict_null_free_documents() -> None:
     schema_root = Path("src/orev3/execution/schemas/v1")
     expected = {Path(path).name for _, path in READINESS_V1_1_SCHEMA_POLICY.values()}
-    assert {path.name for path in schema_root.glob("*.json")} == expected
+    present = {path.name for path in schema_root.glob("*.json")}
+    assert present == expected | {
+        "adapter-declaration.schema.json",
+        "readiness-test-policy.schema.json",
+    }
+    assert "adapter-declaration-v2.schema.json" in expected
+    assert "adapter-declaration.schema.json" not in expected
+    assert "readiness-test-policy-v2.schema.json" in expected
+    assert "readiness-test-policy.schema.json" not in expected
     for path in schema_root.glob("*.json"):
         material = json.loads(path.read_text(encoding="utf-8"))
         assert material["$schema"].endswith("2020-12/schema")
