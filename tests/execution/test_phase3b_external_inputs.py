@@ -41,10 +41,10 @@ def test_unsafe_leaf_is_rejected(tmp_path: Path, unsafe: str) -> None:
         snapshot_regular_file(leaf, logical_identifier="x", declared_byte_count=1, declared_sha256=hashlib.sha256(b"x").hexdigest(), object_store=tmp_path / "store", max_file_bytes=10)
 
 
-def test_declared_mismatch_and_unsupported_collection_fail_closed(tmp_path: Path) -> None:
+def test_declared_mismatch_and_duplicate_collection_fail_closed(tmp_path: Path) -> None:
     source = tmp_path / "x"; source.write_bytes(b"x")
     declaration = {"external_input_identifier": "synthetic", "input_kind": "ordered_file_collection", "members": [{"byte_count": 1, "logical_identifier": "same", "member_path": "x", "sha256": hashlib.sha256(b"x").hexdigest()}, {"byte_count": 1, "logical_identifier": "same", "member_path": "y", "sha256": hashlib.sha256(b"x").hexdigest()}]}
-    with pytest.raises(InputSnapshotError, match="ordered collections are unsupported"):
+    with pytest.raises(InputSnapshotError, match="duplicate collection member"):
         snapshot_declared_input(declaration, locator_paths={"x": source, "y": source}, object_store=tmp_path / "store", limits=LIMITS)
     with pytest.raises(InputSnapshotError, match="INPUT_MISMATCH"):
         snapshot_regular_file(source, logical_identifier="x", declared_byte_count=2, declared_sha256=hashlib.sha256(b"x").hexdigest(), object_store=tmp_path / "store2", max_file_bytes=10)

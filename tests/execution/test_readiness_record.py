@@ -295,9 +295,12 @@ def test_machine_schemas_are_strict_null_free_documents() -> None:
     present = {path.name for path in schema_root.glob("*.json")}
     assert present == expected | {
         "adapter-declaration.schema.json",
+        "adapter-declaration-v2.schema.json",
+        "profile-conformance-evidence.schema.json",
+        "readiness-record.schema.json",
         "readiness-test-policy.schema.json",
     }
-    assert "adapter-declaration-v2.schema.json" in expected
+    assert "adapter-declaration-v3.schema.json" in expected
     assert "adapter-declaration.schema.json" not in expected
     assert "readiness-test-policy-v2.schema.json" in expected
     assert "readiness-test-policy.schema.json" not in expected

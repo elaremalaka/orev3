@@ -14,9 +14,14 @@ from typing import Any, Mapping, Sequence
 
 from orev3.execution.canonical import CanonicalControlError, domain_identity, parse_canonical_bytes, parse_json, validate_json_schema_instance
 from orev3.execution.git_state import GitAuthorityError, GitRepository, RequiredCommittedObject, SourceCandidateRequirements, fetch_remote_head, resolve_source_candidate
-from orev3.execution.preparation import DEFAULT_ARTIFACT_STORE, REPOSITORY_AUTHORITY_PATH, _collect_preparation_environment_evidence, _discover_requirements, _scope_mapping
+from orev3.execution.preparation import DEFAULT_ARTIFACT_STORE, REPOSITORY_AUTHORITY_PATH, PreparationAuthorityGeneration, _collect_preparation_environment_evidence, _discover_requirements, _scope_mapping
 from orev3.execution.readiness import load_repository_authority
-from orev3.execution.readiness_record import PHASE3B_SCHEMA_DOCUMENT_POLICY, PHASE3B_SCHEMA_POLICY
+from orev3.execution.readiness_record import (
+    PHASE3B_SCHEMA_DOCUMENT_POLICY,
+    PHASE3B_SCHEMA_POLICY,
+    PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_PHASE3B_SCHEMA_POLICY,
+)
 from orev3.execution.readiness_record import SourceScopeDeclarationV1
 from orev3.execution.runtime import PHASE3A_SANDBOX_TEMPLATE_IDENTITY, PHASE3B_PROFILE_RENDERER_DOMAIN, PHASE3B_PROFILE_RENDERER_IDENTITY, DetachedSource, run_phase3b_controller, run_phase3b_worker
 
@@ -56,6 +61,11 @@ PHASE3B_CONTROL_PATHS = (
 class EvidencePreparationDisposition(str, Enum):
     EVIDENCE_PREPARATION_VALIDATED = "EVIDENCE_PREPARATION_VALIDATED"
     EVIDENCE_PREPARATION_REJECTED = "EVIDENCE_PREPARATION_REJECTED"
+
+
+class EvidenceAuthorityGeneration(str, Enum):
+    HISTORICAL = "historical-phase3b-v1"
+    PROSPECTIVE_V1_1 = "prospective-v1.1-phase3b"
 
 
 class EvidencePreparationFailureCode(str, Enum):
@@ -136,6 +146,33 @@ def load_phase3b_schemas(repository: GitRepository, source_commit: str) -> Mappi
         schemas[kind] = schema
     if set(schemas) != set(PHASE3B_SCHEMA_POLICY) or len(schemas) != 20:
         raise CanonicalControlError("Phase-3B schema registry is not exactly complete")
+    return schemas
+
+
+def load_prospective_phase3b_schemas(
+    repository: GitRepository, source_commit: str
+) -> Mapping[str, Mapping[str, Any]]:
+    """Load the explicit complete-v1.1 overlay; never infer a latest revision."""
+
+    schemas: dict[str, Mapping[str, Any]] = {}
+    for kind, (_, path) in PROSPECTIVE_PHASE3B_SCHEMA_POLICY.items():
+        entry = repository.tree_entry(source_commit, path)
+        raw = repository.object_bytes(entry.object_identity, max_bytes=1_048_576)
+        expected_id, expected_digest = PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY[kind]
+        if hashlib.sha256(raw).hexdigest() != expected_digest:
+            raise CanonicalControlError(
+                f"prospective Phase-3B schema digest differs: {kind}"
+            )
+        schema = parse_json(raw)
+        if schema.get("$id") != expected_id:
+            raise CanonicalControlError(
+                f"prospective Phase-3B schema identifier differs: {kind}"
+            )
+        schemas[kind] = schema
+    if tuple(schemas) != tuple(PROSPECTIVE_PHASE3B_SCHEMA_POLICY) or len(schemas) != 20:
+        raise CanonicalControlError(
+            "prospective Phase-3B schema registry is not exactly complete"
+        )
     return schemas
 
 
@@ -304,10 +341,23 @@ def _collect_evidence_preparation_evidence(
     authority: Any,
     allow_test_file_remote: bool = False,
     artifact_store_root: Path | None = None,
+    generation: EvidenceAuthorityGeneration = EvidenceAuthorityGeneration.HISTORICAL,
 ) -> EvidencePreparationWorkerEvidence:
     """Private collector for production and synthetic tests; cannot mint status."""
 
-    environment = _collect_preparation_environment_evidence(repository, experiment_identifier, authority=authority, allow_test_file_remote=allow_test_file_remote, artifact_store_root=artifact_store_root)
+    phase3a_generation = (
+        PreparationAuthorityGeneration.HISTORICAL
+        if generation is EvidenceAuthorityGeneration.HISTORICAL
+        else PreparationAuthorityGeneration.PROSPECTIVE_V1_1
+    )
+    environment = _collect_preparation_environment_evidence(
+        repository,
+        experiment_identifier,
+        authority=authority,
+        allow_test_file_remote=allow_test_file_remote,
+        artifact_store_root=artifact_store_root,
+        generation=phase3a_generation,
+    )
     if not environment.evidence_passed:
         raise CanonicalControlError("; ".join(environment.diagnostics))
     remote = fetch_remote_head(repository, authority, "origin", allow_test_file=allow_test_file_remote)
@@ -315,9 +365,25 @@ def _collect_evidence_preparation_evidence(
     local_head = repository.resolve_commit("HEAD")
     if branch != authority.approved_branch_ref or local_head != remote.remote_head_commit or local_head != environment.source_commit:
         raise CanonicalControlError("Phase-3B authority changed after environment validation")
-    requirements = _discover_requirements(repository, local_head, experiment_identifier)
-    from orev3.execution.preparation import _load_adapter_material, load_phase3a_schemas
-    _, _, adapter = _load_adapter_material(repository, local_head, load_phase3a_schemas(repository, local_head), experiment_identifier)
+    requirements = _discover_requirements(
+        repository,
+        local_head,
+        experiment_identifier,
+        generation=phase3a_generation,
+    )
+    from orev3.execution.preparation import (
+        _load_adapter_material,
+        load_phase3a_schemas,
+        load_prospective_phase3a_schemas,
+    )
+    selected_phase3a_schemas = (
+        load_phase3a_schemas(repository, local_head)
+        if generation is EvidenceAuthorityGeneration.HISTORICAL
+        else load_prospective_phase3a_schemas(repository, local_head)
+    )
+    _, _, adapter = _load_adapter_material(
+        repository, local_head, selected_phase3a_schemas, experiment_identifier
+    )
     policy_entry = repository.tree_entry(local_head, EVIDENCE_POLICY_PATH)
     policy_bytes = repository.object_bytes(policy_entry.object_identity, max_bytes=1_048_576)
     extra_objects = [RequiredCommittedObject(EVIDENCE_POLICY_PATH, hashlib.sha256(policy_bytes).hexdigest(), "blob")]
@@ -357,6 +423,7 @@ def _collect_evidence_preparation_evidence(
         "repository_authority_identifier": candidate.remote_head.repository_authority_identifier,
         "source_commit": candidate.source_commit,
         "source_scopes": [_scope_mapping(scope) for scope in candidate.source_scopes],
+        "authority_generation": generation.value,
     }
     with DetachedSource(repository, candidate.source_commit) as detached:
         controller_entry = repository.tree_entry(candidate.source_commit, "src/orev3/execution/evidence_preparation_worker.py")
@@ -384,12 +451,19 @@ def validate_evidence_preparation(
     experiment_identifier: str,
     *,
     operational_input_locators: Mapping[str, Path],
+    generation: EvidenceAuthorityGeneration = EvidenceAuthorityGeneration.HISTORICAL,
 ) -> EvidencePreparationAssessment:
     """Sole authoritative entry; no caller may supply S, authority, or evidence."""
 
     try:
         authority = load_repository_authority(repository.root / REPOSITORY_AUTHORITY_PATH)
-        evidence = _collect_evidence_preparation_evidence(repository, experiment_identifier, operational_input_locators=operational_input_locators, authority=authority)
+        evidence = _collect_evidence_preparation_evidence(
+            repository,
+            experiment_identifier,
+            operational_input_locators=operational_input_locators,
+            authority=authority,
+            generation=generation,
+        )
         aggregate = evidence.aggregate_material
         return EvidencePreparationAssessment(EvidencePreparationDisposition.EVIDENCE_PREPARATION_VALIDATED, PHASE3B_REMAINING_PREDICATES, (), aggregate["evidence_preparation_identity"], aggregate)
     except (CanonicalControlError, GitAuthorityError, OSError, KeyError, ValueError, TypeError) as exc:
@@ -399,6 +473,4 @@ def validate_evidence_preparation(
             EvidencePreparationFailureCode.EVIDENCE_PREPARATION_INTERNAL_REJECTED.value,
         )
         return EvidencePreparationAssessment(EvidencePreparationDisposition.EVIDENCE_PREPARATION_REJECTED, PHASE3B_REMAINING_PREDICATES, (code,))
-
-
-__all__ = ["EVIDENCE_POLICY_DOMAIN", "EVIDENCE_POLICY_PATH", "EVIDENCE_PREPARATION_DOMAIN", "PHASE3B_CONTROL_PATHS", "PHASE3B_REMAINING_PREDICATES", "EvidencePreparationAssessment", "EvidencePreparationDisposition", "EvidencePreparationFailureCode", "EvidencePreparationWorkerEvidence", "aggregate_evidence", "load_evidence_policy", "load_phase3b_schemas", "reconstruct_projection_twice", "reconstruct_replay_twice", "require_phase3b_governance_closure", "validate_evidence_preparation"]
+__all__ = ["EVIDENCE_POLICY_DOMAIN", "EVIDENCE_POLICY_PATH", "EVIDENCE_PREPARATION_DOMAIN", "PHASE3B_CONTROL_PATHS", "PHASE3B_REMAINING_PREDICATES", "EvidenceAuthorityGeneration", "EvidencePreparationAssessment", "EvidencePreparationDisposition", "EvidencePreparationFailureCode", "EvidencePreparationWorkerEvidence", "aggregate_evidence", "load_evidence_policy", "load_phase3b_schemas", "load_prospective_phase3b_schemas", "reconstruct_projection_twice", "reconstruct_replay_twice", "require_phase3b_governance_closure", "validate_evidence_preparation"]

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import Any, Mapping, Sequence
 
 from orev3.execution.canonical import CanonicalControlError, domain_identity, validate_repository_path
@@ -195,6 +196,32 @@ def validate_profile_contract(
     return {**material, "profile_conformance_evidence_identity": domain_identity(PROFILE_EVIDENCE_DOMAIN, material)}
 
 
+def validate_profile_contract_v2(
+    profile: Mapping[str, Any], *, artifact_declarations: Sequence[Mapping[str, Any]] = ()
+) -> dict[str, Any]:
+    """Construct prospective evidence without characterization placeholders."""
+
+    historical = validate_profile_contract(
+        profile, artifact_declarations=artifact_declarations
+    )
+    material = {
+        key: value
+        for key, value in historical.items()
+        if key not in {"authorization_contract_identity", "profile_conformance_evidence_identity"}
+    }
+    material["schema_version"] = 2
+    if profile["profile_name"] == "outcome_aware_v1":
+        material["authorization_contract_identity"] = profile["declarations"][
+            "authorization_contract_identity"
+        ]["contract_identity"]
+    return {
+        **material,
+        "profile_conformance_evidence_identity": domain_identity(
+            PROFILE_EVIDENCE_DOMAIN, material
+        ),
+    }
+
+
 def validate_artifact_declarations(
     declarations: Sequence[Mapping[str, Any]], *, profile_name: str
 ) -> dict[str, Any]:
@@ -214,6 +241,8 @@ def validate_artifact_declarations(
         if claimed_identity != domain_identity(_ARTIFACT_DECLARATION_DOMAIN, identity_material):
             raise CanonicalControlError("ARTIFACT_CONTRACT_INVALID: declaration identity")
         identifier = declaration["artifact_identifier"]
+        if unicodedata.normalize("NFC", identifier) != identifier:
+            raise CanonicalControlError("ARTIFACT_CONTRACT_INVALID: identifier normalization")
         path = validate_repository_path(declaration["relative_path"])
         if identifier in identifiers or path in paths or path.casefold() in folded_paths:
             raise CanonicalControlError("ARTIFACT_CONTRACT_INVALID: collision")
@@ -235,6 +264,8 @@ def validate_artifact_declarations(
             raise CanonicalControlError("ARTIFACT_CONTRACT_INVALID: outcome dependency")
         identifiers.add(identifier); paths.add(path); folded_paths.add(path.casefold()); by_id[identifier] = declaration
     for identifier, declaration in by_id.items():
+        if declaration["dependencies"] != sorted(declaration["dependencies"]):
+            raise CanonicalControlError("ARTIFACT_CONTRACT_INVALID: dependency order")
         if any(dependency not in by_id for dependency in declaration["dependencies"]):
             raise CanonicalControlError("ARTIFACT_CONTRACT_INVALID: missing dependency")
         if declaration["execution_phase"] != "evaluation" and any(role in {"outcome", "authorization", "evaluation"} for role in declaration["dependency_roles"]):
@@ -258,4 +289,4 @@ def validate_artifact_declarations(
     return {**material, "artifact_declaration_evidence_identity": domain_identity(ARTIFACT_EVIDENCE_DOMAIN, material)}
 
 
-__all__ = ["ARTIFACT_EVIDENCE_DOMAIN", "PROFILE_BINDING_DOMAIN", "PROFILE_EVIDENCE_DOMAIN", "reconstruct_profile_binding_identity", "validate_artifact_declarations", "validate_profile_contract"]
+__all__ = ["ARTIFACT_EVIDENCE_DOMAIN", "PROFILE_BINDING_DOMAIN", "PROFILE_EVIDENCE_DOMAIN", "reconstruct_profile_binding_identity", "validate_artifact_declarations", "validate_profile_contract", "validate_profile_contract_v2"]

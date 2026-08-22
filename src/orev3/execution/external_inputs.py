@@ -122,15 +122,22 @@ def snapshot_declared_input(
     limits: ResourceLimits,
 ) -> ImmutableInputSnapshot:
     declared = declaration["members"]
-    if declaration.get("input_kind") != "regular_file" or len(declared) != 1:
-        raise InputSnapshotError("INPUT_SCHEMA_MISMATCH: ordered collections are unsupported in Phase-3B v1")
+    input_kind = declaration.get("input_kind")
+    if input_kind not in {"regular_file", "ordered_file_collection"}:
+        raise InputSnapshotError("INPUT_SCHEMA_MISMATCH: unsupported input kind")
+    if input_kind == "regular_file" and len(declared) != 1:
+        raise InputSnapshotError("INPUT_SCHEMA_MISMATCH: regular file requires one member")
     if not declared or len(declared) > limits.max_collection_members:
         raise InputSnapshotError("RESOURCE_LIMIT_EXCEEDED")
     identifiers = [member["logical_identifier"] for member in declared]
     paths = [member["member_path"] for member in declared]
     if len(set(identifiers)) != len(identifiers) or len(set(paths)) != len(paths):
         raise InputSnapshotError("INPUT_MISMATCH: duplicate collection member")
+    if any(member.get("member_order", index) != index for index, member in enumerate(declared)):
+        raise InputSnapshotError("INPUT_MISMATCH: collection member order")
     declared_total = sum(member["byte_count"] for member in declared)
+    if declaration.get("aggregate_byte_count", declared_total) != declared_total:
+        raise InputSnapshotError("INPUT_MISMATCH: aggregate byte count")
     if declared_total > limits.max_aggregate_collection_bytes or declared_total > limits.max_temporary_disk_bytes:
         raise InputSnapshotError("RESOURCE_LIMIT_EXCEEDED")
     members: list[SnapshotMember] = []

@@ -12,17 +12,115 @@ import pytest
 
 from orev3.execution.canonical import canonical_bytes, domain_identity, parse_canonical_bytes
 import orev3.execution.evidence_preparation as evidence_module
-from orev3.execution.evidence_preparation import EvidencePreparationDisposition, _collect_evidence_preparation_evidence, validate_evidence_preparation
+from orev3.execution.evidence_preparation import EvidenceAuthorityGeneration, EvidencePreparationDisposition, _collect_evidence_preparation_evidence, validate_evidence_preparation
 from orev3.execution.phase3b_components import PROJECTION_SCHEMA_CONTRACT_DOMAIN, RAW_SCHEMA_CONTRACT_DOMAIN, resolve_component
 from orev3.execution.contract_validation import reconstruct_profile_binding_identity
 from orev3.execution.git_state import GitRepository
-from orev3.execution.readiness_record import PROTOCOL_BINDING_DOMAIN, TEST_POLICY_DOMAIN
-from orev3.execution.registry import ADAPTER_DOMAIN, ADAPTER_REGISTRY_DOMAIN, ARTIFACT_DECLARATION_DOMAIN, EXTERNAL_INPUT_DECLARATION_DOMAIN
+from orev3.execution.readiness_record import PROTOCOL_BINDING_DOMAIN, TEST_POLICY_DOMAIN, RepositoryAuthorityV1, RepositoryEndpoint
+from orev3.execution.readiness import load_repository_authority
+from orev3.execution.registry import ADAPTER_DOMAIN, ADAPTER_REGISTRY_DOMAIN, ARTIFACT_DECLARATION_DOMAIN, EXTERNAL_INPUT_DECLARATION_DOMAIN, EXTERNAL_INPUT_MANIFEST_DOMAIN, EXTERNAL_INPUT_MEMBER_DOMAIN
 from orev3.execution.test_policy import READINESS_TEST_COLLECTION_DOMAIN
 
 from test_phase3a_preparation import ARTIFACT_STORE, git, synthetic_repository, write
+from test_phase3c_readiness_contracts import (
+    _write_adapter_and_registry,
+    prospective_repository,
+)
 
 ZERO = "0" * 64
+
+
+def test_prospective_detached_worker_accepts_ordered_collection(
+    tmp_path: Path,
+) -> None:
+    repository, _, _ = prospective_repository(tmp_path)
+    root = repository.root
+    descriptor_path = "config/research/readiness/experiments/synthetic-adapter-v1.json"
+    descriptor = parse_canonical_bytes((root / descriptor_path).read_bytes())
+    first = (
+        b'{"candidates":[1,2],"eligible":true,'
+        b'"exclusion_reason":"not_applicable","observation_index":0,'
+        b'"outcome":"hidden-a","source_unit_key":"unit-a"}\n'
+    )
+    second = (
+        b'{"candidates":[1,2],"eligible":false,'
+        b'"exclusion_reason":"missing_observation","observation_index":0,'
+        b'"outcome":"hidden-b","source_unit_key":"unit-b"}\n'
+    )
+    input_paths = (tmp_path / "ordered-a.jsonl", tmp_path / "ordered-b.jsonl")
+    for path, payload in zip(input_paths, (first, second), strict=True):
+        path.write_bytes(payload)
+    declaration = descriptor["external_inputs"]["declarations"][0]
+    declaration["input_kind"] = "ordered_file_collection"
+    declaration["members"] = []
+    for index, (logical, locator, payload) in enumerate(
+        zip(("first", "second"), ("synthetic-input-a", "synthetic-input-b"), (first, second), strict=True)
+    ):
+        member = {
+            "byte_count": len(payload),
+            "logical_identifier": logical,
+            "member_identity": ZERO,
+            "member_order": index,
+            "member_path": locator,
+            "sha256": hashlib.sha256(payload).hexdigest(),
+        }
+        member["member_identity"] = domain_identity(
+            EXTERNAL_INPUT_MEMBER_DOMAIN,
+            {key: value for key, value in member.items() if key != "member_identity"},
+        )
+        declaration["members"].append(member)
+    declaration["aggregate_byte_count"] = len(first) + len(second)
+    declaration["manifest_revision"] = "external-input-ordered-file-manifest-v1"
+    declaration["manifest_identity"] = domain_identity(
+        EXTERNAL_INPUT_MANIFEST_DOMAIN,
+        {
+            "external_input_identifier": declaration["external_input_identifier"],
+            "input_version": declaration["input_version"],
+            "manifest_revision": declaration["manifest_revision"],
+            "members": declaration["members"],
+        },
+    )
+    declaration["external_input_identity"] = domain_identity(
+        EXTERNAL_INPUT_DECLARATION_DOMAIN,
+        {
+            key: value
+            for key, value in declaration.items()
+            if key != "external_input_identity"
+        },
+    )
+    descriptor["evidence_preparation"]["decision_selection"][
+        "permitted_exclusion_reasons"
+    ] = ["missing_observation"]
+    _write_adapter_and_registry(root, descriptor)
+    git(root, "add", ".")
+    git(root, "commit", "-qm", "prospective ordered Phase-3B input")
+    git(root, "push", "-q", "origin", "HEAD:refs/heads/research/post-v1")
+    committed_authority = load_repository_authority(
+        root / "config/research/readiness/repository-authority-v1.json"
+    )
+    authority = RepositoryAuthorityV1(
+        committed_authority.schema_version,
+        committed_authority.repository_authority_identifier,
+        committed_authority.git_object_format,
+        committed_authority.approved_branch_ref,
+        (RepositoryEndpoint("file", repository.text("remote", "get-url", "origin")),),
+    )
+    evidence = _collect_evidence_preparation_evidence(
+        repository,
+        "synthetic-prospective",
+        operational_input_locators={
+            "synthetic-input-a": input_paths[0],
+            "synthetic-input-b": input_paths[1],
+        },
+        authority=authority,
+        allow_test_file_remote=True,
+        artifact_store_root=ARTIFACT_STORE,
+        generation=EvidenceAuthorityGeneration.PROSPECTIVE_V1_1,
+    )
+    assert len(evidence.aggregate_material["input_snapshot_identities"]) == 1
+    assert len(evidence.aggregate_material["dataset_evidence_identities"]) == 1
+    assert len(evidence.aggregate_material["projection_evidence_identities"]) == 1
+    assert evidence.aggregate_material["adapter_identity"] == descriptor["adapter_identity"]
 
 
 def test_complete_synthetic_pre_outcome_evidence_pipeline(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

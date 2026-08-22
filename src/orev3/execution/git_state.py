@@ -9,14 +9,16 @@ import selectors
 import signal
 import subprocess
 import time
+from collections import Counter
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Mapping
 from urllib.parse import urlsplit, urlunsplit
 
 from orev3.execution.canonical import (
     CanonicalControlError,
+    domain_identity,
     parse_canonical_bytes,
     parse_json,
     require_git_object,
@@ -26,9 +28,12 @@ from orev3.execution.canonical import (
 from orev3.execution.readiness_record import (
     PHASE2_SCHEMA_DOCUMENT_POLICY,
     PHASE2_SCHEMA_POLICY,
+    READINESS_V1_1_SCHEMA_DOCUMENT_POLICY,
+    READINESS_V1_1_SCHEMA_POLICY,
     READINESS_TEST_POLICY_PATH,
     REPOSITORY_AUTHORITY_PATH,
     ReadinessRecordV1,
+    ReadinessRecordV2,
     RepositoryAuthorityV1,
     SourceScopeDeclarationV1,
     load_repository_authority_bytes,
@@ -36,6 +41,7 @@ from orev3.execution.readiness_record import (
     reconstruct_protocol_binding_identity,
     validate_implementation_binding,
     validate_readiness_record,
+    validate_readiness_record_v2,
     validate_readiness_test_policy,
 )
 
@@ -147,10 +153,18 @@ class BoundSchemaRegistry:
             ) from exc
 
     def filename_registry(self) -> dict[str, dict[str, Any]]:
-        return {
-            PHASE2_SCHEMA_POLICY[kind][1].rsplit("/", 1)[-1]: schema
-            for kind, schema in self.schemas_by_object_kind.items()
-        }
+        result: dict[str, dict[str, Any]] = {}
+        for kind, schema in self.schemas_by_object_kind.items():
+            if (
+                kind in READINESS_V1_1_SCHEMA_POLICY
+                and schema.get("$id")
+                == READINESS_V1_1_SCHEMA_DOCUMENT_POLICY[kind][0]
+            ):
+                path = READINESS_V1_1_SCHEMA_POLICY[kind][1]
+            else:
+                path = PHASE2_SCHEMA_POLICY[kind][1]
+            result[path.rsplit("/", 1)[-1]] = schema
+        return result
 
 
 def _run_bounded_process(
@@ -1127,6 +1141,886 @@ def validate_record_git_bindings(
     return registry
 
 
+def validate_record_v2_git_bindings(
+    repository: GitRepository,
+    record: ReadinessRecordV2,
+    *,
+    prerequisites: Any | None = None,
+    phase3b_evidence: Mapping[str, Any] | None = None,
+) -> BoundSchemaRegistry:
+    """Independently reconstruct prospective record authority at ``S``.
+
+    ``prerequisites`` is the already-reconstructed Slice-2 bundle.  It is
+    optional only to support schema/Git-only diagnostics; a complete
+    readiness candidate requires it and detached Phase-3B evidence.
+    """
+
+    source = repository.resolve_commit(record.source_commit)
+    if prerequisites is None or phase3b_evidence is None:
+        raise GitAuthorityError(
+            GitDiagnosticCode.CANONICAL_RECORD_INVALID,
+            "complete readiness-v2 validation requires reconstructed prerequisites and detached Phase-3B evidence",
+        )
+    authority_entry = repository.tree_entry(source, REPOSITORY_AUTHORITY_PATH)
+    _validate_safe_governed_entry(repository, source, authority_entry)
+    try:
+        committed_authority = load_repository_authority_bytes(
+            repository.object_bytes(authority_entry.object_identity, max_bytes=1_048_576)
+        )
+    except CanonicalControlError as exc:
+        raise GitAuthorityError(
+            GitDiagnosticCode.CANONICAL_RECORD_INVALID,
+            "repository authority at S is malformed",
+            repository_path=REPOSITORY_AUTHORITY_PATH,
+        ) from exc
+    git_authority = record.material["git_authority"]
+    if (
+        committed_authority.repository_authority_identifier
+        != git_authority["repository_authority_identifier"]
+        or committed_authority.approved_branch_ref
+        != git_authority["approved_branch_ref"]
+        or committed_authority.git_object_format != repository.object_format()
+    ):
+        raise GitAuthorityError(
+            GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+            "repository authority differs from readiness record",
+            repository_path=REPOSITORY_AUTHORITY_PATH,
+        )
+    schemas: dict[str, dict[str, Any]] = {}
+    schema_registry: dict[str, dict[str, Any]] = {}
+    for declaration in record.material["schema"]["declarations"]:
+        raw = _validate_blob_binding(repository, source, declaration, "prospective schema")
+        schema = parse_json(raw, max_bytes=1_048_576)
+        kind = declaration["object_kind"]
+        expected_id, expected_digest = READINESS_V1_1_SCHEMA_DOCUMENT_POLICY[kind]
+        _, expected_path = READINESS_V1_1_SCHEMA_POLICY[kind]
+        if (
+            schema.get("$id") != expected_id
+            or hashlib.sha256(raw).hexdigest() != expected_digest
+            or declaration["path"] != expected_path
+            or declaration["byte_count"] != len(raw)
+        ):
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "prospective schema declaration does not reconstruct",
+                repository_path=declaration["path"],
+            )
+        schemas[kind] = schema
+        schema_registry[expected_path.rsplit("/", 1)[-1]] = schema
+    try:
+        validate_json_schema_instance(
+            record.material,
+            schemas["readiness-record"],
+            schema_registry=schema_registry,
+        )
+        validate_readiness_record_v2(record.material)
+    except CanonicalControlError as exc:
+        raise GitAuthorityError(
+            GitDiagnosticCode.CANONICAL_RECORD_INVALID,
+            "prospective readiness record is invalid",
+        ) from exc
+    for section_name in ("readiness_specification", "protocol", "execution_specification"):
+        _validate_blob_binding(repository, source, record.material[section_name], section_name)
+    runtime = record.material["runtime"]
+    runtime_raw: bytes | None = None
+    for prefix in ("dependency_lock", "offline_artifact_manifest", "runtime_contract"):
+        binding = {
+            "path": runtime[f"{prefix}_path"],
+            "sha256": runtime[f"{prefix}_sha256"],
+            "git_blob_identity": runtime[f"{prefix}_git_blob_identity"],
+        }
+        if prefix == "runtime_contract":
+            binding["byte_count"] = runtime["runtime_contract_byte_count"]
+        else:
+            entry = repository.tree_entry(source, binding["path"])
+            binding["byte_count"] = len(repository.object_bytes(entry.object_identity, max_bytes=8 * 1024 * 1024))
+        raw = _validate_blob_binding(repository, source, binding, prefix)
+        if prefix == "runtime_contract":
+            runtime_raw = raw
+    from orev3.execution.runtime import (
+        PHASE3B_WORKER_EVIDENCE_DOMAIN,
+        load_offline_artifact_manifest_bytes,
+        load_runtime_contract_bytes,
+        validate_dependency_lock,
+    )
+
+    assert runtime_raw is not None
+    runtime_contract = load_runtime_contract_bytes(
+        runtime_raw, schema=schemas["runtime-contract"]
+    )
+    lock_entry = repository.tree_entry(source, runtime_contract.dependency_lock_path)
+    lock_raw = repository.object_bytes(lock_entry.object_identity, max_bytes=8 * 1024 * 1024)
+    dependency_lock = validate_dependency_lock(
+        lock_raw, expected_sha256=runtime_contract.dependency_lock_sha256
+    )
+    manifest_entry = repository.tree_entry(source, runtime_contract.artifact_manifest_path)
+    manifest_raw = repository.object_bytes(
+        manifest_entry.object_identity, max_bytes=8 * 1024 * 1024
+    )
+    manifest = load_offline_artifact_manifest_bytes(
+        manifest_raw,
+        schema=schemas["offline-artifact-manifest"],
+        expected_sha256=runtime_contract.artifact_manifest_sha256,
+        dependency_lock_sha256=runtime_contract.dependency_lock_sha256,
+        dependency_lock=dependency_lock,
+    )
+    runtime_material = runtime_contract.material
+    expected_runtime = {
+        "dependency_environment_identity": runtime_material["dependency_lock"]["closed_environment_identity"],
+        "dependency_lock_git_blob_identity": lock_entry.object_identity,
+        "dependency_lock_identity": runtime_material["dependency_lock"]["lock_identity"],
+        "dependency_lock_path": runtime_contract.dependency_lock_path,
+        "dependency_lock_sha256": runtime_contract.dependency_lock_sha256,
+        "host_system_identity": runtime_material["host_system"]["host_system_identity"],
+        "offline_artifact_manifest_git_blob_identity": manifest_entry.object_identity,
+        "offline_artifact_manifest_identity": manifest.manifest_identity,
+        "offline_artifact_manifest_path": runtime_contract.artifact_manifest_path,
+        "offline_artifact_manifest_sha256": runtime_contract.artifact_manifest_sha256,
+        "python_implementation": runtime_material["python"]["implementation"],
+        "python_version": runtime_material["python"]["version"],
+        "runtime_bundle_identity": runtime_material["python"]["runtime_bundle_identity"],
+        "runtime_contract_byte_count": len(runtime_raw),
+        "runtime_contract_git_blob_identity": repository.tree_entry(
+            source, runtime["runtime_contract_path"]
+        ).object_identity,
+        "runtime_contract_identity": runtime_contract.runtime_contract_identity,
+        "runtime_contract_path": "config/research/readiness/runtime-contract-v1.json",
+        "runtime_contract_sha256": hashlib.sha256(runtime_raw).hexdigest(),
+    }
+    if runtime != expected_runtime:
+        raise GitAuthorityError(
+            GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+            "runtime authority differs from the committed runtime contract",
+        )
+    for scope in record.material["source_scopes"]:
+        entry = repository.tree_entry(source, scope["repository_path"])
+        _validate_safe_governed_entry(repository, source, entry)
+        if entry.object_identity != scope["git_object_identity"] or entry.mode != scope["git_mode"]:
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "source scope differs from S",
+                repository_path=scope["repository_path"],
+            )
+    for component in record.material["control_plane"]["components"]:
+        entry = repository.tree_entry(source, component["path"])
+        _validate_safe_governed_entry(repository, source, entry)
+        raw = repository.object_bytes(entry.object_identity, max_bytes=8 * 1024 * 1024)
+        if entry.object_type != "blob" or entry.mode != "100644" or entry.object_identity != component["git_object_identity"] or hashlib.sha256(raw).hexdigest() != component["sha256"]:
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "control component differs from S",
+                repository_path=component["path"],
+            )
+    attempt = record.material["attempt_policy"]
+    _validate_blob_binding(repository, source, {
+        "path": attempt["attempt_authority_contract_path"],
+        "byte_count": attempt["attempt_authority_contract_byte_count"],
+        "sha256": attempt["attempt_authority_contract_sha256"],
+        "git_blob_identity": attempt["attempt_authority_contract_git_blob_identity"],
+    }, "attempt authority contract")
+    if prerequisites is not None:
+        adapter = prerequisites.adapter.material
+        authority = prerequisites.attempt_authority
+        policy = prerequisites.readiness_test_policy.material
+        implementation = record.material["implementation"]
+        if (
+            adapter["schema_version"] != 3
+            or adapter["adapter_identity"] != implementation["adapter_identity"]
+            or adapter["adapter_identifier"] != implementation["adapter_identifier"]
+            or adapter["external_inputs"]["declarations"] != record.material["external_inputs"]["declarations"]
+            or adapter["artifacts"]["declarations"] != record.material["artifacts"]["declarations"]
+        ):
+            raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, "adapter-v3 authority differs from record")
+        authority_material = authority.material
+        control_by_role = {
+            item["role"]: item
+            for item in record.material["control_plane"]["components"]
+        }
+        registry_component = control_by_role["adapter_registry"]
+        if (
+            registry_component["component_identifier"]
+            != prerequisites.adapter_registry.material["registry_identifier"]
+            or implementation["adapter_registry_identity"]
+            != prerequisites.adapter_registry.material["adapter_registry_identity"]
+        ):
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "adapter-registry authority differs from record control authority",
+            )
+        if (
+            control_by_role["allocator_client"]["component_identifier"]
+            != authority_material["allocator_client_identifier"]
+            or control_by_role["allocator_client"]["component_identity"]
+            != authority.allocator_client_component_identity
+            or control_by_role["allocator_contract"]["component_identifier"]
+            != authority_material["allocator_implementation_identifier"]
+            or control_by_role["allocator_contract"]["component_identity"]
+            != authority.allocator_contract_identity
+        ):
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "allocator control authority differs from attempt contract",
+            )
+        expected_attempt = {
+            "allocation_authority_identity": authority.allocation_authority_identity,
+            "allocator_contract_identity": authority.allocator_contract_identity,
+            "control_storage_component_identity": authority_material["control_storage_component"]["component_identity"],
+            "control_storage_contract_identity": authority.control_storage_contract_identity,
+            "output_namespace_identity_policy": authority_material["output_namespace_identity_policy"],
+            "supported_attempt_kinds": authority_material["supported_attempt_kinds"],
+            "attempt_authority_contract_git_blob_identity": authority.git_object_identity,
+            "attempt_authority_contract_path": authority.repository_path,
+            "attempt_authority_contract_sha256": authority.sha256,
+        }
+        if any(attempt[key] != expected for key, expected in expected_attempt.items()):
+            raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, "attempt authority differs from record")
+        if attempt["attempt_output_declaration_identity"] != adapter["attempt_output_declaration_identity"] or attempt["output_policy_identity"] != adapter["attempt_output_declaration_identity_material"]["output_policy_identity"]:
+            raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, "attempt-output authority differs from record")
+        validation = record.material["validation"]
+        if validation["test_policy_identity"] != policy["policy_identity"] or validation["mandatory_test_selectors"] != policy["required_selectors"] or validation["launch_smoke_selectors"] != policy["launch_smoke_selectors"]:
+            raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, "readiness-test policy differs from record")
+        expected_scopes = []
+        for scope in prerequisites.source_scopes:
+            scope_material = {
+                "git_mode": scope.git_mode,
+                "git_object_identity": scope.git_object_identity,
+                "nesting": scope.nesting,
+                "repository_path": scope.repository_path,
+                "role": scope.role,
+            }
+            if scope.nesting == "nested":
+                scope_material["parent_path"] = scope.parent_path
+            expected_scopes.append(scope_material)
+        expected_scopes.sort(
+            key=lambda item: (item["repository_path"], item["role"])
+        )
+        if record.material["source_scopes"] != expected_scopes:
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "record source scopes differ from reconstructed prerequisites",
+            )
+        scopes = record.material["source_scopes"]
+        component_paths = [
+            item["path"] for item in record.material["control_plane"]["components"]
+        ]
+        component_paths.append(authority_material["control_storage_component"]["path"])
+        for path in component_paths:
+            if not any(
+                scope["role"] in {"control_plane", "implementation"}
+                and (
+                    scope["repository_path"] == path
+                    or (
+                        scope["git_mode"] == "040000"
+                        and path.startswith(scope["repository_path"] + "/")
+                    )
+                )
+                for scope in scopes
+            ):
+                raise GitAuthorityError(
+                    GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                    "governed component is not covered by its source scope",
+                    repository_path=path,
+                )
+        configuration = record.material["configuration"]
+        if (
+            configuration["experiment_configuration_identity"]
+            != adapter["configuration"]["experiment_configuration_identity"]
+            or configuration["decision_selection_identity"]
+            != adapter["configuration"]["decision_selection_identity"]
+        ):
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "adapter configuration authority differs from record",
+            )
+        if (
+            record.material["protocol"]["path"] != adapter["protocol"]["path"]
+            or record.material["protocol"]["revision"] != adapter["protocol"]["revision"]
+            or record.material["protocol"]["sha256"] != adapter["protocol"]["sha256"]
+            or record.material["execution_specification"]["path"]
+            != adapter["execution_specification"]["path"]
+            or record.material["execution_specification"]["revision"]
+            != adapter["execution_specification"]["revision"]
+            or record.material["execution_specification"]["sha256"]
+            != adapter["execution_specification"]["sha256"]
+        ):
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "adapter document authority differs from record",
+            )
+    if phase3b_evidence is not None:
+        from orev3.execution.contract_validation import (
+            ARTIFACT_EVIDENCE_DOMAIN,
+            PROFILE_EVIDENCE_DOMAIN,
+        )
+        from orev3.execution.dataset_validation import (
+            DATASET_EVIDENCE_DOMAIN,
+            PROJECTION_EVIDENCE_DOMAIN,
+            dataset_evidence,
+        )
+        from orev3.execution.evidence_preparation import (
+            EVIDENCE_POLICY_PATH,
+            EVIDENCE_PREPARATION_DOMAIN,
+            load_evidence_policy,
+        )
+        from orev3.execution.external_inputs import INPUT_SNAPSHOT_DOMAIN
+        from orev3.execution.replay_preparation import (
+            POPULATION_EVIDENCE_DOMAIN,
+            REPLAY_EVIDENCE_DOMAIN,
+        )
+        from orev3.execution.test_policy import READINESS_TEST_EVIDENCE_DOMAIN
+
+        required_bundle = {
+            "aggregate", "artifacts", "datasets", "population", "profile",
+            "projections", "readiness_test", "replay", "snapshots", "workers",
+        }
+        if set(phase3b_evidence) != required_bundle:
+            raise GitAuthorityError(
+                GitDiagnosticCode.CANONICAL_RECORD_INVALID,
+                "detached Phase-3B evidence bundle is incomplete or extended",
+            )
+        aggregate = phase3b_evidence["aggregate"]
+        objects = {
+            "readiness-test-evidence": (phase3b_evidence["readiness_test"], READINESS_TEST_EVIDENCE_DOMAIN, "readiness_test_evidence_identity"),
+            "replay-evidence": (phase3b_evidence["replay"], REPLAY_EVIDENCE_DOMAIN, "replay_evidence_identity"),
+            "population-accounting-evidence": (phase3b_evidence["population"], POPULATION_EVIDENCE_DOMAIN, "population_accounting_evidence_identity"),
+            "profile-conformance-evidence": (phase3b_evidence["profile"], PROFILE_EVIDENCE_DOMAIN, "profile_conformance_evidence_identity"),
+            "artifact-declaration-evidence": (phase3b_evidence["artifacts"], ARTIFACT_EVIDENCE_DOMAIN, "artifact_declaration_evidence_identity"),
+            "evidence-preparation": (aggregate, EVIDENCE_PREPARATION_DOMAIN, "evidence_preparation_identity"),
+        }
+        for kind, (evidence_object, domain, identity_field) in objects.items():
+            try:
+                validate_json_schema_instance(
+                    evidence_object, schemas[kind], schema_registry=schema_registry
+                )
+                identity_material = dict(evidence_object)
+                claimed = identity_material.pop(identity_field)
+                if domain_identity(domain, identity_material) != claimed:
+                    raise CanonicalControlError("evidence identity mismatch")
+            except (CanonicalControlError, KeyError, TypeError) as exc:
+                raise GitAuthorityError(
+                    GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                    f"detached {kind} does not reconstruct",
+                ) from exc
+        for collection_name, kind, domain, identity_field in (
+            ("snapshots", "immutable-input-snapshot", INPUT_SNAPSHOT_DOMAIN, "input_snapshot_identity"),
+            ("datasets", "dataset-validation-evidence", DATASET_EVIDENCE_DOMAIN, "dataset_validation_evidence_identity"),
+            ("projections", "outcome-blind-projection-evidence", PROJECTION_EVIDENCE_DOMAIN, "projection_evidence_identity"),
+        ):
+            for evidence_object in phase3b_evidence[collection_name]:
+                try:
+                    validate_json_schema_instance(evidence_object, schemas[kind], schema_registry=schema_registry)
+                    identity_material = dict(evidence_object); claimed = identity_material.pop(identity_field)
+                    if domain_identity(domain, identity_material) != claimed:
+                        raise CanonicalControlError("evidence identity mismatch")
+                except (CanonicalControlError, KeyError, TypeError) as exc:
+                    raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, f"detached {kind} does not reconstruct") from exc
+        worker_ids: list[str] = []
+        worker_materials: list[Mapping[str, Any]] = []
+        worker_results: dict[str, list[Mapping[str, Any]]] = {}
+        for worker_bundle in phase3b_evidence["workers"]:
+            try:
+                if set(worker_bundle) != {"material", "result"}:
+                    raise CanonicalControlError("worker evidence bundle is open")
+                worker = worker_bundle["material"]
+                result = worker_bundle["result"]
+                if not isinstance(worker, Mapping) or not isinstance(result, Mapping):
+                    raise CanonicalControlError("worker evidence bundle is malformed")
+                worker_material = dict(worker)
+                worker_identity = worker_material.pop("worker_evidence_identity")
+                if (
+                    domain_identity(PHASE3B_WORKER_EVIDENCE_DOMAIN, worker_material)
+                    != worker_identity
+                    or domain_identity(PHASE3B_WORKER_EVIDENCE_DOMAIN, result)
+                    != worker_material["output_identity"]
+                ):
+                    raise CanonicalControlError("worker evidence identity mismatch")
+                worker_ids.append(worker_identity)
+                worker_materials.append(worker)
+                worker_results.setdefault(worker["worker_kind"], []).append(result)
+            except (CanonicalControlError, KeyError, TypeError) as exc:
+                raise GitAuthorityError(
+                    GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                    "detached worker evidence does not reconstruct",
+                ) from exc
+        if worker_ids != sorted(worker_ids) or len(worker_ids) != len(set(worker_ids)):
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "worker evidence collection is not canonical",
+            )
+        validation = record.material["validation"]
+        readiness_test = phase3b_evidence["readiness_test"]
+        direct_validation = {
+            "additional_test_selectors": readiness_test["additional_selectors"],
+            "collected_node_ids": readiness_test["collected_node_ids"],
+            "mandatory_test_selectors": readiness_test["mandatory_selectors"],
+            "readiness_test_evidence_identity": readiness_test["readiness_test_evidence_identity"],
+            "test_policy_identity": readiness_test["policy_identity"],
+            "test_results": readiness_test["results"],
+        }
+        if any(validation[key] != expected for key, expected in direct_validation.items()):
+            raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, "readiness-test evidence differs from direct record fields")
+        replay_evidence = phase3b_evidence["replay"]
+        direct_replay = {key: replay_evidence[key] for key in (
+            "candidate_order", "decision_selection_identity", "ordered_decision_identities",
+            "ordered_replay_unit_identities", "ordered_source_unit_identities",
+            "projection_identity", "replay_evidence_identity", "replay_identity",
+            "replay_preparer_component_identity", "selector_component_identity",
+        )}
+        if any(record.material["replay"][key] != expected for key, expected in direct_replay.items()) or record.material["replay"]["population_accounting"] != {key: value for key, value in phase3b_evidence["population"].items() if key != "schema_version"}:
+            raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, "Replay/population evidence differs from direct record fields")
+        artifact_evidence = phase3b_evidence["artifacts"]
+        if (
+            record.material["artifacts"]["artifact_declaration_evidence_identity"] != artifact_evidence["artifact_declaration_evidence_identity"]
+            or record.material["artifacts"]["dependency_order"] != artifact_evidence["dependency_order"]
+            or record.material["artifacts"]["output_policy_identity"] != artifact_evidence["output_policy_identity"]
+            or [item["declaration_identity"] for item in record.material["artifacts"]["declarations"]] != artifact_evidence["declaration_identities"]
+        ):
+            raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, "artifact evidence differs from direct record fields")
+        profile_evidence = phase3b_evidence["profile"]
+        if (
+            profile_evidence != prerequisites.profile_contracts.profile_evidence
+            or record.material["outcome_policy"][
+                "profile_conformance_evidence_identity"
+            ]
+            != profile_evidence["profile_conformance_evidence_identity"]
+        ):
+            raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, "profile evidence differs from direct record fields")
+        direct_profile = record.material["outcome_policy"]
+        for key in (
+            "outcome_capability",
+            "profile_contract_identities",
+            "profile_identity",
+            "profile_name",
+        ):
+            if direct_profile[key] != profile_evidence[key]:
+                raise GitAuthorityError(
+                    GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                    "profile evidence content differs from direct outcome policy",
+                )
+        if direct_profile["profile_name"] == "outcome_aware_v1" and (
+            direct_profile["authorization_contract_identity"]
+            != profile_evidence["authorization_contract_identity"]
+        ):
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "profile authorization evidence differs from direct outcome policy",
+            )
+        snapshot_ids = [item["input_snapshot_identity"] for item in phase3b_evidence["snapshots"]]
+        dataset_ids = sorted(item["dataset_validation_evidence_identity"] for item in phase3b_evidence["datasets"])
+        projection_ids = sorted(item["projection_evidence_identity"] for item in phase3b_evidence["projections"])
+        direct_inputs = record.material["external_inputs"]
+        if direct_inputs["input_snapshot_identities"] != snapshot_ids or direct_inputs["dataset_validation_evidence_identities"] != dataset_ids or direct_inputs["projection_evidence_identities"] != projection_ids:
+            raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, "input evidence differs from direct record fields")
+        declarations = prerequisites.adapter.material["external_inputs"]["declarations"]
+        if len(phase3b_evidence["snapshots"]) != len(declarations):
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "snapshot/declaration cardinality differs",
+            )
+        contracts = {
+            item["external_input_identifier"]: item
+            for item in prerequisites.adapter.material["evidence_preparation"][
+                "dataset_contracts"
+            ]
+        }
+        datasets_by_snapshot = {
+            item["input_snapshot_identity"]: item
+            for item in phase3b_evidence["datasets"]
+        }
+        if len(datasets_by_snapshot) != len(phase3b_evidence["datasets"]):
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "dataset evidence snapshot binding is duplicated",
+            )
+        projections_by_dataset = {
+            item["dataset_identity"]: item
+            for item in phase3b_evidence["projections"]
+        }
+        if len(projections_by_dataset) != len(phase3b_evidence["projections"]):
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "projection evidence dataset binding is duplicated",
+            )
+        from orev3.execution.phase3b_components import resolve_component
+
+        semantic_component_ids: set[str] = set()
+        for declaration, snapshot in zip(
+            declarations, phase3b_evidence["snapshots"], strict=True
+        ):
+            expected_snapshot_members = [
+                {
+                    "byte_count": member["byte_count"],
+                    "logical_member_identifier": member["logical_identifier"],
+                    "member_order": index,
+                    "sha256": member["sha256"],
+                }
+                for index, member in enumerate(declaration["members"])
+            ]
+            if (
+                snapshot["external_input_identifier"]
+                != declaration["external_input_identifier"]
+                or snapshot["input_kind"] != declaration["input_kind"]
+                or snapshot["members"] != expected_snapshot_members
+            ):
+                raise GitAuthorityError(
+                    GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                    "immutable snapshot differs from adapter-v3 declaration",
+                )
+            try:
+                dataset = datasets_by_snapshot[snapshot["input_snapshot_identity"]]
+            except KeyError as exc:
+                raise GitAuthorityError(
+                    GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                    "dataset evidence is absent for governed snapshot",
+                ) from exc
+            contract = contracts[declaration["external_input_identifier"]]
+            parser = resolve_component(
+                repository,
+                source,
+                declaration["parser_configuration"]["parser_identifier"],
+            )
+            validator = resolve_component(
+                repository, source, contract["dataset_validator_identifier"]
+            )
+            semantic_component_ids.update(
+                {parser.component_identity, validator.component_identity}
+            )
+            expected_dataset = dataset_evidence(
+                external_input_identity=declaration["external_input_identity"],
+                snapshot_identity=snapshot["input_snapshot_identity"],
+                source_class=contract["source_class"],
+                dataset_version=contract["dataset_version"],
+                container=contract["container"],
+                parser_component_identity=parser.component_identity,
+                validator_component_identity=validator.component_identity,
+                schema_identity=declaration["schema_identity"],
+                protocol_revision=contract["protocol_revision"],
+                record_count=dataset["ordered_record_count"],
+                record_ordering=contract["record_ordering"],
+                candidate_order=contract["candidate_order"],
+                projection_required=contract["projection_required"],
+                dataset_content_identity=dataset["dataset_content_identity"],
+            )
+            if dataset != expected_dataset:
+                raise GitAuthorityError(
+                    GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                    "dataset evidence first-order authority does not reconstruct",
+                )
+            projection = projections_by_dataset.get(dataset["dataset_identity"])
+            if contract["projection_required"] and projection is None:
+                raise GitAuthorityError(
+                    GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                    "required projection evidence is absent",
+                )
+            if projection is not None:
+                projector = resolve_component(
+                    repository, source, contract["projector_identifier"]
+                )
+                semantic_component_ids.add(projector.component_identity)
+                projection_schema_raw = repository.object_bytes(
+                    repository.tree_entry(
+                        source, contract["projection_schema_path"]
+                    ).object_identity,
+                    max_bytes=1_048_576,
+                )
+                projection_schema = parse_canonical_bytes(projection_schema_raw)
+                projection_identity = domain_identity(
+                    PROJECTION_EVIDENCE_DOMAIN,
+                    {
+                        "byte_count": projection["byte_count"],
+                        "ordered_record_count": projection["ordered_record_count"],
+                        "parser_component_identity": parser.component_identity,
+                        "projection_schema_identity": contract[
+                            "projection_schema_identity"
+                        ],
+                        "projector_component_identity": projector.component_identity,
+                        "sha256": projection["sha256"],
+                    },
+                )
+                if (
+                    projection["projection_identity"] != projection_identity
+                    or projection["raw_input_snapshot_identity"]
+                    != snapshot["input_snapshot_identity"]
+                    or projection["parser_component_identity"]
+                    != parser.component_identity
+                    or projection["projector_component_identity"]
+                    != projector.component_identity
+                    or projection["projection_schema_identity"]
+                    != contract["projection_schema_identity"]
+                    or projection["allowed_fields"]
+                    != sorted(projection_schema["properties"])
+                ):
+                    raise GitAuthorityError(
+                        GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                        "projection evidence first-order authority does not reconstruct",
+                    )
+        if set(datasets_by_snapshot) != set(snapshot_ids):
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "dataset evidence contains an ungoverned snapshot binding",
+            )
+        if set(projections_by_dataset) != {
+            item["dataset_identity"]
+            for item in phase3b_evidence["datasets"]
+            if contracts[
+                next(
+                    declaration["external_input_identifier"]
+                    for declaration, snapshot in zip(
+                        declarations, phase3b_evidence["snapshots"], strict=True
+                    )
+                    if snapshot["input_snapshot_identity"]
+                    == item["input_snapshot_identity"]
+                )
+            ]["projection_required"]
+        }:
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "projection evidence membership differs from governed contracts",
+            )
+        decision = prerequisites.adapter.material["evidence_preparation"][
+            "decision_selection"
+        ]
+        if (
+            phase3b_evidence["population"]["permitted_exclusion_reasons"]
+            != decision["permitted_exclusion_reasons"]
+            or replay_evidence["decision_selection_identity"]
+            != decision["configuration_identity"]
+        ):
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "population/decision-selection authority differs from adapter-v3",
+            )
+        input_results = worker_results.get("INPUT_PROJECTOR", [])
+        for dataset in phase3b_evidence["datasets"]:
+            projection = projections_by_dataset.get(dataset["dataset_identity"])
+            matching_results = [
+                result
+                for result in input_results
+                if result.get("status") == "evidence_passed"
+                and result.get("dataset_content_identity")
+                == dataset["dataset_content_identity"]
+                and result.get("record_count") == dataset["ordered_record_count"]
+                and projection is not None
+                and result.get("byte_count") == projection["byte_count"]
+                and result.get("sha256") == projection["sha256"]
+            ]
+            if len(matching_results) < 2:
+                raise GitAuthorityError(
+                    GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                    "dataset/projection authority lacks two detached worker reconstructions",
+                )
+        replay_results = worker_results.get("REPLAY_PREPARATION", [])
+        if sum(
+            result.get("status") == "evidence_passed"
+            and result.get("replay_identity")
+            == replay_evidence["replay_evidence_identity"]
+            and result.get("population_identity")
+            == phase3b_evidence["population"][
+                "population_accounting_evidence_identity"
+            ]
+            for result in replay_results
+        ) < 2:
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "Replay/population authority lacks two detached worker reconstructions",
+            )
+        if not any(
+            result.get("status") == "evidence_passed"
+            and result.get("exit_code") == 0
+            and result.get("warning_count") == 0
+            and result.get("collected_node_ids")
+            == readiness_test["collected_node_ids"]
+            and result.get("results") == readiness_test["results"]
+            for result in worker_results.get("READINESS_TEST", [])
+        ):
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "readiness-test evidence lacks detached execution authority",
+            )
+        for identifier in (
+            decision["selector_identifier"],
+            decision["replay_preparer_identifier"],
+            "static-profile-validator-v1",
+            "static-artifact-validator-v1",
+        ):
+            semantic_component_ids.add(
+                resolve_component(repository, source, identifier).component_identity
+            )
+        evidence_policy_entry = repository.tree_entry(source, EVIDENCE_POLICY_PATH)
+        evidence_policy_raw = repository.object_bytes(
+            evidence_policy_entry.object_identity, max_bytes=1_048_576
+        )
+        evidence_policy = load_evidence_policy(
+            evidence_policy_raw, schema=schemas["evidence-preparation-policy"]
+        )
+        if (
+            record.material["configuration"][
+                "evidence_preparation_policy_identity"
+            ]
+            != evidence_policy["policy_identity"]
+            or prerequisites.adapter.material["evidence_preparation"][
+                "resource_policy_identity"
+            ]
+            != evidence_policy["policy_identity"]
+        ):
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "evidence-preparation policy authority differs from record",
+            )
+        worker_profiles = {
+            item["worker_kind"]: item
+            for item in evidence_policy["worker_profiles"]
+        }
+        worker_modules = {
+            "INPUT_PROJECTOR": "src/orev3/execution/input_projection_worker.py",
+            "READINESS_TEST": "src/orev3/execution/readiness_test_worker.py",
+            "REPLAY_PREPARATION": "src/orev3/execution/replay_preparation_worker.py",
+        }
+        from orev3.execution.phase3b_components import WORKER_CODE_CLOSURES
+
+        expected_worker_authorities: Counter[tuple[str, str, tuple[str, ...]]] = Counter()
+
+        def require_worker_authority(
+            worker_kind: str,
+            command: str,
+            invocation_identifier: str,
+            input_capability_identities: tuple[str, ...] = (),
+        ) -> None:
+            command_identity = domain_identity(
+                PHASE3B_WORKER_EVIDENCE_DOMAIN,
+                {
+                    "command": command,
+                    "invocation_identifier": invocation_identifier,
+                    "worker_kind": worker_kind,
+                },
+            )
+            capabilities = tuple(sorted(input_capability_identities))
+            expected_worker_authorities[
+                (worker_kind, command_identity, capabilities)
+            ] += 1
+
+        for snapshot_identity in snapshot_ids:
+            for invocation_identifier in ("projection-1", "projection-2"):
+                require_worker_authority(
+                    "INPUT_PROJECTOR",
+                    "project_canonical_jsonl",
+                    invocation_identifier,
+                    (snapshot_identity,),
+                )
+        for invocation_identifier in ("collection-a", "collection-b"):
+            require_worker_authority(
+                "READINESS_TEST", "collect", invocation_identifier
+            )
+        require_worker_authority("READINESS_TEST", "run_exact", "execution")
+        for invocation_identifier in ("replay-1", "replay-2"):
+            require_worker_authority(
+                "REPLAY_PREPARATION",
+                "reconstruct_replay",
+                invocation_identifier,
+                (replay_evidence["projection_identity"],),
+            )
+
+        actual_worker_authorities: Counter[
+            tuple[str, str, tuple[str, ...]]
+        ] = Counter()
+
+        for worker in worker_materials:
+            expected_fields = {
+                "capability_policy_identity",
+                "closed_dependency_identity",
+                "code_capability_git_identities",
+                "command_identity",
+                "input_capability_identities",
+                "output_identity",
+                "runtime_contract_identity",
+                "sandbox_template_identity",
+                "source_commit",
+                "successful_worker_disposition",
+                "worker_evidence_identity",
+                "worker_kind",
+                "worker_module_git_identity",
+            }
+            kind = worker.get("worker_kind")
+            profile = worker_profiles.get(kind)
+            module_path = worker_modules.get(kind)
+            if (
+                set(worker) != expected_fields
+                or profile is None
+                or module_path is None
+                or profile["module"] != module_path
+                or worker["capability_policy_identity"]
+                != evidence_policy["policy_identity"]
+                or worker["closed_dependency_identity"]
+                != runtime["dependency_environment_identity"]
+                or worker["runtime_contract_identity"]
+                != runtime_contract.runtime_contract_identity
+                or worker["sandbox_template_identity"]
+                != profile["sandbox_template_identity"]
+                or worker["source_commit"] != source
+                or worker["successful_worker_disposition"] != "evidence_passed"
+                or worker["worker_module_git_identity"]
+                != repository.tree_entry(source, module_path).object_identity
+            ):
+                raise GitAuthorityError(
+                    GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                    "Phase-3B worker authority differs from committed policy",
+                )
+            expected_code_ids = {
+                repository.tree_entry(source, path).object_identity
+                for path in WORKER_CODE_CLOSURES[kind]
+            }
+            supplied_code_ids = worker["code_capability_git_identities"]
+            if (
+                supplied_code_ids != sorted(set(supplied_code_ids))
+                or not expected_code_ids.issubset(set(supplied_code_ids))
+            ):
+                raise GitAuthorityError(
+                    GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                    "Phase-3B worker code authority differs from S",
+                )
+            supplied_capabilities = worker["input_capability_identities"]
+            if supplied_capabilities != sorted(set(supplied_capabilities)):
+                raise GitAuthorityError(
+                    GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                    "Phase-3B worker input capabilities are not canonical",
+                )
+            actual_worker_authorities[
+                (
+                    kind,
+                    worker["command_identity"],
+                    tuple(supplied_capabilities),
+                )
+            ] += 1
+        if actual_worker_authorities != expected_worker_authorities:
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "Phase-3B worker command/input authority differs from governed invocation",
+            )
+        aggregate_expected = {
+            "adapter_identity": record.material["implementation"]["adapter_identity"],
+            "artifact_evidence_identity": artifact_evidence["artifact_declaration_evidence_identity"],
+            "dataset_evidence_identities": dataset_ids,
+            "evidence_preparation_identity": validation["evidence_preparation_identity"],
+            "input_snapshot_identities": sorted(snapshot_ids),
+            "population_evidence_identity": phase3b_evidence["population"]["population_accounting_evidence_identity"],
+            "profile_evidence_identity": profile_evidence["profile_conformance_evidence_identity"],
+            "projection_evidence_identities": projection_ids,
+            "readiness_test_evidence_identity": readiness_test["readiness_test_evidence_identity"],
+            "replay_evidence_identity": replay_evidence["replay_evidence_identity"],
+            "source_commit": source,
+            "runtime_contract_identity": runtime_contract.runtime_contract_identity,
+            "dependency_environment_identity": runtime[
+                "dependency_environment_identity"
+            ],
+            "capability_policy_identity": evidence_policy["policy_identity"],
+            "semantic_component_identities": sorted(semantic_component_ids),
+            "worker_evidence_identities": worker_ids,
+        }
+        if any(aggregate[key] != expected for key, expected in aggregate_expected.items()):
+            raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, "Phase-3B aggregate cross-binding differs from record")
+    return BoundSchemaRegistry(schemas)
+
+
 def _validate_protocol_binding_relationship(
     record: ReadinessRecordV1, binding: Mapping[str, Any]
 ) -> None:
@@ -1237,5 +2131,6 @@ __all__ = [
     "inspect_committed_requirements",
     "resolve_source_candidate",
     "validate_record_git_bindings",
+    "validate_record_v2_git_bindings",
     "validate_remote_alias",
 ]

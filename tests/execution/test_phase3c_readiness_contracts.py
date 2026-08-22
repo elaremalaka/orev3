@@ -18,6 +18,12 @@ from orev3.execution.contract_validation import (
     validate_artifact_declarations,
 )
 from orev3.execution.git_state import GitAuthorityError
+from orev3.execution.evidence_preparation import load_prospective_phase3b_schemas
+from orev3.execution.phase3b_components import (
+    PROJECTION_SCHEMA_CONTRACT_DOMAIN,
+    RAW_SCHEMA_CONTRACT_DOMAIN,
+    resolve_component,
+)
 from orev3.execution.readiness_contracts import (
     ADAPTER_REGISTRY_PATH,
     ALLOCATION_AUTHORITY_IDENTITY_DOMAIN,
@@ -54,6 +60,9 @@ from orev3.execution.registry import (
     ADAPTER_DOMAIN,
     ADAPTER_REGISTRY_DOMAIN,
     ARTIFACT_DECLARATION_DOMAIN,
+    EXTERNAL_INPUT_DECLARATION_DOMAIN,
+    EXTERNAL_INPUT_MEMBER_DOMAIN,
+    PARSER_CONFIGURATION_DOMAIN,
     AdapterDeclarationV1,
     load_adapter_declaration_bytes,
 )
@@ -106,6 +115,23 @@ def _rewrite_adapter(
         declarations={},
     )
     descriptor["execution_profile"]["profile_identity"] = profile_identity
+    descriptor["evidence_preparation"]["resource_policy_identity"] = parse_json(
+        (
+            root
+            / "config/research/readiness/evidence-preparation-policy-v1.json"
+        ).read_bytes()
+    )["policy_identity"]
+    replay_preparer = resolve_component(
+        root_repository(root),
+        root_repository(root).resolve_commit("HEAD"),
+        "canonical-replay-preparer-v1",
+    )
+    descriptor["replay_preparation_contract_identity"] = (
+        replay_preparer.component_identity
+    )
+    descriptor["replay_preparation_entry_point"] = (
+        "orev3.execution.replay_preparation:build_replay_evidence"
+    )
     artifacts = [
         _bound_artifact(
             artifact_identifier="characterization-report",
@@ -162,7 +188,49 @@ def _rewrite_adapter(
     descriptor["attempt_output_declaration_identity"] = domain_identity(
         ATTEMPT_OUTPUT_DECLARATION_IDENTITY_DOMAIN, output_material
     )
-    descriptor["schema_version"] = 2
+    contracts = {
+        item["external_input_identifier"]: item
+        for item in descriptor["evidence_preparation"]["dataset_contracts"]
+    }
+    for declaration in descriptor["external_inputs"]["declarations"]:
+        contract = contracts[declaration["external_input_identifier"]]
+        declaration["aggregate_byte_count"] = sum(
+            item["byte_count"] for item in declaration["members"]
+        )
+        declaration["input_version"] = contract["dataset_version"]
+        for index, member in enumerate(declaration["members"]):
+            member["member_order"] = index
+            member["member_identity"] = domain_identity(
+                EXTERNAL_INPUT_MEMBER_DOMAIN,
+                {
+                    "byte_count": member["byte_count"],
+                    "logical_identifier": member["logical_identifier"],
+                    "member_order": index,
+                    "member_path": member["member_path"],
+                    "sha256": member["sha256"],
+                },
+            )
+        parser_configuration = {
+            "container": contract["container"],
+            "decoder": {"decoder_kind": "not_required"},
+            "parser_identifier": contract["raw_parser_identifier"],
+            "parser_revision": "1",
+            "record_ordering": contract["record_ordering"],
+            "schema_identity": declaration["schema_identity"],
+        }
+        declaration["parser_configuration"] = parser_configuration
+        declaration["parser_configuration_identity"] = domain_identity(
+            PARSER_CONFIGURATION_DOMAIN, parser_configuration
+        )
+        declaration["external_input_identity"] = domain_identity(
+            EXTERNAL_INPUT_DECLARATION_DOMAIN,
+            {
+                key: value
+                for key, value in declaration.items()
+                if key != "external_input_identity"
+            },
+        )
+    descriptor["schema_version"] = 3
     descriptor["governed_scope_paths"] = sorted(
         set(descriptor["governed_scope_paths"]) | set(extra_governed)
     )
@@ -188,6 +256,38 @@ def _rewrite_adapter(
     reference = registry["descriptors"][0]
     reference["descriptor_identity"] = descriptor["adapter_identity"]
     reference["descriptor_sha256"] = hashlib.sha256(descriptor_raw).hexdigest()
+    declarations_by_identifier = {
+        item["external_input_identifier"]: item
+        for item in descriptor["external_inputs"]["declarations"]
+    }
+    registry["projection_contracts"] = [
+        {
+            "dataset_validator_identifier": contract[
+                "dataset_validator_identifier"
+            ],
+            "output_container": contract["container"],
+            "projection_contract_identifier": contract[
+                "projection_contract_identifier"
+            ],
+            "projection_schema_identifier": contract[
+                "projection_schema_identifier"
+            ],
+            "projection_schema_identity": contract[
+                "projection_schema_identity"
+            ],
+            "projection_schema_path": contract["projection_schema_path"],
+            "projection_schema_sha256": contract["projection_schema_sha256"],
+            "projector_identifier": contract["projector_identifier"],
+            "raw_parser_identifier": contract["raw_parser_identifier"],
+            "raw_schema_identifier": contract["raw_schema_identifier"],
+            "raw_schema_identity": declarations_by_identifier[
+                contract["external_input_identifier"]
+            ]["schema_identity"],
+            "raw_schema_path": contract["raw_schema_path"],
+            "raw_schema_sha256": contract["raw_schema_sha256"],
+        }
+        for contract in descriptor["evidence_preparation"]["dataset_contracts"]
+    ]
     registry["adapter_registry_identity"] = domain_identity(
         ADAPTER_REGISTRY_DOMAIN,
         {
@@ -230,7 +330,122 @@ def prospective_repository(tmp_path: Path, *, kinds: tuple[str, ...] = ("officia
     repository, _, _, _ = synthetic_repository(tmp_path)
     root = repository.root
     write(root, READINESS_TEST_POLICY_V2_PATH, (ROOT / READINESS_TEST_POLICY_V2_PATH).read_bytes())
+    write(
+        root,
+        "docs/research/specifications/experiment-execution-readiness-v1.1.md",
+        (
+            ROOT
+            / "docs/research/specifications/experiment-execution-readiness-v1.1.md"
+        ).read_bytes(),
+    )
+    write(
+        root,
+        "config/research/readiness/evidence-preparation-policy-v1.json",
+        (
+            ROOT
+            / "config/research/readiness/evidence-preparation-policy-v1.json"
+        ).read_bytes(),
+    )
     write(root, "pyproject.toml", (ROOT / "pyproject.toml").read_bytes())
+    raw_schema_path = "config/research/readiness/experiments/synthetic-raw-v1.json"
+    projection_schema_path = (
+        "config/research/readiness/experiments/synthetic-projection-v1.json"
+    )
+    common_properties = {
+        "candidates": {
+            "items": {"type": "integer"},
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": True,
+        },
+        "eligible": {"type": "boolean"},
+        "exclusion_reason": {
+            "enum": ["missing_observation", "not_applicable"],
+            "type": "string",
+        },
+        "observation_index": {"minimum": 0, "type": "integer"},
+        "source_unit_key": {"pattern": "^[a-z0-9-]+$", "type": "string"},
+    }
+    projection_schema = {
+        "$id": "orev3-test://synthetic/outcome-blind-projection-v1",
+        "additionalProperties": False,
+        "properties": common_properties,
+        "required": sorted(common_properties),
+        "type": "object",
+    }
+    raw_properties = {**common_properties, "outcome": {"type": "string"}}
+    raw_schema = {
+        "$id": "orev3-test://synthetic/raw-v1",
+        "additionalProperties": False,
+        "properties": raw_properties,
+        "required": sorted(raw_properties),
+        "type": "object",
+    }
+    raw_schema_raw = canonical_bytes(raw_schema)
+    projection_schema_raw = canonical_bytes(projection_schema)
+    write(root, raw_schema_path, raw_schema_raw)
+    write(root, projection_schema_path, projection_schema_raw)
+    input_payload = (
+        b'{"candidates":[1,2],"eligible":true,'
+        b'"exclusion_reason":"not_applicable","observation_index":0,'
+        b'"outcome":"hidden","source_unit_key":"unit-a"}\n'
+    )
+    descriptor_path = (
+        "config/research/readiness/experiments/synthetic-adapter-v1.json"
+    )
+    descriptor = parse_json((root / descriptor_path).read_bytes())
+    parser = resolve_component(
+        repository, repository.resolve_commit("HEAD"), "canonical-jsonl-raw-parser-v1"
+    )
+    declaration = {
+        "external_input_identifier": "synthetic-input",
+        "external_input_identity": ZERO,
+        "input_kind": "regular_file",
+        "members": [
+            {
+                "byte_count": len(input_payload),
+                "logical_identifier": "combined",
+                "member_path": "synthetic-input",
+                "sha256": hashlib.sha256(input_payload).hexdigest(),
+            }
+        ],
+        "parser_identity": parser.component_identity,
+        "role": "dataset",
+        "schema_identity": domain_identity(RAW_SCHEMA_CONTRACT_DOMAIN, raw_schema),
+    }
+    declaration["external_input_identity"] = domain_identity(
+        EXTERNAL_INPUT_DECLARATION_DOMAIN,
+        {key: value for key, value in declaration.items() if key != "external_input_identity"},
+    )
+    descriptor["external_inputs"] = {"declarations": [declaration]}
+    descriptor["evidence_preparation"]["dataset_contracts"] = [
+        {
+            "candidate_order": [1, 2],
+            "container": "canonical_jsonl",
+            "dataset_validator_identifier": "canonical-jsonl-dataset-validator-v1",
+            "dataset_version": "synthetic-v1",
+            "external_input_identifier": "synthetic-input",
+            "projection_contract_identifier": "synthetic-outcome-blind-v1",
+            "projection_required": True,
+            "projection_schema_identifier": "synthetic-projection-schema-v1",
+            "projection_schema_identity": domain_identity(
+                PROJECTION_SCHEMA_CONTRACT_DOMAIN, projection_schema
+            ),
+            "projection_schema_path": projection_schema_path,
+            "projection_schema_sha256": hashlib.sha256(
+                projection_schema_raw
+            ).hexdigest(),
+            "projector_identifier": "canonical-jsonl-outcome-blind-projector-v1",
+            "protocol_revision": "1",
+            "raw_parser_identifier": "canonical-jsonl-raw-parser-v1",
+            "raw_schema_identifier": "synthetic-raw-schema-v1",
+            "raw_schema_path": raw_schema_path,
+            "raw_schema_sha256": hashlib.sha256(raw_schema_raw).hexdigest(),
+            "record_ordering": "source_order",
+            "source_class": "combined_outcome_bearing",
+        }
+    ]
+    write(root, descriptor_path, canonical_bytes(descriptor))
     for path, raw in (
         (ALLOCATOR_IMPLEMENTATION_PATH, b"# governed allocator contract; no allocator implementation\n"),
         (ORCHESTRATOR_IMPLEMENTATION_PATH, b"# governed orchestrator contract; no orchestrator implementation\n"),
@@ -317,6 +532,8 @@ def prospective_repository(tmp_path: Path, *, kinds: tuple[str, ...] = ("officia
             ORCHESTRATOR_IMPLEMENTATION_PATH,
             OUTCOME_GATE_IMPLEMENTATION_PATH,
             CONTROL_STORAGE_IMPLEMENTATION_PATH,
+            raw_schema_path,
+            projection_schema_path,
         ),
     )
     git(root, "add", ".")
@@ -330,13 +547,26 @@ def prospective_repository(tmp_path: Path, *, kinds: tuple[str, ...] = ("officia
         descriptor_path: "configuration",
         binding_path: "configuration",
         implementation_path: "implementation",
+        "docs/research/experiments/synthetic.md": "protocol",
+        "docs/research/specifications/execution-v2.md": "execution_specification",
+        "docs/research/specifications/experiment-execution-readiness-v1.1.md": "readiness_specification",
         ALLOCATOR_IMPLEMENTATION_PATH: "control_plane",
         ORCHESTRATOR_IMPLEMENTATION_PATH: "control_plane",
         OUTCOME_GATE_IMPLEMENTATION_PATH: "control_plane",
         CONTROL_STORAGE_IMPLEMENTATION_PATH: "control_plane",
+        "src/orev3/execution/projection.py": "control_plane",
+        "src/orev3/execution/canonical.py": "control_plane",
+        "src/orev3/execution/registry.py": "control_plane",
+        "src/orev3/execution/readiness.py": "control_plane",
         READINESS_V1_1_SCHEMA_POLICY["readiness-test-policy"][1]: "readiness_schema",
         SOURCE_TREE_PATH: "source_tree",
         "pyproject.toml": "dependency_manifest",
+        "requirements/pylock.readiness-v1.toml": "dependency_manifest",
+        "config/research/readiness/evidence-preparation-policy-v1.json": "configuration",
+        "config/research/readiness/runtime-contract-v1.json": "runtime_manifest",
+        "config/research/readiness/offline-artifact-manifest-v1.json": "runtime_manifest",
+        raw_schema_path: "configuration",
+        projection_schema_path: "configuration",
         "tests/execution/test_readiness_mandatory_v1.py": "readiness_tests",
     }
     return repository, source, _source_scopes(root, source, roles)
@@ -415,7 +645,7 @@ def test_historical_and_prospective_overlays_are_explicit_and_exact() -> None:
         PROSPECTIVE_PHASE3B_SCHEMA_POLICY,
         READINESS_V1_1_SCHEMA_POLICY,
     ):
-        assert prospective["adapter-declaration"][0] == "adapter-declaration-v2"
+        assert prospective["adapter-declaration"][0] == "adapter-declaration-v3"
         assert len([kind for kind in prospective if kind == "adapter-declaration"]) == 1
     with pytest.raises(CanonicalControlError, match="not governed"):
         prospective_schema_policy("latest")  # type: ignore[arg-type]
@@ -434,8 +664,11 @@ def test_all_prospective_overlay_schemas_reconstruct_from_s(tmp_path: Path) -> N
         assert schemas["readiness-test-policy"]["$id"].endswith("readiness-test-policy-v2")
         if generation is not ProspectiveRegistryGeneration.PHASE2:
             assert schemas["adapter-declaration"]["$id"].endswith(
-                "adapter-declaration-v2"
+                "adapter-declaration-v3"
             )
+    prospective_phase3b = load_prospective_phase3b_schemas(repository, source)
+    assert prospective_phase3b["adapter-declaration"]["$id"].endswith("adapter-declaration-v3")
+    assert prospective_phase3b["profile-conformance-evidence"]["$id"].endswith("profile-conformance-evidence-v2")
 
 
 def test_complete_synthetic_prerequisites_reconstruct_without_side_effects(tmp_path: Path) -> None:
@@ -465,6 +698,102 @@ def test_complete_synthetic_prerequisites_reconstruct_without_side_effects(tmp_p
     assert not hasattr(result, "readiness_identity")
     assert not hasattr(result, "attempt_identity")
     assert not hasattr(result, "allocation_receipt")
+
+
+@pytest.mark.parametrize("open_field", ("decision_selection", "profile_contracts"))
+def test_adapter_v3_rejects_open_nested_authority(
+    tmp_path: Path, open_field: str
+) -> None:
+    repository, _, scopes = prospective_repository(tmp_path)
+    descriptor_path = (
+        repository.root
+        / "config/research/readiness/experiments/synthetic-adapter-v1.json"
+    )
+    descriptor = parse_json(descriptor_path.read_bytes())
+    if open_field == "decision_selection":
+        descriptor["evidence_preparation"]["decision_selection"][
+            "caller_extension"
+        ] = {"authority": ONE}
+    else:
+        descriptor["evidence_preparation"]["profile_contract_declarations"] = [
+            {"caller_extension": ONE}
+        ]
+    _write_adapter_and_registry(repository.root, descriptor)
+    source = _commit_mutation(repository, "open adapter-v3 authority")
+    scopes = _source_scopes(
+        repository.root,
+        source,
+        {item["repository_path"]: item["role"] for item in scopes},
+    )
+    with pytest.raises((CanonicalControlError, GitAuthorityError)):
+        load_readiness_prerequisite_contracts(
+            repository,
+            source,
+            experiment_identifier="synthetic-prospective",
+            requested_attempt_kind="official",
+            source_scopes=scopes,
+        )
+
+
+def test_adapter_v3_rejects_arbitrary_governed_decoder_authority(
+    tmp_path: Path,
+) -> None:
+    repository, _, scopes = prospective_repository(tmp_path)
+    descriptor_path = (
+        repository.root
+        / "config/research/readiness/experiments/synthetic-adapter-v1.json"
+    )
+    descriptor = parse_json(descriptor_path.read_bytes())
+    implementation_path = "src/orev3/execution/projection.py"
+    configuration_path = "config/research/readiness/evidence-preparation-policy-v1.json"
+    implementation = (repository.root / implementation_path).read_bytes()
+    configuration = (repository.root / configuration_path).read_bytes()
+    decoder = {
+        "configuration_byte_count": len(configuration),
+        "configuration_git_blob_identity": git(
+            repository.root, "hash-object", configuration_path
+        ),
+        "configuration_identity": ONE,
+        "configuration_path": configuration_path,
+        "configuration_sha256": hashlib.sha256(configuration).hexdigest(),
+        "decoder_component_identity": ONE,
+        "decoder_identifier": "caller-selected-decoder-v1",
+        "decoder_kind": "governed_decoder",
+        "decoder_revision": "1",
+        "implementation_git_blob_identity": git(
+            repository.root, "hash-object", implementation_path
+        ),
+        "implementation_path": implementation_path,
+        "implementation_sha256": hashlib.sha256(implementation).hexdigest(),
+    }
+    declaration = descriptor["external_inputs"]["declarations"][0]
+    declaration["parser_configuration"]["decoder"] = decoder
+    declaration["parser_configuration_identity"] = domain_identity(
+        PARSER_CONFIGURATION_DOMAIN, declaration["parser_configuration"]
+    )
+    declaration["external_input_identity"] = domain_identity(
+        EXTERNAL_INPUT_DECLARATION_DOMAIN,
+        {
+            key: value
+            for key, value in declaration.items()
+            if key != "external_input_identity"
+        },
+    )
+    _write_adapter_and_registry(repository.root, descriptor)
+    source = _commit_mutation(repository, "arbitrary decoder authority")
+    scopes = _source_scopes(
+        repository.root,
+        source,
+        {item["repository_path"]: item["role"] for item in scopes},
+    )
+    with pytest.raises((CanonicalControlError, GitAuthorityError), match="decoder"):
+        load_readiness_prerequisite_contracts(
+            repository,
+            source,
+            experiment_identifier="synthetic-prospective",
+            requested_attempt_kind="official",
+            source_scopes=scopes,
+        )
 
 
 @pytest.mark.parametrize("defect", ("missing", "malformed", "authority", "allocator"))
@@ -851,13 +1180,17 @@ def test_characterization_cannot_bind_outcome_profile_contract(tmp_path: Path) -
     write(repository.root, ADAPTER_REGISTRY_PATH, canonical_bytes(registry))
     source = _commit_mutation(repository)
     schemas = load_prospective_schemas(repository, source, ProspectiveRegistryGeneration.READINESS_V1_1)
-    registry_obj, adapter, _ = __import__(
-        "orev3.execution.readiness_contracts", fromlist=["_load_adapter"]
-    )._load_adapter(repository, source, schemas=schemas, experiment_identifier="synthetic-prospective")
-    assert registry_obj
-    from orev3.execution.readiness_contracts import load_profile_contracts
-    with pytest.raises(CanonicalControlError, match="PROFILE_POLICY_MISMATCH"):
-        load_profile_contracts(repository, source, schemas=schemas, adapter=adapter)
+    with pytest.raises(
+        CanonicalControlError, match="profile contract declarations differ"
+    ):
+        __import__(
+            "orev3.execution.readiness_contracts", fromlist=["_load_adapter"]
+        )._load_adapter(
+            repository,
+            source,
+            schemas=schemas,
+            experiment_identifier="synthetic-prospective",
+        )
 
 
 def test_outcome_aware_profile_contracts_reconstruct_and_fail_closed(tmp_path: Path) -> None:
@@ -984,6 +1317,8 @@ def test_outcome_aware_profile_contracts_reconstruct_and_fail_closed(tmp_path: P
 
 def test_source_scope_multiple_paths_and_substitution_fail_closed(tmp_path: Path) -> None:
     repository, source, scopes = prospective_repository(tmp_path)
+    assert sum(item["role"] == "control_plane" for item in scopes) >= 2
+    assert sum(item["role"] == "dependency_manifest" for item in scopes) == 2
     required = {item["repository_path"]: item["role"] for item in scopes}
     assert len(validate_prerequisite_source_scopes(repository, source, scopes, required_roles=required)) == len(scopes)
     duplicate = sorted(scopes + [dict(scopes[0])], key=lambda item: item["repository_path"])

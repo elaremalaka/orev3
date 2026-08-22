@@ -43,6 +43,7 @@ def main() -> int:
         candidate_order=request["candidate_order"],
         allowed_exclusion_reasons=request["allowed_exclusion_reasons"],
         max_units=request["max_units"],
+        decision_selection_identity=request.get("decision_selection_identity"),
     )
     target = Path(request["private_output"])
     payload = canonical_bytes({"population": population, "replay": replay})

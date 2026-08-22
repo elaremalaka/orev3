@@ -27,12 +27,16 @@ from orev3.execution.readiness import load_repository_authority
 from orev3.execution.readiness_record import (
     PHASE3A_SCHEMA_DOCUMENT_POLICY,
     PHASE3A_SCHEMA_POLICY,
+    PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_PHASE3A_SCHEMA_POLICY,
+    READINESS_TEST_POLICY_V2_PATH,
     RepositoryAuthorityV1,
     SourceScopeDeclarationV1,
     load_repository_authority_bytes,
     reconstruct_document_binding_identity,
     validate_implementation_binding,
     validate_readiness_test_policy,
+    validate_readiness_test_policy_v2,
 )
 from orev3.execution.registry import load_adapter_declaration_bytes, load_adapter_registry_bytes
 from orev3.execution.runtime import (
@@ -50,6 +54,7 @@ RUNTIME_CONTRACT_PATH = "config/research/readiness/runtime-contract-v1.json"
 ADAPTER_REGISTRY_PATH = "config/research/readiness/adapter-registry-v1.json"
 READINESS_TEST_POLICY_PATH = "config/research/readiness/readiness-test-policy-v1.json"
 READINESS_SPECIFICATION_PATH = "docs/research/specifications/experiment-execution-readiness-v1.md"
+READINESS_SPECIFICATION_V1_1_PATH = "docs/research/specifications/experiment-execution-readiness-v1.1.md"
 REPOSITORY_AUTHORITY_PATH = "config/research/readiness/repository-authority-v1.json"
 DEFAULT_ARTIFACT_STORE = "data/research/readiness/wheels"
 PHASE3A_REMAINING_PREDICATES = (
@@ -67,6 +72,11 @@ PHASE3A_REMAINING_PREDICATES = (
 class PreparationEnvironmentDisposition(str, Enum):
     PREPARATION_ENVIRONMENT_VALIDATED = "PREPARATION_ENVIRONMENT_VALIDATED"
     PREPARATION_ENVIRONMENT_REJECTED = "PREPARATION_ENVIRONMENT_REJECTED"
+
+
+class PreparationAuthorityGeneration(str, Enum):
+    HISTORICAL = "historical-phase3a-v1"
+    PROSPECTIVE_V1_1 = "prospective-v1.1-phase3a"
 
 
 class PreparationEvidenceDisposition(str, Enum):
@@ -127,6 +137,42 @@ def load_phase3a_schemas(repository: GitRepository, source_commit: str) -> Mappi
     return schemas
 
 
+def load_prospective_phase3a_schemas(
+    repository: GitRepository, source_commit: str
+) -> Mapping[str, Mapping[str, object]]:
+    schemas: dict[str, Mapping[str, object]] = {}
+    for kind, (_, path) in PROSPECTIVE_PHASE3A_SCHEMA_POLICY.items():
+        raw = _blob(repository, source_commit, path)
+        expected_identifier, expected_digest = (
+            PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY[kind]
+        )
+        if hashlib.sha256(raw).hexdigest() != expected_digest:
+            raise CanonicalControlError(
+                f"bound prospective Phase-3A schema digest differs: {kind}"
+            )
+        schema = parse_json(raw)
+        if schema.get("$id") != expected_identifier:
+            raise CanonicalControlError(
+                f"bound prospective Phase-3A schema identifier differs: {kind}"
+            )
+        schemas[kind] = schema
+    if tuple(schemas) != tuple(PROSPECTIVE_PHASE3A_SCHEMA_POLICY) or len(schemas) != 10:
+        raise CanonicalControlError(
+            "prospective Phase-3A schema registry is not exactly complete"
+        )
+    return schemas
+
+
+def _selected_phase3a_authority(
+    generation: PreparationAuthorityGeneration,
+) -> tuple[str, str]:
+    if generation is PreparationAuthorityGeneration.HISTORICAL:
+        return READINESS_TEST_POLICY_PATH, READINESS_SPECIFICATION_PATH
+    if generation is PreparationAuthorityGeneration.PROSPECTIVE_V1_1:
+        return READINESS_TEST_POLICY_V2_PATH, READINESS_SPECIFICATION_V1_1_PATH
+    raise CanonicalControlError("preparation authority generation is unsupported")
+
+
 def _scope_mapping(scope: SourceScopeDeclarationV1) -> dict[str, str]:
     material = {
         "git_mode": scope.git_mode,
@@ -159,14 +205,17 @@ def _require_phase3a_scope_closure(
     dependency_lock_path: str,
     artifact_manifest_path: str,
     mandatory_test_paths: tuple[str, ...],
+    *,
+    readiness_test_policy_path: str = READINESS_TEST_POLICY_PATH,
+    readiness_specification_path: str = READINESS_SPECIFICATION_PATH,
 ) -> None:
     required: dict[str, str] = {
         RUNTIME_CONTRACT_PATH: "runtime_manifest",
         ADAPTER_REGISTRY_PATH: "configuration",
         descriptor_path: "configuration",
         artifact_manifest_path: "configuration",
-        READINESS_TEST_POLICY_PATH: "readiness_test_policy",
-        READINESS_SPECIFICATION_PATH: "readiness_specification",
+        readiness_test_policy_path: "readiness_test_policy",
+        readiness_specification_path: "readiness_specification",
         REPOSITORY_AUTHORITY_PATH: "repository_authority",
         "src/orev3": "source_tree",
         "src/orev3/execution": "control_plane",
@@ -234,10 +283,31 @@ def _validate_detached_preparation_environment(request: Mapping[str, Any]) -> Ma
     ):
         raise CanonicalControlError("detached repository authority differs from resolved Phase-2 authority")
     scopes = _validate_scope_objects(repository, source, request["source_scopes"])
-    schemas = load_phase3a_schemas(repository, source)
-    policy = parse_canonical_bytes(_blob(repository, source, READINESS_TEST_POLICY_PATH))
+    try:
+        generation = PreparationAuthorityGeneration(
+            request.get(
+                "authority_generation",
+                PreparationAuthorityGeneration.HISTORICAL.value,
+            )
+        )
+    except ValueError as exc:
+        raise CanonicalControlError(
+            "detached preparation authority generation is unsupported"
+        ) from exc
+    schemas = (
+        load_phase3a_schemas(repository, source)
+        if generation is PreparationAuthorityGeneration.HISTORICAL
+        else load_prospective_phase3a_schemas(repository, source)
+    )
+    readiness_test_policy_path, readiness_specification_path = (
+        _selected_phase3a_authority(generation)
+    )
+    policy = parse_canonical_bytes(_blob(repository, source, readiness_test_policy_path))
     validate_json_schema_instance(policy, schemas["readiness-test-policy"], schema_registry={})
-    validate_readiness_test_policy(policy)
+    if generation is PreparationAuthorityGeneration.HISTORICAL:
+        validate_readiness_test_policy(policy)
+    else:
+        validate_readiness_test_policy_v2(policy)
     mandatory_test_paths = tuple(policy["required_selectors"])
     runtime = load_runtime_contract_bytes(_blob(repository, source, RUNTIME_CONTRACT_PATH), schema=schemas["runtime-contract"])
     lock_raw = _blob(repository, source, runtime.dependency_lock_path, limit=8 * 1024 * 1024)
@@ -295,7 +365,17 @@ def _validate_detached_preparation_environment(request: Mapping[str, Any]) -> Ma
     required_descriptor_paths = {reference["descriptor_path"], descriptor["protocol"]["path"], descriptor["implementation_binding_path"], specification["path"], implementation_path}
     if not required_descriptor_paths.issubset(set(descriptor["governed_scope_paths"])):
         raise CanonicalControlError("adapter governed scopes omit a bound authority object")
-    _require_phase3a_scope_closure(scopes, descriptor, reference["descriptor_path"], implementation_path, runtime.dependency_lock_path, runtime.artifact_manifest_path, mandatory_test_paths)
+    _require_phase3a_scope_closure(
+        scopes,
+        descriptor,
+        reference["descriptor_path"],
+        implementation_path,
+        runtime.dependency_lock_path,
+        runtime.artifact_manifest_path,
+        mandatory_test_paths,
+        readiness_test_policy_path=readiness_test_policy_path,
+        readiness_specification_path=readiness_specification_path,
+    )
     if request.get("phase3b_controller") is True:
         dependency_root_path = Path(request["closed_dependency_root_path"]).resolve()
         temporary_root = Path(request["controller_temporary_root"]).resolve()
@@ -336,10 +416,26 @@ def _validate_detached_preparation_environment(request: Mapping[str, Any]) -> Ma
     return result
 
 
-def _discover_requirements(repository: GitRepository, source: str, experiment_identifier: str) -> SourceCandidateRequirements:
-    schemas = load_phase3a_schemas(repository, source)
-    policy = parse_canonical_bytes(_blob(repository, source, READINESS_TEST_POLICY_PATH))
-    validate_readiness_test_policy(policy)
+def _discover_requirements(
+    repository: GitRepository,
+    source: str,
+    experiment_identifier: str,
+    *,
+    generation: PreparationAuthorityGeneration = PreparationAuthorityGeneration.HISTORICAL,
+) -> SourceCandidateRequirements:
+    schemas = (
+        load_phase3a_schemas(repository, source)
+        if generation is PreparationAuthorityGeneration.HISTORICAL
+        else load_prospective_phase3a_schemas(repository, source)
+    )
+    readiness_test_policy_path, readiness_specification_path = (
+        _selected_phase3a_authority(generation)
+    )
+    policy = parse_canonical_bytes(_blob(repository, source, readiness_test_policy_path))
+    if generation is PreparationAuthorityGeneration.HISTORICAL:
+        validate_readiness_test_policy(policy)
+    else:
+        validate_readiness_test_policy_v2(policy)
     runtime = load_runtime_contract_bytes(_blob(repository, source, RUNTIME_CONTRACT_PATH), schema=schemas["runtime-contract"])
     registry, reference, adapter = _load_adapter_material(repository, source, schemas, experiment_identifier)
     del registry
@@ -355,8 +451,8 @@ def _discover_requirements(repository: GitRepository, source: str, experiment_id
         ADAPTER_REGISTRY_PATH: ("configuration", "top_level", ""),
         reference["descriptor_path"]: ("configuration", "top_level", ""),
         runtime.artifact_manifest_path: ("configuration", "top_level", ""),
-        READINESS_TEST_POLICY_PATH: ("readiness_test_policy", "top_level", ""),
-        READINESS_SPECIFICATION_PATH: ("readiness_specification", "top_level", ""),
+        readiness_test_policy_path: ("readiness_test_policy", "top_level", ""),
+        readiness_specification_path: ("readiness_specification", "top_level", ""),
         REPOSITORY_AUTHORITY_PATH: ("repository_authority", "top_level", ""),
         descriptor["implementation_binding_path"]: ("configuration", "top_level", ""),
         descriptor["protocol"]["path"]: ("protocol", "top_level", ""),
@@ -411,6 +507,7 @@ def _collect_preparation_environment_evidence(
     artifact_store_root: Path | None = None,
     allow_test_file_remote: bool = False,
     interpreter: Path | None = None,
+    generation: PreparationAuthorityGeneration = PreparationAuthorityGeneration.HISTORICAL,
 ) -> PreparationEnvironmentEvidence:
     """Private evidence collector; it cannot return authoritative Phase-3A state."""
 
@@ -421,7 +518,9 @@ def _collect_preparation_environment_evidence(
         local_head = repository.resolve_commit("HEAD")
         if branch != authority.approved_branch_ref or local_head != first_remote.remote_head_commit:
             raise GitAuthorityError(GitDiagnosticCode.LOCAL_REMOTE_DIVERGENCE, "preparation requires synchronized approved local and remote heads")
-        requirements = _discover_requirements(repository, local_head, identifier)
+        requirements = _discover_requirements(
+            repository, local_head, identifier, generation=generation
+        )
         candidate = resolve_source_candidate(repository, authority, remote_alias, requirements, allow_test_file=allow_test_file_remote)
         store = (artifact_store_root or (repository.root / DEFAULT_ARTIFACT_STORE)).resolve()
         request = {
@@ -431,6 +530,7 @@ def _collect_preparation_environment_evidence(
             "repository_authority_identifier": candidate.remote_head.repository_authority_identifier,
             "source_commit": candidate.source_commit,
             "source_scopes": [_scope_mapping(scope) for scope in candidate.source_scopes],
+            "authority_generation": generation.value,
         }
         with DetachedSource(repository, candidate.source_commit) as detached:
             worker = _run_preparation_worker(detached, "validate_runtime", request, interpreter=interpreter)

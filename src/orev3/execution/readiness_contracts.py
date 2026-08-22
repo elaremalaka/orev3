@@ -24,6 +24,7 @@ from orev3.execution.contract_validation import (
     PROFILE_CONTRACT_DOMAIN,
     validate_artifact_declarations,
     validate_profile_contract,
+    validate_profile_contract_v2,
 )
 from orev3.execution.git_state import GitRepository
 from orev3.execution.readiness_record import (
@@ -440,6 +441,84 @@ def _load_adapter(
         or adapter.adapter_identity != reference["descriptor_identity"]
     ):
         raise CanonicalControlError("adapter descriptor differs from registry reference")
+    if adapter.material["schema_version"] == 3:
+        from orev3.execution.phase3b_components import (
+            RAW_SCHEMA_CONTRACT_DOMAIN,
+            resolve_component,
+        )
+
+        contracts = {
+            item["external_input_identifier"]: item
+            for item in adapter.material["evidence_preparation"]["dataset_contracts"]
+        }
+        governed_paths = set(adapter.material["governed_scope_paths"])
+        def governed(path: str) -> bool:
+            return any(
+                path == candidate or path.startswith(candidate + "/")
+                for candidate in governed_paths
+            )
+
+        for declaration in adapter.material["external_inputs"]["declarations"]:
+            parser = resolve_component(
+                repository,
+                source_commit,
+                declaration["parser_configuration"]["parser_identifier"],
+            )
+            parser_configuration = declaration["parser_configuration"]
+            if (
+                parser.component_identity != declaration["parser_identity"]
+                or parser.revision != parser_configuration["parser_revision"]
+                or not governed(parser.path)
+            ):
+                raise CanonicalControlError(
+                    "external-input parser component does not reconstruct"
+                )
+            contract = contracts[declaration["external_input_identifier"]]
+            raw_schema, _ = _committed_blob(
+                repository, source_commit, contract["raw_schema_path"]
+            )
+            if (
+                hashlib.sha256(raw_schema).hexdigest()
+                != contract["raw_schema_sha256"]
+                or domain_identity(
+                    RAW_SCHEMA_CONTRACT_DOMAIN, parse_canonical_bytes(raw_schema)
+                )
+                != declaration["schema_identity"]
+            ):
+                raise CanonicalControlError(
+                    "external-input schema authority does not reconstruct"
+                )
+            decoder = parser_configuration["decoder"]
+            if decoder["decoder_kind"] == "governed_decoder":
+                decoder_component = resolve_component(
+                    repository, source_commit, decoder["decoder_identifier"]
+                )
+                if (
+                    decoder_component.component_identity
+                    != decoder["decoder_component_identity"]
+                    or decoder_component.path != decoder["implementation_path"]
+                    or decoder_component.revision != decoder["decoder_revision"]
+                    or decoder_component.git_object_identity
+                    != decoder["implementation_git_blob_identity"]
+                    or decoder_component.sha256 != decoder["implementation_sha256"]
+                ):
+                    raise CanonicalControlError(
+                        "decoder implementation authority does not reconstruct"
+                    )
+                configuration_raw, configuration_git = _committed_blob(
+                    repository, source_commit, decoder["configuration_path"]
+                )
+                if (
+                    not governed(decoder["configuration_path"])
+                    or not governed(decoder["implementation_path"])
+                    or len(configuration_raw) != decoder["configuration_byte_count"]
+                    or configuration_git != decoder["configuration_git_blob_identity"]
+                    or hashlib.sha256(configuration_raw).hexdigest()
+                    != decoder["configuration_sha256"]
+                ):
+                    raise CanonicalControlError(
+                        "decoder configuration authority does not reconstruct"
+                    )
     binding_raw, _ = _committed_blob(
         repository, source_commit, adapter.material["implementation_binding_path"]
     )
@@ -521,8 +600,18 @@ def load_profile_contracts(
         "declarations": declarations,
         "outcome_policy": adapter.material["outcome_policy"],
     }
-    evidence = validate_profile_contract(
-        profile, artifact_declarations=adapter.material["artifacts"]["declarations"]
+    evidence = (
+        validate_profile_contract_v2(
+            profile,
+            artifact_declarations=adapter.material["artifacts"]["declarations"],
+        )
+        if schemas["profile-conformance-evidence"].get("$id", "").endswith(
+            "profile-conformance-evidence-v2"
+        )
+        else validate_profile_contract(
+            profile,
+            artifact_declarations=adapter.material["artifacts"]["declarations"],
+        )
     )
     return BoundProfileContracts(declarations, evidence)
 
@@ -630,6 +719,17 @@ def validate_prerequisite_source_scopes(
                     )
     for path, role in required_roles.items():
         scope = by_path.get(path)
+        if scope is None:
+            scope = next(
+                (
+                    candidate
+                    for candidate in scopes
+                    if candidate.role == role
+                    and candidate.git_mode == "040000"
+                    and path.startswith(candidate.repository_path + "/")
+                ),
+                None,
+            )
         if scope is None or scope.role != role:
             raise CanonicalControlError(
                 f"required prerequisite source scope is absent: {role}:{path}"
@@ -699,7 +799,23 @@ def load_readiness_prerequisite_contracts(
         *(reference["path"] for reference in adapter.material["evidence_preparation"]["profile_contract_declarations"]),
         *required_control_paths,
     }
-    if not required_adapter_paths.issubset(governed_paths):
+    for declaration in adapter.material["external_inputs"]["declarations"]:
+        parser = declaration["parser_configuration"]
+        from orev3.execution.phase3b_components import COMPONENT_POLICIES
+
+        required_adapter_paths.add(COMPONENT_POLICIES[parser["parser_identifier"]].path)
+        decoder = parser["decoder"]
+        if decoder["decoder_kind"] == "governed_decoder":
+            required_adapter_paths.update(
+                {decoder["implementation_path"], decoder["configuration_path"]}
+            )
+    if any(
+        not any(
+            path == governed_path or path.startswith(governed_path + "/")
+            for governed_path in governed_paths
+        )
+        for path in required_adapter_paths
+    ):
         raise CanonicalControlError(
             "adapter does not govern every prerequisite authority path"
         )
@@ -732,6 +848,17 @@ def load_readiness_prerequisite_contracts(
         "profile_contract_declarations"
     ]:
         required_roles[reference["path"]] = "configuration"
+    for declaration in adapter.material["external_inputs"]["declarations"]:
+        parser = declaration["parser_configuration"]
+        from orev3.execution.phase3b_components import COMPONENT_POLICIES
+
+        required_roles[COMPONENT_POLICIES[parser["parser_identifier"]].path] = (
+            "control_plane"
+        )
+        decoder = parser["decoder"]
+        if decoder["decoder_kind"] == "governed_decoder":
+            required_roles[decoder["implementation_path"]] = "control_plane"
+            required_roles[decoder["configuration_path"]] = "configuration"
     nested_under_source = {
         path: ("nested", SOURCE_TREE_PATH)
         for path in required_roles

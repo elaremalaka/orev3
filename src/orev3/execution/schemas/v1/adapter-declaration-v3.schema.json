@@ -1,0 +1,122 @@
+{
+  "$id": "orev3://schemas/execution-readiness/v1/adapter-declaration-v3",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "adapter_identifier": {"$ref": "#/$defs/identifier"},
+    "adapter_identity": {"$ref": "#/$defs/sha256"},
+    "adapter_readiness_test_nodes": {"$ref": "#/$defs/sortedStrings"},
+    "adapter_readiness_tests": {"$ref": "#/$defs/sortedStrings"},
+    "artifacts": {"$ref": "#/$defs/artifacts"},
+    "attempt_output_declaration_identity": {"$ref": "#/$defs/sha256"},
+    "attempt_output_declaration_identity_material": {"$ref": "#/$defs/attemptOutput"},
+    "configuration": {"$ref": "#/$defs/configuration"},
+    "evidence_preparation": {"$ref": "#/$defs/evidencePreparation"},
+    "execution_profile": {"$ref": "#/$defs/executionProfile"},
+    "execution_specification": {"$ref": "#/$defs/executionSpecification"},
+    "experiment_identifier": {"pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "type": "string"},
+    "external_inputs": {"additionalProperties": false, "properties": {"declarations": {"items": {"$ref": "#/$defs/externalInput"}, "maxItems": 4096, "type": "array", "uniqueItems": true, "x-order-semantics": "role-then-first-member-path-then-identifier", "x-unique-key": ["external_input_identifier"]}}, "required": ["declarations"], "type": "object"},
+    "governed_scope_paths": {"items": {"$ref": "#/$defs/path"}, "minItems": 1, "maxItems": 4096, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+    "implementation_binding_path": {"$ref": "#/$defs/path"},
+    "implementation_entry_point": {"pattern": "^[A-Za-z_][A-Za-z0-9_.]*:[A-Za-z_][A-Za-z0-9_]*$", "type": "string"},
+    "outcome_policy": {"enum": ["outcome_aware_authorized_only", "prohibited_and_not_performed"]},
+    "protocol": {"$ref": "#/$defs/specification"},
+    "replay_preparation_contract_identity": {"$ref": "#/$defs/sha256"},
+    "replay_preparation_entry_point": {"pattern": "^[A-Za-z_][A-Za-z0-9_.]*:[A-Za-z_][A-Za-z0-9_]*$", "type": "string"},
+    "schema_version": {"const": 3}
+  },
+  "required": ["adapter_identifier", "adapter_identity", "adapter_readiness_test_nodes", "adapter_readiness_tests", "artifacts", "attempt_output_declaration_identity", "attempt_output_declaration_identity_material", "configuration", "evidence_preparation", "execution_profile", "execution_specification", "experiment_identifier", "external_inputs", "governed_scope_paths", "implementation_binding_path", "implementation_entry_point", "outcome_policy", "protocol", "replay_preparation_contract_identity", "replay_preparation_entry_point", "schema_version"],
+  "title": "AdapterDeclarationV3",
+  "type": "object",
+  "$defs": {
+    "artifact": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_identifier": {"$ref": "#/$defs/identifier"}, "artifact_kind": {"$ref": "#/$defs/identifier"},
+        "container": {"enum": ["json", "jsonl", "text"]}, "declaration_identity": {"$ref": "#/$defs/sha256"},
+        "dependencies": {"items": {"$ref": "#/$defs/identifier"}, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+        "dependency_roles": {"items": {"$ref": "#/$defs/identifier"}, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+        "execution_phase": {"enum": ["characterization", "evaluation", "ranking"]},
+        "profile_applicability": {"enum": ["all_profiles", "outcome_aware_v1", "outcome_blind_characterization_v1"]},
+        "relative_path": {"$ref": "#/$defs/path"}, "schema_identity": {"$ref": "#/$defs/sha256"}
+      },
+      "required": ["artifact_identifier", "artifact_kind", "container", "declaration_identity", "dependencies", "dependency_roles", "execution_phase", "profile_applicability", "relative_path", "schema_identity"], "type": "object"
+    },
+    "artifacts": {"additionalProperties": false, "properties": {"declarations": {"items": {"$ref": "#/$defs/artifact"}, "maxItems": 4096, "type": "array", "uniqueItems": true, "x-canonical-order": ["artifact_identifier"], "x-unique-key": ["artifact_identifier"]}}, "required": ["declarations"], "type": "object"},
+    "attemptOutput": {"additionalProperties": false, "properties": {
+      "adapter_identifier": {"$ref": "#/$defs/identifier"}, "allocation_authority_identity": {"$ref": "#/$defs/sha256"}, "allocator_contract_identity": {"$ref": "#/$defs/sha256"},
+      "artifact_declaration_identities": {"items": {"$ref": "#/$defs/sha256"}, "type": "array", "uniqueItems": true, "x-order-semantics": "artifact-identifier-order"},
+      "attempt_output_declaration_schema_revision": {"const": "attempt-output-declaration-identity-material-v1"}, "control_storage_contract_identity": {"$ref": "#/$defs/sha256"},
+      "experiment_identifier": {"pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "type": "string"}, "output_namespace_identity_policy": {"const": "output-namespace-identity-material-v1"},
+      "output_policy_identity": {"$ref": "#/$defs/sha256"}, "output_policy_revision": {"const": "readiness-v1-output-policy"}
+    }, "required": ["adapter_identifier", "allocation_authority_identity", "allocator_contract_identity", "artifact_declaration_identities", "attempt_output_declaration_schema_revision", "control_storage_contract_identity", "experiment_identifier", "output_namespace_identity_policy", "output_policy_identity", "output_policy_revision"], "type": "object"},
+    "configuration": {"additionalProperties": false, "properties": {"decision_selection_identity": {"$ref": "#/$defs/sha256"}, "experiment_configuration_identity": {"$ref": "#/$defs/sha256"}}, "required": ["decision_selection_identity", "experiment_configuration_identity"], "type": "object"},
+    "datasetContract": {"type": "object", "additionalProperties": false, "properties": {
+      "candidate_order": {"items": {"minimum": 0, "type": "integer"}, "minItems": 1, "type": "array", "uniqueItems": true}, "container": {"$ref": "#/$defs/identifier"},
+      "dataset_validator_identifier": {"$ref": "#/$defs/identifier"}, "dataset_version": {"$ref": "#/$defs/identifier"}, "external_input_identifier": {"$ref": "#/$defs/identifier"},
+      "projection_contract_identifier": {"$ref": "#/$defs/identifier"}, "projection_required": {"type": "boolean"}, "projection_schema_identifier": {"$ref": "#/$defs/identifier"},
+      "projection_schema_identity": {"$ref": "#/$defs/sha256"}, "projection_schema_path": {"$ref": "#/$defs/path"}, "projection_schema_sha256": {"$ref": "#/$defs/sha256"},
+      "projector_identifier": {"$ref": "#/$defs/identifier"}, "protocol_revision": {"type": "string", "minLength": 1}, "raw_parser_identifier": {"$ref": "#/$defs/identifier"},
+      "raw_schema_identifier": {"$ref": "#/$defs/identifier"}, "raw_schema_path": {"$ref": "#/$defs/path"}, "raw_schema_sha256": {"$ref": "#/$defs/sha256"},
+      "record_ordering": {"$ref": "#/$defs/identifier"}, "source_class": {"enum": ["combined_outcome_bearing", "outcome_blind"]}
+    }, "required": ["candidate_order", "container", "dataset_validator_identifier", "dataset_version", "external_input_identifier", "projection_contract_identifier", "projection_required", "projection_schema_identifier", "projection_schema_identity", "projection_schema_path", "projection_schema_sha256", "projector_identifier", "protocol_revision", "raw_parser_identifier", "raw_schema_identifier", "raw_schema_path", "raw_schema_sha256", "record_ordering", "source_class"]},
+    "decoder": {"oneOf": [
+      {"additionalProperties": false, "properties": {"decoder_kind": {"const": "not_required"}}, "required": ["decoder_kind"], "type": "object"},
+      {"additionalProperties": false, "properties": {
+        "configuration_byte_count": {"minimum": 0, "type": "integer"}, "configuration_git_blob_identity": {"$ref": "#/$defs/git"}, "configuration_identity": {"$ref": "#/$defs/sha256"},
+        "configuration_path": {"$ref": "#/$defs/path"}, "configuration_sha256": {"$ref": "#/$defs/sha256"}, "decoder_component_identity": {"$ref": "#/$defs/sha256"},
+        "decoder_identifier": {"$ref": "#/$defs/identifier"}, "decoder_kind": {"const": "governed_decoder"}, "decoder_revision": {"minLength": 1, "type": "string"},
+        "implementation_git_blob_identity": {"$ref": "#/$defs/git"}, "implementation_path": {"$ref": "#/$defs/path"}, "implementation_sha256": {"$ref": "#/$defs/sha256"}
+      }, "required": ["configuration_byte_count", "configuration_git_blob_identity", "configuration_identity", "configuration_path", "configuration_sha256", "decoder_component_identity", "decoder_identifier", "decoder_kind", "decoder_revision", "implementation_git_blob_identity", "implementation_path", "implementation_sha256"], "type": "object"}
+    ]},
+    "evidencePreparation": {"additionalProperties": false, "properties": {
+      "dataset_contracts": {"items": {"$ref": "#/$defs/datasetContract"}, "type": "array", "x-canonical-order": ["external_input_identifier"], "x-unique-key": ["external_input_identifier"]},
+      "decision_selection": {"additionalProperties": false, "properties": {
+        "configuration_identity": {"$ref": "#/$defs/sha256"},
+        "permitted_exclusion_reasons": {"items": {"minLength": 1, "type": "string"}, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+        "replay_preparer_identifier": {"const": "canonical-replay-preparer-v1"},
+        "selector_identifier": {"const": "latest-eligible-observation-selector-v1"},
+        "selector_revision": {"const": "1"},
+        "target_observation_rule": {"minLength": 1, "maxLength": 256, "type": "string"},
+        "tie_behavior": {"minLength": 1, "maxLength": 256, "type": "string"},
+        "tolerance_contract": {"minLength": 1, "maxLength": 256, "type": "string"}
+      }, "required": ["configuration_identity", "permitted_exclusion_reasons", "replay_preparer_identifier", "selector_identifier", "selector_revision", "target_observation_rule", "tie_behavior", "tolerance_contract"], "type": "object"},
+      "profile_contract_declarations": {"items": {"additionalProperties": false, "properties": {
+        "contract_identifier": {"$ref": "#/$defs/identifier"},
+        "identity": {"$ref": "#/$defs/sha256"},
+        "path": {"$ref": "#/$defs/path"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }, "required": ["contract_identifier", "identity", "path", "sha256"], "type": "object"}, "type": "array", "x-canonical-order": ["contract_identifier"], "x-unique-key": ["contract_identifier"]},
+      "resource_policy_identity": {"$ref": "#/$defs/sha256"}
+    }, "required": ["dataset_contracts", "decision_selection", "profile_contract_declarations", "resource_policy_identity"], "type": "object"},
+    "executionProfile": {"additionalProperties": false, "properties": {"profile_identity": {"$ref": "#/$defs/sha256"}, "profile_name": {"enum": ["outcome_aware_v1", "outcome_blind_characterization_v1"]}}, "required": ["profile_identity", "profile_name"], "type": "object"},
+    "executionSpecification": {"additionalProperties": false, "properties": {"path": {"$ref": "#/$defs/path"}, "revision": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}, "specification_identity": {"$ref": "#/$defs/sha256"}}, "required": ["path", "revision", "sha256", "specification_identity"], "type": "object"},
+    "externalInput": {"oneOf": [
+      {"$ref": "#/$defs/regularInput"},
+      {"$ref": "#/$defs/manifestInput"}
+    ]},
+    "externalCommon": {"properties": {
+      "aggregate_byte_count": {"minimum": 0, "type": "integer"}, "external_input_identifier": {"$ref": "#/$defs/identifier"}, "external_input_identity": {"$ref": "#/$defs/sha256"},
+      "input_kind": {"enum": ["regular_file", "ordered_file_collection"]}, "input_version": {"$ref": "#/$defs/identifier"}, "members": {"items": {"$ref": "#/$defs/member"}, "minItems": 1, "type": "array"},
+      "parser_configuration": {"$ref": "#/$defs/parserConfiguration"}, "parser_configuration_identity": {"$ref": "#/$defs/sha256"}, "parser_identity": {"$ref": "#/$defs/sha256"},
+      "role": {"$ref": "#/$defs/identifier"}, "schema_identity": {"$ref": "#/$defs/sha256"}
+    }},
+    "git": {"pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$", "type": "string"},
+    "identifier": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"},
+    "manifestInput": {"additionalProperties": false, "properties": {
+      "aggregate_byte_count": {"minimum": 0, "type": "integer"}, "external_input_identifier": {"$ref": "#/$defs/identifier"}, "external_input_identity": {"$ref": "#/$defs/sha256"}, "input_kind": {"const": "ordered_file_collection"}, "input_version": {"$ref": "#/$defs/identifier"}, "members": {"items": {"$ref": "#/$defs/member"}, "minItems": 1, "type": "array"},
+      "parser_configuration": {"$ref": "#/$defs/parserConfiguration"}, "parser_configuration_identity": {"$ref": "#/$defs/sha256"}, "parser_identity": {"$ref": "#/$defs/sha256"}, "role": {"$ref": "#/$defs/identifier"}, "schema_identity": {"$ref": "#/$defs/sha256"}, "manifest_identity": {"$ref": "#/$defs/sha256"},
+      "manifest_revision": {"const": "external-input-ordered-file-manifest-v1"}
+    }, "required": ["aggregate_byte_count", "external_input_identifier", "external_input_identity", "input_kind", "input_version", "members", "parser_configuration", "parser_configuration_identity", "parser_identity", "role", "schema_identity", "manifest_identity", "manifest_revision"], "type": "object"},
+    "member": {"additionalProperties": false, "properties": {"byte_count": {"minimum": 0, "type": "integer"}, "logical_identifier": {"$ref": "#/$defs/identifier"}, "member_identity": {"$ref": "#/$defs/sha256"}, "member_order": {"minimum": 0, "type": "integer"}, "member_path": {"$ref": "#/$defs/path"}, "sha256": {"$ref": "#/$defs/sha256"}}, "required": ["byte_count", "logical_identifier", "member_identity", "member_order", "member_path", "sha256"], "type": "object"},
+    "parserConfiguration": {"additionalProperties": false, "properties": {"container": {"$ref": "#/$defs/identifier"}, "decoder": {"$ref": "#/$defs/decoder"}, "parser_identifier": {"$ref": "#/$defs/identifier"}, "parser_revision": {"minLength": 1, "type": "string"}, "record_ordering": {"$ref": "#/$defs/identifier"}, "schema_identity": {"$ref": "#/$defs/sha256"}}, "required": ["container", "decoder", "parser_identifier", "parser_revision", "record_ordering", "schema_identity"], "type": "object"},
+    "path": {"pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?!.*//)[^\\u0000]+$", "type": "string"},
+    "regularInput": {"additionalProperties": false, "properties": {
+      "aggregate_byte_count": {"minimum": 0, "type": "integer"}, "external_input_identifier": {"$ref": "#/$defs/identifier"}, "external_input_identity": {"$ref": "#/$defs/sha256"}, "input_kind": {"const": "regular_file"}, "input_version": {"$ref": "#/$defs/identifier"}, "members": {"items": {"$ref": "#/$defs/member"}, "maxItems": 1, "minItems": 1, "type": "array"},
+      "parser_configuration": {"$ref": "#/$defs/parserConfiguration"}, "parser_configuration_identity": {"$ref": "#/$defs/sha256"}, "parser_identity": {"$ref": "#/$defs/sha256"}, "role": {"$ref": "#/$defs/identifier"}, "schema_identity": {"$ref": "#/$defs/sha256"}
+    }, "required": ["aggregate_byte_count", "external_input_identifier", "external_input_identity", "input_kind", "input_version", "members", "parser_configuration", "parser_configuration_identity", "parser_identity", "role", "schema_identity"], "type": "object"},
+    "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "sortedStrings": {"items": {"minLength": 1, "type": "string"}, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+    "specification": {"additionalProperties": false, "properties": {"path": {"$ref": "#/$defs/path"}, "revision": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}}, "required": ["path", "revision", "sha256"], "type": "object"}
+  }
+}

@@ -60,6 +60,13 @@ READINESS_TEST_POLICY_V2_PATH = (
 READINESS_SPECIFICATION_PATH = (
     "docs/research/specifications/experiment-execution-readiness-v1.md"
 )
+READINESS_SPECIFICATION_V1_1_PATH = (
+    "docs/research/specifications/experiment-execution-readiness-v1.1.md"
+)
+READINESS_SPECIFICATION_V1_1_REVISION = "experiment-execution-readiness-v1.1"
+READINESS_SPECIFICATION_V1_1_SHA256 = (
+    "e938499cc254ce2d65fce925fb6e33c5d8b9dcea73a91a2c01e1017e8fb17da9"
+)
 PHASE2_SCHEMA_REGISTRY_IDENTIFIER = "readiness-phase2-schema-registry-v1"
 PHASE2_SCHEMA_POLICY = {
     "implementation-binding": (
@@ -211,6 +218,10 @@ PHASE3B_SCHEMA_DOCUMENT_POLICY = {
 }
 PROSPECTIVE_PHASE2_SCHEMA_POLICY = {
     **PHASE2_SCHEMA_POLICY,
+    "readiness-record": (
+        "readiness-record-v2",
+        "src/orev3/execution/schemas/v1/readiness-record-v2.schema.json",
+    ),
     "readiness-test-policy": (
         "readiness-test-policy-v2",
         "src/orev3/execution/schemas/v1/readiness-test-policy-v2.schema.json",
@@ -218,6 +229,10 @@ PROSPECTIVE_PHASE2_SCHEMA_POLICY = {
 }
 PROSPECTIVE_PHASE2_SCHEMA_DOCUMENT_POLICY = {
     **PHASE2_SCHEMA_DOCUMENT_POLICY,
+    "readiness-record": (
+        "orev3://schemas/execution-readiness/v1/readiness-record-v2",
+        "2436da1b932237a005cb703d210a6baee8e56b466bd54de0ac6a58d2d227e068",
+    ),
     "readiness-test-policy": (
         "orev3://schemas/execution-readiness/v1/readiness-test-policy-v2",
         "2c09e2088c116b4fd2b2ee2cb60f193d5923c01a9c21e38766f3a3326d17b11b",
@@ -225,9 +240,10 @@ PROSPECTIVE_PHASE2_SCHEMA_DOCUMENT_POLICY = {
 }
 PROSPECTIVE_PHASE3A_SCHEMA_POLICY = {
     **PHASE3A_SCHEMA_POLICY,
+    "readiness-record": PROSPECTIVE_PHASE2_SCHEMA_POLICY["readiness-record"],
     "adapter-declaration": (
-        "adapter-declaration-v2",
-        "src/orev3/execution/schemas/v1/adapter-declaration-v2.schema.json",
+        "adapter-declaration-v3",
+        "src/orev3/execution/schemas/v1/adapter-declaration-v3.schema.json",
     ),
     "readiness-test-policy": PROSPECTIVE_PHASE2_SCHEMA_POLICY[
         "readiness-test-policy"
@@ -235,9 +251,12 @@ PROSPECTIVE_PHASE3A_SCHEMA_POLICY = {
 }
 PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY = {
     **PHASE3A_SCHEMA_DOCUMENT_POLICY,
+    "readiness-record": PROSPECTIVE_PHASE2_SCHEMA_DOCUMENT_POLICY[
+        "readiness-record"
+    ],
     "adapter-declaration": (
-        "orev3://schemas/execution-readiness/v1/adapter-declaration-v2",
-        "a58a5596ae30355657a994873134e1696e6cb614b51c21555314cd663e9bebd0",
+        "orev3://schemas/execution-readiness/v1/adapter-declaration-v3",
+        "e6b9294498f7b51d34c7e8c03bf18516dfd0a840ba340fddfb9ba919a8fe4d72",
     ),
     "readiness-test-policy": PROSPECTIVE_PHASE2_SCHEMA_DOCUMENT_POLICY[
         "readiness-test-policy"
@@ -245,21 +264,33 @@ PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY = {
 }
 PROSPECTIVE_PHASE3B_SCHEMA_POLICY = {
     **PHASE3B_SCHEMA_POLICY,
+    "readiness-record": PROSPECTIVE_PHASE2_SCHEMA_POLICY["readiness-record"],
     "adapter-declaration": PROSPECTIVE_PHASE3A_SCHEMA_POLICY[
         "adapter-declaration"
     ],
     "readiness-test-policy": PROSPECTIVE_PHASE2_SCHEMA_POLICY[
         "readiness-test-policy"
     ],
+    "profile-conformance-evidence": (
+        "profile-conformance-evidence-v2",
+        "src/orev3/execution/schemas/v1/profile-conformance-evidence-v2.schema.json",
+    ),
 }
 PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY = {
     **PHASE3B_SCHEMA_DOCUMENT_POLICY,
+    "readiness-record": PROSPECTIVE_PHASE2_SCHEMA_DOCUMENT_POLICY[
+        "readiness-record"
+    ],
     "adapter-declaration": PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY[
         "adapter-declaration"
     ],
     "readiness-test-policy": PROSPECTIVE_PHASE2_SCHEMA_DOCUMENT_POLICY[
         "readiness-test-policy"
     ],
+    "profile-conformance-evidence": (
+        "orev3://schemas/execution-readiness/v1/profile-conformance-evidence-v2",
+        "c8f31746b8252988583bf2df83855536baf40ef3dfe2dc869e27ee5479ec21cb",
+    ),
 }
 READINESS_V1_1_SCHEMA_REGISTRY_IDENTIFIER = "readiness-v1-schema-registry-v1"
 READINESS_V1_1_SCHEMA_POLICY = dict(
@@ -360,8 +391,8 @@ READINESS_V1_1_SCHEMA_KIND_ORDER = (
     "evidence-preparation",
     "evidence-preparation-policy",
     "execution-control-manifest",
-    "implementation-binding",
     "immutable-input-snapshot",
+    "implementation-binding",
     "launch-authority-snapshot",
     "offline-artifact-manifest",
     "outcome-authorization",
@@ -525,6 +556,29 @@ class ReadinessRecordV1:
 
 
 @dataclass(frozen=True, slots=True)
+class ReadinessRecordV2:
+    """Prospective v1.1 candidate material without lifecycle authority."""
+
+    material: Mapping[str, Any]
+    readiness_identity: str
+    experiment_identifier: str
+    source_commit: str
+
+    @classmethod
+    def from_mapping(cls, material: Mapping[str, Any]) -> "ReadinessRecordV2":
+        validate_readiness_record_v2(material)
+        expected = reconstruct_readiness_identity(material)
+        if material["readiness_identity"] != expected:
+            raise CanonicalControlError("readiness-v2 identity does not reconstruct")
+        return cls(
+            material=dict(material),
+            readiness_identity=expected,
+            experiment_identifier=material["experiment"]["experiment_identifier"],
+            source_commit=material["git_authority"]["source_commit"],
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class LaunchAuthoritySnapshotV1:
     schema_version: int
     repository_authority_identifier: str
@@ -581,6 +635,30 @@ def load_readiness_record_bytes(
     if record.canonical_record_path != expected_path:
         raise CanonicalControlError("record canonical path does not reconstruct")
     return record
+
+
+def build_readiness_record_v2(material: Mapping[str, Any]) -> ReadinessRecordV2:
+    """Normalize already-reconstructed authority into a candidate data object.
+
+    This function is deliberately pure: it writes nothing and mints no
+    lifecycle state.  The caller supplies the governed 18 sections; this
+    function supplies only the canonical aggregate identity.
+    """
+
+    if "readiness_identity" in material:
+        raise CanonicalControlError("readiness identity is derived, not caller-selected")
+    complete = dict(material)
+    complete["readiness_identity"] = domain_identity(
+        READINESS_RECORD_DOMAIN, dict(material)
+    )
+    return ReadinessRecordV2.from_mapping(complete)
+
+
+def load_readiness_record_v2_bytes(raw: bytes) -> ReadinessRecordV2:
+    material = parse_canonical_bytes(
+        raw, validator=validate_readiness_record_v2, max_bytes=MAX_READINESS_RECORD_BYTES
+    )
+    return ReadinessRecordV2.from_mapping(material)
 
 
 def reconstruct_readiness_identity(material: Mapping[str, Any]) -> str:
@@ -822,6 +900,362 @@ def validate_readiness_record(material: Mapping[str, Any]) -> None:
     if material["execution_profile"]["profile_name"] != material["outcome_policy"]["profile_name"]:
         raise CanonicalControlError("profile and outcome policy disagree")
     require_git_object("source_commit", authority["source_commit"], object_format)
+
+
+def validate_readiness_record_v2(material: Mapping[str, Any]) -> None:
+    """Validate prospective readiness-record-v2 canonical semantics.
+
+    Git bytes are independently checked by ``validate_record_v2_git_bindings``;
+    this layer closes the data model and all cross-field relationships.
+    """
+
+    top = {
+        "artifacts", "attempt_policy", "configuration", "control_plane",
+        "execution_profile", "execution_specification", "experiment",
+        "external_inputs", "git_authority", "implementation", "outcome_policy",
+        "protocol", "readiness_identity", "readiness_specification", "replay",
+        "runtime", "schema", "source_scopes", "validation",
+    }
+    validate_exact_fields(material, top, label="readiness-record-v2")
+    require_sha256("readiness_identity", material["readiness_identity"])
+    authority = _mapping(material, "git_authority")
+    object_format = _object_format_from_identity(authority.get("source_commit"))
+    _validate_git_authority_binding(authority, object_format=object_format)
+    _validate_schema_section_v2(_mapping(material, "schema"), object_format=object_format)
+    _validate_experiment(_mapping(material, "experiment"))
+    for section_name, identity_field in (
+        ("readiness_specification", "specification_identity"),
+        ("protocol", "protocol_identity"),
+        ("execution_specification", "specification_identity"),
+    ):
+        binding = _mapping(material, section_name)
+        _validate_document_binding(
+            binding, label=section_name, identity_field=identity_field,
+            includes_identifier=section_name == "protocol", object_format=object_format,
+        )
+        if reconstruct_document_binding_identity(binding, identity_field=identity_field) != binding[identity_field]:
+            raise CanonicalControlError(f"{section_name} identity does not reconstruct")
+    readiness_spec = material["readiness_specification"]
+    if (
+        readiness_spec["path"] != READINESS_SPECIFICATION_V1_1_PATH
+        or readiness_spec["revision"] != READINESS_SPECIFICATION_V1_1_REVISION
+        or readiness_spec["sha256"] != READINESS_SPECIFICATION_V1_1_SHA256
+    ):
+        raise CanonicalControlError("readiness-v1.1 specification binding is unsupported")
+    implementation = _mapping(material, "implementation")
+    _validate_implementation_v2(implementation, object_format=object_format)
+    _validate_control_plane_v2(
+        _mapping(material, "control_plane"), implementation=implementation,
+        object_format=object_format,
+    )
+    _validate_source_scopes_v2(material["source_scopes"], object_format=object_format)
+    _validate_profile(_mapping(material, "execution_profile"))
+    _validate_runtime_v2(_mapping(material, "runtime"), object_format=object_format)
+    _validate_configuration_v2(_mapping(material, "configuration"))
+    _validate_external_inputs_v2(_mapping(material, "external_inputs"))
+    _validate_replay_v2(_mapping(material, "replay"))
+    _validate_artifacts_v2(
+        _mapping(material, "artifacts"),
+        profile_name=material["execution_profile"]["profile_name"],
+    )
+    _validate_outcome_policy_v2(
+        _mapping(material, "outcome_policy"), _mapping(material, "execution_profile")
+    )
+    _validate_validation_v2(_mapping(material, "validation"))
+    _validate_attempt_policy_v2(_mapping(material, "attempt_policy"))
+    experiment = material["experiment"]
+    if experiment["canonical_record_path"] != str(
+        canonical_readiness_record_path(experiment["experiment_identifier"])
+    ):
+        raise CanonicalControlError("canonical record path does not reconstruct")
+    if experiment["experiment_configuration_identity"] != material["configuration"]["experiment_configuration_identity"]:
+        raise CanonicalControlError("experiment configuration identity is inconsistent")
+    if material["configuration"]["decision_selection_identity"] != material["replay"]["decision_selection_identity"]:
+        raise CanonicalControlError("decision-selection identity is inconsistent")
+    if material["execution_profile"]["profile_identity"] != material["outcome_policy"]["profile_identity"]:
+        raise CanonicalControlError("profile identity is inconsistent")
+    if material["artifacts"]["output_policy_identity"] != material["attempt_policy"]["output_policy_identity"]:
+        raise CanonicalControlError("output-policy identity is inconsistent")
+    control_by_role = {
+        item["role"]: item for item in material["control_plane"]["components"]
+    }
+    if control_by_role["allocator_client"]["component_identity"] != material["attempt_policy"]["allocator_client_component_identity"]:
+        raise CanonicalControlError("allocator-client component identity is inconsistent")
+    if control_by_role["allocator_contract"]["component_identity"] != material["attempt_policy"]["allocator_contract_identity"]:
+        raise CanonicalControlError("allocator-contract component identity is inconsistent")
+    if reconstruct_readiness_identity(material) != material["readiness_identity"]:
+        raise CanonicalControlError("readiness identity does not reconstruct")
+
+
+def _validate_schema_section_v2(value: Mapping[str, Any], *, object_format: str) -> None:
+    validate_exact_fields(value, {"canonical_encoding_revision", "declarations", "schema_registry_identifier"}, label="prospective schema section")
+    if value["canonical_encoding_revision"] != CANONICAL_ENCODING_REVISION or value["schema_registry_identifier"] != READINESS_V1_1_SCHEMA_REGISTRY_IDENTIFIER:
+        raise CanonicalControlError("prospective schema registry selection is unsupported")
+    declarations = require_sorted_unique(
+        "prospective schema declarations", value["declarations"],
+        key=lambda item: item.get("object_kind", "") if isinstance(item, dict) else "",
+        uniqueness=lambda item: item.get("object_kind", "") if isinstance(item, dict) else "",
+    )
+    if tuple(item.get("object_kind") for item in declarations) != READINESS_V1_1_SCHEMA_KIND_ORDER:
+        raise CanonicalControlError("prospective 29-kind schema registry is incomplete")
+    seen_registry: set[str] = set(); seen_ids: set[str] = set(); seen_paths: set[str] = set()
+    for declaration in declarations:
+        validate_exact_fields(declaration, {"byte_count", "git_blob_identity", "object_kind", "path", "registry_identifier", "schema_id", "sha256"}, label="prospective schema declaration")
+        kind = declaration["object_kind"]
+        require_integer("byte_count", declaration["byte_count"])
+        require_git_object("git_blob_identity", declaration["git_blob_identity"], object_format)
+        require_sha256("sha256", declaration["sha256"])
+        expected_registry, expected_path = READINESS_V1_1_SCHEMA_POLICY[kind]
+        expected_id, expected_digest = READINESS_V1_1_SCHEMA_DOCUMENT_POLICY[kind]
+        if (declaration["registry_identifier"], declaration["path"], declaration["schema_id"], declaration["sha256"]) != (expected_registry, expected_path, expected_id, expected_digest):
+            raise CanonicalControlError("prospective schema declaration conflicts with policy")
+        if declaration["registry_identifier"] in seen_registry or declaration["schema_id"] in seen_ids or declaration["path"] in seen_paths:
+            raise CanonicalControlError("prospective schema authority is duplicated")
+        seen_registry.add(declaration["registry_identifier"]); seen_ids.add(declaration["schema_id"]); seen_paths.add(declaration["path"])
+
+
+_FIXED_CONTROL_COMPONENTS = {
+    "adapter_registry": (
+        "experiment-execution-readiness-adapter-registry-v1",
+        "src/orev3/execution/registry.py",
+    ),
+    "canonical_serializer": ("canonical_serializer", "src/orev3/execution/canonical.py"),
+    "official_orchestrator": ("official_orchestrator", "src/orev3/execution/orchestrator.py"),
+    "outcome_gate": ("outcome_gate", "src/orev3/execution/outcome_gate.py"),
+    "readiness_validator": ("readiness_validator", "src/orev3/execution/readiness.py"),
+}
+
+
+def _validate_control_plane_v2(value: Mapping[str, Any], *, implementation: Mapping[str, Any], object_format: str) -> None:
+    validate_exact_fields(value, {"components"}, label="control plane")
+    components = require_sorted_unique("control components", value["components"], key=lambda item: item.get("component_identifier", "") if isinstance(item, dict) else "")
+    by_role: dict[str, Mapping[str, Any]] = {}
+    for component in components:
+        validate_exact_fields(component, {"component_identifier", "component_identity", "git_object_identity", "path", "role", "sha256"}, label="control component")
+        role = component["role"]
+        if role not in _CONTROL_ROLES or role in by_role:
+            raise CanonicalControlError("control component role is unsupported or duplicated")
+        by_role[role] = component
+        require_git_object("git_object_identity", component["git_object_identity"], object_format)
+        require_sha256("sha256", component["sha256"]); require_sha256("component_identity", component["component_identity"])
+        if reconstruct_control_component_identity(component) != component["component_identity"]:
+            raise CanonicalControlError("control component identity does not reconstruct")
+        fixed = _FIXED_CONTROL_COMPONENTS.get(role)
+        if fixed is not None and (component["component_identifier"], component["path"]) != fixed:
+            raise CanonicalControlError("control component identifier/path is not governed")
+    if set(by_role) != _CONTROL_ROLES:
+        raise CanonicalControlError("control component roles are incomplete")
+    adapter = by_role["adapter"]
+    if adapter["component_identifier"] != implementation["adapter_identifier"] or adapter["path"] != implementation["implementation_path"] or adapter["git_object_identity"] != implementation["implementation_git_blob_identity"] or adapter["sha256"] != implementation["implementation_sha256"]:
+        raise CanonicalControlError("adapter control component differs from implementation")
+
+
+def _validate_source_scopes_v2(value: Any, *, object_format: str) -> None:
+    scopes = require_sorted_unique("source scopes", value, key=lambda item: (item.get("repository_path", ""), item.get("role", "")) if isinstance(item, dict) else ("", ""), uniqueness=lambda item: item.get("repository_path", "") if isinstance(item, dict) else "")
+    roles: dict[str, int] = {}
+    for item in scopes:
+        validate_source_scope(item, object_format=object_format)
+        roles[item["role"]] = roles.get(item["role"], 0) + 1
+    for role in (
+        "execution_specification",
+        "implementation",
+        "protocol",
+        "readiness_schema",
+        "readiness_specification",
+        "readiness_test_policy",
+        "repository_authority",
+        "source_tree",
+    ):
+        if roles.get(role) != 1:
+            raise CanonicalControlError(f"singleton source-scope role must occur once: {role}")
+
+
+def _validate_implementation_v2(value: Mapping[str, Any], *, object_format: str) -> None:
+    required = {"adapter_identifier", "adapter_identity", "adapter_registry_identity", "entry_point", "implementation_git_blob_identity", "implementation_identity", "implementation_path", "implementation_sha256", "protocol_binding_byte_count", "protocol_binding_git_blob_identity", "protocol_binding_identity", "protocol_binding_path", "protocol_binding_sha256"}
+    validate_exact_fields(value, required, label="prospective implementation")
+    require_string("adapter_identifier", value["adapter_identifier"], pattern=_SAFE_IDENTIFIER)
+    require_string("entry_point", value["entry_point"], pattern=_ENTRY_POINT)
+    for field in ("adapter_identity", "adapter_registry_identity", "implementation_identity", "implementation_sha256", "protocol_binding_identity", "protocol_binding_sha256"):
+        require_sha256(field, value[field])
+    for field in ("implementation_git_blob_identity", "protocol_binding_git_blob_identity"):
+        require_git_object(field, value[field], object_format)
+    validate_repository_path(value["implementation_path"]); validate_repository_path(value["protocol_binding_path"])
+    require_integer("protocol_binding_byte_count", value["protocol_binding_byte_count"])
+    if reconstruct_implementation_identity(value) != value["implementation_identity"]:
+        raise CanonicalControlError("implementation identity does not reconstruct")
+
+
+def _validate_runtime_v2(value: Mapping[str, Any], *, object_format: str) -> None:
+    required = {"dependency_environment_identity", "dependency_lock_git_blob_identity", "dependency_lock_identity", "dependency_lock_path", "dependency_lock_sha256", "host_system_identity", "offline_artifact_manifest_git_blob_identity", "offline_artifact_manifest_identity", "offline_artifact_manifest_path", "offline_artifact_manifest_sha256", "python_implementation", "python_version", "runtime_bundle_identity", "runtime_contract_byte_count", "runtime_contract_git_blob_identity", "runtime_contract_identity", "runtime_contract_path", "runtime_contract_sha256"}
+    validate_exact_fields(value, required, label="runtime")
+    for field in required:
+        if field.endswith("_path"):
+            validate_repository_path(value[field])
+        elif field.endswith("git_blob_identity"):
+            require_git_object(field, value[field], object_format)
+        elif field.endswith("identity") or field.endswith("sha256"):
+            require_sha256(field, value[field])
+    require_integer("runtime_contract_byte_count", value["runtime_contract_byte_count"])
+    require_string("python_implementation", value["python_implementation"]); require_string("python_version", value["python_version"])
+
+
+def _validate_configuration_v2(value: Mapping[str, Any]) -> None:
+    required = {"decision_selection_identity", "evidence_preparation_policy_identity", "experiment_configuration_identity"}
+    validate_exact_fields(value, required, label="configuration")
+    for field in required: require_sha256(field, value[field])
+
+
+def _validate_external_inputs_v2(value: Mapping[str, Any]) -> None:
+    from orev3.execution.registry import validate_external_input_declaration_v3
+    required = {"dataset_validation_evidence_identities", "declarations", "input_snapshot_identities", "projection_evidence_identities"}
+    validate_exact_fields(value, required, label="external inputs")
+    declarations = value["declarations"]
+    expected_order = sorted(declarations, key=lambda item: (item["role"], item["members"][0]["member_path"], item["external_input_identifier"]))
+    if declarations != expected_order:
+        raise CanonicalControlError("external input declarations are not canonical")
+    identifiers: set[str] = set(); roles: set[str] = set(); first_paths: set[str] = set()
+    for declaration in declarations:
+        validate_external_input_declaration_v3(declaration)
+        identifier = declaration["external_input_identifier"]; role = declaration["role"]; path = declaration["members"][0]["member_path"]
+        if identifier in identifiers or role in roles or path in first_paths:
+            raise CanonicalControlError("external input authority is duplicated")
+        identifiers.add(identifier); roles.add(role); first_paths.add(path)
+    snapshots = value["input_snapshot_identities"]
+    if len(snapshots) != len(declarations):
+        raise CanonicalControlError("external input snapshot cardinality differs")
+    for field in ("input_snapshot_identities", "dataset_validation_evidence_identities", "projection_evidence_identities"):
+        identities = value[field]
+        if field != "input_snapshot_identities" and identities != sorted(identities):
+            raise CanonicalControlError(f"{field} is not canonical")
+        if len(identities) != len(set(identities)):
+            raise CanonicalControlError(f"{field} contains duplicates")
+        for identity in identities: require_sha256(field, identity)
+
+
+def _validate_replay_v2(value: Mapping[str, Any]) -> None:
+    required = {"candidate_order", "decision_selection_identity", "ordered_decision_identities", "ordered_replay_unit_identities", "ordered_source_unit_identities", "population_accounting", "projection_identity", "replay_evidence_identity", "replay_identity", "replay_preparer_component_identity", "selector_component_identity"}
+    validate_exact_fields(value, required, label="replay")
+    candidates = value["candidate_order"]
+    if not isinstance(candidates, list) or len(candidates) != len(set(candidates)) or any(isinstance(item, bool) or not isinstance(item, int) or item < 0 for item in candidates):
+        raise CanonicalControlError("candidate order is invalid")
+    for field in required - {"candidate_order", "population_accounting", "ordered_decision_identities", "ordered_replay_unit_identities", "ordered_source_unit_identities"}:
+        require_sha256(field, value[field])
+    source = value["ordered_source_unit_identities"]; replay = value["ordered_replay_unit_identities"]; decisions = value["ordered_decision_identities"]
+    for collection in (source, replay, decisions):
+        if len(collection) != len(set(collection)): raise CanonicalControlError("Replay identity collection is duplicated")
+        for identity in collection: require_sha256("Replay identity", identity)
+    population = _mapping(value, "population_accounting")
+    required_population = {"dispositions", "excluded_count", "included_count", "permitted_exclusion_reasons", "population_accounting_evidence_identity", "source_count"}
+    validate_exact_fields(population, required_population, label="population accounting")
+    reasons = require_sorted_unique("permitted exclusion reasons", population["permitted_exclusion_reasons"], key=lambda item: item)
+    dispositions = population["dispositions"]
+    if len(dispositions) != len(source): raise CanonicalControlError("population disposition cardinality differs")
+    included_replay: list[str] = []; included_decisions: list[str] = []
+    for index, disposition in enumerate(dispositions):
+        validate_exact_fields(disposition, {"decision_identity", "reason", "replay_unit_identity", "source_unit_identity", "status"}, label="population disposition")
+        if disposition["source_unit_identity"] != source[index]: raise CanonicalControlError("population disposition is not source-positional")
+        if disposition["status"] == "replay_included":
+            if disposition["reason"] != "included_by_governed_selector": raise CanonicalControlError("included disposition reason is invalid")
+            require_sha256("replay_unit_identity", disposition["replay_unit_identity"]); require_sha256("decision_identity", disposition["decision_identity"])
+            included_replay.append(disposition["replay_unit_identity"]); included_decisions.append(disposition["decision_identity"])
+        elif disposition["status"] == "replay_excluded":
+            if disposition["replay_unit_identity"] != "not_applicable" or disposition["decision_identity"] != "not_applicable" or disposition["reason"] not in reasons:
+                raise CanonicalControlError("excluded disposition is invalid")
+        else: raise CanonicalControlError("population disposition status is invalid")
+    if included_replay != replay or included_decisions != decisions:
+        raise CanonicalControlError("population included identities do not reconcile")
+    if population["source_count"] != len(source) or population["included_count"] != len(replay) or population["excluded_count"] != len(source) - len(replay):
+        raise CanonicalControlError("population counts do not reconcile")
+    require_sha256("population_accounting_evidence_identity", population["population_accounting_evidence_identity"])
+
+
+def canonical_artifact_dependency_order(declarations: Any) -> list[str]:
+    import unicodedata
+    by_id: dict[str, Mapping[str, Any]] = {}; identities: set[str] = set(); paths: set[str] = set()
+    for declaration in declarations:
+        identifier = unicodedata.normalize("NFC", declaration["artifact_identifier"])
+        if identifier != declaration["artifact_identifier"] or identifier in by_id or declaration["declaration_identity"] in identities or declaration["relative_path"].casefold() in paths:
+            raise CanonicalControlError("artifact authority is duplicated or noncanonical")
+        by_id[identifier] = declaration; identities.add(declaration["declaration_identity"]); paths.add(declaration["relative_path"].casefold())
+    active: set[str] = set(); visited: set[str] = set(); order: list[str] = []
+    def visit(identifier: str) -> None:
+        if identifier in active: raise CanonicalControlError("artifact dependency cycle")
+        if identifier in visited: return
+        active.add(identifier)
+        dependencies = by_id[identifier]["dependencies"]
+        if dependencies != sorted(dependencies) or len(dependencies) != len(set(dependencies)): raise CanonicalControlError("artifact dependencies are not canonical")
+        for dependency in dependencies:
+            if dependency not in by_id: raise CanonicalControlError("artifact dependency is missing")
+            visit(dependency)
+        active.remove(identifier); visited.add(identifier); order.append(identifier)
+    for identifier in sorted(by_id): visit(identifier)
+    return order
+
+
+def _validate_artifacts_v2(value: Mapping[str, Any], *, profile_name: str) -> None:
+    required = {"artifact_declaration_evidence_identity", "declarations", "dependency_order", "output_policy_identity"}
+    validate_exact_fields(value, required, label="artifacts")
+    declarations = value["declarations"]
+    if declarations != sorted(declarations, key=lambda item: item["artifact_identifier"]): raise CanonicalControlError("artifact declarations are not canonical")
+    if value["dependency_order"] != canonical_artifact_dependency_order(declarations): raise CanonicalControlError("artifact dependency order does not reconstruct")
+    require_sha256("artifact_declaration_evidence_identity", value["artifact_declaration_evidence_identity"]); require_sha256("output_policy_identity", value["output_policy_identity"])
+    from orev3.execution.contract_validation import validate_artifact_declarations
+    evidence = validate_artifact_declarations(declarations, profile_name=profile_name)
+    if (
+        value["artifact_declaration_evidence_identity"]
+        != evidence["artifact_declaration_evidence_identity"]
+        or value["dependency_order"] != evidence["dependency_order"]
+        or value["output_policy_identity"] != evidence["output_policy_identity"]
+    ):
+        raise CanonicalControlError("artifact evidence authority does not reconstruct")
+
+
+def _validate_outcome_policy_v2(value: Mapping[str, Any], profile: Mapping[str, Any]) -> None:
+    common = {"outcome_capability", "profile_conformance_evidence_identity", "profile_contract_identities", "profile_identity", "profile_name"}
+    characterization = value.get("profile_name") == "outcome_blind_characterization_v1"
+    validate_exact_fields(value, common if characterization else common | {"authorization_contract_identity"}, label="outcome policy")
+    if value["profile_name"] != profile["profile_name"] or value["profile_identity"] != profile["profile_identity"]: raise CanonicalControlError("outcome policy profile differs")
+    require_sha256("profile_conformance_evidence_identity", value["profile_conformance_evidence_identity"])
+    contracts = value["profile_contract_identities"]
+    if characterization:
+        if value["outcome_capability"] != "prohibited_and_not_performed" or contracts != []: raise CanonicalControlError("characterization exposes outcome authority")
+    else:
+        if value["profile_name"] != "outcome_aware_v1" or value["outcome_capability"] != "outcome_aware_authorized_only" or contracts != sorted(contracts) or len(contracts) != 6 or len(set(contracts)) != 6 or value["authorization_contract_identity"] not in contracts:
+            raise CanonicalControlError("outcome-aware contract authority is invalid")
+        require_sha256("authorization_contract_identity", value["authorization_contract_identity"])
+
+
+def _validate_validation_v2(value: Mapping[str, Any]) -> None:
+    required = {"additional_test_selectors", "collected_node_ids", "compile_passed", "evidence_preparation_identity", "import_passed", "launch_smoke_selectors", "mandatory_test_selectors", "readiness_test_evidence_identity", "reconstruction_passed", "test_policy_identity", "test_results"}
+    validate_exact_fields(value, required, label="validation")
+    for field in ("compile_passed", "import_passed", "reconstruction_passed"):
+        if value[field] is not True: raise CanonicalControlError(f"{field} must be true")
+    for field in ("evidence_preparation_identity", "readiness_test_evidence_identity", "test_policy_identity"): require_sha256(field, value[field])
+    for field in ("additional_test_selectors", "collected_node_ids", "launch_smoke_selectors", "mandatory_test_selectors"):
+        require_sorted_unique(field, value[field], key=lambda item: item)
+    results = require_sorted_unique("test results", value["test_results"], key=lambda item: item.get("node_id", "") if isinstance(item, dict) else "")
+    for result in results:
+        validate_exact_fields(result, {"node_id", "status"}, label="test result")
+        if result["status"] != "passed": raise CanonicalControlError("readiness test did not pass")
+
+
+def _validate_attempt_policy_v2(value: Mapping[str, Any]) -> None:
+    required = {"allocation_authority_identity", "allocator_client_component_identity", "allocator_contract_identity", "attempt_authority_contract_byte_count", "attempt_authority_contract_git_blob_identity", "attempt_authority_contract_path", "attempt_authority_contract_sha256", "attempt_identity_domain", "attempt_identity_schema_identifier", "attempt_output_declaration_identity", "collision_policy", "control_storage_component_identity", "control_storage_contract_identity", "output_namespace_identity_policy", "output_policy_identity", "output_policy_revision", "supported_attempt_kinds"}
+    validate_exact_fields(value, required, label="attempt policy")
+    for field in (
+        "allocation_authority_identity", "allocator_client_component_identity",
+        "allocator_contract_identity", "attempt_output_declaration_identity",
+        "control_storage_component_identity", "control_storage_contract_identity",
+        "output_policy_identity",
+    ):
+        require_sha256(field, value[field])
+    require_integer("attempt_authority_contract_byte_count", value["attempt_authority_contract_byte_count"])
+    require_git_object("attempt_authority_contract_git_blob_identity", value["attempt_authority_contract_git_blob_identity"], _object_format_from_identity(value["attempt_authority_contract_git_blob_identity"]))
+    validate_repository_path(value["attempt_authority_contract_path"])
+    require_sha256("attempt_authority_contract_sha256", value["attempt_authority_contract_sha256"])
+    if value["attempt_authority_contract_path"] != "config/research/readiness/attempt-authority-contract-v1.json" or value["collision_policy"] != "reject_any_existing_path" or value["output_namespace_identity_policy"] != "output-namespace-identity-material-v1" or value["output_policy_revision"] != "readiness-v1-output-policy": raise CanonicalControlError("attempt policy token is unsupported")
+    kinds = require_sorted_unique("supported attempt kinds", value["supported_attempt_kinds"], key=lambda item: item)
+    if not set(kinds) <= {"official", "reproduction"} or "official" not in kinds: raise CanonicalControlError("official attempt authority is not supported")
 
 
 def validate_launch_authority_snapshot(
@@ -1529,6 +1963,9 @@ __all__ = [
     "READINESS_SPECIFICATION_PATH",
     "READINESS_SPECIFICATION_REVISION",
     "READINESS_SPECIFICATION_SHA256",
+    "READINESS_SPECIFICATION_V1_1_PATH",
+    "READINESS_SPECIFICATION_V1_1_REVISION",
+    "READINESS_SPECIFICATION_V1_1_SHA256",
     "READINESS_TEST_POLICY_PATH",
     "READINESS_TEST_POLICY_V2_PATH",
     "READINESS_V1_1_SCHEMA_DOCUMENT_POLICY",
@@ -1553,11 +1990,15 @@ __all__ = [
     "PROSPECTIVE_PHASE3B_SCHEMA_POLICY",
     "PROTOCOL_BINDING_DOMAIN",
     "ReadinessRecordV1",
+    "ReadinessRecordV2",
     "RepositoryAuthorityV1",
     "SourceScopeDeclarationV1",
     "build_launch_authority_snapshot",
+    "build_readiness_record_v2",
+    "canonical_artifact_dependency_order",
     "canonical_readiness_record_path",
     "load_readiness_record_bytes",
+    "load_readiness_record_v2_bytes",
     "load_repository_authority_bytes",
     "reconstruct_readiness_identity",
     "reconstruct_control_component_identity",
@@ -1567,6 +2008,7 @@ __all__ = [
     "validate_implementation_binding",
     "validate_launch_authority_snapshot",
     "validate_readiness_record",
+    "validate_readiness_record_v2",
     "validate_repository_authority",
     "validate_readiness_test_policy",
     "validate_readiness_test_policy_v2",

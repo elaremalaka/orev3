@@ -60,14 +60,14 @@ def main() -> int:
     dependency_root_path = controller_temp / "closed-dependencies"
     try:
         from orev3.execution.canonical import domain_identity, parse_canonical_bytes, validate_json_schema_instance
-        from orev3.execution.contract_validation import PROFILE_CONTRACT_DOMAIN, reconstruct_profile_binding_identity, validate_artifact_declarations, validate_profile_contract
+        from orev3.execution.contract_validation import PROFILE_CONTRACT_DOMAIN, reconstruct_profile_binding_identity, validate_artifact_declarations, validate_profile_contract, validate_profile_contract_v2
         from orev3.execution.dataset_validation import dataset_evidence, projection_evidence, publish_projection
-        from orev3.execution.evidence_preparation import aggregate_evidence, load_evidence_policy, load_phase3b_schemas, reconstruct_projection_twice, reconstruct_replay_twice, require_phase3b_governance_closure
+        from orev3.execution.evidence_preparation import EvidenceAuthorityGeneration, aggregate_evidence, load_evidence_policy, load_phase3b_schemas, load_prospective_phase3b_schemas, reconstruct_projection_twice, reconstruct_replay_twice, require_phase3b_governance_closure
         from orev3.execution.external_inputs import ResourceLimits, snapshot_declared_input
         from orev3.execution.git_state import GitRepository
         from orev3.execution.phase3b_components import PROJECTION_SCHEMA_CONTRACT_DOMAIN, RAW_SCHEMA_CONTRACT_DOMAIN, require_projection_contract_binding, resolve_component
-        from orev3.execution.preparation import READINESS_TEST_POLICY_PATH, _blob, _collection_affecting_paths, _load_adapter_material, _validate_scope_objects
-        from orev3.execution.readiness_record import validate_readiness_test_policy
+        from orev3.execution.preparation import PreparationAuthorityGeneration, READINESS_TEST_POLICY_PATH, _blob, _collection_affecting_paths, _load_adapter_material, _validate_scope_objects
+        from orev3.execution.readiness_record import READINESS_TEST_POLICY_V2_PATH, validate_readiness_test_policy, validate_readiness_test_policy_v2
         from orev3.execution.runtime import NETWORK_SANDBOX_PROFILE, PHASE3B_WORKER_EVIDENCE_DOMAIN, _run_preparation_worker
         from orev3.execution.test_policy import run_readiness_tests
 
@@ -79,12 +79,26 @@ def main() -> int:
         if repository.tree_entry(source, controller_path).object_identity != request.get("controller_module_git_identity"):
             raise ValueError("detached controller module identity differs")
 
-        schemas = load_phase3b_schemas(repository, source)
+        try:
+            generation = EvidenceAuthorityGeneration(request["authority_generation"])
+        except (KeyError, ValueError) as exc:
+            raise ValueError("Phase-3B authority generation is absent or unsupported") from exc
+        prospective = generation is EvidenceAuthorityGeneration.PROSPECTIVE_V1_1
+        schemas = (
+            load_prospective_phase3b_schemas(repository, source)
+            if prospective
+            else load_phase3b_schemas(repository, source)
+        )
         policy = load_evidence_policy(_blob(repository, source, request["evidence_policy_path"]), schema=schemas["evidence-preparation-policy"])
         limits = ResourceLimits.from_policy(policy)
         phase3a_request = dict(request)
         phase3a_request.update(
             {
+                "authority_generation": (
+                    PreparationAuthorityGeneration.PROSPECTIVE_V1_1.value
+                    if prospective
+                    else PreparationAuthorityGeneration.HISTORICAL.value
+                ),
                 "closed_dependency_root_path": str(dependency_root_path),
                 "controller_temporary_root": str(controller_temp),
                 "phase3b_controller": True,
@@ -124,8 +138,14 @@ def main() -> int:
         }
         worker_evidence_identities = [domain_identity(PHASE3B_WORKER_EVIDENCE_DOMAIN, phase3a_material)]
 
-        test_policy = parse_canonical_bytes(_blob(repository, source, READINESS_TEST_POLICY_PATH))
-        validate_readiness_test_policy(test_policy)
+        test_policy_path = (
+            READINESS_TEST_POLICY_V2_PATH if prospective else READINESS_TEST_POLICY_PATH
+        )
+        test_policy = parse_canonical_bytes(_blob(repository, source, test_policy_path))
+        if prospective:
+            validate_readiness_test_policy_v2(test_policy)
+        else:
+            validate_readiness_test_policy(test_policy)
         registry, _, adapter = _load_adapter_material(repository, source, schemas, request["experiment_identifier"])
         descriptor = adapter.material
         scopes = _validate_scope_objects(repository, source, request["source_scopes"])
@@ -199,18 +219,38 @@ def main() -> int:
                 raise ValueError("projection schema identity differs")
             if raw_parser.component_identity != declaration["parser_identity"]:
                 raise ValueError("raw parser binding differs from external-input declaration")
-            if len(snapshot.members) != 1:
-                raise ValueError("canonical JSONL projector requires one declared member")
+            if len(snapshot.members) == 1:
+                raw_projection_input = snapshot.members[0].content_object
+                expected_projection_input_sha256 = snapshot.members[0].sha256
+                expected_projection_input_size = snapshot.members[0].byte_count
+            elif prospective and declaration["input_kind"] == "ordered_file_collection":
+                raw_projection_input = controller_temp / (
+                    "ordered-input-" + declaration["external_input_identifier"] + ".jsonl"
+                )
+                digest = hashlib.sha256()
+                total = 0
+                with raw_projection_input.open("xb") as combined:
+                    for member in snapshot.members:
+                        raw = member.content_object.read_bytes()
+                        if len(raw) != member.byte_count or hashlib.sha256(raw).hexdigest() != member.sha256:
+                            raise ValueError("ordered input member differs after snapshot")
+                        combined.write(raw)
+                        digest.update(raw)
+                        total += len(raw)
+                expected_projection_input_sha256 = digest.hexdigest()
+                expected_projection_input_size = total
+            else:
+                raise ValueError("historical canonical JSONL projector requires one declared member")
             raw_schema_path = source_root / contract["raw_schema_path"]
             projection_schema_path = source_root / contract["projection_schema_path"]
             projection_bytes, projector_ids, projector_result = reconstruct_projection_twice(
                 source_root=source_root,
                 dependency_root=dependency_root,
-                raw_snapshot=snapshot.members[0].content_object,
+                raw_snapshot=raw_projection_input,
                 raw_schema_path=raw_schema_path,
                 projection_schema_path=projection_schema_path,
-                expected_raw_sha256=snapshot.members[0].sha256,
-                expected_raw_size=snapshot.members[0].byte_count,
+                expected_raw_sha256=expected_projection_input_sha256,
+                expected_raw_size=expected_projection_input_size,
                 max_raw_bytes=limits.max_file_bytes,
                 max_projection_bytes=limits.max_projection_bytes,
                 max_records=limits.max_replay_units,
@@ -229,8 +269,10 @@ def main() -> int:
             projection_paths.append(publish_projection(projection_bytes, store=projection_store, expected_sha256=projection["sha256"]))
             datasets.append(dataset)
             projections.append(projection)
-        if len(projection_paths) != 1:
+        if not prospective and len(projection_paths) != 1:
             raise ValueError("Phase-3B v1 Replay requires exactly one projection")
+        if prospective and not projection_paths:
+            raise ValueError("prospective Phase-3B requires a governed Replay projection")
 
         decision = descriptor["evidence_preparation"]["decision_selection"]
         selector = resolve_component(repository, source, decision["selector_identifier"])
@@ -264,7 +306,7 @@ def main() -> int:
             dependency_environment_identity=dependency_environment_identity,
             capability_policy=policy,
             projection_identity=projections[0]["projection_identity"],
-            request_material={"allowed_exclusion_reasons": decision["permitted_exclusion_reasons"], "candidate_order": descriptor["evidence_preparation"]["dataset_contracts"][0]["candidate_order"], "configuration_identity": decision["configuration_identity"], "dataset_identity": datasets[0]["dataset_identity"], "expected_projection_sha256": projections[0]["sha256"], "expected_projection_size": projections[0]["byte_count"], "max_projection_bytes": limits.max_projection_bytes, "max_units": limits.max_replay_units, "projection_identity": projections[0]["projection_identity"], "projection_schema_path": str(source_root / descriptor["evidence_preparation"]["dataset_contracts"][0]["projection_schema_path"]), "replay_preparer_component_identity": replay_preparer.component_identity, "selector_component_identity": selector.component_identity, "selector_identifier": selector.identifier},
+            request_material={"allowed_exclusion_reasons": decision["permitted_exclusion_reasons"], "candidate_order": descriptor["evidence_preparation"]["dataset_contracts"][0]["candidate_order"], "configuration_identity": decision["configuration_identity"], **({"decision_selection_identity": decision["configuration_identity"]} if prospective else {}), "dataset_identity": datasets[0]["dataset_identity"], "expected_projection_sha256": projections[0]["sha256"], "expected_projection_size": projections[0]["byte_count"], "max_projection_bytes": limits.max_projection_bytes, "max_units": limits.max_replay_units, "projection_identity": projections[0]["projection_identity"], "projection_schema_path": str(source_root / descriptor["evidence_preparation"]["dataset_contracts"][0]["projection_schema_path"]), "replay_preparer_component_identity": replay_preparer.component_identity, "selector_component_identity": selector.component_identity, "selector_identifier": selector.identifier},
         )
         worker_evidence_identities.extend(replay_worker_ids)
         replay_bundle = parse_canonical_bytes(replay_bytes)
@@ -294,7 +336,18 @@ def main() -> int:
         )
         if descriptor["execution_profile"]["profile_identity"] != reconstructed_profile_identity:
             raise ValueError("execution profile identity does not reconstruct")
-        profile = validate_profile_contract({**descriptor["execution_profile"], "declarations": profile_declarations, "outcome_policy": descriptor["outcome_policy"]}, artifact_declarations=descriptor["artifacts"]["declarations"])
+        profile_material = {**descriptor["execution_profile"], "declarations": profile_declarations, "outcome_policy": descriptor["outcome_policy"]}
+        profile = (
+            validate_profile_contract_v2(
+                profile_material,
+                artifact_declarations=descriptor["artifacts"]["declarations"],
+            )
+            if prospective
+            else validate_profile_contract(
+                profile_material,
+                artifact_declarations=descriptor["artifacts"]["declarations"],
+            )
+        )
         validate_json_schema_instance(artifacts, schemas["artifact-declaration-evidence"], schema_registry={})
         validate_json_schema_instance(profile, schemas["profile-conformance-evidence"], schema_registry={})
         worker_evidence_identities = sorted(worker_evidence_identities)

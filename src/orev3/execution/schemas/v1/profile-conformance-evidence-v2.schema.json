@@ -1,0 +1,43 @@
+{
+  "$id": "orev3://schemas/execution-readiness/v1/profile-conformance-evidence-v2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "properties": {
+        "outcome_capability": {"const": "prohibited_and_not_performed"},
+        "profile_conformance_evidence_identity": {"$ref": "#/$defs/sha256"},
+        "profile_contract_identities": {"maxItems": 0, "type": "array"},
+        "profile_identity": {"$ref": "#/$defs/sha256"},
+        "profile_name": {"const": "outcome_blind_characterization_v1"},
+        "reconciled_artifact_declaration_identities": {"$ref": "#/$defs/identities"},
+        "schema_version": {"const": 2},
+        "validated_artifact_identifiers": {"$ref": "#/$defs/identifiers"}
+      },
+      "required": ["outcome_capability", "profile_conformance_evidence_identity", "profile_contract_identities", "profile_identity", "profile_name", "reconciled_artifact_declaration_identities", "schema_version", "validated_artifact_identifiers"],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "authorization_contract_identity": {"$ref": "#/$defs/sha256"},
+        "outcome_capability": {"const": "outcome_aware_authorized_only"},
+        "profile_conformance_evidence_identity": {"$ref": "#/$defs/sha256"},
+        "profile_contract_identities": {"maxItems": 6, "minItems": 6, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"], "items": {"$ref": "#/$defs/sha256"}},
+        "profile_identity": {"$ref": "#/$defs/sha256"},
+        "profile_name": {"const": "outcome_aware_v1"},
+        "reconciled_artifact_declaration_identities": {"$ref": "#/$defs/identities"},
+        "schema_version": {"const": 2},
+        "validated_artifact_identifiers": {"$ref": "#/$defs/identifiers"}
+      },
+      "required": ["authorization_contract_identity", "outcome_capability", "profile_conformance_evidence_identity", "profile_contract_identities", "profile_identity", "profile_name", "reconciled_artifact_declaration_identities", "schema_version", "validated_artifact_identifiers"],
+      "type": "object"
+    }
+  ],
+  "$defs": {
+    "identifiers": {"items": {"pattern": "^[a-z][a-z0-9_.-]*$", "type": "string"}, "minItems": 1, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+    "identities": {"items": {"$ref": "#/$defs/sha256"}, "minItems": 1, "type": "array", "uniqueItems": true},
+    "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+  },
+  "title": "ProfileConformanceEvidenceV2"
+}

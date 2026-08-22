@@ -57,6 +57,7 @@ def build_replay_evidence(
     candidate_order: Sequence[int],
     allowed_exclusion_reasons: Sequence[str],
     max_units: int,
+    decision_selection_identity: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     if len(records) > max_units:
         raise CanonicalControlError("RESOURCE_LIMIT_EXCEEDED")
@@ -113,13 +114,24 @@ def build_replay_evidence(
     }
     population_identity = domain_identity(POPULATION_EVIDENCE_DOMAIN, population_material)
     population = {**population_material, "population_accounting_evidence_identity": population_identity}
+    selected_decision_identity = (
+        decision_selection_identity
+        if decision_selection_identity is not None
+        else domain_identity(REPLAY_EVIDENCE_DOMAIN, {"configuration_identity": configuration_identity, "dataset_identity": dataset_identity, "selector_component_identity": selector_component_identity, "selector_identifier": selector_identifier})
+    )
+    if (
+        not isinstance(selected_decision_identity, str)
+        or len(selected_decision_identity) != 64
+        or any(character not in "0123456789abcdef" for character in selected_decision_identity)
+    ):
+        raise CanonicalControlError("REPLAY_IDENTITY_MISMATCH")
     replay_core = {
         "candidate_order": list(candidate_order),
         "projection_identity": projection_identity,
         "ordered_decision_identities": decision_ids,
         "ordered_replay_unit_identities": replay_ids,
         "ordered_source_unit_identities": source_ids,
-        "decision_selection_identity": domain_identity(REPLAY_EVIDENCE_DOMAIN, {"configuration_identity": configuration_identity, "dataset_identity": dataset_identity, "selector_component_identity": selector_component_identity, "selector_identifier": selector_identifier}),
+        "decision_selection_identity": selected_decision_identity,
         "replay_preparer_component_identity": replay_preparer_component_identity,
         "selector_component_identity": selector_component_identity,
     }

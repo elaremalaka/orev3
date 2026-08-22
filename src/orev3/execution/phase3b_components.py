@@ -61,6 +61,13 @@ COMPONENT_POLICIES: Mapping[str, ComponentPolicy] = {
     ),
 }
 
+# The governed-decoder branch is intentionally closed over a separate finite
+# repository policy.  No decoder implementation is currently authorized; an
+# adapter must therefore use ``not_required`` until a reviewed decoder entry is
+# committed here.  Keeping this mapping explicit prevents a descriptor from
+# turning an arbitrary identifier/path/hash tuple into component authority.
+DECODER_COMPONENT_POLICIES: Mapping[str, ComponentPolicy] = {}
+
 
 WORKER_CODE_CLOSURES: Mapping[str, tuple[str, ...]] = {
     "READINESS_TEST": (
@@ -91,7 +98,7 @@ WORKER_CODE_CLOSURES: Mapping[str, tuple[str, ...]] = {
 
 def resolve_component(repository: GitRepository, source_commit: str, identifier: str) -> ComponentBinding:
     try:
-        policy = COMPONENT_POLICIES[identifier]
+        policy = {**COMPONENT_POLICIES, **DECODER_COMPONENT_POLICIES}[identifier]
     except KeyError as exc:
         raise CanonicalControlError("unknown Phase-3B semantic component identifier") from exc
     entry = repository.tree_entry(source_commit, policy.path)
@@ -144,6 +151,7 @@ def __file_path() -> str:
 __all__ = [
     "COMPONENT_BINDING_DOMAIN",
     "COMPONENT_POLICIES",
+    "DECODER_COMPONENT_POLICIES",
     "WORKER_CODE_CLOSURES",
     "ComponentBinding",
     "ComponentPolicy",
