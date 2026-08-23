@@ -15,8 +15,6 @@ POPULATION_EVIDENCE_DOMAIN = "orev3:experiment-population-accounting-evidence:v1
 SOURCE_UNIT_DOMAIN = "orev3:experiment-replay-source-unit:v1\n"
 DECISION_DOMAIN = "orev3:experiment-selected-decision:v1\n"
 REPLAY_UNIT_DOMAIN = "orev3:experiment-replay-unit:v1\n"
-
-
 def load_verified_projection(
     path: Path, *, expected_sha256: str, expected_size: int,
     projection_schema: Mapping[str, Any], max_bytes: int, max_units: int,
@@ -58,7 +56,10 @@ def build_replay_evidence(
     allowed_exclusion_reasons: Sequence[str],
     max_units: int,
     decision_selection_identity: str | None = None,
+    schema_version: int = 1,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
+    if schema_version not in {1, 2}:
+        raise CanonicalControlError("unsupported Replay evidence schema version")
     if len(records) > max_units:
         raise CanonicalControlError("RESOURCE_LIMIT_EXCEEDED")
     if selector_identifier != "latest-eligible-observation-selector-v1":
@@ -109,7 +110,7 @@ def build_replay_evidence(
         "excluded_count": len(source_ids) - len(replay_ids),
         "included_count": len(replay_ids),
         "permitted_exclusion_reasons": list(allowed_exclusion_reasons),
-        "schema_version": 1,
+        "schema_version": schema_version,
         "source_count": len(source_ids),
     }
     population_identity = domain_identity(POPULATION_EVIDENCE_DOMAIN, population_material)
@@ -136,7 +137,11 @@ def build_replay_evidence(
         "selector_component_identity": selector_component_identity,
     }
     replay_identity = domain_identity(REPLAY_EVIDENCE_DOMAIN, replay_core)
-    replay_material = {**replay_core, "replay_identity": replay_identity, "schema_version": 1}
+    replay_material = {
+        **replay_core,
+        "replay_identity": replay_identity,
+        "schema_version": schema_version,
+    }
     return {**replay_material, "replay_evidence_identity": domain_identity(REPLAY_EVIDENCE_DOMAIN, replay_material)}, population
 
 
@@ -148,4 +153,10 @@ def require_deterministic_reconstruction(
         raise CanonicalControlError("REPLAY_NONDETERMINISTIC")
 
 
-__all__ = ["POPULATION_EVIDENCE_DOMAIN", "REPLAY_EVIDENCE_DOMAIN", "build_replay_evidence", "load_verified_projection", "require_deterministic_reconstruction"]
+__all__ = [
+    "POPULATION_EVIDENCE_DOMAIN",
+    "REPLAY_EVIDENCE_DOMAIN",
+    "build_replay_evidence",
+    "load_verified_projection",
+    "require_deterministic_reconstruction",
+]

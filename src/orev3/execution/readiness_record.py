@@ -275,6 +275,18 @@ PROSPECTIVE_PHASE3B_SCHEMA_POLICY = {
         "profile-conformance-evidence-v2",
         "src/orev3/execution/schemas/v1/profile-conformance-evidence-v2.schema.json",
     ),
+    "replay-evidence": (
+        "replay-evidence-v2",
+        "src/orev3/execution/schemas/v1/replay-evidence-v2.schema.json",
+    ),
+    "population-accounting-evidence": (
+        "population-accounting-evidence-v2",
+        "src/orev3/execution/schemas/v1/population-accounting-evidence-v2.schema.json",
+    ),
+    "evidence-preparation": (
+        "evidence-preparation-v2",
+        "src/orev3/execution/schemas/v1/evidence-preparation-v2.schema.json",
+    ),
 }
 PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY = {
     **PHASE3B_SCHEMA_DOCUMENT_POLICY,
@@ -290,6 +302,18 @@ PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY = {
     "profile-conformance-evidence": (
         "orev3://schemas/execution-readiness/v1/profile-conformance-evidence-v2",
         "c8f31746b8252988583bf2df83855536baf40ef3dfe2dc869e27ee5479ec21cb",
+    ),
+    "replay-evidence": (
+        "orev3://schemas/execution-readiness/v1/replay-evidence-v2",
+        "124b27cd9458697e3fff9e9f52305b2a416718abcbd08bcfe62692ca14912b0e",
+    ),
+    "population-accounting-evidence": (
+        "orev3://schemas/execution-readiness/v1/population-accounting-evidence-v2",
+        "5f311c04486fb2f71634a4b165004d6088b18699562500d8a6b1a5f2a4745991",
+    ),
+    "evidence-preparation": (
+        "orev3://schemas/execution-readiness/v1/evidence-preparation-v2",
+        "44cf31c797e777dc17ed33d8e04597dd45c5f7d49e98adf4f67c66f34aa190b5",
     ),
 }
 READINESS_V1_1_SCHEMA_REGISTRY_IDENTIFIER = "readiness-v1-schema-registry-v1"

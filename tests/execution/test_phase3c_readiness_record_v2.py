@@ -52,14 +52,16 @@ from orev3.execution.evidence_preparation import (
     EVIDENCE_POLICY_PATH,
     aggregate_evidence,
     load_evidence_policy,
+    reconstruct_prospective_phase3a_worker,
 )
+from orev3.execution.preparation import PHASE3A_REMAINING_PREDICATES
 from orev3.execution.external_inputs import INPUT_SNAPSHOT_DOMAIN
 from orev3.execution.git_state import GitAuthorityError, validate_record_v2_git_bindings
-from orev3.execution.phase3b_components import (
-    WORKER_CODE_CLOSURES,
-    resolve_component,
+from orev3.execution.phase3b_components import WORKER_CODE_CLOSURES, resolve_component
+from orev3.execution.replay_preparation import (
+    build_replay_evidence,
 )
-from orev3.execution.replay_preparation import build_replay_evidence
+from orev3.execution.zero_input_phase3b import build_zero_input_replay_evidence
 from orev3.execution.runtime import (
     PHASE3B_WORKER_EVIDENCE_DOMAIN,
     load_offline_artifact_manifest_bytes,
@@ -278,10 +280,17 @@ def _committed_component(
     return material
 
 
-def _prospective_git_candidate(tmp_path: Path):
+def _prospective_git_candidate(
+    tmp_path: Path,
+    *,
+    zero_input: bool = False,
+    outcome_aware: bool = False,
+):
     from orev3.execution.readiness_contracts import load_readiness_prerequisite_contracts
 
-    repository, source, scopes = prospective_repository(tmp_path)
+    repository, source, scopes = prospective_repository(
+        tmp_path, zero_input=zero_input, outcome_aware=outcome_aware
+    )
     prerequisites = load_readiness_prerequisite_contracts(
         repository,
         source,
@@ -506,27 +515,40 @@ def _prospective_git_candidate(tmp_path: Path):
         repository, source, decision["replay_preparer_identifier"]
     )
     semantic_components.update((selector.component_identity, replay_preparer.component_identity))
-    replay, population = build_replay_evidence(
-        [
-            {
-                "candidates": contracts[input_declarations[0]["external_input_identifier"]]["candidate_order"],
-                "eligible": True,
-                "exclusion_reason": "not_applicable",
-                "observation_index": 0,
-                "source_unit_key": "unit-a",
-            }
-        ],
-        dataset_identity=datasets[0]["dataset_identity"],
-        projection_identity=projections[0]["projection_identity"],
-        selector_identifier=selector.identifier,
-        selector_component_identity=selector.component_identity,
-        replay_preparer_component_identity=replay_preparer.component_identity,
-        configuration_identity=decision["configuration_identity"],
-        candidate_order=contracts[input_declarations[0]["external_input_identifier"]]["candidate_order"],
-        allowed_exclusion_reasons=decision["permitted_exclusion_reasons"],
-        max_units=10,
-        decision_selection_identity=decision["configuration_identity"],
-    )
+    if zero_input:
+        replay, population = build_zero_input_replay_evidence(
+            adapter_identity=adapter["adapter_identity"],
+            experiment_identifier=adapter["experiment_identifier"],
+            profile_identity=adapter["execution_profile"]["profile_identity"],
+            source_commit=source,
+            decision_selection_identity=decision["configuration_identity"],
+            selector_component_identity=selector.component_identity,
+            replay_preparer_component_identity=replay_preparer.component_identity,
+            permitted_exclusion_reasons=decision["permitted_exclusion_reasons"],
+        )
+    else:
+        replay, population = build_replay_evidence(
+            [
+                {
+                    "candidates": contracts[input_declarations[0]["external_input_identifier"]]["candidate_order"],
+                    "eligible": True,
+                    "exclusion_reason": "not_applicable",
+                    "observation_index": 0,
+                    "source_unit_key": "unit-a",
+                }
+            ],
+            dataset_identity=datasets[0]["dataset_identity"],
+            projection_identity=projections[0]["projection_identity"],
+            selector_identifier=selector.identifier,
+            selector_component_identity=selector.component_identity,
+            replay_preparer_component_identity=replay_preparer.component_identity,
+            configuration_identity=decision["configuration_identity"],
+            candidate_order=contracts[input_declarations[0]["external_input_identifier"]]["candidate_order"],
+            allowed_exclusion_reasons=decision["permitted_exclusion_reasons"],
+            max_units=10,
+            decision_selection_identity=decision["configuration_identity"],
+            schema_version=2,
+        )
     artifact_evidence = validate_artifact_declarations(
         adapter["artifacts"]["declarations"],
         profile_name=adapter["execution_profile"]["profile_name"],
@@ -560,17 +582,98 @@ def _prospective_git_candidate(tmp_path: Path):
         evidence_policy_raw,
         schema=prerequisites.schemas["evidence-preparation-policy"],
     )
+    source_scope_material = []
+    for scope in prerequisites.source_scopes:
+        item = {
+            "git_mode": scope.git_mode,
+            "git_object_identity": scope.git_object_identity,
+            "nesting": scope.nesting,
+            "repository_path": scope.repository_path,
+            "role": scope.role,
+        }
+        if scope.nesting == "nested":
+            item["parent_path"] = scope.parent_path
+        source_scope_material.append(item)
+    source_scope_material.sort(
+        key=lambda item: (item["repository_path"], item["role"])
+    )
     workers = []
+    repository_authority = parse_json(
+        repository.object_bytes(
+            repository.tree_entry(
+                source, "config/research/readiness/repository-authority-v1.json"
+            ).object_identity,
+            max_bytes=1_048_576,
+        )
+    )
+    normalized_phase3a = reconstruct_prospective_phase3a_worker(
+        repository=repository,
+        source_commit=source,
+        phase3a_result={
+            "adapter_identity": adapter["adapter_identity"],
+            "adapter_registry_identity": prerequisites.adapter_registry.material[
+                "adapter_registry_identity"
+            ],
+            "closed_dependency_environment_identity": runtime[
+                "dependency_environment_identity"
+            ],
+            "closed_dependency_root_path": "/operational/root-not-authority",
+            "command": "validate_runtime",
+            "dependency_import_origins": [
+                probe["module"].replace(".", "/") + "/__init__.py"
+                for probe in runtime_contract.material["import_policy"][
+                    "dependency_import_probes"
+                ]
+            ],
+            "evidence_disposition": "PREPARATION_ENVIRONMENT_EVIDENCE_PASSED",
+            "network_denial_verified": True,
+            "project_control_plane_origins": [
+                "src/orev3/execution/canonical.py",
+                "src/orev3/execution/git_state.py",
+                "src/orev3/execution/preparation.py",
+                "src/orev3/execution/preparation_worker.py",
+                "src/orev3/execution/readiness_record.py",
+                "src/orev3/execution/registry.py",
+                "src/orev3/execution/runtime.py",
+            ],
+            "remaining_predicates": list(PHASE3A_REMAINING_PREDICATES),
+            "runtime_contract_identity": runtime_contract.runtime_contract_identity,
+            "source_commit": source,
+            "status": "evidence_passed",
+        },
+        approved_branch_ref=repository_authority["approved_branch_ref"],
+        repository_authority_identifier=repository_authority[
+            "repository_authority_identifier"
+        ],
+        source_scopes=source_scope_material,
+        capability_policy_identity=evidence_policy["policy_identity"],
+        sandbox_template_identity=next(
+            item["sandbox_template_identity"]
+            for item in evidence_policy["worker_profiles"]
+            if item["worker_kind"] == "PHASE3A_VALIDATOR"
+        ),
+    )
+    workers.append(
+        {
+            "material": dict(normalized_phase3a.material),
+            "result": dict(normalized_phase3a.result),
+        }
+    )
     worker_occurrences: dict[str, int] = {}
-    for kind in (
-        "INPUT_PROJECTOR",
-        "INPUT_PROJECTOR",
-        "READINESS_TEST",
-        "READINESS_TEST",
-        "READINESS_TEST",
-        "REPLAY_PREPARATION",
-        "REPLAY_PREPARATION",
-    ):
+    worker_kinds = (
+        ("READINESS_TEST", "READINESS_TEST", "READINESS_TEST")
+        if zero_input
+        else (
+            "INPUT_PROJECTOR",
+            "INPUT_PROJECTOR",
+            "READINESS_TEST",
+            "READINESS_TEST",
+            "READINESS_TEST",
+            "REPLAY_PREPARATION",
+            "REPLAY_PREPARATION",
+        )
+    )
+    for kind in worker_kinds:
         occurrence = worker_occurrences.get(kind, 0) + 1
         worker_occurrences[kind] = occurrence
         profile_policy = next(
@@ -672,6 +775,7 @@ def _prospective_git_candidate(tmp_path: Path):
             item["material"]["worker_evidence_identity"] for item in workers
         ],
         semantic_component_identities=sorted(semantic_components),
+        schema_version=2,
     ).aggregate_material
 
     readiness_specification = _committed_document(
@@ -696,14 +800,6 @@ def _prospective_git_candidate(tmp_path: Path):
         revision=adapter["execution_specification"]["revision"],
         identity_field="specification_identity",
     )
-    repository_authority = parse_json(
-        repository.object_bytes(
-            repository.tree_entry(
-                source, "config/research/readiness/repository-authority-v1.json"
-            ).object_identity,
-            max_bytes=1_048_576,
-        )
-    )
     attempt_raw, attempt_blob = _git_blob(
         repository, source, authority.repository_path
     )
@@ -720,19 +816,6 @@ def _prospective_git_candidate(tmp_path: Path):
             "profile_name",
         }
     }
-    source_scope_material = []
-    for scope in prerequisites.source_scopes:
-        item = {
-            "git_mode": scope.git_mode,
-            "git_object_identity": scope.git_object_identity,
-            "nesting": scope.nesting,
-            "repository_path": scope.repository_path,
-            "role": scope.role,
-        }
-        if scope.nesting == "nested":
-            item["parent_path"] = scope.parent_path
-        source_scope_material.append(item)
-    source_scope_material.sort(key=lambda item: (item["repository_path"], item["role"]))
     material = {
         "schema": {
             "canonical_encoding_revision": CANONICAL_ENCODING_REVISION,

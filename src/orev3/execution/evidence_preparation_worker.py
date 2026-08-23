@@ -62,12 +62,13 @@ def main() -> int:
         from orev3.execution.canonical import domain_identity, parse_canonical_bytes, validate_json_schema_instance
         from orev3.execution.contract_validation import PROFILE_CONTRACT_DOMAIN, reconstruct_profile_binding_identity, validate_artifact_declarations, validate_profile_contract, validate_profile_contract_v2
         from orev3.execution.dataset_validation import dataset_evidence, projection_evidence, publish_projection
-        from orev3.execution.evidence_preparation import EvidenceAuthorityGeneration, aggregate_evidence, load_evidence_policy, load_phase3b_schemas, load_prospective_phase3b_schemas, reconstruct_projection_twice, reconstruct_replay_twice, require_phase3b_governance_closure
+        from orev3.execution.evidence_preparation import EvidenceAuthorityGeneration, aggregate_evidence, load_evidence_policy, load_phase3b_schemas, load_prospective_phase3b_schemas, reconstruct_projection_twice, reconstruct_prospective_phase3a_worker, reconstruct_replay_twice, require_phase3b_governance_closure
         from orev3.execution.external_inputs import ResourceLimits, snapshot_declared_input
         from orev3.execution.git_state import GitRepository
         from orev3.execution.phase3b_components import PROJECTION_SCHEMA_CONTRACT_DOMAIN, RAW_SCHEMA_CONTRACT_DOMAIN, require_projection_contract_binding, resolve_component
         from orev3.execution.preparation import PreparationAuthorityGeneration, READINESS_TEST_POLICY_PATH, _blob, _collection_affecting_paths, _load_adapter_material, _validate_scope_objects
         from orev3.execution.readiness_record import READINESS_TEST_POLICY_V2_PATH, validate_readiness_test_policy, validate_readiness_test_policy_v2
+        from orev3.execution.zero_input_phase3b import build_zero_input_replay_evidence
         from orev3.execution.runtime import NETWORK_SANDBOX_PROFILE, PHASE3B_WORKER_EVIDENCE_DOMAIN, _run_preparation_worker
         from orev3.execution.test_policy import run_readiness_tests
 
@@ -123,20 +124,24 @@ def main() -> int:
             or NETWORK_SANDBOX_PROFILE != "(version 1)\n(allow default)\n(deny network*)\n"
         ):
             raise ValueError("Phase-3A sibling capability policy differs from its fixed implementation")
-        phase3a_material = {
-            "capability_policy_identity": policy["policy_identity"],
-            "closed_dependency_identity": dependency_environment_identity,
-            "command_identity": domain_identity(PHASE3B_WORKER_EVIDENCE_DOMAIN, {"command": "validate_runtime", "worker_kind": "PHASE3A_VALIDATOR"}),
-            "input_capability_identities": [],
-            "output_identity": domain_identity(PHASE3B_WORKER_EVIDENCE_DOMAIN, phase3a),
-            "runtime_contract_identity": runtime_contract_identity,
-            "sandbox_template_identity": phase3a_declaration["sandbox_template_identity"],
-            "source_commit": source,
-            "successful_worker_disposition": "evidence_passed",
-            "worker_kind": "PHASE3A_VALIDATOR",
-            "worker_module_git_identity": repository.tree_entry(source, "src/orev3/execution/preparation_worker.py").object_identity,
-        }
-        worker_evidence_identities = [domain_identity(PHASE3B_WORKER_EVIDENCE_DOMAIN, phase3a_material)]
+        worker_evidence_identities = []
+        if not prospective:
+            phase3a_material = {
+                "capability_policy_identity": policy["policy_identity"],
+                "closed_dependency_identity": dependency_environment_identity,
+                "command_identity": domain_identity(PHASE3B_WORKER_EVIDENCE_DOMAIN, {"command": "validate_runtime", "worker_kind": "PHASE3A_VALIDATOR"}),
+                "input_capability_identities": [],
+                "output_identity": domain_identity(PHASE3B_WORKER_EVIDENCE_DOMAIN, phase3a),
+                "runtime_contract_identity": runtime_contract_identity,
+                "sandbox_template_identity": phase3a_declaration["sandbox_template_identity"],
+                "source_commit": source,
+                "successful_worker_disposition": "evidence_passed",
+                "worker_kind": "PHASE3A_VALIDATOR",
+                "worker_module_git_identity": repository.tree_entry(source, "src/orev3/execution/preparation_worker.py").object_identity,
+            }
+            worker_evidence_identities.append(
+                domain_identity(PHASE3B_WORKER_EVIDENCE_DOMAIN, phase3a_material)
+            )
 
         test_policy_path = (
             READINESS_TEST_POLICY_V2_PATH if prospective else READINESS_TEST_POLICY_PATH
@@ -149,6 +154,33 @@ def main() -> int:
         registry, _, adapter = _load_adapter_material(repository, source, schemas, request["experiment_identifier"])
         descriptor = adapter.material
         scopes = _validate_scope_objects(repository, source, request["source_scopes"])
+        if prospective:
+            scope_material = [
+                {
+                    "git_mode": scope.git_mode,
+                    "git_object_identity": scope.git_object_identity,
+                    "nesting": scope.nesting,
+                    **({"parent_path": scope.parent_path} if scope.parent_path else {}),
+                    "repository_path": scope.repository_path,
+                    "role": scope.role,
+                }
+                for scope in scopes
+            ]
+            normalized_phase3a = reconstruct_prospective_phase3a_worker(
+                repository=repository,
+                source_commit=source,
+                phase3a_result=phase3a,
+                approved_branch_ref=request["approved_branch_ref"],
+                repository_authority_identifier=request[
+                    "repository_authority_identifier"
+                ],
+                source_scopes=scope_material,
+                capability_policy_identity=policy["policy_identity"],
+                sandbox_template_identity=phase3a_declaration[
+                    "sandbox_template_identity"
+                ],
+            )
+            worker_evidence_identities.append(normalized_phase3a.evidence_identity)
         contract_paths = [contract[field] for contract in descriptor["evidence_preparation"]["dataset_contracts"] for field in ("raw_schema_path", "projection_schema_path")]
         contract_paths.extend(item["path"] for item in descriptor["evidence_preparation"]["profile_contract_declarations"])
         reconstructed_collection_paths = _collection_affecting_paths(repository, source, (*test_policy["required_selectors"], *descriptor["adapter_readiness_tests"]))
@@ -187,7 +219,17 @@ def main() -> int:
         projection_paths = []
         semantic_component_identities = []
         contracts = {item["external_input_identifier"]: item for item in descriptor["evidence_preparation"]["dataset_contracts"]}
-        for declaration in descriptor["external_inputs"]["declarations"]:
+        declarations = descriptor["external_inputs"]["declarations"]
+        zero_input = prospective and declarations == []
+        if zero_input and (
+            contracts
+            or request["operational_input_locators"]
+            or descriptor["evidence_preparation"]["decision_selection"][
+                "permitted_exclusion_reasons"
+            ]
+        ):
+            raise ValueError("zero-input adapter authority is not canonically empty")
+        for declaration in declarations:
             snapshot = snapshot_declared_input(
                 declaration,
                 # Preserve the exact lexical spelling until the detached
@@ -271,7 +313,7 @@ def main() -> int:
             projections.append(projection)
         if not prospective and len(projection_paths) != 1:
             raise ValueError("Phase-3B v1 Replay requires exactly one projection")
-        if prospective and not projection_paths:
+        if prospective and not projection_paths and not zero_input:
             raise ValueError("prospective Phase-3B requires a governed Replay projection")
 
         decision = descriptor["evidence_preparation"]["decision_selection"]
@@ -284,32 +326,48 @@ def main() -> int:
             or decision["tolerance_contract"] != "exact"
         ):
             raise ValueError("decision selector semantic contract differs from executed implementation")
-        exclusion_schema = descriptor["evidence_preparation"]["dataset_contracts"][0]
-        projection_schema_for_selector = parse_canonical_bytes(_blob(repository, source, exclusion_schema["projection_schema_path"]))
-        governed_exclusions = set(projection_schema_for_selector["properties"]["exclusion_reason"].get("enum", ())) - {"not_applicable"}
-        if not set(decision["permitted_exclusion_reasons"]).issubset(governed_exclusions):
-            raise ValueError("decision selector exclusion contract is not governed by the projection schema")
+        if not zero_input:
+            exclusion_schema = descriptor["evidence_preparation"]["dataset_contracts"][0]
+            projection_schema_for_selector = parse_canonical_bytes(_blob(repository, source, exclusion_schema["projection_schema_path"]))
+            governed_exclusions = set(projection_schema_for_selector["properties"]["exclusion_reason"].get("enum", ())) - {"not_applicable"}
+            if not set(decision["permitted_exclusion_reasons"]).issubset(governed_exclusions):
+                raise ValueError("decision selector exclusion contract is not governed by the projection schema")
         if descriptor["replay_preparation_entry_point"] != "orev3.execution.replay_preparation:build_replay_evidence":
             raise ValueError("Replay entry point differs from the governed Phase-3B implementation")
         if descriptor["replay_preparation_contract_identity"] != replay_preparer.component_identity:
             raise ValueError("Replay preparation contract identity differs from executed implementation")
         semantic_component_identities.extend((selector.component_identity, replay_preparer.component_identity))
-        replay_bytes, replay_worker_ids = reconstruct_replay_twice(
-            source_root=source_root,
-            dependency_root=dependency_root,
-            projection_path=projection_paths[0],
-            projection_schema_path=source_root / descriptor["evidence_preparation"]["dataset_contracts"][0]["projection_schema_path"],
-            raw_store_root=input_store,
-            denied_locator_roots=locator_roots,
-            source_commit=source,
-            runtime_contract_identity=runtime_contract_identity,
-            dependency_environment_identity=dependency_environment_identity,
-            capability_policy=policy,
-            projection_identity=projections[0]["projection_identity"],
-            request_material={"allowed_exclusion_reasons": decision["permitted_exclusion_reasons"], "candidate_order": descriptor["evidence_preparation"]["dataset_contracts"][0]["candidate_order"], "configuration_identity": decision["configuration_identity"], **({"decision_selection_identity": decision["configuration_identity"]} if prospective else {}), "dataset_identity": datasets[0]["dataset_identity"], "expected_projection_sha256": projections[0]["sha256"], "expected_projection_size": projections[0]["byte_count"], "max_projection_bytes": limits.max_projection_bytes, "max_units": limits.max_replay_units, "projection_identity": projections[0]["projection_identity"], "projection_schema_path": str(source_root / descriptor["evidence_preparation"]["dataset_contracts"][0]["projection_schema_path"]), "replay_preparer_component_identity": replay_preparer.component_identity, "selector_component_identity": selector.component_identity, "selector_identifier": selector.identifier},
-        )
-        worker_evidence_identities.extend(replay_worker_ids)
-        replay_bundle = parse_canonical_bytes(replay_bytes)
+        if zero_input:
+            replay, population = build_zero_input_replay_evidence(
+                adapter_identity=adapter.adapter_identity,
+                experiment_identifier=request["experiment_identifier"],
+                profile_identity=descriptor["execution_profile"]["profile_identity"],
+                source_commit=source,
+                decision_selection_identity=decision["configuration_identity"],
+                selector_component_identity=selector.component_identity,
+                replay_preparer_component_identity=replay_preparer.component_identity,
+                permitted_exclusion_reasons=decision[
+                    "permitted_exclusion_reasons"
+                ],
+            )
+            replay_bundle = {"population": population, "replay": replay}
+        else:
+            replay_bytes, replay_worker_ids = reconstruct_replay_twice(
+                source_root=source_root,
+                dependency_root=dependency_root,
+                projection_path=projection_paths[0],
+                projection_schema_path=source_root / descriptor["evidence_preparation"]["dataset_contracts"][0]["projection_schema_path"],
+                raw_store_root=input_store,
+                denied_locator_roots=locator_roots,
+                source_commit=source,
+                runtime_contract_identity=runtime_contract_identity,
+                dependency_environment_identity=dependency_environment_identity,
+                capability_policy=policy,
+                projection_identity=projections[0]["projection_identity"],
+                request_material={"allowed_exclusion_reasons": decision["permitted_exclusion_reasons"], "candidate_order": descriptor["evidence_preparation"]["dataset_contracts"][0]["candidate_order"], "configuration_identity": decision["configuration_identity"], **({"decision_selection_identity": decision["configuration_identity"]} if prospective else {}), "dataset_identity": datasets[0]["dataset_identity"], "expected_projection_sha256": projections[0]["sha256"], "expected_projection_size": projections[0]["byte_count"], "max_projection_bytes": limits.max_projection_bytes, "max_units": limits.max_replay_units, "projection_identity": projections[0]["projection_identity"], "projection_schema_path": str(source_root / descriptor["evidence_preparation"]["dataset_contracts"][0]["projection_schema_path"]), "replay_preparer_component_identity": replay_preparer.component_identity, "selector_component_identity": selector.component_identity, "selector_identifier": selector.identifier, **({"schema_version": 2} if prospective else {})},
+            )
+            worker_evidence_identities.extend(replay_worker_ids)
+            replay_bundle = parse_canonical_bytes(replay_bytes)
         validate_json_schema_instance(replay_bundle["replay"], schemas["replay-evidence"], schema_registry={})
         validate_json_schema_instance(replay_bundle["population"], schemas["population-accounting-evidence"], schema_registry={})
         artifacts = validate_artifact_declarations(descriptor["artifacts"]["declarations"], profile_name=descriptor["execution_profile"]["profile_name"])
@@ -354,7 +412,7 @@ def main() -> int:
         if len(worker_evidence_identities) != len(set(worker_evidence_identities)):
             raise ValueError("duplicate worker evidence identity")
         semantic_component_identities = sorted(set(semantic_component_identities))
-        aggregate = aggregate_evidence(source_commit=source, runtime_contract_identity=runtime_contract_identity, dependency_environment_identity=dependency_environment_identity, adapter_identity=adapter.adapter_identity, readiness_test_identity=tests["readiness_test_evidence_identity"], input_snapshot_identities=sorted(item.identity for item in snapshots), dataset_identities=sorted(item["dataset_validation_evidence_identity"] for item in datasets), projection_identities=sorted(item["projection_evidence_identity"] for item in projections), replay_identity=replay_bundle["replay"]["replay_evidence_identity"], population_identity=replay_bundle["population"]["population_accounting_evidence_identity"], profile_identity=profile["profile_conformance_evidence_identity"], artifact_identity=artifacts["artifact_declaration_evidence_identity"], capability_policy_identity=policy["policy_identity"], worker_evidence_identities=worker_evidence_identities, semantic_component_identities=semantic_component_identities)
+        aggregate = aggregate_evidence(source_commit=source, runtime_contract_identity=runtime_contract_identity, dependency_environment_identity=dependency_environment_identity, adapter_identity=adapter.adapter_identity, readiness_test_identity=tests["readiness_test_evidence_identity"], input_snapshot_identities=sorted(item.identity for item in snapshots), dataset_identities=sorted(item["dataset_validation_evidence_identity"] for item in datasets), projection_identities=sorted(item["projection_evidence_identity"] for item in projections), replay_identity=replay_bundle["replay"]["replay_evidence_identity"], population_identity=replay_bundle["population"]["population_accounting_evidence_identity"], profile_identity=profile["profile_conformance_evidence_identity"], artifact_identity=artifacts["artifact_declaration_evidence_identity"], capability_policy_identity=policy["policy_identity"], worker_evidence_identities=worker_evidence_identities, semantic_component_identities=semantic_component_identities, schema_version=2 if prospective else 1)
         validate_json_schema_instance(aggregate.aggregate_material, schemas["evidence-preparation"], schema_registry={})
         module_origins = _project_modules_below(source_root)
         required_origins = {

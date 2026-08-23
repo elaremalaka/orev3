@@ -1310,6 +1310,81 @@ def test_final_registry_has_unique_kinds_policy_identifiers_ids_and_paths() -> N
     assert len(paths) == len(set(paths))
 
 
+def test_prospective_phase3b_v2_schemas_accept_only_exact_zero_branches() -> None:
+    schemas = {
+        name: parse_json((SCHEMA_ROOT / f"{name}-v2.schema.json").read_bytes())
+        for name in (
+            "replay-evidence",
+            "population-accounting-evidence",
+            "evidence-preparation",
+        )
+    }
+    replay = {
+        "candidate_order": [],
+        "decision_selection_identity": SHA,
+        "ordered_decision_identities": [],
+        "ordered_replay_unit_identities": [],
+        "ordered_source_unit_identities": [],
+        "projection_identity": SHA,
+        "replay_evidence_identity": SHA,
+        "replay_identity": SHA,
+        "replay_preparer_component_identity": SHA,
+        "schema_version": 2,
+        "selector_component_identity": SHA,
+    }
+    population = {
+        "dispositions": [],
+        "excluded_count": 0,
+        "included_count": 0,
+        "permitted_exclusion_reasons": [],
+        "population_accounting_evidence_identity": SHA,
+        "schema_version": 2,
+        "source_count": 0,
+    }
+    aggregate = {
+        "adapter_identity": SHA,
+        "artifact_evidence_identity": SHA,
+        "capability_policy_identity": SHA,
+        "dataset_evidence_identities": [],
+        "dependency_environment_identity": SHA,
+        "evidence_preparation_identity": SHA,
+        "input_snapshot_identities": [],
+        "population_evidence_identity": SHA,
+        "profile_evidence_identity": SHA,
+        "projection_evidence_identities": [],
+        "readiness_test_evidence_identity": SHA,
+        "replay_evidence_identity": SHA,
+        "runtime_contract_identity": SHA,
+        "schema_version": 2,
+        "semantic_component_identities": [str(index) * 64 for index in range(1, 5)],
+        "source_commit": GIT,
+        "worker_evidence_identities": [str(index) * 64 for index in range(5, 9)],
+    }
+    for schema, value in (
+        (schemas["replay-evidence"], replay),
+        (schemas["population-accounting-evidence"], population),
+        (schemas["evidence-preparation"], aggregate),
+    ):
+        validate_json_schema_instance(value, schema, schema_registry={})
+
+    invalid_population = copy.deepcopy(population)
+    invalid_population["source_count"] = 1
+    with pytest.raises(CanonicalControlError):
+        validate_json_schema_instance(
+            invalid_population,
+            schemas["population-accounting-evidence"],
+            schema_registry={},
+        )
+    invalid_aggregate = copy.deepcopy(aggregate)
+    invalid_aggregate["worker_evidence_identities"].append("9" * 64)
+    with pytest.raises(CanonicalControlError):
+        validate_json_schema_instance(
+            invalid_aggregate,
+            schemas["evidence-preparation"],
+            schema_registry={},
+        )
+
+
 def test_slice_one_introduces_no_operational_control_object_apis() -> None:
     production = Path("src/orev3/execution")
     assert not (production / "orchestrator.py").exists()

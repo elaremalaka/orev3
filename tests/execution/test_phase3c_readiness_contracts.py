@@ -104,15 +104,79 @@ def _rewrite_adapter(
     *,
     attempt_contract: dict[str, object],
     extra_governed: tuple[str, ...],
+    outcome_aware: bool = False,
 ) -> tuple[str, str, str]:
     descriptor_path = "config/research/readiness/experiments/synthetic-adapter-v1.json"
     binding_path = "config/research/readiness/experiments/synthetic-binding.json"
     descriptor = parse_json((root / descriptor_path).read_bytes())
     binding = parse_json((root / binding_path).read_bytes())
+    profile_declarations: dict[str, dict[str, object]] = {}
+    profile_references: list[dict[str, object]] = []
+    if outcome_aware:
+        profile_declarations = {
+            "authorization_contract_identity": _bound_contract(
+                "authorization_contract_identity",
+                contract_kind="outcome-authorization",
+                evaluation_artifact_identifier="evaluation",
+                outcome_access="authorization_required",
+            ),
+            "evaluation_dependency_graph_identity": _bound_contract(
+                "evaluation_dependency_graph_identity",
+                contract_kind="evaluation-dependency-graph",
+                edges=[["authorization", "evaluation"], ["outcome_source", "evaluation"], ["ranking", "evaluation"]],
+                evaluation_artifact_identifier="evaluation",
+                ranking_artifact_identifier="ranking",
+            ),
+            "freeze_contract_identity": _bound_contract(
+                "freeze_contract_identity",
+                contract_kind="ranking-freeze",
+                ranking_artifact_identifier="ranking",
+                ranking_frozen_before_outcome=True,
+            ),
+            "outcome_blind_ranking_source_identity": _bound_contract(
+                "outcome_blind_ranking_source_identity",
+                contract_kind="outcome-blind-ranking-source",
+                outcome_blind=True,
+                ranking_artifact_identifier="ranking",
+            ),
+            "outcome_source_identity": _bound_contract(
+                "outcome_source_identity",
+                contract_kind="outcome-source",
+                external_input_identifier="synthetic-input",
+                outcome_source_role="declared_external_input",
+            ),
+            "ranking_artifact_identifier": _bound_contract(
+                "ranking_artifact_identifier",
+                artifact_identifier="ranking",
+                contract_kind="ranking-artifact-reference",
+            ),
+        }
+        for identifier in sorted(profile_declarations):
+            path = f"config/research/readiness/profiles/{identifier}.json"
+            raw = canonical_bytes(profile_declarations[identifier])
+            write(root, path, raw)
+            profile_references.append(
+                {
+                    "contract_identifier": identifier,
+                    "identity": profile_declarations[identifier]["contract_identity"],
+                    "path": path,
+                    "sha256": hashlib.sha256(raw).hexdigest(),
+                }
+            )
+    profile_name = (
+        "outcome_aware_v1"
+        if outcome_aware
+        else "outcome_blind_characterization_v1"
+    )
+    outcome_policy = (
+        "outcome_aware_authorized_only"
+        if outcome_aware
+        else "prohibited_and_not_performed"
+    )
     profile_identity = reconstruct_profile_binding_identity(
-        profile_name="outcome_blind_characterization_v1",
-        outcome_policy="prohibited_and_not_performed",
-        declarations={},
+        profile_name=profile_name,
+        outcome_policy=outcome_policy,
+        declarations=profile_declarations,
     )
     descriptor["execution_profile"]["profile_identity"] = profile_identity
     descriptor["evidence_preparation"]["resource_policy_identity"] = parse_json(
@@ -156,10 +220,44 @@ def _rewrite_adapter(
             schema_identity="2" * 64,
         ),
     ]
+    if outcome_aware:
+        artifacts = [
+            _bound_artifact(
+                artifact_identifier="ranking",
+                artifact_kind="ranking_artifact",
+                container="json",
+                dependencies=[],
+                dependency_roles=["replay"],
+                execution_phase="ranking",
+                profile_applicability="outcome_aware_v1",
+                relative_path="artifacts/ranking.json",
+                schema_identity=ONE,
+            ),
+            _bound_artifact(
+                artifact_identifier="evaluation",
+                artifact_kind="evaluation_report",
+                container="json",
+                dependencies=["ranking"],
+                dependency_roles=["authorization", "outcome", "ranking"],
+                execution_phase="evaluation",
+                profile_applicability="outcome_aware_v1",
+                relative_path="artifacts/evaluation.json",
+                schema_identity="2" * 64,
+            ),
+        ]
+        artifacts.sort(key=lambda item: item["artifact_identifier"])
     descriptor["artifacts"]["declarations"] = artifacts
     artifact_evidence = validate_artifact_declarations(
-        artifacts, profile_name="outcome_blind_characterization_v1"
+        artifacts, profile_name=profile_name
     )
+    descriptor["execution_profile"] = {
+        "profile_identity": profile_identity,
+        "profile_name": profile_name,
+    }
+    descriptor["outcome_policy"] = outcome_policy
+    descriptor["evidence_preparation"][
+        "profile_contract_declarations"
+    ] = profile_references
     output_material = {
         "adapter_identifier": descriptor["adapter_identifier"],
         "allocation_authority_identity": attempt_contract[
@@ -232,7 +330,9 @@ def _rewrite_adapter(
         )
     descriptor["schema_version"] = 3
     descriptor["governed_scope_paths"] = sorted(
-        set(descriptor["governed_scope_paths"]) | set(extra_governed)
+        set(descriptor["governed_scope_paths"])
+        | set(extra_governed)
+        | {item["path"] for item in profile_references}
     )
     descriptor["adapter_identity"] = domain_identity(
         ADAPTER_DOMAIN,
@@ -326,7 +426,13 @@ def root_repository(root: Path):
     return GitRepository(root)
 
 
-def prospective_repository(tmp_path: Path, *, kinds: tuple[str, ...] = ("official", "reproduction")):
+def prospective_repository(
+    tmp_path: Path,
+    *,
+    kinds: tuple[str, ...] = ("official", "reproduction"),
+    zero_input: bool = False,
+    outcome_aware: bool = False,
+):
     repository, _, _, _ = synthetic_repository(tmp_path)
     root = repository.root
     write(root, READINESS_TEST_POLICY_V2_PATH, (ROOT / READINESS_TEST_POLICY_V2_PATH).read_bytes())
@@ -445,6 +551,12 @@ def prospective_repository(tmp_path: Path, *, kinds: tuple[str, ...] = ("officia
             "source_class": "combined_outcome_bearing",
         }
     ]
+    if zero_input:
+        descriptor["external_inputs"] = {"declarations": []}
+        descriptor["evidence_preparation"]["dataset_contracts"] = []
+        descriptor["evidence_preparation"]["decision_selection"][
+            "permitted_exclusion_reasons"
+        ] = []
     write(root, descriptor_path, canonical_bytes(descriptor))
     for path, raw in (
         (ALLOCATOR_IMPLEMENTATION_PATH, b"# governed allocator contract; no allocator implementation\n"),
@@ -535,6 +647,7 @@ def prospective_repository(tmp_path: Path, *, kinds: tuple[str, ...] = ("officia
             raw_schema_path,
             projection_schema_path,
         ),
+        outcome_aware=outcome_aware,
     )
     git(root, "add", ".")
     git(root, "commit", "-qm", "prospective v1.1 prerequisite contracts")
@@ -569,6 +682,9 @@ def prospective_repository(tmp_path: Path, *, kinds: tuple[str, ...] = ("officia
         projection_schema_path: "configuration",
         "tests/execution/test_readiness_mandatory_v1.py": "readiness_tests",
     }
+    if outcome_aware:
+        for path in (root / "config/research/readiness/profiles").glob("*.json"):
+            roles[path.relative_to(root).as_posix()] = "configuration"
     return repository, source, _source_scopes(root, source, roles)
 
 

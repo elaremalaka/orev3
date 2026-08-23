@@ -297,8 +297,11 @@ def test_machine_schemas_are_strict_null_free_documents() -> None:
         "adapter-declaration.schema.json",
         "adapter-declaration-v2.schema.json",
         "profile-conformance-evidence.schema.json",
+        "population-accounting-evidence.schema.json",
         "readiness-record.schema.json",
         "readiness-test-policy.schema.json",
+        "replay-evidence.schema.json",
+        "evidence-preparation.schema.json",
     }
     assert "adapter-declaration-v3.schema.json" in expected
     assert "adapter-declaration.schema.json" not in expected

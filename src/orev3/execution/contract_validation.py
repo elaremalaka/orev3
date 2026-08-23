@@ -210,6 +210,9 @@ def validate_profile_contract_v2(
         if key not in {"authorization_contract_identity", "profile_conformance_evidence_identity"}
     }
     material["schema_version"] = 2
+    material["profile_contract_identities"] = sorted(
+        material["profile_contract_identities"]
+    )
     if profile["profile_name"] == "outcome_aware_v1":
         material["authorization_contract_identity"] = profile["declarations"][
             "authorization_contract_identity"

@@ -44,6 +44,7 @@ def main() -> int:
         allowed_exclusion_reasons=request["allowed_exclusion_reasons"],
         max_units=request["max_units"],
         decision_selection_identity=request.get("decision_selection_identity"),
+        schema_version=request.get("schema_version", 1),
     )
     target = Path(request["private_output"])
     payload = canonical_bytes({"population": population, "replay": replay})

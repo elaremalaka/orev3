@@ -12,9 +12,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from orev3.execution.canonical import CanonicalControlError, domain_identity, parse_canonical_bytes, parse_json, validate_json_schema_instance
+from orev3.execution.canonical import CanonicalControlError, domain_identity, parse_canonical_bytes, parse_json, validate_json_schema_instance, validate_repository_path
 from orev3.execution.git_state import GitAuthorityError, GitRepository, RequiredCommittedObject, SourceCandidateRequirements, fetch_remote_head, resolve_source_candidate
-from orev3.execution.preparation import DEFAULT_ARTIFACT_STORE, REPOSITORY_AUTHORITY_PATH, PreparationAuthorityGeneration, _collect_preparation_environment_evidence, _discover_requirements, _scope_mapping
+from orev3.execution.preparation import DEFAULT_ARTIFACT_STORE, PHASE3A_REMAINING_PREDICATES, REPOSITORY_AUTHORITY_PATH, PreparationAuthorityGeneration, _collect_preparation_environment_evidence, _discover_requirements, _scope_mapping
 from orev3.execution.readiness import load_repository_authority
 from orev3.execution.readiness_record import (
     PHASE3B_SCHEMA_DOCUMENT_POLICY,
@@ -23,11 +23,23 @@ from orev3.execution.readiness_record import (
     PROSPECTIVE_PHASE3B_SCHEMA_POLICY,
 )
 from orev3.execution.readiness_record import SourceScopeDeclarationV1
-from orev3.execution.runtime import PHASE3A_SANDBOX_TEMPLATE_IDENTITY, PHASE3B_PROFILE_RENDERER_DOMAIN, PHASE3B_PROFILE_RENDERER_IDENTITY, DetachedSource, run_phase3b_controller, run_phase3b_worker
+from orev3.execution.runtime import PHASE3A_SANDBOX_TEMPLATE_IDENTITY, PHASE3B_PROFILE_RENDERER_DOMAIN, PHASE3B_PROFILE_RENDERER_IDENTITY, PHASE3B_WORKER_EVIDENCE_DOMAIN, DetachedSource, Phase3BWorkerEvidence, run_phase3b_controller, run_phase3b_worker
 
 EVIDENCE_PREPARATION_DOMAIN = "orev3:experiment-evidence-preparation:v1\n"
 EVIDENCE_POLICY_DOMAIN = "orev3:readiness-evidence-preparation-policy:v1\n"
 EVIDENCE_POLICY_PATH = "config/research/readiness/evidence-preparation-policy-v1.json"
+PHASE3A_NORMALIZED_OUTPUT_REVISION = "phase3a-normalized-output-v1"
+PHASE3A_NORMALIZED_WORKER_REVISION = "phase3a-normalized-worker-v1"
+PHASE3A_NORMALIZED_INVOCATION = "phase3a-validate-runtime"
+PHASE3A_NORMALIZED_CODE_PATHS = (
+    "src/orev3/execution/canonical.py",
+    "src/orev3/execution/git_state.py",
+    "src/orev3/execution/preparation.py",
+    "src/orev3/execution/preparation_worker.py",
+    "src/orev3/execution/readiness_record.py",
+    "src/orev3/execution/registry.py",
+    "src/orev3/execution/runtime.py",
+)
 PHASE3B_REMAINING_PREDICATES = (
     "attempt_allocation_and_control_storage",
     "candidate_readiness_record_generation",
@@ -55,6 +67,7 @@ PHASE3B_CONTROL_PATHS = (
     "src/orev3/execution/replay_preparation.py",
     "src/orev3/execution/replay_preparation_worker.py",
     "src/orev3/execution/test_policy.py",
+    "src/orev3/execution/zero_input_phase3b.py",
 )
 
 
@@ -102,6 +115,132 @@ class EvidencePreparationAssessment:
     diagnostics: tuple[str, ...]
     evidence_preparation_identity: str = ""
     evidence: Mapping[str, Any] | None = None
+
+
+def reconstruct_prospective_phase3a_worker(
+    *,
+    repository: GitRepository,
+    source_commit: str,
+    phase3a_result: Mapping[str, Any],
+    approved_branch_ref: str,
+    repository_authority_identifier: str,
+    source_scopes: Sequence[Mapping[str, Any]],
+    capability_policy_identity: str,
+    sandbox_template_identity: str,
+) -> Phase3BWorkerEvidence:
+    """Normalize prospective Phase-3A worker authority without physical paths."""
+
+    allowed_result_fields = {
+        "adapter_identity",
+        "adapter_registry_identity",
+        "closed_dependency_environment_identity",
+        "closed_dependency_root_path",
+        "command",
+        "dependency_import_origins",
+        "evidence_disposition",
+        "network_denial_verified",
+        "project_control_plane_origins",
+        "remaining_predicates",
+        "runtime_contract_identity",
+        "source_commit",
+        "status",
+    }
+    if set(phase3a_result) != allowed_result_fields:
+        raise CanonicalControlError("prospective Phase-3A result shape differs")
+    if (
+        phase3a_result["source_commit"] != source_commit
+        or phase3a_result["command"] != "validate_runtime"
+        or phase3a_result["evidence_disposition"]
+        != "PREPARATION_ENVIRONMENT_EVIDENCE_PASSED"
+        or phase3a_result["network_denial_verified"] is not True
+        or phase3a_result["status"] != "evidence_passed"
+    ):
+        raise CanonicalControlError("prospective Phase-3A result did not pass")
+    expected_predicates = list(PHASE3A_REMAINING_PREDICATES)
+    if phase3a_result["remaining_predicates"] != expected_predicates:
+        raise CanonicalControlError("prospective Phase-3A predicates differ")
+    import_origins = phase3a_result["dependency_import_origins"]
+    if not isinstance(import_origins, list):
+        raise CanonicalControlError("dependency import origins are malformed")
+    for origin in import_origins:
+        validate_repository_path(origin)
+    scopes = [dict(item) for item in source_scopes]
+    if scopes != sorted(scopes, key=lambda item: (item["repository_path"], item["role"])):
+        raise CanonicalControlError("prospective Phase-3A scopes are not canonical")
+    scope_paths = [item["repository_path"] for item in scopes]
+    if len(scope_paths) != len(set(scope_paths)):
+        raise CanonicalControlError("prospective Phase-3A scope path is duplicated")
+    required_origins = set(PHASE3A_NORMALIZED_CODE_PATHS)
+    if not required_origins.issubset(
+        set(phase3a_result["project_control_plane_origins"])
+    ):
+        raise CanonicalControlError("prospective Phase-3A worker origins are incomplete")
+    code_ids = sorted(
+        {
+            repository.tree_entry(source_commit, path).object_identity
+            for path in PHASE3A_NORMALIZED_CODE_PATHS
+        }
+    )
+    output_material = {
+        "adapter_identity": phase3a_result["adapter_identity"],
+        "adapter_registry_identity": phase3a_result["adapter_registry_identity"],
+        "approved_branch_ref": approved_branch_ref,
+        "authority_generation": PreparationAuthorityGeneration.PROSPECTIVE_V1_1.value,
+        "closed_dependency_environment_identity": phase3a_result[
+            "closed_dependency_environment_identity"
+        ],
+        "command": "validate_runtime",
+        "dependency_import_origins": list(import_origins),
+        "evidence_disposition": "PREPARATION_ENVIRONMENT_EVIDENCE_PASSED",
+        "network_denial_verified": True,
+        "normalized_output_revision": PHASE3A_NORMALIZED_OUTPUT_REVISION,
+        "remaining_predicates": expected_predicates,
+        "repository_authority_identifier": repository_authority_identifier,
+        "runtime_contract_identity": phase3a_result["runtime_contract_identity"],
+        "source_commit": source_commit,
+        "source_scopes": scopes,
+        "status": "evidence_passed",
+        "worker_code_git_identities": code_ids,
+    }
+    output_identity = domain_identity(
+        PHASE3B_WORKER_EVIDENCE_DOMAIN, output_material
+    )
+    command_material = {
+        "authority_generation": PreparationAuthorityGeneration.PROSPECTIVE_V1_1.value,
+        "command": "validate_runtime",
+        "invocation_identifier": PHASE3A_NORMALIZED_INVOCATION,
+        "worker_kind": "PHASE3A_VALIDATOR",
+        "worker_revision": PHASE3A_NORMALIZED_WORKER_REVISION,
+    }
+    worker_material = {
+        "capability_policy_identity": capability_policy_identity,
+        "closed_dependency_identity": phase3a_result[
+            "closed_dependency_environment_identity"
+        ],
+        "code_capability_git_identities": code_ids,
+        "command_identity": domain_identity(
+            PHASE3B_WORKER_EVIDENCE_DOMAIN, command_material
+        ),
+        "input_capability_identities": [],
+        "invocation_identifier": PHASE3A_NORMALIZED_INVOCATION,
+        "output_identity": output_identity,
+        "runtime_contract_identity": phase3a_result["runtime_contract_identity"],
+        "sandbox_template_identity": sandbox_template_identity,
+        "source_commit": source_commit,
+        "successful_worker_disposition": "evidence_passed",
+        "worker_kind": "PHASE3A_VALIDATOR",
+        "worker_module_git_identity": repository.tree_entry(
+            source_commit, "src/orev3/execution/preparation_worker.py"
+        ).object_identity,
+        "worker_revision": PHASE3A_NORMALIZED_WORKER_REVISION,
+    }
+    identity = domain_identity(PHASE3B_WORKER_EVIDENCE_DOMAIN, worker_material)
+    return Phase3BWorkerEvidence(
+        "PHASE3A_VALIDATOR",
+        identity,
+        {**worker_material, "worker_evidence_identity": identity},
+        output_material,
+    )
 
 
 def _read_verified_worker_object(path: Path, *, expected_size: int, expected_sha256: str, limit: int) -> bytes:
@@ -245,7 +384,10 @@ def aggregate_evidence(
     capability_policy_identity: str = "0" * 64,
     worker_evidence_identities: Sequence[str] = (),
     semantic_component_identities: Sequence[str] = (),
+    schema_version: int = 1,
 ) -> EvidencePreparationWorkerEvidence:
+    if schema_version not in {1, 2}:
+        raise CanonicalControlError("unsupported evidence-preparation schema version")
     components = {
         "artifact_evidence_identity": artifact_identity,
         "dataset_evidence_identities": list(dataset_identities),
@@ -272,7 +414,7 @@ def aggregate_evidence(
         "replay_evidence_identity": replay_identity,
         "runtime_contract_identity": runtime_contract_identity,
         "semantic_component_identities": list(semantic_component_identities),
-        "schema_version": 1,
+        "schema_version": schema_version,
         "source_commit": source_commit,
         "worker_evidence_identities": list(worker_evidence_identities),
     }
@@ -473,4 +615,4 @@ def validate_evidence_preparation(
             EvidencePreparationFailureCode.EVIDENCE_PREPARATION_INTERNAL_REJECTED.value,
         )
         return EvidencePreparationAssessment(EvidencePreparationDisposition.EVIDENCE_PREPARATION_REJECTED, PHASE3B_REMAINING_PREDICATES, (code,))
-__all__ = ["EVIDENCE_POLICY_DOMAIN", "EVIDENCE_POLICY_PATH", "EVIDENCE_PREPARATION_DOMAIN", "PHASE3B_CONTROL_PATHS", "PHASE3B_REMAINING_PREDICATES", "EvidenceAuthorityGeneration", "EvidencePreparationAssessment", "EvidencePreparationDisposition", "EvidencePreparationFailureCode", "EvidencePreparationWorkerEvidence", "aggregate_evidence", "load_evidence_policy", "load_phase3b_schemas", "load_prospective_phase3b_schemas", "reconstruct_projection_twice", "reconstruct_replay_twice", "require_phase3b_governance_closure", "validate_evidence_preparation"]
+__all__ = ["EVIDENCE_POLICY_DOMAIN", "EVIDENCE_POLICY_PATH", "EVIDENCE_PREPARATION_DOMAIN", "PHASE3A_NORMALIZED_CODE_PATHS", "PHASE3A_NORMALIZED_INVOCATION", "PHASE3A_NORMALIZED_OUTPUT_REVISION", "PHASE3A_NORMALIZED_WORKER_REVISION", "PHASE3B_CONTROL_PATHS", "PHASE3B_REMAINING_PREDICATES", "EvidenceAuthorityGeneration", "EvidencePreparationAssessment", "EvidencePreparationDisposition", "EvidencePreparationFailureCode", "EvidencePreparationWorkerEvidence", "aggregate_evidence", "load_evidence_policy", "load_phase3b_schemas", "load_prospective_phase3b_schemas", "reconstruct_projection_twice", "reconstruct_prospective_phase3a_worker", "reconstruct_replay_twice", "require_phase3b_governance_closure", "validate_evidence_preparation"]

@@ -1,0 +1,40 @@
+{
+  "$id": "orev3://schemas/execution-readiness/v1/population-accounting-evidence-v2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "excluded": {"additionalProperties": false, "properties": {"decision_identity": {"const": "not_applicable"}, "reason": {"minLength": 1, "type": "string"}, "replay_unit_identity": {"const": "not_applicable"}, "source_unit_identity": {"$ref": "#/$defs/sha256"}, "status": {"const": "replay_excluded"}}, "required": ["decision_identity", "reason", "replay_unit_identity", "source_unit_identity", "status"], "type": "object"},
+    "included": {"additionalProperties": false, "properties": {"decision_identity": {"$ref": "#/$defs/sha256"}, "reason": {"const": "included_by_governed_selector"}, "replay_unit_identity": {"$ref": "#/$defs/sha256"}, "source_unit_identity": {"$ref": "#/$defs/sha256"}, "status": {"const": "replay_included"}}, "required": ["decision_identity", "reason", "replay_unit_identity", "source_unit_identity", "status"], "type": "object"},
+    "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+  },
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "properties": {
+        "dispositions": {"items": {"oneOf": [{"$ref": "#/$defs/included"}, {"$ref": "#/$defs/excluded"}]}, "minItems": 1, "type": "array", "x-order-semantics": "identity-bearing", "x-unique-key": ["source_unit_identity"]},
+        "excluded_count": {"minimum": 0, "type": "integer"},
+        "included_count": {"minimum": 0, "type": "integer"},
+        "permitted_exclusion_reasons": {"items": {"minLength": 1, "type": "string"}, "type": "array", "uniqueItems": true, "x-canonical-order": ["value"]},
+        "population_accounting_evidence_identity": {"$ref": "#/$defs/sha256"},
+        "schema_version": {"const": 2},
+        "source_count": {"minimum": 1, "type": "integer"}
+      },
+      "required": ["dispositions", "excluded_count", "included_count", "permitted_exclusion_reasons", "population_accounting_evidence_identity", "schema_version", "source_count"],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "dispositions": {"const": []},
+        "excluded_count": {"const": 0},
+        "included_count": {"const": 0},
+        "permitted_exclusion_reasons": {"const": []},
+        "population_accounting_evidence_identity": {"$ref": "#/$defs/sha256"},
+        "schema_version": {"const": 2},
+        "source_count": {"const": 0}
+      },
+      "required": ["dispositions", "excluded_count", "included_count", "permitted_exclusion_reasons", "population_accounting_evidence_identity", "schema_version", "source_count"],
+      "type": "object"
+    }
+  ],
+  "title": "PopulationAccountingEvidenceV2"
+}

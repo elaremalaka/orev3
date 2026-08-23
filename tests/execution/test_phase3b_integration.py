@@ -30,6 +30,46 @@ from test_phase3c_readiness_contracts import (
 ZERO = "0" * 64
 
 
+def _file_remote_authority(repository: GitRepository) -> RepositoryAuthorityV1:
+    committed = load_repository_authority(
+        repository.root / "config/research/readiness/repository-authority-v1.json"
+    )
+    return RepositoryAuthorityV1(
+        committed.schema_version,
+        committed.repository_authority_identifier,
+        committed.git_object_format,
+        committed.approved_branch_ref,
+        (
+            RepositoryEndpoint(
+                "file", repository.text("remote", "get-url", "origin")
+            ),
+        ),
+    )
+
+
+def test_prospective_detached_worker_accepts_exact_zero_input(
+    tmp_path: Path,
+) -> None:
+    repository, _, _ = prospective_repository(tmp_path, zero_input=True)
+    git(repository.root, "push", "-q", "origin", "HEAD:refs/heads/research/post-v1")
+    evidence = _collect_evidence_preparation_evidence(
+        repository,
+        "synthetic-prospective",
+        operational_input_locators={},
+        authority=_file_remote_authority(repository),
+        allow_test_file_remote=True,
+        artifact_store_root=ARTIFACT_STORE,
+        generation=EvidenceAuthorityGeneration.PROSPECTIVE_V1_1,
+    )
+    material = evidence.aggregate_material
+    assert material["schema_version"] == 2
+    assert material["input_snapshot_identities"] == []
+    assert material["dataset_evidence_identities"] == []
+    assert material["projection_evidence_identities"] == []
+    assert len(material["semantic_component_identities"]) == 4
+    assert len(material["worker_evidence_identities"]) == 4
+
+
 def test_prospective_detached_worker_accepts_ordered_collection(
     tmp_path: Path,
 ) -> None:
@@ -95,22 +135,13 @@ def test_prospective_detached_worker_accepts_ordered_collection(
     git(root, "add", ".")
     git(root, "commit", "-qm", "prospective ordered Phase-3B input")
     git(root, "push", "-q", "origin", "HEAD:refs/heads/research/post-v1")
-    committed_authority = load_repository_authority(
-        root / "config/research/readiness/repository-authority-v1.json"
-    )
-    authority = RepositoryAuthorityV1(
-        committed_authority.schema_version,
-        committed_authority.repository_authority_identifier,
-        committed_authority.git_object_format,
-        committed_authority.approved_branch_ref,
-        (RepositoryEndpoint("file", repository.text("remote", "get-url", "origin")),),
-    )
+    authority = _file_remote_authority(repository)
     evidence = _collect_evidence_preparation_evidence(
         repository,
         "synthetic-prospective",
         operational_input_locators={
-            "synthetic-input-a": input_paths[0],
-            "synthetic-input-b": input_paths[1],
+            "synthetic-input-a": input_paths[0].resolve(),
+            "synthetic-input-b": input_paths[1].resolve(),
         },
         authority=authority,
         allow_test_file_remote=True,

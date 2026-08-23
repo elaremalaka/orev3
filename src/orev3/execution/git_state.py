@@ -1161,6 +1161,39 @@ def validate_record_v2_git_bindings(
             GitDiagnosticCode.CANONICAL_RECORD_INVALID,
             "complete readiness-v2 validation requires reconstructed prerequisites and detached Phase-3B evidence",
         )
+    # Slice 4 and the final independent validator intentionally share the
+    # same owner-level reconstruction primitives.  The legacy whole-record
+    # checks below remain defense in depth, but do not define a parallel
+    # first-failure algorithm.
+    from orev3.execution.readiness_candidate import (
+        PHASE3C_EVALUATION_ORDER,
+        Phase3CEvaluationInput,
+        validate_phase3c_invariant_bindings,
+    )
+
+    owner_material = dict(record.material)
+    owner_material.pop("readiness_identity", None)
+    owner_evaluation = Phase3CEvaluationInput(
+        repository=repository,
+        experiment_identifier=record.experiment_identifier,
+        repository_authority_identifier=record.material["git_authority"][
+            "repository_authority_identifier"
+        ],
+        approved_branch_ref=record.material["git_authority"][
+            "approved_branch_ref"
+        ],
+        readiness_material=owner_material,
+        prerequisites=prerequisites,
+        phase3b_evidence=phase3b_evidence,
+    )
+    owner_failure: Exception | None = None
+    try:
+        for invariant_identifier in PHASE3C_EVALUATION_ORDER[:-1]:
+            validate_phase3c_invariant_bindings(
+                owner_evaluation, invariant_identifier
+            )
+    except Exception as exc:
+        owner_failure = exc
     authority_entry = repository.tree_entry(source, REPOSITORY_AUTHORITY_PATH)
     _validate_safe_governed_entry(repository, source, authority_entry)
     try:
@@ -1612,6 +1645,7 @@ def validate_record_v2_git_bindings(
         if direct_inputs["input_snapshot_identities"] != snapshot_ids or direct_inputs["dataset_validation_evidence_identities"] != dataset_ids or direct_inputs["projection_evidence_identities"] != projection_ids:
             raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, "input evidence differs from direct record fields")
         declarations = prerequisites.adapter.material["external_inputs"]["declarations"]
+        zero_input = declarations == []
         if len(phase3b_evidence["snapshots"]) != len(declarations):
             raise GitAuthorityError(
                 GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
@@ -1810,7 +1844,12 @@ def validate_record_v2_git_bindings(
                     "dataset/projection authority lacks two detached worker reconstructions",
                 )
         replay_results = worker_results.get("REPLAY_PREPARATION", [])
-        if sum(
+        if zero_input and replay_results:
+            raise GitAuthorityError(
+                GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                "zero-input authority cannot contain Replay workers",
+            )
+        if not zero_input and sum(
             result.get("status") == "evidence_passed"
             and result.get("replay_identity")
             == replay_evidence["replay_evidence_identity"]
@@ -1912,19 +1951,25 @@ def validate_record_v2_git_bindings(
                 "READINESS_TEST", "collect", invocation_identifier
             )
         require_worker_authority("READINESS_TEST", "run_exact", "execution")
-        for invocation_identifier in ("replay-1", "replay-2"):
-            require_worker_authority(
-                "REPLAY_PREPARATION",
-                "reconstruct_replay",
-                invocation_identifier,
-                (replay_evidence["projection_identity"],),
-            )
+        if not zero_input:
+            for invocation_identifier in ("replay-1", "replay-2"):
+                require_worker_authority(
+                    "REPLAY_PREPARATION",
+                    "reconstruct_replay",
+                    invocation_identifier,
+                    (replay_evidence["projection_identity"],),
+                )
 
         actual_worker_authorities: Counter[
             tuple[str, str, tuple[str, ...]]
         ] = Counter()
 
         for worker in worker_materials:
+            if worker.get("worker_kind") == "PHASE3A_VALIDATOR":
+                # The shared owner-level validator above reconstructs the
+                # prospective normalized Phase-3A output and worker.  It is
+                # intentionally disjoint from the historical generic shape.
+                continue
             expected_fields = {
                 "capability_policy_identity",
                 "closed_dependency_identity",
@@ -2018,6 +2063,11 @@ def validate_record_v2_git_bindings(
         }
         if any(aggregate[key] != expected for key, expected in aggregate_expected.items()):
             raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, "Phase-3B aggregate cross-binding differs from record")
+    if owner_failure is not None:
+        raise GitAuthorityError(
+            GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+            "owner-level readiness authority does not reconstruct",
+        ) from owner_failure
     return BoundSchemaRegistry(schemas)
 
 

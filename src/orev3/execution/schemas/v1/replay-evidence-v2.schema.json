@@ -1,0 +1,47 @@
+{
+  "$id": "orev3://schemas/execution-readiness/v1/replay-evidence-v2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "identities": {"items": {"$ref": "#/$defs/sha256"}, "type": "array", "uniqueItems": true, "x-order-semantics": "identity-bearing"},
+    "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+  },
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_order": {"items": {"type": "integer"}, "minItems": 1, "type": "array", "uniqueItems": true, "x-order-semantics": "identity-bearing"},
+        "decision_selection_identity": {"$ref": "#/$defs/sha256"},
+        "ordered_decision_identities": {"$ref": "#/$defs/identities"},
+        "ordered_replay_unit_identities": {"$ref": "#/$defs/identities"},
+        "ordered_source_unit_identities": {"items": {"$ref": "#/$defs/sha256"}, "minItems": 1, "type": "array", "uniqueItems": true, "x-order-semantics": "identity-bearing"},
+        "projection_identity": {"$ref": "#/$defs/sha256"},
+        "replay_preparer_component_identity": {"$ref": "#/$defs/sha256"},
+        "replay_evidence_identity": {"$ref": "#/$defs/sha256"},
+        "replay_identity": {"$ref": "#/$defs/sha256"},
+        "schema_version": {"const": 2},
+        "selector_component_identity": {"$ref": "#/$defs/sha256"}
+      },
+      "required": ["candidate_order", "decision_selection_identity", "ordered_decision_identities", "ordered_replay_unit_identities", "ordered_source_unit_identities", "projection_identity", "replay_preparer_component_identity", "replay_evidence_identity", "replay_identity", "schema_version", "selector_component_identity"],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_order": {"const": []},
+        "decision_selection_identity": {"$ref": "#/$defs/sha256"},
+        "ordered_decision_identities": {"const": []},
+        "ordered_replay_unit_identities": {"const": []},
+        "ordered_source_unit_identities": {"const": []},
+        "projection_identity": {"$ref": "#/$defs/sha256"},
+        "replay_preparer_component_identity": {"$ref": "#/$defs/sha256"},
+        "replay_evidence_identity": {"$ref": "#/$defs/sha256"},
+        "replay_identity": {"$ref": "#/$defs/sha256"},
+        "schema_version": {"const": 2},
+        "selector_component_identity": {"$ref": "#/$defs/sha256"}
+      },
+      "required": ["candidate_order", "decision_selection_identity", "ordered_decision_identities", "ordered_replay_unit_identities", "ordered_source_unit_identities", "projection_identity", "replay_preparer_component_identity", "replay_evidence_identity", "replay_identity", "schema_version", "selector_component_identity"],
+      "type": "object"
+    }
+  ],
+  "title": "ReplayEvidenceV2"
+}
