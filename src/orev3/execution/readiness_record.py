@@ -587,6 +587,10 @@ class ReadinessRecordV2:
     readiness_identity: str
     experiment_identifier: str
     source_commit: str
+    canonical_record_path: str
+    repository_authority_identifier: str
+    approved_branch_ref: str
+    source_scopes: tuple[SourceScopeDeclarationV1, ...]
 
     @classmethod
     def from_mapping(cls, material: Mapping[str, Any]) -> "ReadinessRecordV2":
@@ -599,6 +603,15 @@ class ReadinessRecordV2:
             readiness_identity=expected,
             experiment_identifier=material["experiment"]["experiment_identifier"],
             source_commit=material["git_authority"]["source_commit"],
+            canonical_record_path=material["experiment"]["canonical_record_path"],
+            repository_authority_identifier=material["git_authority"][
+                "repository_authority_identifier"
+            ],
+            approved_branch_ref=material["git_authority"]["approved_branch_ref"],
+            source_scopes=tuple(
+                SourceScopeDeclarationV1.from_mapping(item)
+                for item in material["source_scopes"]
+            ),
         )
 
 

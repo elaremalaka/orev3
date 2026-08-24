@@ -114,6 +114,30 @@ PHASE3C_EVALUATION_ORDER = (
     "canonical_readiness_record",
 )
 
+CURRENT_READINESS_EVALUATION_ORDER = (
+    "git_authority",
+    "canonical_readiness_record",
+    "schema_registry",
+    "experiment",
+    "readiness_specification",
+    "control_plane",
+    "source_scopes",
+    "protocol",
+    "implementation",
+    "execution_specification",
+    "execution_profile",
+    "runtime",
+    "configuration",
+    "external_inputs",
+    "replay",
+    "artifacts",
+    "outcome_policy",
+    "validation",
+    "attempt_policy",
+    "readiness_seal_and_ancestry",
+    "current_external_inputs",
+)
+
 _PHASE3C_APPLICABLE = frozenset(PHASE3C_EVALUATION_ORDER)
 _STATUS_VALUES = frozenset(
     {"passed", "failed", "not_evaluated", "not_applicable"}
@@ -183,6 +207,8 @@ class ReceiptValidationContext:
     failed_invariant_identifier: str
     candidate_source_commit: str | None
     readiness_identity: str | None
+    receipt_class: str = "READINESS_REJECTED"
+    current_readiness_disposition: str = "not_applicable"
 
 
 @dataclass(frozen=True, slots=True)
@@ -241,10 +267,16 @@ def validate_readiness_failure_receipt(
     validate_exact_fields(material, fields, label="readiness-failure-receipt")
     if material["schema_version"] != 1:
         raise CanonicalControlError("failure receipt schema revision is unsupported")
-    if material["receipt_class"] != "READINESS_REJECTED":
-        raise CanonicalControlError("Phase 3C may construct only READINESS_REJECTED")
-    if material["current_readiness_disposition"] != "not_applicable":
-        raise CanonicalControlError("readiness rejection disposition is invalid")
+    if context.receipt_class not in {"READINESS_REJECTED", "CURRENT_READINESS"}:
+        raise CanonicalControlError("receipt validation context is unsupported")
+    if material["receipt_class"] != context.receipt_class:
+        raise CanonicalControlError("failure receipt class differs from context")
+    if material["current_readiness_disposition"] != context.current_readiness_disposition:
+        raise CanonicalControlError("failure receipt disposition differs from context")
+    if context.receipt_class == "READINESS_REJECTED":
+        evaluation_order = PHASE3C_EVALUATION_ORDER
+    else:
+        evaluation_order = CURRENT_READINESS_EVALUATION_ORDER
     normalize_experiment_identifier(material["experiment_identifier"])
     require_string("repository_authority_identifier", material["repository_authority_identifier"])
     branch = require_string("approved_branch_ref", material["approved_branch_ref"])
@@ -253,20 +285,21 @@ def validate_readiness_failure_receipt(
     _validate_availability(material["candidate_source_commit"], git=True)
     _validate_availability(material["readiness_identity"], git=False)
     if material["launch_authority_snapshot_identity"] != {"status": "absent"}:
-        raise CanonicalControlError("Phase-3C launch snapshot authority must be absent")
+        raise CanonicalControlError("pre-launch receipt snapshot authority must be absent")
     if material["scientific_execution_started"] is not False:
         raise CanonicalControlError("scientific execution cannot start in a receipt")
     if material["scientific_outcome_evidence"] != "absent":
         raise CanonicalControlError("scientific outcome evidence must be absent")
     failed = material["failed_invariant_identifier"]
-    if failed not in _PHASE3C_APPLICABLE:
-        raise CanonicalControlError("failure receipt invariant is not Phase-3C applicable")
+    applicable = frozenset(evaluation_order)
+    if failed not in applicable:
+        raise CanonicalControlError("failure receipt invariant is not stage-applicable")
     statuses = material["check_statuses"]
     if not isinstance(statuses, list) or len(statuses) != 27:
         raise CanonicalControlError("failure receipt must contain 27 statuses")
     if [item.get("check_identifier") for item in statuses if isinstance(item, Mapping)] != list(INVARIANT_SERIALIZATION_ORDER):
         raise CanonicalControlError("failure receipt status order is invalid")
-    passed = set(PHASE3C_EVALUATION_ORDER[: PHASE3C_EVALUATION_ORDER.index(failed)])
+    passed = set(evaluation_order[: evaluation_order.index(failed)])
     for item in statuses:
         validate_exact_fields(item, {"check_identifier", "status"}, label="failure check status")
         identifier = item["check_identifier"]
@@ -275,7 +308,7 @@ def validate_readiness_failure_receipt(
             raise CanonicalControlError("failure receipt status is invalid")
         expected = (
             "not_applicable"
-            if identifier not in _PHASE3C_APPLICABLE
+            if identifier not in applicable
             else "failed"
             if identifier == failed
             else "passed"
@@ -297,12 +330,13 @@ def validate_readiness_failure_receipt(
         raise CanonicalControlError("failure receipt context does not reconstruct")
     expected_source = _availability(context.candidate_source_commit)
     expected_readiness = _availability(context.readiness_identity)
-    if failed == "git_authority":
-        expected_source = {"status": "absent"}
-    elif context.candidate_source_commit is None:
-        raise CanonicalControlError("post-Git failure requires known source authority")
-    if context.readiness_identity is not None and failed != "canonical_readiness_record":
-        raise CanonicalControlError("known readiness identity is outside its authority point")
+    if context.receipt_class == "READINESS_REJECTED":
+        if failed == "git_authority":
+            expected_source = {"status": "absent"}
+        elif context.candidate_source_commit is None:
+            raise CanonicalControlError("post-Git failure requires known source authority")
+        if context.readiness_identity is not None and failed != "canonical_readiness_record":
+            raise CanonicalControlError("known readiness identity is outside its authority point")
     if (
         material["candidate_source_commit"] != expected_source
         or material["readiness_identity"] != expected_readiness
@@ -335,19 +369,29 @@ def build_readiness_failure_receipt(
     candidate_source_commit: str | None,
     readiness_identity: str | None,
     schema: Mapping[str, Any],
+    receipt_class: str = "READINESS_REJECTED",
+    current_readiness_disposition: str = "not_applicable",
 ) -> Mapping[str, Any]:
-    if failed_invariant_identifier not in _PHASE3C_APPLICABLE:
-        raise CanonicalControlError("invalid Phase-3C failed invariant")
+    evaluation_order = (
+        PHASE3C_EVALUATION_ORDER
+        if receipt_class == "READINESS_REJECTED"
+        else CURRENT_READINESS_EVALUATION_ORDER
+        if receipt_class == "CURRENT_READINESS"
+        else ()
+    )
+    applicable = frozenset(evaluation_order)
+    if failed_invariant_identifier not in applicable:
+        raise CanonicalControlError("invalid stage failed invariant")
     passed = set(
-        PHASE3C_EVALUATION_ORDER[
-            : PHASE3C_EVALUATION_ORDER.index(failed_invariant_identifier)
+        evaluation_order[
+            : evaluation_order.index(failed_invariant_identifier)
         ]
     )
     statuses = []
     for identifier in INVARIANT_SERIALIZATION_ORDER:
         status = (
             "not_applicable"
-            if identifier not in _PHASE3C_APPLICABLE
+            if identifier not in applicable
             else "failed"
             if identifier == failed_invariant_identifier
             else "passed"
@@ -359,12 +403,12 @@ def build_readiness_failure_receipt(
         "approved_branch_ref": approved_branch_ref,
         "candidate_source_commit": _availability(candidate_source_commit),
         "check_statuses": statuses,
-        "current_readiness_disposition": "not_applicable",
+        "current_readiness_disposition": current_readiness_disposition,
         "experiment_identifier": normalize_experiment_identifier(experiment_identifier),
         "failed_invariant_identifier": failed_invariant_identifier,
         "launch_authority_snapshot_identity": {"status": "absent"},
         "readiness_identity": _availability(readiness_identity),
-        "receipt_class": "READINESS_REJECTED",
+        "receipt_class": receipt_class,
         "repository_authority_identifier": repository_authority_identifier,
         "schema_version": 1,
         "scientific_execution_started": False,
@@ -382,6 +426,8 @@ def build_readiness_failure_receipt(
             failed_invariant_identifier=failed_invariant_identifier,
             candidate_source_commit=candidate_source_commit,
             readiness_identity=readiness_identity,
+            receipt_class=receipt_class,
+            current_readiness_disposition=current_readiness_disposition,
         ),
         schema=schema,
     )

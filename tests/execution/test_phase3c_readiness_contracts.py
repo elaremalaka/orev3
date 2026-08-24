@@ -61,6 +61,7 @@ from orev3.execution.registry import (
     ADAPTER_REGISTRY_DOMAIN,
     ARTIFACT_DECLARATION_DOMAIN,
     EXTERNAL_INPUT_DECLARATION_DOMAIN,
+    EXTERNAL_INPUT_MANIFEST_DOMAIN,
     EXTERNAL_INPUT_MEMBER_DOMAIN,
     PARSER_CONFIGURATION_DOMAIN,
     AdapterDeclarationV1,
@@ -320,6 +321,21 @@ def _rewrite_adapter(
         declaration["parser_configuration_identity"] = domain_identity(
             PARSER_CONFIGURATION_DOMAIN, parser_configuration
         )
+        if declaration["input_kind"] == "ordered_file_collection":
+            declaration["manifest_revision"] = (
+                "external-input-ordered-file-manifest-v1"
+            )
+            declaration["manifest_identity"] = domain_identity(
+                EXTERNAL_INPUT_MANIFEST_DOMAIN,
+                {
+                    "external_input_identifier": declaration[
+                        "external_input_identifier"
+                    ],
+                    "input_version": declaration["input_version"],
+                    "manifest_revision": declaration["manifest_revision"],
+                    "members": declaration["members"],
+                },
+            )
         declaration["external_input_identity"] = domain_identity(
             EXTERNAL_INPUT_DECLARATION_DOMAIN,
             {
@@ -432,6 +448,7 @@ def prospective_repository(
     kinds: tuple[str, ...] = ("official", "reproduction"),
     zero_input: bool = False,
     outcome_aware: bool = False,
+    ordered_input: bool = False,
 ):
     repository, _, _, _ = synthetic_repository(tmp_path)
     root = repository.root
@@ -503,17 +520,33 @@ def prospective_repository(
     parser = resolve_component(
         repository, repository.resolve_commit("HEAD"), "canonical-jsonl-raw-parser-v1"
     )
+    member_payloads = (
+        (input_payload[:70], input_payload[70:])
+        if ordered_input
+        else (input_payload,)
+    )
     declaration = {
         "external_input_identifier": "synthetic-input",
         "external_input_identity": ZERO,
-        "input_kind": "regular_file",
+        "input_kind": (
+            "ordered_file_collection" if ordered_input else "regular_file"
+        ),
         "members": [
             {
-                "byte_count": len(input_payload),
-                "logical_identifier": "combined",
-                "member_path": "synthetic-input",
-                "sha256": hashlib.sha256(input_payload).hexdigest(),
+                "byte_count": len(payload),
+                "logical_identifier": (
+                    ("first", "second")[index]
+                    if ordered_input
+                    else "combined"
+                ),
+                "member_path": (
+                    f"synthetic-input-{index + 1}"
+                    if ordered_input
+                    else "synthetic-input"
+                ),
+                "sha256": hashlib.sha256(payload).hexdigest(),
             }
+            for index, payload in enumerate(member_payloads)
         ],
         "parser_identity": parser.component_identity,
         "role": "dataset",

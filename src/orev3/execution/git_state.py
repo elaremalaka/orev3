@@ -822,8 +822,9 @@ def derive_readiness_seal(
     repository: GitRepository,
     *,
     remote_head_commit: str,
-    record: ReadinessRecordV1,
+    record: ReadinessRecordV1 | ReadinessRecordV2,
     record_blob_identity: str,
+    validate_governed_source: bool = True,
 ) -> ReadinessSealDerivation:
     head = repository.resolve_commit(remote_head_commit)
     current = repository.tree_entry(head, record.canonical_record_path)
@@ -893,7 +894,7 @@ def derive_readiness_seal(
         for path in repository.diff_paths(record.source_commit, head, governed_paths)
         if path != record.canonical_record_path
     )
-    if changed_governed:
+    if validate_governed_source and changed_governed:
         raise GitAuthorityError(
             GitDiagnosticCode.SOURCE_STALE,
             "governed source changed after S",

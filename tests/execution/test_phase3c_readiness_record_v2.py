@@ -285,11 +285,15 @@ def _prospective_git_candidate(
     *,
     zero_input: bool = False,
     outcome_aware: bool = False,
+    ordered_input: bool = False,
 ):
     from orev3.execution.readiness_contracts import load_readiness_prerequisite_contracts
 
     repository, source, scopes = prospective_repository(
-        tmp_path, zero_input=zero_input, outcome_aware=outcome_aware
+        tmp_path,
+        zero_input=zero_input,
+        outcome_aware=outcome_aware,
+        ordered_input=ordered_input,
     )
     prerequisites = load_readiness_prerequisite_contracts(
         repository,
