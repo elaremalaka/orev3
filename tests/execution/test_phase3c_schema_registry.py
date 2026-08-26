@@ -1385,11 +1385,15 @@ def test_prospective_phase3b_v2_schemas_accept_only_exact_zero_branches() -> Non
         )
 
 
-def test_slice_one_introduces_no_operational_control_object_apis() -> None:
+def test_shared_semantic_core_introduces_no_operational_authority() -> None:
     production = Path("src/orev3/execution")
+    assert (production / "attempts.py").is_file()
+    assert (production / "control_storage.py").is_file()
     assert not (production / "orchestrator.py").exists()
-    assert not (production / "attempts.py").exists()
     assert not (production / "outcome_gate.py").exists()
+    assert not Path(
+        "config/research/readiness/attempt-authority-contract-v1.json"
+    ).exists()
     for forbidden in (
         "build_attempt_allocation",
         "build_attempt_control_record",
