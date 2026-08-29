@@ -1389,8 +1389,8 @@ def test_shared_semantic_core_introduces_no_operational_authority() -> None:
     production = Path("src/orev3/execution")
     assert (production / "attempts.py").is_file()
     assert (production / "control_storage.py").is_file()
-    assert not (production / "orchestrator.py").exists()
-    assert not (production / "outcome_gate.py").exists()
+    assert (production / "orchestrator.py").is_file()
+    assert (production / "outcome_gate.py").is_file()
     assert not Path(
         "config/research/readiness/attempt-authority-contract-v1.json"
     ).exists()
