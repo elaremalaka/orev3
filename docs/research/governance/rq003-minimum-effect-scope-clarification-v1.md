@@ -3,7 +3,7 @@
 ## Status
 
 - Type: Prospective research-governance scope decision
-- State: Draft for independent review; not frozen
+- State: Adopted and frozen prospectively
 - Historical authority mutation: None
 - Outcome evidence used: None
 - Implementation authorized: No
@@ -132,15 +132,14 @@ authority. Nothing here weakens them.
 
 ## 5. Historical and prospective boundary
 
-This clarification is prospective from its eventual frozen source commit. It
-does not alter the bytes, identities, dispositions, or interpretation of
-RQ-003, the minimum-effect policy, Experiment 2A, Experiments 3 or 4, or their
-findings. It does not promote inherited uncommitted material into authority.
-
-The minimum-effect policy remains controlling for the characterization-to-
-dependent-evaluation promotion class in Section 2.1. This decision controls
-the narrower direct-information class in Section 2.2 only after it is reviewed,
-committed, pushed, and independently remote-verified.
+This clarification is prospective from its adoption commit. It does not alter
+the bytes, identities, dispositions, or interpretation of RQ-003, the
+minimum-effect policy, Experiment 2A, Experiments 3 or 4, or their findings.
+It does not promote inherited uncommitted material into authority.
+The minimum-effect policy remains controlling for the
+characterization-to-dependent-evaluation promotion class in Section 2.1.
+This decision controls the narrower direct-information class in Section 2.2
+after the adoption commit is pushed and independently remote-verified.
 
 ## 6. Information-flow and side-effect boundary
 
@@ -149,6 +148,6 @@ and outcome-blind scientific reasoning. No raw outcome or winner data was
 opened, queried, or used. Frozen historical findings were used only to verify
 the existing authority sequence and bounded interpretations.
 
-This draft creates no implementation, adapter, projection, candidate,
+This decision creates no implementation, adapter, projection, candidate,
 `READINESS_VALIDATED`, E, R, `EXECUTION_READY`, launch, experiment result,
 Strategy, paper, live, or capital authority.

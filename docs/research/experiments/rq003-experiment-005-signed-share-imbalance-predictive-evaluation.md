@@ -2,8 +2,8 @@
 
 ## Status
 
-- Type: Proposed governing research protocol
-- Protocol status: Draft for targeted scientific and governance review
+- Type: Governing research protocol
+- Protocol status: Adopted and frozen prospectively
 - Research design: Complete
 - Implementation authorized: No
 - Empirical execution authorized: No
@@ -18,11 +18,11 @@ measurement, population, comparison procedures, controls, metrics,
 uncertainty, dispositions, and confirmation boundary before any Experiment 5
 outcome access.
 
-This draft is not frozen authority. It does not authorize implementation,
-outcome access, empirical execution, a production adapter, a projection
-contract, a readiness candidate, `READINESS_VALIDATED`, an evidence-
-publication commit E, a readiness seal R, `EXECUTION_READY`, Strategy use,
-launch activity, or economic interpretation.
+This frozen protocol does not authorize implementation, outcome access,
+empirical execution, a production adapter, a projection contract, a readiness
+candidate, READINESS_VALIDATED, an evidence-publication commit E, a readiness
+seal R, EXECUTION_READY, Strategy use, launch activity, or economic
+interpretation.
 
 ## Authority and scientific lineage
 
@@ -1210,7 +1210,7 @@ scientific result, open outcomes, execute the experiment, or authorize launch.
 `EXECUTION_READY` permits the later launch-validation lifecycle to begin; it
 does not mean launch validation passed or capital may be deployed.
 
-This draft creates no adapter, projection contract, registry member,
+This protocol creates no adapter, projection contract, registry member,
 candidate, E, R, readiness record, or execution authority. If a future
 implementation discovers that scientific material required here cannot be
 represented under frozen Execution Readiness authority, it must stop for
