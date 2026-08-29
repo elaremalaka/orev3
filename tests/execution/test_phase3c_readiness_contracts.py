@@ -453,6 +453,10 @@ def prospective_repository(
     repository, _, _, _ = synthetic_repository(tmp_path)
     root = repository.root
     write(root, READINESS_TEST_POLICY_V2_PATH, (ROOT / READINESS_TEST_POLICY_V2_PATH).read_bytes())
+    readiness_policy = parse_json((ROOT / READINESS_TEST_POLICY_V2_PATH).read_bytes())
+    for selector in readiness_policy["required_selectors"]:
+        selector_path = selector.split("::", 1)[0]
+        write(root, selector_path, (ROOT / selector_path).read_bytes())
     write(
         root,
         "docs/research/specifications/experiment-execution-readiness-v1.1.md",
@@ -713,8 +717,9 @@ def prospective_repository(
         "config/research/readiness/offline-artifact-manifest-v1.json": "runtime_manifest",
         raw_schema_path: "configuration",
         projection_schema_path: "configuration",
-        "tests/execution/test_readiness_mandatory_v1.py": "readiness_tests",
     }
+    for selector in readiness_policy["required_selectors"]:
+        roles[selector.split("::", 1)[0]] = "readiness_tests"
     if outcome_aware:
         for path in (root / "config/research/readiness/profiles").glob("*.json"):
             roles[path.relative_to(root).as_posix()] = "configuration"
@@ -963,6 +968,52 @@ def test_attempt_authority_contract_fails_closed(tmp_path: Path, defect: str) ->
         load_attempt_authority_contract(repository, source, schemas=schemas, requested_attempt_kind="official")
 
 
+def test_repository_shared_attempt_authority_reconstructs_without_live_provider(
+    tmp_path: Path,
+) -> None:
+    repository, _, _ = prospective_repository(tmp_path)
+    for path in (
+        REPOSITORY_AUTHORITY_PATH,
+        ALLOCATOR_IMPLEMENTATION_PATH,
+        CONTROL_STORAGE_IMPLEMENTATION_PATH,
+        ATTEMPT_AUTHORITY_CONTRACT_PATH,
+    ):
+        write(repository.root, path, (ROOT / path).read_bytes())
+    source = _commit_mutation(repository, "bind repository shared attempt authority")
+    schemas = load_prospective_schemas(
+        repository, source, ProspectiveRegistryGeneration.READINESS_V1_1
+    )
+
+    official = load_attempt_authority_contract(
+        repository,
+        source,
+        schemas=schemas,
+        requested_attempt_kind="official",
+    )
+    reproduction = load_attempt_authority_contract(
+        repository,
+        source,
+        schemas=schemas,
+        requested_attempt_kind="reproduction",
+    )
+
+    assert official.material == reproduction.material
+    assert official.material["allocation_authority_identity_material"] == {
+        "allocation_authority_identifier": "orev3-shared-attempt-authority-v1",
+        "allocation_authority_schema_revision": (
+            "allocation-authority-identity-material-v1"
+        ),
+        "repository_authority_identifier": "orev3-primary-repository-v1",
+    }
+    assert official.material["supported_attempt_kinds"] == [
+        "official",
+        "reproduction",
+    ]
+    assert official.material["control_storage_component"]["path"] == (
+        CONTROL_STORAGE_IMPLEMENTATION_PATH
+    )
+
+
 def test_caller_cannot_substitute_a_prerequisite_schema(tmp_path: Path) -> None:
     repository, source, _ = prospective_repository(tmp_path)
     schemas = dict(
@@ -1083,6 +1134,34 @@ def test_policy_v2_empty_is_valid_but_missing_unsorted_and_mismatch_reject(tmp_p
         changed = _commit_mutation(repository)
         with pytest.raises(CanonicalControlError):
             load_readiness_test_policy_v2(repository, changed, schemas=schemas)
+
+
+def test_repository_policy_adopts_frozen_shared_conformance_suites(
+    tmp_path: Path,
+) -> None:
+    repository, source, _ = prospective_repository(tmp_path)
+    schemas = load_prospective_schemas(
+        repository, source, ProspectiveRegistryGeneration.READINESS_V1_1
+    )
+    policy = load_readiness_test_policy_v2(
+        repository, source, schemas=schemas
+    ).material
+
+    assert policy["required_selectors"] == [
+        "tests/execution/test_attempts.py",
+        "tests/execution/test_control_storage.py",
+        "tests/execution/test_orchestrator.py",
+        "tests/execution/test_outcome_gate.py",
+        "tests/execution/test_phase3c_schema_registry.py",
+        "tests/execution/test_readiness_mandatory_v1.py",
+    ]
+    assert policy["expected_mandatory_node_count"] == 302
+    assert policy["expected_mandatory_collection_identity"] == (
+        "8937799ed8717bc9b6bc9928f91650f5d6618c84e75e94ab8a32b51485838528"
+    )
+    assert policy["policy_identity"] == (
+        "83c1a18f525567e3ebde49a8e3f1e67199d1b89bc7c0e8ee9b91442180a4d407"
+    )
 
 
 def test_launch_smoke_selectors_are_an_identity_bound_mandatory_subset(

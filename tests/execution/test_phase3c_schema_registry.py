@@ -1391,9 +1391,29 @@ def test_shared_semantic_core_introduces_no_operational_authority() -> None:
     assert (production / "control_storage.py").is_file()
     assert (production / "orchestrator.py").is_file()
     assert (production / "outcome_gate.py").is_file()
-    assert not Path(
-        "config/research/readiness/attempt-authority-contract-v1.json"
-    ).exists()
+    authority = parse_json(
+        Path(
+            "config/research/readiness/attempt-authority-contract-v1.json"
+        ).read_bytes()
+    )
+    assert authority["allocation_authority_identity_material"][
+        "allocation_authority_identifier"
+    ] == "orev3-shared-attempt-authority-v1"
+    serialized = json.dumps(authority, sort_keys=True)
+    for forbidden_operational_field in (
+        "backend",
+        "credential",
+        "database_url",
+        "endpoint",
+        "filesystem_root",
+        "provider",
+    ):
+        assert forbidden_operational_field not in serialized
+    registry = parse_json(
+        Path("config/research/readiness/adapter-registry-v1.json").read_bytes()
+    )
+    assert registry["descriptors"] == []
+    assert registry["projection_contracts"] == []
     for forbidden in (
         "build_attempt_allocation",
         "build_attempt_control_record",
