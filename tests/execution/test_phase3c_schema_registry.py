@@ -10,6 +10,7 @@ import pytest
 
 from orev3.execution.canonical import (
     CanonicalControlError,
+    domain_identity,
     parse_json,
     validate_json_schema_instance,
 )
@@ -28,6 +29,18 @@ from orev3.execution.contract_validation import (
 
 
 SCHEMA_ROOT = Path("src/orev3/execution/schemas/v1")
+AUTHORITY_CONTEXT_PATH = Path(
+    "tests/execution/prospective-authority-context-v1.json"
+)
+AUTHORITY_CONTEXT_DOMAIN = "orev3:test:prospective-authority-context:v1\n"
+ADAPTER_REGISTRY_DOMAIN = "orev3:readiness-adapter-registry:v1\n"
+ADAPTER_DOMAIN = "orev3:readiness-adapter-declaration:v1\n"
+SYNTHETIC_ADAPTER_IDENTIFIER = "synthetic-prospective-adapter"
+SYNTHETIC_EXPERIMENT_IDENTIFIER = "synthetic-prospective"
+SYNTHETIC_DESCRIPTOR_PATH = Path(
+    "config/research/readiness/experiments/synthetic-adapter-v1.json"
+)
+SYNTHETIC_PROJECTION_CONTRACT_IDENTIFIER = "synthetic-outcome-blind-v1"
 SHA = "1" * 64
 GIT = "a" * 40
 NEW_KINDS = {
@@ -1385,6 +1398,154 @@ def test_prospective_phase3b_v2_schemas_accept_only_exact_zero_branches() -> Non
         )
 
 
+def _expected_synthetic_authority(input_mode: str) -> dict[str, Any]:
+    """Reconstruct fixture authority independently of registry and context."""
+
+    assert input_mode in {"declared_input", "zero_input"}
+    descriptor_raw = SYNTHETIC_DESCRIPTOR_PATH.read_bytes()
+    descriptor = parse_json(descriptor_raw)
+    assert descriptor["adapter_identifier"] == SYNTHETIC_ADAPTER_IDENTIFIER
+    assert descriptor["experiment_identifier"] == SYNTHETIC_EXPERIMENT_IDENTIFIER
+    descriptor_identity = domain_identity(
+        ADAPTER_DOMAIN,
+        {key: value for key, value in descriptor.items() if key != "adapter_identity"},
+    )
+    assert descriptor["adapter_identity"] == descriptor_identity
+    descriptor_reference = {
+        "adapter_identifier": SYNTHETIC_ADAPTER_IDENTIFIER,
+        "descriptor_identity": descriptor_identity,
+        "descriptor_path": SYNTHETIC_DESCRIPTOR_PATH.as_posix(),
+        "descriptor_sha256": hashlib.sha256(descriptor_raw).hexdigest(),
+        "experiment_identifier": SYNTHETIC_EXPERIMENT_IDENTIFIER,
+    }
+    declarations = {
+        item["external_input_identifier"]: item
+        for item in descriptor["external_inputs"]["declarations"]
+    }
+    contracts = descriptor["evidence_preparation"]["dataset_contracts"]
+    assert len(contracts) == (0 if input_mode == "zero_input" else 1)
+    projection_contracts = [
+        {
+            "dataset_validator_identifier": contract["dataset_validator_identifier"],
+            "output_container": contract["container"],
+            "projection_contract_identifier": contract["projection_contract_identifier"],
+            "projection_schema_identifier": contract["projection_schema_identifier"],
+            "projection_schema_identity": contract["projection_schema_identity"],
+            "projection_schema_path": contract["projection_schema_path"],
+            "projection_schema_sha256": contract["projection_schema_sha256"],
+            "projector_identifier": contract["projector_identifier"],
+            "raw_parser_identifier": contract["raw_parser_identifier"],
+            "raw_schema_identifier": contract["raw_schema_identifier"],
+            "raw_schema_identity": declarations[contract["external_input_identifier"]]["schema_identity"],
+            "raw_schema_path": contract["raw_schema_path"],
+            "raw_schema_sha256": contract["raw_schema_sha256"],
+        }
+        for contract in contracts
+    ]
+    if projection_contracts:
+        assert projection_contracts[0]["projection_contract_identifier"] == SYNTHETIC_PROJECTION_CONTRACT_IDENTIFIER
+    registry_material = {
+        "descriptors": [descriptor_reference],
+        "projection_contracts": projection_contracts,
+        "registry_identifier": "experiment-execution-readiness-adapter-registry-v1",
+        "schema_version": 1,
+    }
+    return {
+        "expected_adapter_descriptor_identity": descriptor_identity,
+        "expected_adapter_descriptor_path": SYNTHETIC_DESCRIPTOR_PATH.as_posix(),
+        "expected_adapter_descriptor_sha256": descriptor_reference["descriptor_sha256"],
+        "expected_adapter_descriptors": registry_material["descriptors"],
+        "expected_adapter_identifier": SYNTHETIC_ADAPTER_IDENTIFIER,
+        "expected_projection_contract_identifier": SYNTHETIC_PROJECTION_CONTRACT_IDENTIFIER if projection_contracts else "",
+        "expected_projection_contracts": projection_contracts,
+        "expected_projection_schema_identity": projection_contracts[0]["projection_schema_identity"] if projection_contracts else "",
+        "expected_registry_identity": domain_identity(ADAPTER_REGISTRY_DOMAIN, registry_material),
+    }
+
+
+def _reseal_context(context: dict[str, Any]) -> dict[str, Any]:
+    material = {key: value for key, value in context.items() if key != "authority_context_identity"}
+    return {**material, "authority_context_identity": domain_identity(AUTHORITY_CONTEXT_DOMAIN, material)}
+
+
+def _reseal_registry(registry: dict[str, Any]) -> dict[str, Any]:
+    material = {key: value for key, value in registry.items() if key != "adapter_registry_identity"}
+    return {**material, "adapter_registry_identity": domain_identity(ADAPTER_REGISTRY_DOMAIN, material)}
+
+
+def _assert_shared_semantic_core_authority(
+    *, authority: dict[str, Any], registry: dict[str, Any], context: dict[str, Any] | None
+) -> None:
+    registry_material = {
+        key: value
+        for key, value in registry.items()
+        if key != "adapter_registry_identity"
+    }
+    assert registry["adapter_registry_identity"] == domain_identity(
+        ADAPTER_REGISTRY_DOMAIN, registry_material
+    )
+    if context is None:
+        assert authority["allocation_authority_identity_material"][
+            "allocation_authority_identifier"
+        ] == "orev3-shared-attempt-authority-v1"
+        assert registry["descriptors"] == []
+        assert registry["projection_contracts"] == []
+    else:
+        assert set(context) == {
+            "allocation_authority_identifier",
+            "authority_context_identifier",
+            "authority_context_identity",
+            "expected_adapter_descriptor_identity",
+            "expected_adapter_descriptor_path",
+            "expected_adapter_descriptor_sha256",
+            "expected_adapter_descriptors",
+            "expected_adapter_identifier",
+            "expected_projection_contract_identifier",
+            "expected_projection_contracts",
+            "expected_projection_schema_identity",
+            "expected_registry_identity",
+            "schema_version",
+            "synthetic_input_mode",
+        }
+        assert context["schema_version"] == 1
+        assert (
+            context["authority_context_identifier"]
+            == "synthetic-prospective-integration-v1"
+        )
+        identity_material = {
+            key: value
+            for key, value in context.items()
+            if key != "authority_context_identity"
+        }
+        assert context["authority_context_identity"] == domain_identity(
+            AUTHORITY_CONTEXT_DOMAIN, identity_material
+        )
+        assert context["allocation_authority_identifier"] == "synthetic-shared-authority"
+        assert authority["allocation_authority_identity_material"][
+            "allocation_authority_identifier"
+        ] == context["allocation_authority_identifier"]
+        assert context["synthetic_input_mode"] in {"declared_input", "zero_input"}
+        independently_expected = _expected_synthetic_authority(context["synthetic_input_mode"])
+        for key, expected_value in independently_expected.items():
+            assert context[key] == expected_value
+        assert registry["descriptors"] == independently_expected["expected_adapter_descriptors"]
+        assert registry["projection_contracts"] == independently_expected["expected_projection_contracts"]
+        assert registry["adapter_registry_identity"] == independently_expected["expected_registry_identity"]
+    serialized = json.dumps(
+        {"authority": authority, "context": context, "registry": registry},
+        sort_keys=True,
+    )
+    for forbidden_operational_field in (
+        "backend",
+        "credential",
+        "database_url",
+        "endpoint",
+        "filesystem_root",
+        "provider",
+    ):
+        assert forbidden_operational_field not in serialized
+
+
 def test_shared_semantic_core_introduces_no_operational_authority() -> None:
     production = Path("src/orev3/execution")
     assert (production / "attempts.py").is_file()
@@ -1396,24 +1557,95 @@ def test_shared_semantic_core_introduces_no_operational_authority() -> None:
             "config/research/readiness/attempt-authority-contract-v1.json"
         ).read_bytes()
     )
-    assert authority["allocation_authority_identity_material"][
-        "allocation_authority_identifier"
-    ] == "orev3-shared-attempt-authority-v1"
-    serialized = json.dumps(authority, sort_keys=True)
-    for forbidden_operational_field in (
-        "backend",
-        "credential",
-        "database_url",
-        "endpoint",
-        "filesystem_root",
-        "provider",
-    ):
-        assert forbidden_operational_field not in serialized
     registry = parse_json(
         Path("config/research/readiness/adapter-registry-v1.json").read_bytes()
     )
-    assert registry["descriptors"] == []
-    assert registry["projection_contracts"] == []
+    context = (
+        parse_json(AUTHORITY_CONTEXT_PATH.read_bytes())
+        if AUTHORITY_CONTEXT_PATH.exists()
+        else None
+    )
+    _assert_shared_semantic_core_authority(
+        authority=authority, registry=registry, context=context
+    )
+    if context is not None:
+        for mutation in (
+            {**context, "authority_context_identifier": "unknown-context"},
+            {**context, "allocation_authority_identifier": "orev3-shared-attempt-authority-v1"},
+            {**context, "synthetic_input_mode": "unknown"},
+        ):
+            with pytest.raises(AssertionError):
+                _assert_shared_semantic_core_authority(
+                    authority=authority, registry=registry, context=mutation
+                )
+
+        coordinated: list[tuple[dict[str, Any], dict[str, Any]]] = []
+
+        changed_registry = copy.deepcopy(registry)
+        changed_context = copy.deepcopy(context)
+        changed_registry["descriptors"][0]["descriptor_identity"] = "2" * 64
+        changed_context["expected_adapter_descriptors"][0]["descriptor_identity"] = "2" * 64
+        changed_context["expected_adapter_descriptor_identity"] = "2" * 64
+        changed_registry = _reseal_registry(changed_registry)
+        changed_context["expected_registry_identity"] = changed_registry["adapter_registry_identity"]
+        coordinated.append((changed_registry, _reseal_context(changed_context)))
+
+        changed_content_registry = copy.deepcopy(registry)
+        changed_content_context = copy.deepcopy(context)
+        changed_content_registry["descriptors"][0]["descriptor_sha256"] = "5" * 64
+        changed_content_context["expected_adapter_descriptors"][0]["descriptor_sha256"] = "5" * 64
+        changed_content_context["expected_adapter_descriptor_sha256"] = "5" * 64
+        changed_content_registry = _reseal_registry(changed_content_registry)
+        changed_content_context["expected_registry_identity"] = changed_content_registry["adapter_registry_identity"]
+        coordinated.append((changed_content_registry, _reseal_context(changed_content_context)))
+
+        substituted_registry = copy.deepcopy(registry)
+        substituted_context = copy.deepcopy(context)
+        substituted_registry["descriptors"][0]["adapter_identifier"] = "substitute"
+        substituted_context["expected_adapter_descriptors"][0]["adapter_identifier"] = "substitute"
+        substituted_context["expected_adapter_identifier"] = "substitute"
+        substituted_registry = _reseal_registry(substituted_registry)
+        substituted_context["expected_registry_identity"] = substituted_registry["adapter_registry_identity"]
+        coordinated.append((substituted_registry, _reseal_context(substituted_context)))
+
+        identity_registry = copy.deepcopy(registry)
+        identity_context = copy.deepcopy(context)
+        identity_registry["adapter_registry_identity"] = "3" * 64
+        identity_context["expected_registry_identity"] = "3" * 64
+        coordinated.append((identity_registry, _reseal_context(identity_context)))
+
+        if context["synthetic_input_mode"] == "declared_input":
+            contract_registry = copy.deepcopy(registry)
+            contract_context = copy.deepcopy(context)
+            contract_registry["projection_contracts"][0]["projection_schema_identity"] = "4" * 64
+            contract_context["expected_projection_contracts"][0]["projection_schema_identity"] = "4" * 64
+            contract_context["expected_projection_schema_identity"] = "4" * 64
+            contract_registry = _reseal_registry(contract_registry)
+            contract_context["expected_registry_identity"] = contract_registry["adapter_registry_identity"]
+            coordinated.append((contract_registry, _reseal_context(contract_context)))
+
+            substituted_contract_registry = copy.deepcopy(registry)
+            substituted_contract_context = copy.deepcopy(context)
+            substituted_contract_registry["projection_contracts"][0]["projection_contract_identifier"] = "substitute-contract"
+            substituted_contract_context["expected_projection_contracts"][0]["projection_contract_identifier"] = "substitute-contract"
+            substituted_contract_context["expected_projection_contract_identifier"] = "substitute-contract"
+            substituted_contract_registry = _reseal_registry(substituted_contract_registry)
+            substituted_contract_context["expected_registry_identity"] = substituted_contract_registry["adapter_registry_identity"]
+            coordinated.append((substituted_contract_registry, _reseal_context(substituted_contract_context)))
+
+        mixed_context = copy.deepcopy(context)
+        mixed_context["synthetic_input_mode"] = (
+            "declared_input" if context["synthetic_input_mode"] == "zero_input" else "zero_input"
+        )
+        coordinated.append((copy.deepcopy(registry), _reseal_context(mixed_context)))
+
+        for changed_registry, changed_context in coordinated:
+            with pytest.raises(AssertionError):
+                _assert_shared_semantic_core_authority(
+                    authority=authority,
+                    registry=changed_registry,
+                    context=changed_context,
+                )
     for forbidden in (
         "build_attempt_allocation",
         "build_attempt_control_record",

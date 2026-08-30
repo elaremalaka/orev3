@@ -82,6 +82,65 @@ write = _PHASE3A_SUPPORT.write
 ZERO = "0" * 64
 ONE = "1" * 64
 CONTROL_STORAGE_IMPLEMENTATION_PATH = "src/orev3/execution/control_storage.py"
+PROSPECTIVE_AUTHORITY_CONTEXT_PATH = (
+    "tests/execution/prospective-authority-context-v1.json"
+)
+PROSPECTIVE_AUTHORITY_CONTEXT_DOMAIN = (
+    "orev3:test:prospective-authority-context:v1\n"
+)
+SYNTHETIC_ADAPTER_IDENTIFIER = "synthetic-prospective-adapter"
+SYNTHETIC_EXPERIMENT_IDENTIFIER = "synthetic-prospective"
+SYNTHETIC_DESCRIPTOR_PATH = (
+    "config/research/readiness/experiments/synthetic-adapter-v1.json"
+)
+SYNTHETIC_PROJECTION_CONTRACT_IDENTIFIER = "synthetic-outcome-blind-v1"
+_PHASE3B_COMPONENT_POLICY_PATH = "src/orev3/execution/phase3b_components.py"
+_PROSPECTIVE_READINESS_TEST_DEPENDENCIES = (
+    "src/orev3/execution/attempts.py",
+    "src/orev3/execution/contract_validation.py",
+    "src/orev3/execution/control_storage.py",
+    "src/orev3/execution/git_state.py",
+    "src/orev3/execution/orchestrator.py",
+    "src/orev3/execution/outcome_gate.py",
+    "src/orev3/execution/phase3b_components.py",
+    "src/orev3/execution/readiness.py",
+    "src/orev3/execution/readiness_record.py",
+    PROSPECTIVE_AUTHORITY_CONTEXT_PATH,
+)
+
+
+def _bind_prospective_readiness_test_dependency_closure(root: Path) -> None:
+    """Bind complete tracked APIs required by the frozen mandatory tests."""
+
+    path = root / _PHASE3B_COMPONENT_POLICY_PATH
+    source = path.read_text(encoding="utf-8")
+    marker = (
+        '    "READINESS_TEST": (\n'
+        '        "src/orev3/__init__.py",\n'
+        '        "src/orev3/execution/__init__.py",\n'
+        '        "src/orev3/execution/canonical.py",\n'
+        '        "src/orev3/execution/readiness_test_worker.py",\n'
+        "    ),\n"
+    )
+    assert source.count(marker) == 1
+    schema_dependencies = tuple(
+        sorted(
+            path.relative_to(root).as_posix()
+            for path in (root / "src/orev3/execution/schemas/v1").glob("*.json")
+        )
+    )
+    dependencies = (
+        *_PROSPECTIVE_READINESS_TEST_DEPENDENCIES,
+        ATTEMPT_AUTHORITY_CONTRACT_PATH,
+        ADAPTER_REGISTRY_PATH,
+        *schema_dependencies,
+    )
+    assert len(dependencies) == len(set(dependencies))
+    additions = "".join(f'        "{item}",\n' for item in dependencies)
+    path.write_text(
+        source.replace(marker, marker[:-7] + additions + "    ),\n", 1),
+        encoding="utf-8",
+    )
 
 
 def _identity_component(
@@ -98,6 +157,73 @@ def _identity_component(
             "sha256": hashlib.sha256(raw).hexdigest(),
         }
     )
+
+
+def _synthetic_fixture_authority(
+    root: Path, *, input_mode: str
+) -> dict[str, object]:
+    """Reconstruct expected fixture authority without consulting the registry."""
+
+    assert input_mode in {"declared_input", "zero_input"}
+    descriptor_raw = (root / SYNTHETIC_DESCRIPTOR_PATH).read_bytes()
+    descriptor = parse_json(descriptor_raw)
+    assert descriptor["adapter_identifier"] == SYNTHETIC_ADAPTER_IDENTIFIER
+    assert descriptor["experiment_identifier"] == SYNTHETIC_EXPERIMENT_IDENTIFIER
+    descriptor_identity = domain_identity(
+        ADAPTER_DOMAIN,
+        {key: value for key, value in descriptor.items() if key != "adapter_identity"},
+    )
+    assert descriptor["adapter_identity"] == descriptor_identity
+    descriptor_reference = {
+        "adapter_identifier": SYNTHETIC_ADAPTER_IDENTIFIER,
+        "descriptor_identity": descriptor_identity,
+        "descriptor_path": SYNTHETIC_DESCRIPTOR_PATH,
+        "descriptor_sha256": hashlib.sha256(descriptor_raw).hexdigest(),
+        "experiment_identifier": SYNTHETIC_EXPERIMENT_IDENTIFIER,
+    }
+    declarations = {
+        item["external_input_identifier"]: item
+        for item in descriptor["external_inputs"]["declarations"]
+    }
+    contracts = descriptor["evidence_preparation"]["dataset_contracts"]
+    assert len(contracts) == (0 if input_mode == "zero_input" else 1)
+    projection_contracts = [
+        {
+            "dataset_validator_identifier": contract["dataset_validator_identifier"],
+            "output_container": contract["container"],
+            "projection_contract_identifier": contract["projection_contract_identifier"],
+            "projection_schema_identifier": contract["projection_schema_identifier"],
+            "projection_schema_identity": contract["projection_schema_identity"],
+            "projection_schema_path": contract["projection_schema_path"],
+            "projection_schema_sha256": contract["projection_schema_sha256"],
+            "projector_identifier": contract["projector_identifier"],
+            "raw_parser_identifier": contract["raw_parser_identifier"],
+            "raw_schema_identifier": contract["raw_schema_identifier"],
+            "raw_schema_identity": declarations[contract["external_input_identifier"]]["schema_identity"],
+            "raw_schema_path": contract["raw_schema_path"],
+            "raw_schema_sha256": contract["raw_schema_sha256"],
+        }
+        for contract in contracts
+    ]
+    if projection_contracts:
+        assert projection_contracts[0]["projection_contract_identifier"] == SYNTHETIC_PROJECTION_CONTRACT_IDENTIFIER
+    registry_material = {
+        "descriptors": [descriptor_reference],
+        "projection_contracts": projection_contracts,
+        "registry_identifier": "experiment-execution-readiness-adapter-registry-v1",
+        "schema_version": 1,
+    }
+    return {
+        "expected_adapter_descriptor_identity": descriptor_identity,
+        "expected_adapter_descriptor_path": SYNTHETIC_DESCRIPTOR_PATH,
+        "expected_adapter_descriptor_sha256": descriptor_reference["descriptor_sha256"],
+        "expected_adapter_descriptors": registry_material["descriptors"],
+        "expected_adapter_identifier": SYNTHETIC_ADAPTER_IDENTIFIER,
+        "expected_projection_contract_identifier": SYNTHETIC_PROJECTION_CONTRACT_IDENTIFIER if projection_contracts else "",
+        "expected_projection_contracts": projection_contracts,
+        "expected_projection_schema_identity": projection_contracts[0]["projection_schema_identity"] if projection_contracts else "",
+        "expected_registry_identity": domain_identity(ADAPTER_REGISTRY_DOMAIN, registry_material),
+    }
 
 
 def _rewrite_adapter(
@@ -595,16 +721,13 @@ def prospective_repository(
             "permitted_exclusion_reasons"
         ] = []
     write(root, descriptor_path, canonical_bytes(descriptor))
-    for path, raw in (
-        (ALLOCATOR_IMPLEMENTATION_PATH, b"# governed allocator contract; no allocator implementation\n"),
-        (ORCHESTRATOR_IMPLEMENTATION_PATH, b"# governed orchestrator contract; no orchestrator implementation\n"),
-        (OUTCOME_GATE_IMPLEMENTATION_PATH, b"# governed outcome gate contract; no outcome opener\n"),
-        (
-            CONTROL_STORAGE_IMPLEMENTATION_PATH,
-            b"# governed control-storage contract implementation; not invoked\n",
-        ),
-    ):
-        write(root, path, raw)
+
+    # ``synthetic_repository`` copied the complete tracked source tree.  Keep
+    # its control-plane implementations intact: the frozen prospective v1.1
+    # readiness-test policy selects mandatory tests for their complete public
+    # APIs, so replacing these modules with contract-only stubs makes the
+    # synthetic source internally inconsistent before Phase-3B is exercised.
+    _bind_prospective_readiness_test_dependency_closure(root)
 
     authority_material = {
         "allocation_authority_identifier": "synthetic-shared-authority",
@@ -686,6 +809,31 @@ def prospective_repository(
         ),
         outcome_aware=outcome_aware,
     )
+    registry = parse_json((root / ADAPTER_REGISTRY_PATH).read_bytes())
+    input_mode = "zero_input" if zero_input else "declared_input"
+    expected_authority = _synthetic_fixture_authority(root, input_mode=input_mode)
+    assert registry["descriptors"] == expected_authority["expected_adapter_descriptors"]
+    assert registry["projection_contracts"] == expected_authority["expected_projection_contracts"]
+    assert registry["adapter_registry_identity"] == expected_authority["expected_registry_identity"]
+    context_material = {
+        "allocation_authority_identifier": "synthetic-shared-authority",
+        "authority_context_identifier": "synthetic-prospective-integration-v1",
+        **expected_authority,
+        "schema_version": 1,
+        "synthetic_input_mode": input_mode,
+    }
+    write(
+        root,
+        PROSPECTIVE_AUTHORITY_CONTEXT_PATH,
+        canonical_bytes(
+            {
+                **context_material,
+                "authority_context_identity": domain_identity(
+                    PROSPECTIVE_AUTHORITY_CONTEXT_DOMAIN, context_material
+                ),
+            }
+        ),
+    )
     git(root, "add", ".")
     git(root, "commit", "-qm", "prospective v1.1 prerequisite contracts")
     source = git(root, "rev-parse", "HEAD")
@@ -709,6 +857,7 @@ def prospective_repository(
         "src/orev3/execution/registry.py": "control_plane",
         "src/orev3/execution/readiness.py": "control_plane",
         READINESS_V1_1_SCHEMA_POLICY["readiness-test-policy"][1]: "readiness_schema",
+        PROSPECTIVE_AUTHORITY_CONTEXT_PATH: "readiness_tests",
         SOURCE_TREE_PATH: "source_tree",
         "pyproject.toml": "dependency_manifest",
         "requirements/pylock.readiness-v1.toml": "dependency_manifest",
