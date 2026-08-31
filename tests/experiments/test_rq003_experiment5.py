@@ -485,8 +485,10 @@ def test_frozen_protocol_identity_is_current() -> None:
     root = Path(__file__).resolve().parents[2]
     protocol = root / "docs/research/experiments/rq003-experiment-005-signed-share-imbalance-predictive-evaluation.md"
     governance = root / "docs/research/governance/rq003-minimum-effect-scope-clarification-v1.md"
-    assert hashlib.sha256(protocol.read_bytes()).hexdigest() == "1f20d1781345ec1aa760868dfd7c07845d906fd42e684681d62d09296c9761f5"
-    assert hashlib.sha256(governance.read_bytes()).hexdigest() == "313b5d2ee409ea1bc366637e2a3e2399f3341bfc1d9ef9e46a659dfde999023d"
+    prerequisite = root / "docs/research/governance/rq003-experiment-005-source-processing-prerequisite-v1.md"
+    assert hashlib.sha256(protocol.read_bytes()).hexdigest() == "38afa9005bb43050d23e430335e11654c374d4e2d6f4a9f541782c005bffefdc"
+    assert hashlib.sha256(governance.read_bytes()).hexdigest() == "f736ac301a49be5acca58ef75f5130c1533328cf83cc359c9a69b596c53c2f4b"
+    assert hashlib.sha256(prerequisite.read_bytes()).hexdigest() == "d6d5d0fb3777cdb2a95e3bbff53b4815c574de68e31d4b5f7f1a0409580799a4"
 
 
 def test_share_imbalance_exact_signs_candidate_zero_and_ordering() -> None:

@@ -44,6 +44,16 @@ COMPONENT_POLICIES: Mapping[str, ComponentPolicy] = {
     "canonical-jsonl-outcome-blind-projector-v1": ComponentPolicy(
         "canonical-jsonl-outcome-blind-projector-v1", "1", "src/orev3/execution/projection.py", "INPUT_PROJECTOR"
     ),
+    "rq003-experiment-005-outcome-blind-projector-v1": ComponentPolicy(
+        "rq003-experiment-005-outcome-blind-projector-v1", "1",
+        "src/orev3/experiments/rq003_experiment5_source_processing.py",
+        "INPUT_PROJECTOR",
+    ),
+    "rq003-experiment-005-source-controller-v1": ComponentPolicy(
+        "rq003-experiment-005-source-controller-v1", "1",
+        "src/orev3/experiments/rq003_experiment5_source_processing.py",
+        "CONTROLLER_PURE",
+    ),
     "canonical-jsonl-dataset-validator-v1": ComponentPolicy(
         "canonical-jsonl-dataset-validator-v1", "1", "src/orev3/execution/dataset_validation.py", "INPUT_PROJECTOR"
     ),
@@ -61,12 +71,17 @@ COMPONENT_POLICIES: Mapping[str, ComponentPolicy] = {
     ),
 }
 
-# The governed-decoder branch is intentionally closed over a separate finite
-# repository policy.  No decoder implementation is currently authorized; an
-# adapter must therefore use ``not_required`` until a reviewed decoder entry is
-# committed here.  Keeping this mapping explicit prevents a descriptor from
-# turning an arbitrary identifier/path/hash tuple into component authority.
-DECODER_COMPONENT_POLICIES: Mapping[str, ComponentPolicy] = {}
+# The governed-decoder branch is closed over a separate finite repository
+# policy. An adapter may select only an identifier listed here; this does not
+# itself adopt an adapter or establish Source S.
+DECODER_COMPONENT_POLICIES: Mapping[str, ComponentPolicy] = {
+    "rq003-experiment-005-source-decoder-v1": ComponentPolicy(
+        "rq003-experiment-005-source-decoder-v1",
+        "1",
+        "src/orev3/experiments/rq003_experiment5_source_processing.py",
+        "INPUT_PROJECTOR",
+    ),
+}
 
 
 WORKER_CODE_CLOSURES: Mapping[str, tuple[str, ...]] = {
@@ -84,6 +99,31 @@ WORKER_CODE_CLOSURES: Mapping[str, tuple[str, ...]] = {
         "src/orev3/execution/filesystem_capability.py",
         "src/orev3/execution/input_projection_worker.py",
         "src/orev3/execution/projection.py",
+        "src/orev3/execution/replay_preparation.py",
+        "src/orev3/experiments/rq003_experiment5_source_measurements.py",
+        "src/orev3/features/base.py",
+        "src/orev3/features/board_summary.py",
+        "src/orev3/features/context.py",
+        "src/orev3/features/pipeline.py",
+        "src/orev3/features/raw.py",
+        "src/orev3/features/registry.py",
+        "src/orev3/features/relative.py",
+        "src/orev3/features/rq003_active_round_motherlode.py",
+        "src/orev3/features/rq003_contracts.py",
+        "src/orev3/features/rq003_deployed_lamports.py",
+        "src/orev3/features/rq003_execution.py",
+        "src/orev3/features/rq003_measurement_support.py",
+        "src/orev3/features/rq003_miner_count.py",
+        "src/orev3/features/rq003_production_cost_ema.py",
+        "src/orev3/features/rq003_registry.py",
+        "src/orev3/features/rq003_total_miners.py",
+        "src/orev3/features/rq003_total_vaulted.py",
+        "src/orev3/features/rq003_total_winnings.py",
+        "src/orev3/features/rq003_treasury_motherlode.py",
+        "src/orev3/features/temporal.py",
+        "src/orev3/features/types.py",
+        "src/orev3/strategy_lab/interfaces.py",
+        "src/orev3/experiments/rq003_experiment5_source_processing.py",
     ),
     "REPLAY_PREPARATION": (
         "src/orev3/__init__.py",
@@ -141,7 +181,11 @@ def require_projection_contract_binding(
 
 
 def required_component_paths() -> tuple[str, ...]:
-    return tuple(sorted({policy.path for policy in COMPONENT_POLICIES.values()} | {__file_path()}))
+    return tuple(sorted(
+        {policy.path for policy in COMPONENT_POLICIES.values()}
+        | {policy.path for policy in DECODER_COMPONENT_POLICIES.values()}
+        | {__file_path()}
+    ))
 
 
 def __file_path() -> str:

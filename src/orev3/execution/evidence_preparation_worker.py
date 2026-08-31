@@ -65,7 +65,7 @@ def main() -> int:
         from orev3.execution.evidence_preparation import EvidenceAuthorityGeneration, aggregate_evidence, load_evidence_policy, load_phase3b_schemas, load_prospective_phase3b_schemas, reconstruct_projection_twice, reconstruct_prospective_phase3a_worker, reconstruct_replay_twice, require_phase3b_governance_closure
         from orev3.execution.external_inputs import ResourceLimits, snapshot_declared_input
         from orev3.execution.git_state import GitRepository
-        from orev3.execution.phase3b_components import PROJECTION_SCHEMA_CONTRACT_DOMAIN, RAW_SCHEMA_CONTRACT_DOMAIN, require_projection_contract_binding, resolve_component
+        from orev3.execution.phase3b_components import COMPONENT_POLICIES, DECODER_COMPONENT_POLICIES, PROJECTION_SCHEMA_CONTRACT_DOMAIN, RAW_SCHEMA_CONTRACT_DOMAIN, require_projection_contract_binding, resolve_component
         from orev3.execution.preparation import PreparationAuthorityGeneration, READINESS_TEST_POLICY_PATH, _blob, _collection_affecting_paths, _load_adapter_material, _validate_scope_objects
         from orev3.execution.readiness_record import READINESS_TEST_POLICY_V2_PATH, validate_readiness_test_policy, validate_readiness_test_policy_v2
         from orev3.execution.zero_input_phase3b import build_zero_input_replay_evidence
@@ -285,6 +285,106 @@ def main() -> int:
                 raise ValueError("historical canonical JSONL projector requires one declared member")
             raw_schema_path = source_root / contract["raw_schema_path"]
             projection_schema_path = source_root / contract["projection_schema_path"]
+            governed_decoder_request = None
+            governed_decoder_read_files = ()
+            parser_configuration = declaration.get("parser_configuration")
+            if parser_configuration is None:
+                decoder = None
+            elif not isinstance(parser_configuration, dict) or not isinstance(
+                parser_configuration.get("decoder"), dict
+            ):
+                raise ValueError("declared decoder authority is malformed")
+            else:
+                decoder = parser_configuration["decoder"]
+            if decoder is not None and decoder.get("decoder_kind") == "governed_decoder":
+                decoder_binding = resolve_component(
+                    repository, source, decoder["decoder_identifier"]
+                )
+                if decoder_binding.component_identity != decoder["decoder_component_identity"]:
+                    raise ValueError("governed decoder component differs from adapter authority")
+                configuration_path = source_root / decoder["configuration_path"]
+                configuration_bytes = _blob(repository, source, decoder["configuration_path"])
+                if (
+                    len(configuration_bytes) != decoder["configuration_byte_count"]
+                    or hashlib.sha256(configuration_bytes).hexdigest()
+                    != decoder["configuration_sha256"]
+                    or repository.tree_entry(source, decoder["configuration_path"]).object_identity
+                    != decoder["configuration_git_blob_identity"]
+                ):
+                    raise ValueError("governed decoder configuration differs from adapter authority")
+                decoder_configuration = parse_canonical_bytes(configuration_bytes)
+                schema_authority_blobs = []
+                lifecycle_schema_authority = decoder_configuration.get(
+                    "lifecycle_schema_authority"
+                )
+                observation_schema_authorities = decoder_configuration.get(
+                    "observation_schema_authorities"
+                )
+                if not isinstance(lifecycle_schema_authority, dict) or not isinstance(
+                    observation_schema_authorities, dict
+                ):
+                    raise ValueError("governed raw-schema authority is absent")
+                schema_authority_blobs.extend(
+                    (
+                        lifecycle_schema_authority["model"],
+                        lifecycle_schema_authority["loader"],
+                    )
+                )
+                for observation_authority in observation_schema_authorities.values():
+                    schema_authority_blobs.extend(
+                        (observation_authority["model"], observation_authority["normalizer"])
+                    )
+                for schema_blob in schema_authority_blobs:
+                    schema_bytes = _blob(repository, source, schema_blob["path"])
+                    if (
+                        repository.tree_entry(source, schema_blob["path"]).object_identity
+                        != schema_blob["git_blob_identity"]
+                        or hashlib.sha256(schema_bytes).hexdigest()
+                        != schema_blob["sha256"]
+                    ):
+                        raise ValueError("governed raw-schema source binding differs")
+
+                def binding_material(binding):
+                    policy = {
+                        **COMPONENT_POLICIES,
+                        **DECODER_COMPONENT_POLICIES,
+                    }[binding.identifier]
+                    return {
+                        "component_identity": binding.component_identity,
+                        "git_object_identity": binding.git_object_identity,
+                        "identifier": binding.identifier,
+                        "path": binding.path,
+                        "revision": binding.revision,
+                        "sha256": binding.sha256,
+                        "worker_kind": policy.worker_kind,
+                    }
+
+                governed_decoder_request = {
+                    "decoder_identifier": decoder["decoder_identifier"],
+                    "decoder": decoder,
+                    "external_input_declaration": declaration,
+                    "immutable_input_snapshot": snapshot.material,
+                    "configuration_path": str(configuration_path),
+                    "expected_configuration_byte_count": decoder["configuration_byte_count"],
+                    "expected_configuration_sha256": decoder["configuration_sha256"],
+                    "parser_component": binding_material(raw_parser),
+                    "projector_component": binding_material(projector),
+                    "members": [
+                        {
+                            **declared,
+                            "capability_path": str(actual.content_object),
+                        }
+                        for declared, actual in zip(
+                            declaration["members"], snapshot.members, strict=True
+                        )
+                    ],
+                }
+                governed_decoder_read_files = tuple(
+                    member.content_object for member in snapshot.members
+                ) + (configuration_path,)
+                semantic_component_identities.append(decoder_binding.component_identity)
+            elif decoder is not None and decoder.get("decoder_kind") != "not_required":
+                raise ValueError("declared decoder authority kind is unsupported")
             projection_bytes, projector_ids, projector_result = reconstruct_projection_twice(
                 source_root=source_root,
                 dependency_root=dependency_root,
@@ -301,6 +401,8 @@ def main() -> int:
                 dependency_environment_identity=dependency_environment_identity,
                 capability_policy=policy,
                 raw_snapshot_identity=snapshot.identity,
+                governed_decoder_request=governed_decoder_request,
+                governed_decoder_read_files=governed_decoder_read_files,
             )
             worker_evidence_identities.extend(projector_ids)
             record_count = projection_bytes.count(b"\n")

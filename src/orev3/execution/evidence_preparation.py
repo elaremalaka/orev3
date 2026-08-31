@@ -429,6 +429,8 @@ def reconstruct_projection_twice(
     max_raw_bytes: int, max_projection_bytes: int, max_records: int,
     source_commit: str, runtime_contract_identity: str, dependency_environment_identity: str,
     capability_policy: Mapping[str, Any], raw_snapshot_identity: str,
+    governed_decoder_request: Mapping[str, Any] | None = None,
+    governed_decoder_read_files: Sequence[Path] = (),
 ) -> tuple[bytes, tuple[str, ...], Mapping[str, Any]]:
     root = Path(tempfile.mkdtemp(prefix="orev3-projection-reconstruction-"))
     try:
@@ -437,7 +439,14 @@ def reconstruct_projection_twice(
         results: list[Mapping[str, Any]] = []
         for index in range(2):
             target = root / f"projection-{index}"
-            worker = run_phase3b_worker(source_root, source_commit, "INPUT_PROJECTOR", "input_projection_worker.py", {"command": "project_canonical_jsonl", "expected_raw_sha256": expected_raw_sha256, "expected_raw_size": expected_raw_size, "max_projection_bytes": max_projection_bytes, "max_raw_bytes": max_raw_bytes, "max_records": max_records, "private_output": str(target), "projection_schema_path": str(projection_schema_path), "raw_schema_path": str(raw_schema_path), "raw_snapshot": str(raw_snapshot)}, dependency_root=dependency_root, runtime_contract_identity=runtime_contract_identity, dependency_environment_identity=dependency_environment_identity, capability_policy=capability_policy, invocation_identifier=f"projection-{index + 1}", input_capability_identities=(raw_snapshot_identity,), read_files=(raw_snapshot, raw_schema_path, projection_schema_path), write_roots=(root,), timeout_seconds=180, max_output_bytes=262144)
+            if governed_decoder_request is None:
+                worker_request = {"command": "project_canonical_jsonl", "expected_raw_sha256": expected_raw_sha256, "expected_raw_size": expected_raw_size, "max_projection_bytes": max_projection_bytes, "max_raw_bytes": max_raw_bytes, "max_records": max_records, "private_output": str(target), "projection_schema_path": str(projection_schema_path), "raw_schema_path": str(raw_schema_path), "raw_snapshot": str(raw_snapshot)}
+                read_files = (raw_snapshot, raw_schema_path, projection_schema_path)
+            else:
+                worker_request = dict(governed_decoder_request)
+                worker_request.update({"command": "project_canonical_jsonl", "private_output": str(target), "projection_schema_path": str(projection_schema_path), "raw_schema_path": str(raw_schema_path)})
+                read_files = tuple(governed_decoder_read_files) + (raw_schema_path, projection_schema_path)
+            worker = run_phase3b_worker(source_root, source_commit, "INPUT_PROJECTOR", "input_projection_worker.py", worker_request, dependency_root=dependency_root, runtime_contract_identity=runtime_contract_identity, dependency_environment_identity=dependency_environment_identity, capability_policy=capability_policy, invocation_identifier=f"projection-{index + 1}", input_capability_identities=(raw_snapshot_identity,), read_files=read_files, write_roots=(root,), timeout_seconds=180, max_output_bytes=262144)
             result = worker.result
             worker_evidence.append(worker.evidence_identity)
             results.append(result)
