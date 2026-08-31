@@ -23,6 +23,7 @@ from orev3.execution.test_policy import READINESS_TEST_COLLECTION_DOMAIN
 
 from test_phase3a_preparation import ARTIFACT_STORE, git, synthetic_repository, write
 from test_phase3c_readiness_contracts import (
+    _seal_synthetic_authority_context,
     _write_adapter_and_registry,
     prospective_repository,
 )
@@ -132,6 +133,7 @@ def test_prospective_detached_worker_accepts_ordered_collection(
         "permitted_exclusion_reasons"
     ] = ["missing_observation"]
     _write_adapter_and_registry(root, descriptor)
+    _seal_synthetic_authority_context(root, input_mode="declared_input")
     git(root, "add", ".")
     git(root, "commit", "-qm", "prospective ordered Phase-3B input")
     git(root, "push", "-q", "origin", "HEAD:refs/heads/research/post-v1")

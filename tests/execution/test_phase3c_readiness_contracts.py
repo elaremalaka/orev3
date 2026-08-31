@@ -106,6 +106,7 @@ _PROSPECTIVE_READINESS_TEST_DEPENDENCIES = (
     "src/orev3/execution/readiness.py",
     "src/orev3/execution/readiness_record.py",
     PROSPECTIVE_AUTHORITY_CONTEXT_PATH,
+    SYNTHETIC_DESCRIPTOR_PATH,
 )
 
 
@@ -136,6 +137,18 @@ def _bind_prospective_readiness_test_dependency_closure(root: Path) -> None:
         *schema_dependencies,
     )
     assert len(dependencies) == len(set(dependencies))
+    assert dependencies.count(SYNTHETIC_DESCRIPTOR_PATH) == 1
+    descriptor_parent = SYNTHETIC_DESCRIPTOR_PATH.rsplit("/", 1)[0]
+    assert descriptor_parent not in dependencies
+    assert all(
+        not item.endswith("/") and "*" not in item and "?" not in item
+        for item in dependencies
+    )
+    assert not any(
+        item.startswith(descriptor_parent + "/")
+        and item != SYNTHETIC_DESCRIPTOR_PATH
+        for item in dependencies
+    )
     additions = "".join(f'        "{item}",\n' for item in dependencies)
     path.write_text(
         source.replace(marker, marker[:-7] + additions + "    ),\n", 1),
@@ -224,6 +237,33 @@ def _synthetic_fixture_authority(
         "expected_projection_schema_identity": projection_contracts[0]["projection_schema_identity"] if projection_contracts else "",
         "expected_registry_identity": domain_identity(ADAPTER_REGISTRY_DOMAIN, registry_material),
     }
+
+
+def _seal_synthetic_authority_context(root: Path, *, input_mode: str) -> None:
+    expected_authority = _synthetic_fixture_authority(root, input_mode=input_mode)
+    registry = parse_json((root / ADAPTER_REGISTRY_PATH).read_bytes())
+    assert registry["descriptors"] == expected_authority["expected_adapter_descriptors"]
+    assert registry["projection_contracts"] == expected_authority["expected_projection_contracts"]
+    assert registry["adapter_registry_identity"] == expected_authority["expected_registry_identity"]
+    context_material = {
+        "allocation_authority_identifier": "synthetic-shared-authority",
+        "authority_context_identifier": "synthetic-prospective-integration-v1",
+        **expected_authority,
+        "schema_version": 1,
+        "synthetic_input_mode": input_mode,
+    }
+    write(
+        root,
+        PROSPECTIVE_AUTHORITY_CONTEXT_PATH,
+        canonical_bytes(
+            {
+                **context_material,
+                "authority_context_identity": domain_identity(
+                    PROSPECTIVE_AUTHORITY_CONTEXT_DOMAIN, context_material
+                ),
+            }
+        ),
+    )
 
 
 def _rewrite_adapter(
@@ -809,31 +849,8 @@ def prospective_repository(
         ),
         outcome_aware=outcome_aware,
     )
-    registry = parse_json((root / ADAPTER_REGISTRY_PATH).read_bytes())
     input_mode = "zero_input" if zero_input else "declared_input"
-    expected_authority = _synthetic_fixture_authority(root, input_mode=input_mode)
-    assert registry["descriptors"] == expected_authority["expected_adapter_descriptors"]
-    assert registry["projection_contracts"] == expected_authority["expected_projection_contracts"]
-    assert registry["adapter_registry_identity"] == expected_authority["expected_registry_identity"]
-    context_material = {
-        "allocation_authority_identifier": "synthetic-shared-authority",
-        "authority_context_identifier": "synthetic-prospective-integration-v1",
-        **expected_authority,
-        "schema_version": 1,
-        "synthetic_input_mode": input_mode,
-    }
-    write(
-        root,
-        PROSPECTIVE_AUTHORITY_CONTEXT_PATH,
-        canonical_bytes(
-            {
-                **context_material,
-                "authority_context_identity": domain_identity(
-                    PROSPECTIVE_AUTHORITY_CONTEXT_DOMAIN, context_material
-                ),
-            }
-        ),
-    )
+    _seal_synthetic_authority_context(root, input_mode=input_mode)
     git(root, "add", ".")
     git(root, "commit", "-qm", "prospective v1.1 prerequisite contracts")
     source = git(root, "rev-parse", "HEAD")
