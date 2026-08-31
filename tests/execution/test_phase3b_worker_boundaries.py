@@ -142,6 +142,32 @@ def test_worker_names_and_pytest_arguments_are_not_caller_extensible(tmp_path: P
         run_phase3b_worker(source, source_commit, "ARBITRARY", "arbitrary.py", {}, **_worker_args(source, source_commit))
     with pytest.raises(Exception, match="requires exact readiness-test files"):
         run_phase3b_worker(source, source_commit, "READINESS_TEST", "readiness_test_worker.py", {"command": "run_exact", "selectors": ["--pyargs"]}, **_worker_args(source, source_commit))
+    from orev3.execution.readiness_test_worker import _valid_selector
+
+    assert _valid_selector("tests/test_ready.py::test_ok")
+    assert _valid_selector(
+        "tests/execution/test_attempts.py::"
+        "test_repository_authority_identifier_is_closed[bad\\\\path]"
+    )
+    assert _valid_selector(
+        "tests/execution/test_phase3c_schema_registry.py::"
+        "test_allocation_authority_identifier_rejects_noncanonical_grammar"
+        "[authority\\\\value]"
+    )
+    for unsafe_selector in (
+        "tests\\test_ready.py::test_ok",
+        "/tests/test_ready.py::test_ok",
+        "tests/../test_ready.py::test_ok",
+        "tests/./test_ready.py::test_ok",
+        "tests//test_ready.py::test_ok",
+        "tests/\x00test_ready.py::test_ok",
+        "tests/test_ready.py::test\x00value",
+        "--pyargs",
+        "tests/test_ready.py::",
+        "outside/test_ready.py::test_ok",
+        "tests/../outside.py::test_ok",
+    ):
+        assert not _valid_selector(unsafe_selector)
 
 
 @pytest.mark.parametrize(
@@ -174,6 +200,59 @@ def test_exact_readiness_test_policy_passes_only_all_passed_nodes(tmp_path: Path
     evidence, worker_ids = run_readiness_tests(source_root=source, dependency_root=_dependencies(), source_commit=source_commit, environment_identity="1" * 64, runtime_contract_identity="2" * 64, capability_policy=_policy(), mandatory_selectors=["tests/test_ready.py"], additional_selectors=[], expected_mandatory_collection_identity=collection_identity, expected_mandatory_node_count=1, expected_additional_nodes=[], policy_identity="3" * 64, denied_input_roots=(), timeout_seconds=30, max_output_bytes=65536)
     assert evidence["results"] == [{"node_id": "tests/test_ready.py::test_ok", "status": "passed"}]
     assert len(worker_ids) == 3
+
+    (source / "tests/execution").mkdir()
+    (source / "tests/execution/test_attempts.py").write_text(
+        "import pytest\n"
+        "@pytest.mark.parametrize('value', ['bad\\\\path'], ids=['bad\\\\path'])\n"
+        "def test_repository_authority_identifier_is_closed(value):\n"
+        "    assert value == 'bad\\\\path'\n",
+        encoding="utf-8",
+    )
+    (source / "tests/execution/test_phase3c_schema_registry.py").write_text(
+        "import pytest\n"
+        "@pytest.mark.parametrize('value', ['authority\\\\value'], ids=['authority\\\\value'])\n"
+        "def test_allocation_authority_identifier_rejects_noncanonical_grammar(value):\n"
+        "    assert value == 'authority\\\\value'\n",
+        encoding="utf-8",
+    )
+    source_commit = _commit(source)
+    exact_nodes = [
+        "tests/execution/test_attempts.py::"
+        "test_repository_authority_identifier_is_closed[bad\\\\path]",
+        "tests/execution/test_phase3c_schema_registry.py::"
+        "test_allocation_authority_identifier_rejects_noncanonical_grammar"
+        "[authority\\\\value]",
+    ]
+    exact_collection_identity = domain_identity(
+        READINESS_TEST_COLLECTION_DOMAIN, {"node_ids": exact_nodes}
+    )
+    exact_evidence, exact_worker_ids = run_readiness_tests(
+        source_root=source,
+        dependency_root=_dependencies(),
+        source_commit=source_commit,
+        environment_identity="1" * 64,
+        runtime_contract_identity="2" * 64,
+        capability_policy=_policy(),
+        mandatory_selectors=[
+            "tests/execution/test_attempts.py",
+            "tests/execution/test_phase3c_schema_registry.py",
+        ],
+        additional_selectors=[],
+        expected_mandatory_collection_identity=exact_collection_identity,
+        expected_mandatory_node_count=2,
+        expected_additional_nodes=[],
+        policy_identity="3" * 64,
+        denied_input_roots=(),
+        timeout_seconds=30,
+        max_output_bytes=65536,
+    )
+    assert exact_evidence["collected_node_ids"] == exact_nodes
+    assert exact_evidence["results"] == [
+        {"node_id": node, "status": "passed"} for node in exact_nodes
+    ]
+    assert len(exact_worker_ids) == 3
+
     (source / "tests/test_ready.py").write_text("import pytest\n@pytest.mark.skip(reason='no')\ndef test_skip(): pass\n", encoding="utf-8")
     source_commit = _commit(source)
     with pytest.raises(Exception, match="TEST_COLLECTION_MISMATCH"):

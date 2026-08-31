@@ -11,6 +11,18 @@ from pathlib import Path
 COMMANDS = frozenset({"collect", "run_exact"})
 
 
+def _valid_selector(item: object) -> bool:
+    if not isinstance(item, str) or not item or item.startswith("-") or "\x00" in item:
+        return False
+    path_part, delimiter, node_suffix = item.partition("::")
+    if delimiter and not node_suffix:
+        return False
+    if not path_part.startswith("tests/") or "\\" in path_part:
+        return False
+    path_parts = path_part.split("/")
+    return all(part not in {"", ".", ".."} for part in path_parts)
+
+
 class Plugin:
     def __init__(self) -> None:
         self.collected: list[str] = []
@@ -47,7 +59,9 @@ def main() -> int:
     import pytest
     plugin = Plugin()
     selectors = request["selectors"]
-    if not isinstance(selectors, list) or not selectors or any(not isinstance(item, str) or item.startswith("-") or not item.startswith("tests/") or "\\" in item or "\x00" in item or any(part in {"", ".", ".."} for part in item.split("::", 1)[0].split("/")) for item in selectors):
+    if not isinstance(selectors, list) or not selectors or any(
+        not _valid_selector(item) for item in selectors
+    ):
         return 4
     args = ["-p", "no:cacheprovider", "-p", "no:terminal", "--strict-markers", *selectors]
     if request["command"] == "collect":
