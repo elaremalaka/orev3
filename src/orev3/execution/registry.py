@@ -82,7 +82,7 @@ def load_adapter_declaration_bytes(
     if profile == "outcome_aware_v1" and outcome != "outcome_aware_authorized_only":
         raise CanonicalControlError("outcome-aware adapter policy is inconsistent")
     for declaration in material["external_inputs"]["declarations"]:
-        if material["schema_version"] == 3:
+        if material["schema_version"] in {3, 4}:
             validate_external_input_declaration_v3(declaration)
         elif _identity(EXTERNAL_INPUT_DECLARATION_DOMAIN, declaration, "external_input_identity") != declaration["external_input_identity"]:
             raise CanonicalControlError("external-input declaration identity does not reconstruct")
@@ -121,7 +121,7 @@ def load_adapter_declaration_bytes(
             raise CanonicalControlError("Phase-3B dataset protocol revision differs")
         if contract["source_class"] == "combined_outcome_bearing" and not contract["projection_required"]:
             raise CanonicalControlError("outcome-bearing input lacks an outcome-blind projection contract")
-        if material["schema_version"] == 3:
+        if material["schema_version"] in {3, 4}:
             declaration = next(
                 item for item in material["external_inputs"]["declarations"]
                 if item["external_input_identifier"] == contract["external_input_identifier"]
@@ -165,6 +165,34 @@ def load_adapter_declaration_bytes(
     )
     if {item["contract_identifier"] for item in profile_references} != expected_contracts:
         raise CanonicalControlError("profile contract declarations differ from profile authority")
+    if material["schema_version"] == 4:
+        from orev3.execution.phase3b_components import (
+            reconstruct_configuration_resource_identity,
+            reconstruct_configuration_schema_identity,
+        )
+
+        resource = material["configuration"]["experiment_configuration_resource"]
+        for field in (
+            "configuration_path",
+            "configuration_schema_path",
+            "configuration_validator_path",
+        ):
+            validate_repository_path(resource[field])
+            if resource[field] not in material["governed_scope_paths"]:
+                raise CanonicalControlError(
+                    "Experiment configuration resource path is not governed"
+                )
+        if (
+            reconstruct_configuration_resource_identity(resource)
+            != resource["configuration_resource_identity"]
+            or reconstruct_configuration_schema_identity(resource)
+            != resource["configuration_schema_identity"]
+            or resource["profiled_experiment_configuration_identity"]
+            != material["configuration"]["experiment_configuration_identity"]
+        ):
+            raise CanonicalControlError(
+                "Experiment configuration resource authority does not reconstruct"
+            )
     return AdapterDeclarationV1(
         material, identifier, material["adapter_identifier"], material["adapter_identity"]
     )

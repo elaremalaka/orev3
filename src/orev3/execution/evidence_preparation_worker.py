@@ -84,9 +84,9 @@ def main() -> int:
             generation = EvidenceAuthorityGeneration(request["authority_generation"])
         except (KeyError, ValueError) as exc:
             raise ValueError("Phase-3B authority generation is absent or unsupported") from exc
-        prospective = generation is EvidenceAuthorityGeneration.PROSPECTIVE_V1_1
+        prospective = generation is not EvidenceAuthorityGeneration.HISTORICAL
         schemas = (
-            load_prospective_phase3b_schemas(repository, source)
+            load_prospective_phase3b_schemas(repository, source, generation)
             if prospective
             else load_phase3b_schemas(repository, source)
         )
@@ -96,7 +96,11 @@ def main() -> int:
         phase3a_request.update(
             {
                 "authority_generation": (
-                    PreparationAuthorityGeneration.PROSPECTIVE_V1_1.value
+                    (
+                        PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE.value
+                        if generation is EvidenceAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
+                        else PreparationAuthorityGeneration.PROSPECTIVE_V1_1.value
+                    )
                     if prospective
                     else PreparationAuthorityGeneration.HISTORICAL.value
                 ),
@@ -179,6 +183,11 @@ def main() -> int:
                 sandbox_template_identity=phase3a_declaration[
                     "sandbox_template_identity"
                 ],
+                generation=(
+                    PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
+                    if generation is EvidenceAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
+                    else PreparationAuthorityGeneration.PROSPECTIVE_V1_1
+                ),
             )
             worker_evidence_identities.append(normalized_phase3a.evidence_identity)
         contract_paths = [contract[field] for contract in descriptor["evidence_preparation"]["dataset_contracts"] for field in ("raw_schema_path", "projection_schema_path")]

@@ -262,6 +262,20 @@ PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY = {
         "readiness-test-policy"
     ],
 }
+PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_POLICY = {
+    **PROSPECTIVE_PHASE3A_SCHEMA_POLICY,
+    "adapter-declaration": (
+        "adapter-declaration-v4",
+        "src/orev3/execution/schemas/v1/adapter-declaration-v4.schema.json",
+    ),
+}
+PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_DOCUMENT_POLICY = {
+    **PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY,
+    "adapter-declaration": (
+        "orev3://schemas/execution-readiness/v1/adapter-declaration-v4",
+        "985fd13cff1ca5d399a1f254879c397167d75c0355c0d066a22441d7e2d3ab70",
+    ),
+}
 PROSPECTIVE_PHASE3B_SCHEMA_POLICY = {
     **PHASE3B_SCHEMA_POLICY,
     "readiness-record": PROSPECTIVE_PHASE2_SCHEMA_POLICY["readiness-record"],
@@ -315,6 +329,18 @@ PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY = {
         "orev3://schemas/execution-readiness/v1/evidence-preparation-v2",
         "44cf31c797e777dc17ed33d8e04597dd45c5f7d49e98adf4f67c66f34aa190b5",
     ),
+}
+PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_POLICY = {
+    **PROSPECTIVE_PHASE3B_SCHEMA_POLICY,
+    "adapter-declaration": PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_POLICY[
+        "adapter-declaration"
+    ],
+}
+PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_DOCUMENT_POLICY = {
+    **PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY,
+    "adapter-declaration": PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_DOCUMENT_POLICY[
+        "adapter-declaration"
+    ],
 }
 READINESS_V1_1_SCHEMA_REGISTRY_IDENTIFIER = "readiness-v1-schema-registry-v1"
 READINESS_V1_1_SCHEMA_POLICY = dict(
@@ -441,6 +467,18 @@ READINESS_V1_1_SCHEMA_POLICY = {
 READINESS_V1_1_SCHEMA_DOCUMENT_POLICY = {
     kind: READINESS_V1_1_SCHEMA_DOCUMENT_POLICY[kind]
     for kind in READINESS_V1_1_SCHEMA_KIND_ORDER
+}
+PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY = {
+    **READINESS_V1_1_SCHEMA_POLICY,
+    "adapter-declaration": PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_POLICY[
+        "adapter-declaration"
+    ],
+}
+PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY = {
+    **READINESS_V1_1_SCHEMA_DOCUMENT_POLICY,
+    "adapter-declaration": PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_DOCUMENT_POLICY[
+        "adapter-declaration"
+    ],
 }
 
 _SAFE_IDENTIFIER = re.compile(r"[a-z][a-z0-9_.-]*")
@@ -1035,6 +1073,33 @@ def _validate_schema_section_v2(value: Mapping[str, Any], *, object_format: str)
     )
     if tuple(item.get("object_kind") for item in declarations) != READINESS_V1_1_SCHEMA_KIND_ORDER:
         raise CanonicalControlError("prospective 29-kind schema registry is incomplete")
+    adapter_declaration = next(
+        item for item in declarations if item.get("object_kind") == "adapter-declaration"
+    )
+    adapter_coordinates = (
+        adapter_declaration.get("registry_identifier"),
+        adapter_declaration.get("path"),
+        adapter_declaration.get("schema_id"),
+        adapter_declaration.get("sha256"),
+    )
+    legacy_coordinates = (
+        *READINESS_V1_1_SCHEMA_POLICY["adapter-declaration"],
+        *READINESS_V1_1_SCHEMA_DOCUMENT_POLICY["adapter-declaration"],
+    )
+    v4_coordinates = (
+        *PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY["adapter-declaration"],
+        *PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY[
+            "adapter-declaration"
+        ],
+    )
+    if adapter_coordinates == legacy_coordinates:
+        selected_policy = READINESS_V1_1_SCHEMA_POLICY
+        selected_documents = READINESS_V1_1_SCHEMA_DOCUMENT_POLICY
+    elif adapter_coordinates == v4_coordinates:
+        selected_policy = PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY
+        selected_documents = PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY
+    else:
+        raise CanonicalControlError("prospective adapter schema generation is unsupported")
     seen_registry: set[str] = set(); seen_ids: set[str] = set(); seen_paths: set[str] = set()
     for declaration in declarations:
         validate_exact_fields(declaration, {"byte_count", "git_blob_identity", "object_kind", "path", "registry_identifier", "schema_id", "sha256"}, label="prospective schema declaration")
@@ -1042,8 +1107,8 @@ def _validate_schema_section_v2(value: Mapping[str, Any], *, object_format: str)
         require_integer("byte_count", declaration["byte_count"])
         require_git_object("git_blob_identity", declaration["git_blob_identity"], object_format)
         require_sha256("sha256", declaration["sha256"])
-        expected_registry, expected_path = READINESS_V1_1_SCHEMA_POLICY[kind]
-        expected_id, expected_digest = READINESS_V1_1_SCHEMA_DOCUMENT_POLICY[kind]
+        expected_registry, expected_path = selected_policy[kind]
+        expected_id, expected_digest = selected_documents[kind]
         if (declaration["registry_identifier"], declaration["path"], declaration["schema_id"], declaration["sha256"]) != (expected_registry, expected_path, expected_id, expected_digest):
             raise CanonicalControlError("prospective schema declaration conflicts with policy")
         if declaration["registry_identifier"] in seen_registry or declaration["schema_id"] in seen_ids or declaration["path"] in seen_paths:

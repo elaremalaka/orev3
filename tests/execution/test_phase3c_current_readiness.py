@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import inspect
 import subprocess
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -19,6 +20,7 @@ from orev3.execution.current_readiness import (
     _check_current_inputs,
     assess_historical_seal,
 )
+from orev3.execution.readiness_contracts import ProspectiveRegistryGeneration
 from orev3.execution.detached_evidence import (
     EvidencePublicationInput,
     _publish_detached_evidence_for_test,
@@ -74,6 +76,7 @@ def _sealed_evaluation(
     details: bool = False,
     publish_evidence: bool = True,
     before_seal_graph_defect: str = "",
+    adapter_v4: bool = False,
 ):
     (tmp_path / "candidate").mkdir()
     repository, record, prerequisites, evidence = _prospective_git_candidate(
@@ -81,6 +84,7 @@ def _sealed_evaluation(
         zero_input=zero_input,
         outcome_aware=outcome_aware,
         ordered_input=ordered_input,
+        adapter_v4=adapter_v4,
     )
     root = repository.root
     git(root, "config", "user.email", "readiness@example.invalid")
@@ -168,7 +172,16 @@ def _sealed_evaluation(
             current.write_bytes(INPUT_PAYLOAD)
             locators = {"synthetic-input": (current,)}
     evaluation = CurrentReadinessInput(
-        GitRepository(root), authority, "origin", record.experiment_identifier, locators
+        GitRepository(root),
+        authority,
+        "origin",
+        record.experiment_identifier,
+        locators,
+        (
+            ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
+            if adapter_v4
+            else ProspectiveRegistryGeneration.READINESS_V1_1
+        ),
     )
     base = (evaluation, root, record, seal)
     if details:
@@ -212,6 +225,30 @@ def test_zero_input_sealed_remote_reaches_execution_ready(tmp_path: Path) -> Non
     assert first.readiness_identity == record.readiness_identity
     assert first == second
     assert evaluation.current_input_locators == {}
+
+
+def test_adapter_v4_current_readiness_reauthenticates_resource(
+    tmp_path: Path,
+) -> None:
+    evaluation, _, record, seal = _sealed_evaluation(
+        tmp_path, zero_input=True, adapter_v4=True
+    )
+    assert (
+        evaluation.authority_generation
+        is ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
+    )
+    result = _evaluate_current_readiness_for_test(evaluation)
+    assert isinstance(result, ExecutionReady)
+    assert result.source_commit == record.source_commit
+    assert result.readiness_seal_commit == seal
+    downgraded = _evaluate_current_readiness_for_test(
+        replace(
+            evaluation,
+            authority_generation=ProspectiveRegistryGeneration.READINESS_V1_1,
+        )
+    )
+    assert isinstance(downgraded, CurrentReadinessRejected)
+    assert downgraded.receipt["failed_invariant_identifier"] == "schema_registry"
 
 
 def test_e_publication_layout_and_idempotent_reuse(tmp_path: Path) -> None:
@@ -771,6 +808,11 @@ def test_production_api_is_closed_and_file_transport_fails_closed(
         "remote_alias",
         "experiment_identifier",
         "current_input_locators",
+        "authority_generation",
+    )
+    assert (
+        CurrentReadinessInput.__dataclass_fields__["authority_generation"].default
+        is ProspectiveRegistryGeneration.READINESS_V1_1
     )
     evaluation, _, _, _ = _sealed_evaluation(tmp_path, zero_input=True)
     result = evaluate_current_readiness(evaluation)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 import importlib.util
 import inspect
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
 
 import pytest
@@ -14,6 +14,9 @@ from orev3.execution.canonical import (
     domain_identity,
 )
 from orev3.execution.runtime import PHASE3B_WORKER_EVIDENCE_DOMAIN
+from orev3.execution.phase3b_components import (
+    reconstruct_authenticated_configuration_resource_identity,
+)
 from orev3.execution.readiness_candidate import (
     CANONICAL_RECEIPT_UNAVAILABLE,
     FAILURE_RECEIPT_DOMAIN,
@@ -29,6 +32,7 @@ from orev3.execution.readiness_candidate import (
     evaluate_readiness_candidate,
     load_readiness_failure_receipt_bytes,
     reconstruct_failure_receipt_identity,
+    validate_phase3c_invariant_bindings,
     validate_readiness_failure_receipt,
 )
 _SLICE3_TEST_PATH = Path(__file__).with_name("test_phase3c_readiness_record_v2.py")
@@ -100,6 +104,127 @@ def _receipt_context(
         candidate_source_commit=source,
         readiness_identity=readiness,
     )
+
+
+def test_legacy_candidate_rejects_nonnull_configuration_resource(
+    evaluation: Phase3CEvaluationInput,
+) -> None:
+    changed = replace(
+        evaluation,
+        prerequisites=replace(
+            evaluation.prerequisites,
+            authenticated_experiment_configuration_resource=object(),
+        ),
+    )
+    with pytest.raises(Exception):
+        validate_phase3c_invariant_bindings(changed, "configuration")
+
+
+def test_adapter_v4_candidate_consumes_reconstructed_resource(
+    tmp_path: Path,
+) -> None:
+    repository, record, prerequisites, evidence = _prospective_git_candidate(
+        tmp_path, zero_input=True, adapter_v4=True
+    )
+    material = dict(record.material)
+    material.pop("readiness_identity")
+    authority = record.material["git_authority"]
+    evaluation = Phase3CEvaluationInput(
+        repository=repository,
+        experiment_identifier=record.experiment_identifier,
+        repository_authority_identifier=authority[
+            "repository_authority_identifier"
+        ],
+        approved_branch_ref=authority["approved_branch_ref"],
+        readiness_material=material,
+        prerequisites=prerequisites,
+        phase3b_evidence=evidence,
+    )
+    result = _evaluate_readiness_candidate_for_test(
+        evaluation, _TestMachineryFailurePlan()
+    )
+    assert isinstance(result, ReadinessValidated)
+
+
+@pytest.fixture(scope="module")
+def v4_evaluation(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Phase3CEvaluationInput:
+    repository, record, prerequisites, evidence = _prospective_git_candidate(
+        tmp_path_factory.mktemp("phase3c-v4-candidate"),
+        zero_input=True,
+        adapter_v4=True,
+    )
+    material = dict(record.material)
+    material.pop("readiness_identity")
+    authority = record.material["git_authority"]
+    return Phase3CEvaluationInput(
+        repository=repository,
+        experiment_identifier=record.experiment_identifier,
+        repository_authority_identifier=authority[
+            "repository_authority_identifier"
+        ],
+        approved_branch_ref=authority["approved_branch_ref"],
+        readiness_material=material,
+        prerequisites=prerequisites,
+        phase3b_evidence=evidence,
+    )
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "schema_version",
+        "approved_source_commit",
+        "adapter_identifier",
+        "adapter_identity",
+        "configuration_resource_identity",
+        "configuration_git_object_identity",
+        "configuration_byte_count",
+        "configuration_sha256",
+        "configuration_schema_identity",
+        "configuration_validator_component_identity",
+        "experiment_specific_configuration_identity",
+        "profiled_experiment_configuration_identity",
+        "authenticated_configuration_resource_identity",
+    ),
+)
+def test_adapter_v4_candidate_rejects_every_transient_result_substitution(
+    v4_evaluation: Phase3CEvaluationInput, field: str,
+) -> None:
+    authenticated = (
+        v4_evaluation.prerequisites.authenticated_experiment_configuration_resource
+    )
+    assert authenticated is not None
+    if field == "schema_version":
+        value = 2
+    elif field == "configuration_byte_count":
+        value = authenticated.configuration_byte_count + 1
+    elif field == "approved_source_commit":
+        value = "0" * 40
+    elif field == "adapter_identifier":
+        value = "substituted-adapter"
+    else:
+        value = "0" * 64
+    changed = replace(authenticated, **{field: value})
+    if field != "authenticated_configuration_resource_identity":
+        changed = replace(
+            changed,
+            authenticated_configuration_resource_identity=(
+                reconstruct_authenticated_configuration_resource_identity(
+                    asdict(changed)
+                )
+            ),
+        )
+    altered = replace(
+        v4_evaluation,
+        prerequisites=replace(
+            v4_evaluation.prerequisites,
+            authenticated_experiment_configuration_resource=changed,
+        ),
+    )
+    with pytest.raises(Exception):
+        validate_phase3c_invariant_bindings(altered, "configuration")
 
 
 def _rehash_receipt(receipt: dict) -> None:

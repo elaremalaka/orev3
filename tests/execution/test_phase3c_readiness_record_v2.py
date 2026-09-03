@@ -19,6 +19,8 @@ from orev3.execution.readiness_record import (
     PROSPECTIVE_PHASE2_SCHEMA_POLICY,
     PROSPECTIVE_PHASE3A_SCHEMA_POLICY,
     PROSPECTIVE_PHASE3B_SCHEMA_POLICY,
+    PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY,
     READINESS_RECORD_DOMAIN,
     READINESS_SPECIFICATION_V1_1_PATH,
     READINESS_SPECIFICATION_V1_1_REVISION,
@@ -55,6 +57,7 @@ from orev3.execution.evidence_preparation import (
     reconstruct_prospective_phase3a_worker,
 )
 from orev3.execution.preparation import PHASE3A_REMAINING_PREDICATES
+from orev3.execution.preparation import PreparationAuthorityGeneration
 from orev3.execution.external_inputs import INPUT_SNAPSHOT_DOMAIN
 from orev3.execution.git_state import GitAuthorityError, validate_record_v2_git_bindings
 from orev3.execution.phase3b_components import WORKER_CODE_CLOSURES, resolve_component
@@ -286,14 +289,24 @@ def _prospective_git_candidate(
     zero_input: bool = False,
     outcome_aware: bool = False,
     ordered_input: bool = False,
+    adapter_v4: bool = False,
 ):
-    from orev3.execution.readiness_contracts import load_readiness_prerequisite_contracts
+    from orev3.execution.readiness_contracts import (
+        ProspectiveRegistryGeneration,
+        load_readiness_prerequisite_contracts,
+    )
 
     repository, source, scopes = prospective_repository(
         tmp_path,
         zero_input=zero_input,
-        outcome_aware=outcome_aware,
+        outcome_aware=outcome_aware or adapter_v4,
         ordered_input=ordered_input,
+        adapter_v4_configuration_resource=adapter_v4,
+    )
+    generation = (
+        ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
+        if adapter_v4
+        else ProspectiveRegistryGeneration.READINESS_V1_1
     )
     prerequisites = load_readiness_prerequisite_contracts(
         repository,
@@ -301,14 +314,25 @@ def _prospective_git_candidate(
         experiment_identifier="synthetic-prospective",
         requested_attempt_kind="official",
         source_scopes=scopes,
+        generation=generation,
     )
     adapter = prerequisites.adapter.material
     binding = prerequisites.implementation_binding
     authority = prerequisites.attempt_authority
 
+    schema_policy = (
+        PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY
+        if adapter_v4
+        else READINESS_V1_1_SCHEMA_POLICY
+    )
+    document_policy = (
+        PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY
+        if adapter_v4
+        else READINESS_V1_1_SCHEMA_DOCUMENT_POLICY
+    )
     declarations = []
     for kind in READINESS_V1_1_SCHEMA_KIND_ORDER:
-        registry_identifier, path = READINESS_V1_1_SCHEMA_POLICY[kind]
+        registry_identifier, path = schema_policy[kind]
         raw, git_blob = _git_blob(repository, source, path)
         declarations.append(
             {
@@ -317,7 +341,7 @@ def _prospective_git_candidate(
                 "object_kind": kind,
                 "path": path,
                 "registry_identifier": registry_identifier,
-                "schema_id": READINESS_V1_1_SCHEMA_DOCUMENT_POLICY[kind][0],
+                "schema_id": document_policy[kind][0],
                 "sha256": hashlib.sha256(raw).hexdigest(),
             }
         )
@@ -655,6 +679,11 @@ def _prospective_git_candidate(
             item["sandbox_template_identity"]
             for item in evidence_policy["worker_profiles"]
             if item["worker_kind"] == "PHASE3A_VALIDATOR"
+        ),
+        generation=(
+            PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
+            if adapter_v4
+            else PreparationAuthorityGeneration.PROSPECTIVE_V1_1
         ),
     )
     workers.append(
@@ -1059,6 +1088,84 @@ def test_git_validator_reconstructs_complete_prospective_candidate(
         phase3b_evidence=evidence,
     )
     assert len(registry.schemas_by_object_kind) == 29
+
+
+def test_adapter_v4_final_overlay_replaces_only_adapter_declaration() -> None:
+    assert len(PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY) == 29
+    assert set(PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY) == set(
+        READINESS_V1_1_SCHEMA_POLICY
+    )
+    assert (
+        PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY["adapter-declaration"][0]
+        == "adapter-declaration-v4"
+    )
+    assert (
+        PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY[
+            "adapter-declaration"
+        ][0]
+        == "orev3://schemas/execution-readiness/v1/adapter-declaration-v4"
+    )
+    for kind in set(READINESS_V1_1_SCHEMA_POLICY) - {"adapter-declaration"}:
+        assert (
+            PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY[kind]
+            == READINESS_V1_1_SCHEMA_POLICY[kind]
+        )
+        assert (
+            PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY[kind]
+            == READINESS_V1_1_SCHEMA_DOCUMENT_POLICY[kind]
+        )
+
+
+def test_git_validator_independently_reconstructs_adapter_v4_resource(
+    tmp_path: Path,
+) -> None:
+    repository, record, prerequisites, evidence = _prospective_git_candidate(
+        tmp_path, zero_input=True, adapter_v4=True
+    )
+    registry = validate_record_v2_git_bindings(
+        repository,
+        record,
+        prerequisites=prerequisites,
+        phase3b_evidence=evidence,
+    )
+    authenticated = prerequisites.authenticated_experiment_configuration_resource
+    assert authenticated is not None
+    assert authenticated.approved_source_commit == record.source_commit
+    assert authenticated.adapter_identity == prerequisites.adapter.adapter_identity
+    assert len(registry.schemas_by_object_kind) == 29
+
+
+def test_git_validator_rejects_missing_or_stale_adapter_v4_resource(
+    tmp_path: Path,
+) -> None:
+    repository, record, prerequisites, evidence = _prospective_git_candidate(
+        tmp_path, zero_input=True, adapter_v4=True
+    )
+    with pytest.raises(GitAuthorityError):
+        validate_record_v2_git_bindings(
+            repository,
+            record,
+            prerequisites=replace(
+                prerequisites,
+                authenticated_experiment_configuration_resource=None,
+            ),
+            phase3b_evidence=evidence,
+        )
+    authenticated = prerequisites.authenticated_experiment_configuration_resource
+    assert authenticated is not None
+    with pytest.raises(GitAuthorityError):
+        validate_record_v2_git_bindings(
+            repository,
+            record,
+            prerequisites=replace(
+                prerequisites,
+                authenticated_experiment_configuration_resource=replace(
+                    authenticated,
+                    approved_source_commit="0" * len(record.source_commit),
+                ),
+            ),
+            phase3b_evidence=evidence,
+        )
 
 
 @pytest.mark.parametrize(

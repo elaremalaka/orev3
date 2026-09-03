@@ -29,6 +29,8 @@ from orev3.execution.readiness_record import (
     PHASE3A_SCHEMA_POLICY,
     PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY,
     PROSPECTIVE_PHASE3A_SCHEMA_POLICY,
+    PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_POLICY,
     READINESS_TEST_POLICY_V2_PATH,
     RepositoryAuthorityV1,
     SourceScopeDeclarationV1,
@@ -77,6 +79,9 @@ class PreparationEnvironmentDisposition(str, Enum):
 class PreparationAuthorityGeneration(str, Enum):
     HISTORICAL = "historical-phase3a-v1"
     PROSPECTIVE_V1_1 = "prospective-v1.1-phase3a"
+    ADAPTER_V4_CONFIGURATION_RESOURCE = (
+        "prospective-v1.1-adapter-v4-configuration-resource"
+    )
 
 
 class PreparationEvidenceDisposition(str, Enum):
@@ -138,14 +143,35 @@ def load_phase3a_schemas(repository: GitRepository, source_commit: str) -> Mappi
 
 
 def load_prospective_phase3a_schemas(
-    repository: GitRepository, source_commit: str
+    repository: GitRepository,
+    source_commit: str,
+    generation: PreparationAuthorityGeneration = PreparationAuthorityGeneration.PROSPECTIVE_V1_1,
 ) -> Mapping[str, Mapping[str, object]]:
+    if generation is PreparationAuthorityGeneration.PROSPECTIVE_V1_1:
+        policy = PROSPECTIVE_PHASE3A_SCHEMA_POLICY
+        documents = PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY
+    elif generation is PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE:
+        policy = PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_POLICY
+        documents = PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_DOCUMENT_POLICY
+        if (
+            policy.get("adapter-declaration")
+            != (
+                "adapter-declaration-v4",
+                "src/orev3/execution/schemas/v1/adapter-declaration-v4.schema.json",
+            )
+            or documents.get("adapter-declaration")
+            != (
+                "orev3://schemas/execution-readiness/v1/adapter-declaration-v4",
+                "985fd13cff1ca5d399a1f254879c397167d75c0355c0d066a22441d7e2d3ab70",
+            )
+        ):
+            raise CanonicalControlError("prospective Phase-3A v4 overlay differs")
+    else:
+        raise CanonicalControlError("prospective Phase-3A generation is unsupported")
     schemas: dict[str, Mapping[str, object]] = {}
-    for kind, (_, path) in PROSPECTIVE_PHASE3A_SCHEMA_POLICY.items():
+    for kind, (_, path) in policy.items():
         raw = _blob(repository, source_commit, path)
-        expected_identifier, expected_digest = (
-            PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY[kind]
-        )
+        expected_identifier, expected_digest = documents[kind]
         if hashlib.sha256(raw).hexdigest() != expected_digest:
             raise CanonicalControlError(
                 f"bound prospective Phase-3A schema digest differs: {kind}"
@@ -156,7 +182,7 @@ def load_prospective_phase3a_schemas(
                 f"bound prospective Phase-3A schema identifier differs: {kind}"
             )
         schemas[kind] = schema
-    if tuple(schemas) != tuple(PROSPECTIVE_PHASE3A_SCHEMA_POLICY) or len(schemas) != 10:
+    if tuple(schemas) != tuple(policy) or len(schemas) != 10:
         raise CanonicalControlError(
             "prospective Phase-3A schema registry is not exactly complete"
         )
@@ -168,7 +194,10 @@ def _selected_phase3a_authority(
 ) -> tuple[str, str]:
     if generation is PreparationAuthorityGeneration.HISTORICAL:
         return READINESS_TEST_POLICY_PATH, READINESS_SPECIFICATION_PATH
-    if generation is PreparationAuthorityGeneration.PROSPECTIVE_V1_1:
+    if generation in {
+        PreparationAuthorityGeneration.PROSPECTIVE_V1_1,
+        PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+    }:
         return READINESS_TEST_POLICY_V2_PATH, READINESS_SPECIFICATION_V1_1_PATH
     raise CanonicalControlError("preparation authority generation is unsupported")
 
@@ -297,7 +326,7 @@ def _validate_detached_preparation_environment(request: Mapping[str, Any]) -> Ma
     schemas = (
         load_phase3a_schemas(repository, source)
         if generation is PreparationAuthorityGeneration.HISTORICAL
-        else load_prospective_phase3a_schemas(repository, source)
+        else load_prospective_phase3a_schemas(repository, source, generation)
     )
     readiness_test_policy_path, readiness_specification_path = (
         _selected_phase3a_authority(generation)
@@ -426,7 +455,7 @@ def _discover_requirements(
     schemas = (
         load_phase3a_schemas(repository, source)
         if generation is PreparationAuthorityGeneration.HISTORICAL
-        else load_prospective_phase3a_schemas(repository, source)
+        else load_prospective_phase3a_schemas(repository, source, generation)
     )
     readiness_test_policy_path, readiness_specification_path = (
         _selected_phase3a_authority(generation)
@@ -459,6 +488,20 @@ def _discover_requirements(
         descriptor["execution_specification"]["path"]: ("execution_specification", "top_level", ""),
         runtime.dependency_lock_path: ("dependency_manifest", "top_level", ""),
     }
+    if generation is PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE:
+        resource = descriptor["configuration"]["experiment_configuration_resource"]
+        scopes[resource["configuration_path"]] = (
+            "configuration", "top_level", ""
+        )
+        scopes[resource["configuration_validator_path"]] = (
+            "control_plane", "nested", "src/orev3"
+        )
+        if resource["configuration_schema_path"] not in descriptor[
+            "governed_scope_paths"
+        ]:
+            raise CanonicalControlError(
+                "configuration schema path is not adapter-governed"
+            )
     for path in policy["required_selectors"]:
         scopes[path] = ("readiness_tests", "top_level", "")
     for path in descriptor["adapter_readiness_tests"]:

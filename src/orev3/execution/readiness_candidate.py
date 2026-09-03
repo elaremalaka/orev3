@@ -35,11 +35,16 @@ from orev3.execution.git_state import (
     GitRepository,
     validate_record_v2_git_bindings,
 )
+from orev3.execution.phase3b_components import (
+    reconstruct_authenticated_configuration_resource_identity,
+)
 from orev3.execution.readiness_record import (
     CANONICAL_ENCODING_REVISION,
     READINESS_SPECIFICATION_V1_1_PATH,
     READINESS_SPECIFICATION_V1_1_REVISION,
     READINESS_SPECIFICATION_V1_1_SHA256,
+    PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY,
     READINESS_V1_1_SCHEMA_DOCUMENT_POLICY,
     READINESS_V1_1_SCHEMA_KIND_ORDER,
     READINESS_V1_1_SCHEMA_POLICY,
@@ -704,10 +709,17 @@ def _check_semantic_invariant(
                 != READINESS_V1_1_SCHEMA_KIND_ORDER
             ):
                 raise InvariantFailure(invariant)
-            expected = READINESS_V1_1_SCHEMA_DOCUMENT_POLICY
+            if adapter["schema_version"] == 3:
+                expected_policy = READINESS_V1_1_SCHEMA_POLICY
+                expected = READINESS_V1_1_SCHEMA_DOCUMENT_POLICY
+            elif adapter["schema_version"] == 4:
+                expected_policy = PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY
+                expected = PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY
+            else:
+                raise InvariantFailure(invariant)
             for declaration in declarations:
                 kind = declaration["object_kind"]
-                expected_registry, expected_path = READINESS_V1_1_SCHEMA_POLICY[kind]
+                expected_registry, expected_path = expected_policy[kind]
                 if (
                     kind not in expected
                     or declaration["registry_identifier"] != expected_registry
@@ -821,6 +833,57 @@ def _check_semantic_invariant(
             if configuration != expected_configuration or configuration[
                 "evidence_preparation_policy_identity"
             ] != evidence["aggregate"]["capability_policy_identity"]:
+                raise InvariantFailure(invariant)
+            authenticated = (
+                prerequisites.authenticated_experiment_configuration_resource
+            )
+            if adapter["schema_version"] == 3:
+                if authenticated is not None:
+                    raise InvariantFailure(invariant)
+            elif adapter["schema_version"] == 4:
+                resource = adapter["configuration"][
+                    "experiment_configuration_resource"
+                ]
+                authenticated_material = (
+                    None if authenticated is None else authenticated.identity_material()
+                )
+                if (
+                    authenticated is None
+                    or authenticated.schema_version != 1
+                    or authenticated.approved_source_commit
+                    != prerequisites.source_commit
+                    or authenticated.adapter_identifier
+                    != adapter["adapter_identifier"]
+                    or authenticated.adapter_identity != adapter["adapter_identity"]
+                    or authenticated.configuration_resource_identity
+                    != resource["configuration_resource_identity"]
+                    or authenticated.configuration_git_object_identity
+                    != resource["configuration_git_object_identity"]
+                    or authenticated.configuration_byte_count
+                    != resource["configuration_byte_count"]
+                    or authenticated.configuration_sha256
+                    != resource["configuration_sha256"]
+                    or authenticated.configuration_schema_identity
+                    != resource["configuration_schema_identity"]
+                    or authenticated.configuration_validator_component_identity
+                    != resource["configuration_validator_component_identity"]
+                    or authenticated.experiment_specific_configuration_identity
+                    != resource["experiment_specific_configuration_identity"]
+                    or authenticated.profiled_experiment_configuration_identity
+                    != configuration["experiment_configuration_identity"]
+                    or authenticated_material is None
+                    or reconstruct_authenticated_configuration_resource_identity(
+                        {
+                            **authenticated_material,
+                            "authenticated_configuration_resource_identity": (
+                                authenticated.authenticated_configuration_resource_identity
+                            ),
+                        }
+                    )
+                    != authenticated.authenticated_configuration_resource_identity
+                ):
+                    raise InvariantFailure(invariant)
+            else:
                 raise InvariantFailure(invariant)
         elif invariant == "external_inputs":
             direct = material["external_inputs"]
@@ -1621,13 +1684,18 @@ def _validate_normalized_phase3a_worker(
                 "normalized dependency origin differs from probe order"
             )
     adapter = evaluation.prerequisites.adapter.material
+    phase3a_generation = (
+        "prospective-v1.1-adapter-v4-configuration-resource"
+        if adapter["schema_version"] == 4
+        else "prospective-v1.1-phase3a"
+    )
     expected_result = {
         "adapter_identity": adapter["adapter_identity"],
         "adapter_registry_identity": evaluation.prerequisites.adapter_registry.material[
             "adapter_registry_identity"
         ],
         "approved_branch_ref": evaluation.approved_branch_ref,
-        "authority_generation": "prospective-v1.1-phase3a",
+        "authority_generation": phase3a_generation,
         "closed_dependency_environment_identity": runtime[
             "dependency_environment_identity"
         ],
@@ -1652,7 +1720,7 @@ def _validate_normalized_phase3a_worker(
     command_identity = domain_identity(
         PHASE3B_WORKER_EVIDENCE_DOMAIN,
         {
-            "authority_generation": "prospective-v1.1-phase3a",
+            "authority_generation": phase3a_generation,
             "command": "validate_runtime",
             "invocation_identifier": PHASE3A_NORMALIZED_INVOCATION,
             "worker_kind": "PHASE3A_VALIDATOR",

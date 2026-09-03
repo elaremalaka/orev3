@@ -21,6 +21,8 @@ from orev3.execution.readiness_record import (
     PHASE3B_SCHEMA_POLICY,
     PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY,
     PROSPECTIVE_PHASE3B_SCHEMA_POLICY,
+    PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_POLICY,
 )
 from orev3.execution.readiness_record import SourceScopeDeclarationV1
 from orev3.execution.runtime import PHASE3A_SANDBOX_TEMPLATE_IDENTITY, PHASE3B_PROFILE_RENDERER_DOMAIN, PHASE3B_PROFILE_RENDERER_IDENTITY, PHASE3B_WORKER_EVIDENCE_DOMAIN, DetachedSource, Phase3BWorkerEvidence, run_phase3b_controller, run_phase3b_worker
@@ -79,6 +81,9 @@ class EvidencePreparationDisposition(str, Enum):
 class EvidenceAuthorityGeneration(str, Enum):
     HISTORICAL = "historical-phase3b-v1"
     PROSPECTIVE_V1_1 = "prospective-v1.1-phase3b"
+    ADAPTER_V4_CONFIGURATION_RESOURCE = (
+        "prospective-v1.1-adapter-v4-configuration-resource"
+    )
 
 
 class EvidencePreparationFailureCode(str, Enum):
@@ -127,6 +132,9 @@ def reconstruct_prospective_phase3a_worker(
     source_scopes: Sequence[Mapping[str, Any]],
     capability_policy_identity: str,
     sandbox_template_identity: str,
+    generation: PreparationAuthorityGeneration = (
+        PreparationAuthorityGeneration.PROSPECTIVE_V1_1
+    ),
 ) -> Phase3BWorkerEvidence:
     """Normalize prospective Phase-3A worker authority without physical paths."""
 
@@ -181,11 +189,16 @@ def reconstruct_prospective_phase3a_worker(
             for path in PHASE3A_NORMALIZED_CODE_PATHS
         }
     )
+    if generation not in {
+        PreparationAuthorityGeneration.PROSPECTIVE_V1_1,
+        PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+    }:
+        raise CanonicalControlError("normalized Phase-3A generation is unsupported")
     output_material = {
         "adapter_identity": phase3a_result["adapter_identity"],
         "adapter_registry_identity": phase3a_result["adapter_registry_identity"],
         "approved_branch_ref": approved_branch_ref,
-        "authority_generation": PreparationAuthorityGeneration.PROSPECTIVE_V1_1.value,
+        "authority_generation": generation.value,
         "closed_dependency_environment_identity": phase3a_result[
             "closed_dependency_environment_identity"
         ],
@@ -206,7 +219,7 @@ def reconstruct_prospective_phase3a_worker(
         PHASE3B_WORKER_EVIDENCE_DOMAIN, output_material
     )
     command_material = {
-        "authority_generation": PreparationAuthorityGeneration.PROSPECTIVE_V1_1.value,
+        "authority_generation": generation.value,
         "command": "validate_runtime",
         "invocation_identifier": PHASE3A_NORMALIZED_INVOCATION,
         "worker_kind": "PHASE3A_VALIDATOR",
@@ -289,15 +302,38 @@ def load_phase3b_schemas(repository: GitRepository, source_commit: str) -> Mappi
 
 
 def load_prospective_phase3b_schemas(
-    repository: GitRepository, source_commit: str
+    repository: GitRepository,
+    source_commit: str,
+    generation: EvidenceAuthorityGeneration = EvidenceAuthorityGeneration.PROSPECTIVE_V1_1,
 ) -> Mapping[str, Mapping[str, Any]]:
     """Load the explicit complete-v1.1 overlay; never infer a latest revision."""
 
+    if generation is EvidenceAuthorityGeneration.PROSPECTIVE_V1_1:
+        policy = PROSPECTIVE_PHASE3B_SCHEMA_POLICY
+        documents = PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY
+    elif generation is EvidenceAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE:
+        policy = PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_POLICY
+        documents = PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_DOCUMENT_POLICY
+        if (
+            policy.get("adapter-declaration")
+            != (
+                "adapter-declaration-v4",
+                "src/orev3/execution/schemas/v1/adapter-declaration-v4.schema.json",
+            )
+            or documents.get("adapter-declaration")
+            != (
+                "orev3://schemas/execution-readiness/v1/adapter-declaration-v4",
+                "985fd13cff1ca5d399a1f254879c397167d75c0355c0d066a22441d7e2d3ab70",
+            )
+        ):
+            raise CanonicalControlError("prospective Phase-3B v4 overlay differs")
+    else:
+        raise CanonicalControlError("prospective Phase-3B generation is unsupported")
     schemas: dict[str, Mapping[str, Any]] = {}
-    for kind, (_, path) in PROSPECTIVE_PHASE3B_SCHEMA_POLICY.items():
+    for kind, (_, path) in policy.items():
         entry = repository.tree_entry(source_commit, path)
         raw = repository.object_bytes(entry.object_identity, max_bytes=1_048_576)
-        expected_id, expected_digest = PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY[kind]
+        expected_id, expected_digest = documents[kind]
         if hashlib.sha256(raw).hexdigest() != expected_digest:
             raise CanonicalControlError(
                 f"prospective Phase-3B schema digest differs: {kind}"
@@ -308,7 +344,7 @@ def load_prospective_phase3b_schemas(
                 f"prospective Phase-3B schema identifier differs: {kind}"
             )
         schemas[kind] = schema
-    if tuple(schemas) != tuple(PROSPECTIVE_PHASE3B_SCHEMA_POLICY) or len(schemas) != 20:
+    if tuple(schemas) != tuple(policy) or len(schemas) != 20:
         raise CanonicalControlError(
             "prospective Phase-3B schema registry is not exactly complete"
         )
@@ -499,7 +535,11 @@ def _collect_evidence_preparation_evidence(
     phase3a_generation = (
         PreparationAuthorityGeneration.HISTORICAL
         if generation is EvidenceAuthorityGeneration.HISTORICAL
-        else PreparationAuthorityGeneration.PROSPECTIVE_V1_1
+        else (
+            PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
+            if generation is EvidenceAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
+            else PreparationAuthorityGeneration.PROSPECTIVE_V1_1
+        )
     )
     environment = _collect_preparation_environment_evidence(
         repository,
@@ -530,7 +570,9 @@ def _collect_evidence_preparation_evidence(
     selected_phase3a_schemas = (
         load_phase3a_schemas(repository, local_head)
         if generation is EvidenceAuthorityGeneration.HISTORICAL
-        else load_prospective_phase3a_schemas(repository, local_head)
+        else load_prospective_phase3a_schemas(
+            repository, local_head, phase3a_generation
+        )
     )
     _, _, adapter = _load_adapter_material(
         repository, local_head, selected_phase3a_schemas, experiment_identifier

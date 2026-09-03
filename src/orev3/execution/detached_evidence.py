@@ -485,19 +485,24 @@ def _worker_transport_bundle(bundle: Mapping[str, Any]) -> Mapping[str, Any]:
 def _reconstruct_command_material(worker: Mapping[str, Any]) -> Mapping[str, Any]:
     kind = worker.get("worker_kind")
     if kind == "PHASE3A_VALIDATOR":
-        material = {
-            "authority_generation": "prospective-v1.1-phase3a",
-            "command": "validate_runtime",
-            "invocation_identifier": "phase3a-validate-runtime",
-            "worker_kind": "PHASE3A_VALIDATOR",
-            "worker_revision": "phase3a-normalized-worker-v1",
-        }
         if (
             worker.get("invocation_identifier") != "phase3a-validate-runtime"
             or worker.get("worker_revision") != "phase3a-normalized-worker-v1"
         ):
             raise CanonicalControlError("normalized Phase-3A worker revision differs")
-        candidates = (material,)
+        candidates = tuple(
+            {
+                "authority_generation": authority_generation,
+                "command": "validate_runtime",
+                "invocation_identifier": "phase3a-validate-runtime",
+                "worker_kind": "PHASE3A_VALIDATOR",
+                "worker_revision": "phase3a-normalized-worker-v1",
+            }
+            for authority_generation in (
+                "prospective-v1.1-phase3a",
+                "prospective-v1.1-adapter-v4-configuration-resource",
+            )
+        )
     elif kind == "INPUT_PROJECTOR":
         candidates = tuple(
             {
@@ -613,6 +618,10 @@ def _validate_worker_transport(
         raise CanonicalControlError("worker publication kind is unsupported")
     if set(result) != result_fields or result.get("status") != "evidence_passed":
         raise CanonicalControlError("worker result publication branch differs")
+    if kind == "PHASE3A_VALIDATOR" and result.get(
+        "authority_generation"
+    ) != command.get("authority_generation"):
+        raise CanonicalControlError("Phase-3A publication generation differs")
 
 
 def _load_json_blob(

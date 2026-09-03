@@ -4,16 +4,46 @@ import inspect
 import json
 import ast
 import copy
+import importlib.util
 from pathlib import Path
 
 import pytest
 
 from orev3.execution.canonical import domain_identity, parse_json, validate_json_schema_instance
-from orev3.execution.evidence_preparation import EVIDENCE_POLICY_DOMAIN, EVIDENCE_PREPARATION_DOMAIN, PHASE3B_REMAINING_PREDICATES, EvidencePreparationDisposition, aggregate_evidence, load_evidence_policy, require_phase3b_governance_closure
-from orev3.execution.readiness_record import PHASE3B_SCHEMA_POLICY
+from orev3.execution.evidence_preparation import EVIDENCE_POLICY_DOMAIN, EVIDENCE_PREPARATION_DOMAIN, PHASE3B_REMAINING_PREDICATES, EvidenceAuthorityGeneration, EvidencePreparationDisposition, aggregate_evidence, load_evidence_policy, load_prospective_phase3b_schemas, require_phase3b_governance_closure
+from orev3.execution.preparation import PreparationAuthorityGeneration, load_prospective_phase3a_schemas
+from orev3.execution.readiness_contracts import (
+    ProspectiveRegistryGeneration,
+    load_prospective_schemas,
+    prospective_schema_policy,
+)
+from orev3.execution.readiness_record import (
+    PHASE3B_SCHEMA_POLICY,
+    PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_PHASE3A_SCHEMA_POLICY,
+    PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_PHASE3B_SCHEMA_POLICY,
+    READINESS_V1_1_SCHEMA_DOCUMENT_POLICY,
+    READINESS_V1_1_SCHEMA_POLICY,
+    PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_POLICY,
+    PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_POLICY,
+    PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY,
+)
 from orev3.execution.readiness_record import SourceScopeDeclarationV1
 from orev3.execution.runtime import PHASE3B_CONTROLLER, SAFE_PHASE3B_WORKERS
 from orev3.execution.runtime import _enforce_temporary_disk_limit
+
+_CONTRACTS_TEST_PATH = Path(__file__).with_name("test_phase3c_readiness_contracts.py")
+_CONTRACTS_SPEC = importlib.util.spec_from_file_location(
+    "_orev3_phase3b_authority_contract_fixture", _CONTRACTS_TEST_PATH
+)
+assert _CONTRACTS_SPEC is not None and _CONTRACTS_SPEC.loader is not None
+_CONTRACTS_MODULE = importlib.util.module_from_spec(_CONTRACTS_SPEC)
+_CONTRACTS_SPEC.loader.exec_module(_CONTRACTS_MODULE)
+_prospective_repository = _CONTRACTS_MODULE.prospective_repository
 
 
 def test_schema_policy_is_exactly_twenty() -> None:
@@ -22,6 +52,141 @@ def test_schema_policy_is_exactly_twenty() -> None:
     schema = parse_json(Path("src/orev3/execution/schemas/v1/evidence-preparation-policy.schema.json").read_bytes())
     policy = load_evidence_policy(Path("config/research/readiness/evidence-preparation-policy-v1.json").read_bytes(), schema=schema)
     assert policy["limits"]["max_file_bytes"] == 67_108_864
+
+
+def test_adapter_v4_generation_and_overlays_are_exact() -> None:
+    value = "prospective-v1.1-adapter-v4-configuration-resource"
+    assert ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE.value == value
+    assert PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE.value == value
+    assert EvidenceAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE.value == value
+    for policy, count in (
+        (PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_POLICY, 10),
+        (PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_POLICY, 20),
+        (PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY, 29),
+    ):
+        assert len(policy) == count
+        assert policy["adapter-declaration"][0] == "adapter-declaration-v4"
+        assert "adapter-declaration-v3" not in {entry[0] for entry in policy.values()}
+
+
+def test_unknown_and_cross_stage_generations_reject_without_fallback() -> None:
+    for generation in (
+        ProspectiveRegistryGeneration,
+        PreparationAuthorityGeneration,
+        EvidenceAuthorityGeneration,
+    ):
+        with pytest.raises(ValueError):
+            generation("unknown-generation")
+    with pytest.raises(Exception, match="generation"):
+        prospective_schema_policy(PreparationAuthorityGeneration.PROSPECTIVE_V1_1)
+    with pytest.raises(Exception, match="generation"):
+        load_prospective_phase3a_schemas(
+            None, "0" * 40, EvidenceAuthorityGeneration.PROSPECTIVE_V1_1
+        )
+    with pytest.raises(Exception, match="generation"):
+        load_prospective_phase3b_schemas(
+            None, "0" * 40, PreparationAuthorityGeneration.PROSPECTIVE_V1_1
+        )
+    for wrong in (
+        PreparationAuthorityGeneration.PROSPECTIVE_V1_1,
+        PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+        EvidenceAuthorityGeneration.PROSPECTIVE_V1_1,
+        EvidenceAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+    ):
+        with pytest.raises(Exception, match="generation"):
+            prospective_schema_policy(wrong)
+    for wrong in (
+        ProspectiveRegistryGeneration.READINESS_V1_1,
+        ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+        EvidenceAuthorityGeneration.PROSPECTIVE_V1_1,
+        EvidenceAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+    ):
+        with pytest.raises(Exception, match="generation"):
+            load_prospective_phase3a_schemas(None, "0" * 40, wrong)
+    for wrong in (
+        ProspectiveRegistryGeneration.READINESS_V1_1,
+        ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+        PreparationAuthorityGeneration.PROSPECTIVE_V1_1,
+        PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+    ):
+        with pytest.raises(Exception, match="generation"):
+            load_prospective_phase3b_schemas(None, "0" * 40, wrong)
+
+
+def test_v4_schema_and_document_policy_substitution_matrix_rejects(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository, source, _ = _prospective_repository(
+        tmp_path,
+        outcome_aware=True,
+        adapter_v4_configuration_resource=True,
+    )
+    stages = (
+        (
+            PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_POLICY,
+            PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_DOCUMENT_POLICY,
+            PROSPECTIVE_PHASE3A_SCHEMA_POLICY,
+            PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY,
+            lambda: load_prospective_phase3a_schemas(
+                repository,
+                source,
+                PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+            ),
+        ),
+        (
+            PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_POLICY,
+            PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_DOCUMENT_POLICY,
+            PROSPECTIVE_PHASE3B_SCHEMA_POLICY,
+            PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY,
+            lambda: load_prospective_phase3b_schemas(
+                repository,
+                source,
+                EvidenceAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+            ),
+        ),
+        (
+            PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY,
+            PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY,
+            READINESS_V1_1_SCHEMA_POLICY,
+            READINESS_V1_1_SCHEMA_DOCUMENT_POLICY,
+            lambda: load_prospective_schemas(
+                repository,
+                source,
+                ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+            ),
+        ),
+    )
+    for schema_policy, document_policy, legacy_policy, legacy_documents, load in stages:
+        with monkeypatch.context() as context:
+            context.setitem(
+                schema_policy,
+                "adapter-declaration",
+                ("adapter-declaration-v4", "missing/substituted.schema.json"),
+            )
+            with pytest.raises(Exception):
+                load()
+        with monkeypatch.context() as context:
+            identifier, _ = document_policy["adapter-declaration"]
+            context.setitem(
+                document_policy,
+                "adapter-declaration",
+                (identifier, "0" * 64),
+            )
+            with pytest.raises(Exception):
+                load()
+        with monkeypatch.context() as context:
+            context.setitem(
+                schema_policy,
+                "adapter-declaration",
+                legacy_policy["adapter-declaration"],
+            )
+            context.setitem(
+                document_policy,
+                "adapter-declaration",
+                legacy_documents["adapter-declaration"],
+            )
+            with pytest.raises(Exception):
+                load()
 
 
 def test_aggregate_is_deterministic_and_not_readiness_identity() -> None:

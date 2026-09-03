@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import copy
+from dataclasses import fields
 from pathlib import Path
 
 import pytest
@@ -23,6 +25,11 @@ from orev3.execution.phase3b_components import (
     PROJECTION_SCHEMA_CONTRACT_DOMAIN,
     RAW_SCHEMA_CONTRACT_DOMAIN,
     resolve_component,
+    reconstruct_configuration_resource_identity,
+    reconstruct_configuration_schema_identity,
+    reconstruct_experiment5_configuration_identity,
+    reconstruct_profiled_experiment_configuration_identity,
+    reconstruct_research_specification_profile_identity,
 )
 from orev3.execution.readiness_contracts import (
     ADAPTER_REGISTRY_PATH,
@@ -34,6 +41,7 @@ from orev3.execution.readiness_contracts import (
     ORCHESTRATOR_IMPLEMENTATION_PATH,
     OUTCOME_GATE_IMPLEMENTATION_PATH,
     ProspectiveRegistryGeneration,
+    ReadinessPrerequisiteContracts,
     SOURCE_TREE_PATH,
     load_attempt_authority_contract,
     load_prospective_schemas,
@@ -55,6 +63,7 @@ from orev3.execution.readiness_record import (
     READINESS_V1_1_SCHEMA_POLICY,
     REPOSITORY_AUTHORITY_PATH,
     reconstruct_control_component_identity,
+    reconstruct_protocol_binding_identity,
 )
 from orev3.execution.registry import (
     ADAPTER_DOMAIN,
@@ -68,6 +77,12 @@ from orev3.execution.registry import (
     load_adapter_declaration_bytes,
 )
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def test_prerequisite_configuration_resource_carrier_is_final_optional_field() -> None:
+    field = fields(ReadinessPrerequisiteContracts)[-1]
+    assert field.name == "authenticated_experiment_configuration_resource"
+    assert field.default is None
 _PHASE3A_SPEC = importlib.util.spec_from_file_location(
     "_phase3a_test_support", ROOT / "tests/execution/test_phase3a_preparation.py"
 )
@@ -615,6 +630,7 @@ def prospective_repository(
     zero_input: bool = False,
     outcome_aware: bool = False,
     ordered_input: bool = False,
+    adapter_v4_configuration_resource: bool = False,
 ):
     repository, _, _, _ = synthetic_repository(tmp_path)
     root = repository.root
@@ -849,6 +865,139 @@ def prospective_repository(
         ),
         outcome_aware=outcome_aware,
     )
+    if adapter_v4_configuration_resource:
+        source_processing_path = (
+            "config/research/readiness/"
+            "rq003-experiment-005-source-processing-v1.json"
+        )
+        write(
+            root,
+            source_processing_path,
+            (ROOT / source_processing_path).read_bytes(),
+        )
+        descriptor = parse_json((root / descriptor_path).read_bytes())
+        schema_path = (
+            "src/orev3/execution/schemas/v1/"
+            "rq003-experiment-005-configuration.schema.json"
+        )
+        validator_path = (
+            "src/orev3/experiments/rq003_experiment5_configuration.py"
+        )
+        configuration_path = (
+            "config/research/readiness/experiments/"
+            "rq003-experiment-005-configuration-v1.json"
+        )
+        schema_raw = (root / schema_path).read_bytes()
+        configuration_schema = parse_json(schema_raw)
+
+        def schema_instance(schema: dict[str, object]) -> object:
+            if "const" in schema:
+                return copy.deepcopy(schema["const"])
+            if "$ref" in schema:
+                name = str(schema["$ref"]).rsplit("/", 1)[1]
+                return schema_instance(configuration_schema["$defs"][name])
+            if schema.get("type") == "object":
+                return {
+                    key: schema_instance(value)
+                    for key, value in schema["properties"].items()
+                }
+            pattern = str(schema.get("pattern", ""))
+            if pattern.endswith("{64}$"):
+                return "a" * 64
+            if "40}" in pattern:
+                return "b" * 40
+            raise AssertionError(schema)
+
+        configuration = schema_instance(configuration_schema)
+        assert isinstance(configuration, dict)
+        research_profile = reconstruct_research_specification_profile_identity(
+            "outcome_aware_v1"
+        )
+        configuration["execution_profile"][
+            "research_specification_profile_identity"
+        ] = research_profile
+        configuration["execution_profile"][
+            "adapter_profile_contract_identity"
+        ] = descriptor["execution_profile"]["profile_identity"]
+        configuration["source_processing"][
+            "configuration_git_blob_identity"
+        ] = git(
+            root,
+            "hash-object",
+            source_processing_path,
+        )
+        configuration["configuration_identity"] = (
+            reconstruct_experiment5_configuration_identity(configuration)
+        )
+        profiled_identity = reconstruct_profiled_experiment_configuration_identity(
+            experiment_specific_configuration_identity=configuration[
+                "configuration_identity"
+            ],
+            profile_identity=research_profile,
+        )
+        configuration_raw = canonical_bytes(configuration)
+        write(root, configuration_path, configuration_raw)
+        component = resolve_component(
+            repository,
+            repository.resolve_commit("HEAD"),
+            "rq003-experiment-005-configuration-validator-v1",
+        )
+        resource = {
+            "schema_version": 1,
+            "configuration_identifier": "rq003-experiment-005-configuration-v1",
+            "configuration_revision": "1",
+            "configuration_path": configuration_path,
+            "configuration_git_object_identity": git(
+                root, "hash-object", configuration_path
+            ),
+            "configuration_byte_count": len(configuration_raw),
+            "configuration_sha256": hashlib.sha256(configuration_raw).hexdigest(),
+            "configuration_schema_identifier": (
+                "rq003-experiment-005-configuration-schema-v1"
+            ),
+            "configuration_schema_revision": "1",
+            "configuration_schema_path": schema_path,
+            "configuration_schema_git_object_identity": git(
+                root, "hash-object", schema_path
+            ),
+            "configuration_schema_byte_count": len(schema_raw),
+            "configuration_schema_sha256": hashlib.sha256(schema_raw).hexdigest(),
+            "configuration_schema_identity": ZERO,
+            "configuration_validator_identifier": component.identifier,
+            "configuration_validator_revision": component.revision,
+            "configuration_validator_path": validator_path,
+            "configuration_validator_git_object_identity": component.git_object_identity,
+            "configuration_validator_sha256": component.sha256,
+            "configuration_validator_worker_kind": "CONTROLLER_PURE",
+            "configuration_validator_component_identity": component.component_identity,
+            "experiment_specific_configuration_identity": configuration[
+                "configuration_identity"
+            ],
+            "profiled_experiment_configuration_identity": profiled_identity,
+            "configuration_resource_identity": ZERO,
+        }
+        resource["configuration_schema_identity"] = (
+            reconstruct_configuration_schema_identity(resource)
+        )
+        resource["configuration_resource_identity"] = (
+            reconstruct_configuration_resource_identity(resource)
+        )
+        descriptor["schema_version"] = 4
+        descriptor["configuration"]["experiment_configuration_identity"] = (
+            profiled_identity
+        )
+        descriptor["configuration"]["experiment_configuration_resource"] = resource
+        descriptor["governed_scope_paths"] = sorted(
+            set(descriptor["governed_scope_paths"])
+            | {configuration_path, schema_path, validator_path}
+        )
+        binding = parse_json((root / binding_path).read_bytes())
+        binding["experiment_configuration_identity"] = profiled_identity
+        binding["protocol_binding_identity"] = reconstruct_protocol_binding_identity(
+            binding
+        )
+        write(root, binding_path, canonical_bytes(binding))
+        _write_adapter_and_registry(root, descriptor)
     input_mode = "zero_input" if zero_input else "declared_input"
     _seal_synthetic_authority_context(root, input_mode=input_mode)
     git(root, "add", ".")
@@ -884,6 +1033,11 @@ def prospective_repository(
         raw_schema_path: "configuration",
         projection_schema_path: "configuration",
     }
+    if adapter_v4_configuration_resource:
+        roles.pop(READINESS_V1_1_SCHEMA_POLICY["readiness-test-policy"][1])
+        roles["src/orev3/execution/schemas/v1"] = "readiness_schema"
+        roles[configuration_path] = "configuration"
+        roles[validator_path] = "control_plane"
     for selector in readiness_policy["required_selectors"]:
         roles[selector.split("::", 1)[0]] = "readiness_tests"
     if outcome_aware:
@@ -978,14 +1132,19 @@ def test_all_prospective_overlay_schemas_reconstruct_from_s(tmp_path: Path) -> N
         (ProspectiveRegistryGeneration.PHASE3A, 10),
         (ProspectiveRegistryGeneration.PHASE3B, 20),
         (ProspectiveRegistryGeneration.READINESS_V1_1, 29),
+        (ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE, 29),
     ):
         schemas = load_prospective_schemas(repository, source, generation)
         assert len(schemas) == count
         assert schemas["readiness-test-policy"]["$id"].endswith("readiness-test-policy-v2")
         if generation is not ProspectiveRegistryGeneration.PHASE2:
-            assert schemas["adapter-declaration"]["$id"].endswith(
-                "adapter-declaration-v3"
+            expected = (
+                "adapter-declaration-v4"
+                if generation
+                is ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
+                else "adapter-declaration-v3"
             )
+            assert schemas["adapter-declaration"]["$id"].endswith(expected)
     prospective_phase3b = load_prospective_phase3b_schemas(repository, source)
     assert prospective_phase3b["adapter-declaration"]["$id"].endswith("adapter-declaration-v3")
     assert prospective_phase3b["profile-conformance-evidence"]["$id"].endswith("profile-conformance-evidence-v2")
@@ -1018,6 +1177,122 @@ def test_complete_synthetic_prerequisites_reconstruct_without_side_effects(tmp_p
     assert not hasattr(result, "readiness_identity")
     assert not hasattr(result, "attempt_identity")
     assert not hasattr(result, "allocation_receipt")
+
+
+def test_adapter_v4_configuration_resource_reconstructs_transient_authority(
+    tmp_path: Path,
+) -> None:
+    repository, source, scopes = prospective_repository(
+        tmp_path,
+        outcome_aware=True,
+        adapter_v4_configuration_resource=True,
+    )
+    result = load_readiness_prerequisite_contracts(
+        repository,
+        source,
+        experiment_identifier="synthetic-prospective",
+        requested_attempt_kind="official",
+        source_scopes=scopes,
+        generation=ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+    )
+    authenticated = result.authenticated_experiment_configuration_resource
+    assert authenticated is not None
+    assert authenticated.approved_source_commit == source
+    assert authenticated.adapter_identity == result.adapter.adapter_identity
+    with pytest.raises(CanonicalControlError):
+        load_readiness_prerequisite_contracts(
+            repository,
+            source,
+            experiment_identifier="synthetic-prospective",
+            requested_attempt_kind="official",
+            source_scopes=scopes,
+            generation=ProspectiveRegistryGeneration.READINESS_V1_1,
+        )
+
+
+def test_adapter_v4_source_scope_attack_matrix_rejects_directly(
+    tmp_path: Path,
+) -> None:
+    repository, source, scopes = prospective_repository(
+        tmp_path,
+        outcome_aware=True,
+        adapter_v4_configuration_resource=True,
+    )
+    baseline = load_readiness_prerequisite_contracts(
+        repository,
+        source,
+        experiment_identifier="synthetic-prospective",
+        requested_attempt_kind="official",
+        source_scopes=scopes,
+        generation=ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+    )
+    resource = baseline.adapter.material["configuration"][
+        "experiment_configuration_resource"
+    ]
+    configuration_path = resource["configuration_path"]
+    validator_path = resource["configuration_validator_path"]
+    schema_root = "src/orev3/execution/schemas/v1"
+
+    def reject(attacked: list[dict[str, str]]) -> None:
+        with pytest.raises(CanonicalControlError):
+            load_readiness_prerequisite_contracts(
+                repository,
+                source,
+                experiment_identifier="synthetic-prospective",
+                requested_attempt_kind="official",
+                source_scopes=sorted(attacked, key=lambda item: item["repository_path"]),
+                generation=ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+            )
+
+    for required_path in (configuration_path, schema_root, validator_path):
+        reject([item for item in scopes if item["repository_path"] != required_path])
+
+    for required_path, wrong_role in (
+        (configuration_path, "control_plane"),
+        (schema_root, "configuration"),
+        (validator_path, "configuration"),
+    ):
+        attacked = copy.deepcopy(scopes)
+        next(item for item in attacked if item["repository_path"] == required_path)[
+            "role"
+        ] = wrong_role
+        reject(attacked)
+
+    attacked = copy.deepcopy(scopes)
+    validator_scope = next(
+        item for item in attacked if item["repository_path"] == validator_path
+    )
+    validator_scope["nesting"] = "top_level"
+    validator_scope.pop("parent_path")
+    reject(attacked)
+
+    for required_path, substitute in (
+        (configuration_path, "config/research/readiness/experiments"),
+        (schema_root, "src/orev3/execution/schemas"),
+        (validator_path, "src/orev3/experiments"),
+    ):
+        attacked = copy.deepcopy(scopes)
+        item = next(entry for entry in attacked if entry["repository_path"] == required_path)
+        substitute_entry = repository.tree_entry(source, substitute)
+        item["repository_path"] = substitute
+        item["git_mode"] = substitute_entry.mode
+        item["git_object_identity"] = substitute_entry.object_identity
+        reject(attacked)
+
+    attacked = copy.deepcopy(scopes)
+    extra_path = "src/orev3/execution"
+    extra_entry = repository.tree_entry(source, extra_path)
+    attacked.append(
+        {
+            "git_mode": extra_entry.mode,
+            "git_object_identity": extra_entry.object_identity,
+            "nesting": "nested",
+            "parent_path": SOURCE_TREE_PATH,
+            "repository_path": extra_path,
+            "role": "readiness_schema",
+        }
+    )
+    reject(attacked)
 
 
 @pytest.mark.parametrize("open_field", ("decision_selection", "profile_contracts"))

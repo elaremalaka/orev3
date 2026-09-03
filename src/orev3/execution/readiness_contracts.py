@@ -27,7 +27,24 @@ from orev3.execution.contract_validation import (
     validate_profile_contract_v2,
 )
 from orev3.execution.git_state import GitRepository
+from orev3.execution.phase3b_components import (
+    AuthenticatedExperimentConfigurationResource,
+    ExperimentConfigurationResourceValidationRequest,
+    parse_controller_pure_declarative_validator_spec,
+    reconstruct_authenticated_configuration_resource_identity,
+    reconstruct_configuration_resource_identity,
+    reconstruct_configuration_schema_identity,
+    resolve_controller_pure_declarative_validation_engine,
+    resolve_component,
+    validate_controller_pure_declarative_validator_binding,
+)
 from orev3.execution.readiness_record import (
+    PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_POLICY,
+    PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_POLICY,
+    PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY,
     PROSPECTIVE_PHASE2_SCHEMA_DOCUMENT_POLICY,
     PROSPECTIVE_PHASE2_SCHEMA_POLICY,
     PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY,
@@ -90,6 +107,9 @@ class ProspectiveRegistryGeneration(str, Enum):
     PHASE3A = "prospective-v1.1-phase3a"
     PHASE3B = "prospective-v1.1-phase3b"
     READINESS_V1_1 = "prospective-v1.1-final"
+    ADAPTER_V4_CONFIGURATION_RESOURCE = (
+        "prospective-v1.1-adapter-v4-configuration-resource"
+    )
 
 
 _PROSPECTIVE_POLICIES = {
@@ -111,6 +131,11 @@ _PROSPECTIVE_POLICIES = {
     ProspectiveRegistryGeneration.READINESS_V1_1: (
         READINESS_V1_1_SCHEMA_POLICY,
         READINESS_V1_1_SCHEMA_DOCUMENT_POLICY,
+        29,
+    ),
+    ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE: (
+        PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY,
+        PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY,
         29,
     ),
 }
@@ -154,6 +179,9 @@ class ReadinessPrerequisiteContracts:
     profile_contracts: BoundProfileContracts
     implementation_binding: Mapping[str, Any]
     source_scopes: tuple[SourceScopeDeclarationV1, ...]
+    authenticated_experiment_configuration_resource: (
+        AuthenticatedExperimentConfigurationResource | None
+    ) = None
 
 
 def _committed_blob(
@@ -186,6 +214,19 @@ def load_prospective_schemas(
 ) -> Mapping[str, Mapping[str, Any]]:
     source = repository.resolve_commit(source_commit)
     policy, documents, expected_count = prospective_schema_policy(generation)
+    if generation is ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE and (
+        policy.get("adapter-declaration")
+        != (
+            "adapter-declaration-v4",
+            "src/orev3/execution/schemas/v1/adapter-declaration-v4.schema.json",
+        )
+        or documents.get("adapter-declaration")
+        != (
+            "orev3://schemas/execution-readiness/v1/adapter-declaration-v4",
+            "985fd13cff1ca5d399a1f254879c397167d75c0355c0d066a22441d7e2d3ab70",
+        )
+    ):
+        raise CanonicalControlError("prospective readiness v4 overlay differs")
     if set(policy) != set(documents) or len(policy) != expected_count:
         raise CanonicalControlError("prospective schema overlay is inconsistent")
     schemas: dict[str, Mapping[str, Any]] = {}
@@ -216,8 +257,18 @@ def _require_selected_schema(
 ) -> Mapping[str, Any]:
     try:
         supplied = schemas[kind]
-        _, path = READINESS_V1_1_SCHEMA_POLICY[kind]
-        expected_id, expected_sha256 = READINESS_V1_1_SCHEMA_DOCUMENT_POLICY[kind]
+        if (
+            kind == "adapter-declaration"
+            and supplied.get("$id")
+            == "orev3://schemas/execution-readiness/v1/adapter-declaration-v4"
+        ):
+            _, path = PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY[kind]
+            expected_id, expected_sha256 = (
+                PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY[kind]
+            )
+        else:
+            _, path = READINESS_V1_1_SCHEMA_POLICY[kind]
+            expected_id, expected_sha256 = READINESS_V1_1_SCHEMA_DOCUMENT_POLICY[kind]
     except KeyError as exc:
         raise CanonicalControlError(f"governed prerequisite schema is absent: {kind}") from exc
     raw, _ = _committed_blob(repository, source_commit, path)
@@ -758,12 +809,13 @@ def load_readiness_prerequisite_contracts(
     experiment_identifier: str,
     requested_attempt_kind: str,
     source_scopes: Sequence[Mapping[str, Any]],
+    generation: ProspectiveRegistryGeneration = ProspectiveRegistryGeneration.READINESS_V1_1,
 ) -> ReadinessPrerequisiteContracts:
     """Load one complete prospective declaration set without performing it."""
 
     source = repository.resolve_commit(source_commit)
     schemas = load_prospective_schemas(
-        repository, source, ProspectiveRegistryGeneration.READINESS_V1_1
+        repository, source, generation
     )
     policy = load_readiness_test_policy_v2(repository, source, schemas=schemas)
     registry, adapter, binding = _load_adapter(
@@ -834,6 +886,16 @@ def load_readiness_prerequisite_contracts(
         READINESS_V1_1_SCHEMA_POLICY["readiness-test-policy"][1]: "readiness_schema",
         SOURCE_TREE_PATH: "source_tree",
     }
+    if generation is ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE:
+        resource = adapter.material["configuration"][
+            "experiment_configuration_resource"
+        ]
+        required_roles.pop(
+            READINESS_V1_1_SCHEMA_POLICY["readiness-test-policy"][1]
+        )
+        required_roles["src/orev3/execution/schemas/v1"] = "readiness_schema"
+        required_roles[resource["configuration_path"]] = "configuration"
+        required_roles[resource["configuration_validator_path"]] = "control_plane"
     for selector in (
         *policy.material["required_selectors"],
         *policy.material["launch_smoke_selectors"],
@@ -872,6 +934,19 @@ def load_readiness_prerequisite_contracts(
         required_roles=required_roles,
         required_nesting=nested_under_source,
     )
+    authenticated_configuration_resource = None
+    if generation is ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE:
+        authenticated_configuration_resource = (
+            _authenticate_experiment_configuration_resource(
+                repository=repository,
+                source_commit=source,
+                adapter=adapter,
+                implementation_binding=binding,
+                source_scopes=scopes,
+            )
+        )
+    elif adapter.material["schema_version"] == 4:
+        raise CanonicalControlError("adapter-v4 requires its governed generation")
     return ReadinessPrerequisiteContracts(
         source,
         schemas,
@@ -882,7 +957,179 @@ def load_readiness_prerequisite_contracts(
         profiles,
         binding,
         scopes,
+        authenticated_configuration_resource,
     )
+
+
+def _authenticate_experiment_configuration_resource(
+    *,
+    repository: GitRepository,
+    source_commit: str,
+    adapter: AdapterDeclarationV1,
+    implementation_binding: Mapping[str, Any],
+    source_scopes: tuple[SourceScopeDeclarationV1, ...],
+) -> AuthenticatedExperimentConfigurationResource:
+    if adapter.material["schema_version"] != 4:
+        raise CanonicalControlError("adapter-v4 generation requires adapter-v4")
+    resource = adapter.material["configuration"]["experiment_configuration_resource"]
+    if (
+        resource["schema_version"] != 1
+        or resource["configuration_identifier"]
+        != "rq003-experiment-005-configuration-v1"
+        or resource["configuration_revision"] != "1"
+        or resource["configuration_path"]
+        != "config/research/readiness/experiments/"
+        "rq003-experiment-005-configuration-v1.json"
+        or resource["configuration_schema_identifier"]
+        != "rq003-experiment-005-configuration-schema-v1"
+        or resource["configuration_schema_revision"] != "1"
+        or resource["configuration_schema_path"]
+        != "src/orev3/execution/schemas/v1/"
+        "rq003-experiment-005-configuration.schema.json"
+        or resource["configuration_validator_identifier"]
+        != "rq003-experiment-005-configuration-validator-v1"
+        or resource["configuration_validator_revision"] != "1"
+        or resource["configuration_validator_path"]
+        != "src/orev3/experiments/rq003_experiment5_configuration.py"
+        or resource["configuration_validator_worker_kind"] != "CONTROLLER_PURE"
+    ):
+        raise CanonicalControlError("configuration resource authority differs")
+    governed_paths = set(adapter.material["governed_scope_paths"])
+    resource_paths = {
+        resource["configuration_path"],
+        resource["configuration_schema_path"],
+        resource["configuration_validator_path"],
+    }
+    if not resource_paths.issubset(governed_paths):
+        raise CanonicalControlError("configuration resource path is not adapter-governed")
+
+    scopes_by_path = {scope.repository_path: scope for scope in source_scopes}
+    configuration_scope = scopes_by_path.get(resource["configuration_path"])
+    validator_scope = scopes_by_path.get(resource["configuration_validator_path"])
+    schema_scope = scopes_by_path.get("src/orev3/execution/schemas/v1")
+    if (
+        configuration_scope is None
+        or configuration_scope.role != "configuration"
+        or configuration_scope.nesting != "top_level"
+        or validator_scope is None
+        or validator_scope.role != "control_plane"
+        or validator_scope.nesting != "nested"
+        or validator_scope.parent_path != SOURCE_TREE_PATH
+        or schema_scope is None
+        or schema_scope.role != "readiness_schema"
+        or not resource["configuration_schema_path"].startswith(
+            schema_scope.repository_path + "/"
+        )
+    ):
+        raise CanonicalControlError("configuration resource Source-S scope differs")
+
+    configuration_raw, configuration_git = _committed_blob(
+        repository, source_commit, resource["configuration_path"]
+    )
+    schema_raw, schema_git = _committed_blob(
+        repository, source_commit, resource["configuration_schema_path"]
+    )
+    validator_raw, validator_git = _committed_blob(
+        repository, source_commit, resource["configuration_validator_path"]
+    )
+    if (
+        configuration_git != resource["configuration_git_object_identity"]
+        or len(configuration_raw) != resource["configuration_byte_count"]
+        or hashlib.sha256(configuration_raw).hexdigest()
+        != resource["configuration_sha256"]
+        or schema_git != resource["configuration_schema_git_object_identity"]
+        or len(schema_raw) != resource["configuration_schema_byte_count"]
+        or hashlib.sha256(schema_raw).hexdigest()
+        != resource["configuration_schema_sha256"]
+        or validator_git != resource["configuration_validator_git_object_identity"]
+        or hashlib.sha256(validator_raw).hexdigest()
+        != resource["configuration_validator_sha256"]
+    ):
+        raise CanonicalControlError("configuration resource committed bytes differ")
+
+    schema = parse_json(schema_raw)
+    if (
+        schema.get("$id")
+        != "orev3://schemas/execution-readiness/v1/"
+        "rq003-experiment-005-configuration-schema-v1"
+        or reconstruct_configuration_schema_identity(resource)
+        != resource["configuration_schema_identity"]
+    ):
+        raise CanonicalControlError("configuration schema authority differs")
+    component = resolve_component(
+        repository, source_commit, resource["configuration_validator_identifier"]
+    )
+    if (
+        component.revision != resource["configuration_validator_revision"]
+        or component.path != resource["configuration_validator_path"]
+        or component.git_object_identity
+        != resource["configuration_validator_git_object_identity"]
+        or component.sha256 != resource["configuration_validator_sha256"]
+        or component.component_identity
+        != resource["configuration_validator_component_identity"]
+        or resource["configuration_validator_worker_kind"] != "CONTROLLER_PURE"
+    ):
+        raise CanonicalControlError("configuration validator authority differs")
+    spec = parse_controller_pure_declarative_validator_spec(
+        validator_raw, validator_identifier=component.identifier
+    )
+    validate_controller_pure_declarative_validator_binding(spec, component)
+    validation_engine = resolve_controller_pure_declarative_validation_engine(spec)
+    request = ExperimentConfigurationResourceValidationRequest(
+        approved_source_commit=source_commit,
+        adapter_identifier=adapter.adapter_identifier,
+        adapter_identity=adapter.adapter_identity,
+        configuration_resource=resource,
+        expected_experiment_configuration_identity=implementation_binding[
+            "experiment_configuration_identity"
+        ],
+        execution_profile_name=adapter.material["execution_profile"]["profile_name"],
+        research_specification_profile_identity=parse_canonical_bytes(
+            configuration_raw
+        )["execution_profile"]["research_specification_profile_identity"],
+        adapter_profile_contract_identity=adapter.material["execution_profile"][
+            "profile_identity"
+        ],
+    )
+    validated = validation_engine(
+        configuration_bytes=configuration_raw,
+        configuration_schema=schema,
+        request=request,
+    )
+    if validated.get("status") == "rejected":
+        raise CanonicalControlError("configuration validation was rejected")
+    if (
+        reconstruct_configuration_resource_identity(resource)
+        != resource["configuration_resource_identity"]
+        or implementation_binding["experiment_configuration_identity"]
+        != resource["profiled_experiment_configuration_identity"]
+        or adapter.material["configuration"]["experiment_configuration_identity"]
+        != resource["profiled_experiment_configuration_identity"]
+    ):
+        raise CanonicalControlError("configuration resource equality differs")
+    result_material = {
+        "schema_version": 1,
+        "approved_source_commit": source_commit,
+        "adapter_identifier": adapter.adapter_identifier,
+        "adapter_identity": adapter.adapter_identity,
+        "configuration_resource_identity": resource["configuration_resource_identity"],
+        "configuration_git_object_identity": configuration_git,
+        "configuration_byte_count": len(configuration_raw),
+        "configuration_sha256": hashlib.sha256(configuration_raw).hexdigest(),
+        "configuration_schema_identity": resource["configuration_schema_identity"],
+        "configuration_validator_component_identity": component.component_identity,
+        "experiment_specific_configuration_identity": validated[
+            "experiment_specific_configuration_identity"
+        ],
+        "profiled_experiment_configuration_identity": validated[
+            "profiled_experiment_configuration_identity"
+        ],
+        "authenticated_configuration_resource_identity": "0" * 64,
+    }
+    result_material["authenticated_configuration_resource_identity"] = (
+        reconstruct_authenticated_configuration_resource_identity(result_material)
+    )
+    return AuthenticatedExperimentConfigurationResource(**result_material)
 
 
 __all__ = [

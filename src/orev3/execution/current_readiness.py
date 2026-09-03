@@ -60,6 +60,7 @@ from orev3.execution.readiness_contracts import (
     READINESS_TEST_POLICY_V2_PATH,
     load_readiness_prerequisite_contracts,
     load_prospective_schemas,
+    prospective_schema_policy,
     ProspectiveRegistryGeneration,
 )
 from orev3.execution.readiness_record import (
@@ -97,6 +98,9 @@ class CurrentReadinessInput:
     remote_alias: str
     experiment_identifier: str
     current_input_locators: Mapping[str, Sequence[PathArgument]]
+    authority_generation: ProspectiveRegistryGeneration = (
+        ProspectiveRegistryGeneration.READINESS_V1_1
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -146,6 +150,9 @@ class _State:
     detached_graph: DetachedEvidenceGraph | None = None
     detached_error: DetachedEvidenceError | None = None
     evidence_publication_orphaned: bool = False
+    authority_generation: ProspectiveRegistryGeneration = (
+        ProspectiveRegistryGeneration.READINESS_V1_1
+    )
 
 
 def evaluate_current_readiness(
@@ -185,7 +192,7 @@ def _evaluate_current_readiness(
     except Exception:
         return CANONICAL_RECEIPT_UNAVAILABLE
 
-    state = _State()
+    state = _State(authority_generation=evaluation.authority_generation)
     try:
         for invariant in CURRENT_READINESS_EVALUATION_ORDER:
             state.active = invariant
@@ -388,6 +395,7 @@ def _load_current_record(
                 record.source_commit,
                 record.material["source_scopes"],
             ),
+            generation=evaluation.authority_generation,
         )
     except Exception:
         state.prerequisites = None
@@ -595,7 +603,10 @@ def _check_schema_registry(repository: GitRepository, state: _State) -> None:
         schemas = load_prospective_schemas(
             repository,
             state.record.source_commit,
-            ProspectiveRegistryGeneration.READINESS_V1_1,
+            state.authority_generation,
+        )
+        selected_policy, selected_documents, selected_count = prospective_schema_policy(
+            state.authority_generation
         )
         declarations = state.record.material["schema"]["declarations"]
         schema_section = state.record.material["schema"]
@@ -604,13 +615,13 @@ def _check_schema_registry(repository: GitRepository, state: _State) -> None:
             != CANONICAL_ENCODING_REVISION
             or schema_section["schema_registry_identifier"]
             != READINESS_V1_1_SCHEMA_REGISTRY_IDENTIFIER
-            or len(declarations) != 29
+            or len(declarations) != selected_count
         ):
             raise CanonicalControlError("sealed schema registry cardinality differs")
         for declaration in declarations:
             kind = declaration["object_kind"]
-            registry_identifier, path = READINESS_V1_1_SCHEMA_POLICY[kind]
-            expected_id, expected_digest = READINESS_V1_1_SCHEMA_DOCUMENT_POLICY[kind]
+            registry_identifier, path = selected_policy[kind]
+            expected_id, expected_digest = selected_documents[kind]
             entry = repository.tree_entry(state.record.source_commit, path)
             raw = repository.object_bytes(entry.object_identity, max_bytes=1_048_576)
             if declaration != {

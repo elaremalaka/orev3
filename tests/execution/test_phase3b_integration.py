@@ -71,6 +71,33 @@ def test_prospective_detached_worker_accepts_exact_zero_input(
     assert len(material["worker_evidence_identities"]) == 4
 
 
+def test_prospective_detached_worker_accepts_adapter_v4_configuration_resource(
+    tmp_path: Path,
+) -> None:
+    repository, _, _ = prospective_repository(
+        tmp_path,
+        zero_input=True,
+        adapter_v4_configuration_resource=True,
+    )
+    git(repository.root, "push", "-q", "origin", "HEAD:refs/heads/research/post-v1")
+    evidence = _collect_evidence_preparation_evidence(
+        repository,
+        "synthetic-prospective",
+        operational_input_locators={},
+        authority=_file_remote_authority(repository),
+        allow_test_file_remote=True,
+        artifact_store_root=ARTIFACT_STORE,
+        generation=EvidenceAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
+    )
+    material = evidence.aggregate_material
+    assert material["schema_version"] == 2
+    assert material["input_snapshot_identities"] == []
+    assert material["dataset_evidence_identities"] == []
+    assert material["projection_evidence_identities"] == []
+    assert len(material["semantic_component_identities"]) == 4
+    assert len(material["worker_evidence_identities"]) == 4
+
+
 def test_prospective_detached_worker_accepts_ordered_collection(
     tmp_path: Path,
 ) -> None:

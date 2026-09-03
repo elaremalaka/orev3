@@ -13,12 +13,18 @@ from orev3.execution.canonical import canonical_bytes, domain_identity
 from orev3.execution.git_state import GitAuthorityError, GitDiagnosticCode, GitRepository, SourceCandidate, resolve_source_candidate
 from orev3.execution.preparation import (
     PHASE3A_REMAINING_PREDICATES,
+    PreparationAuthorityGeneration,
     PreparationEvidenceDisposition,
     PreparationEnvironmentDisposition,
     _collect_preparation_environment_evidence,
     _discover_requirements,
     _scope_mapping,
+    _selected_phase3a_authority,
     validate_preparation_environment,
+)
+from orev3.execution.readiness_record import (
+    READINESS_SPECIFICATION_V1_1_PATH,
+    READINESS_TEST_POLICY_V2_PATH,
 )
 from orev3.execution.readiness_record import PROTOCOL_BINDING_DOMAIN, RepositoryAuthorityV1, RepositoryEndpoint, reconstruct_document_binding_identity
 from orev3.execution.registry import ADAPTER_DOMAIN, ADAPTER_REGISTRY_DOMAIN
@@ -28,6 +34,16 @@ ROOT = Path(__file__).resolve().parents[2]
 ARTIFACT_STORE = ROOT / "data/research/readiness/wheels"
 ZERO = "0" * 64
 ONE = "1" * 64
+
+
+def test_adapter_v4_phase3a_generation_uses_exact_v11_authority_documents() -> None:
+    assert (
+        PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE.value
+        == "prospective-v1.1-adapter-v4-configuration-resource"
+    )
+    assert _selected_phase3a_authority(
+        PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
+    ) == (READINESS_TEST_POLICY_V2_PATH, READINESS_SPECIFICATION_V1_1_PATH)
 
 
 def git(root: Path, *args: str, check: bool = True) -> str:

@@ -1162,6 +1162,38 @@ def validate_record_v2_git_bindings(
             GitDiagnosticCode.CANONICAL_RECORD_INVALID,
             "complete readiness-v2 validation requires reconstructed prerequisites and detached Phase-3B evidence",
         )
+    adapter_schema_version = prerequisites.adapter.material["schema_version"]
+    authenticated_configuration = (
+        prerequisites.authenticated_experiment_configuration_resource
+    )
+    if adapter_schema_version == 3 and authenticated_configuration is not None:
+        raise GitAuthorityError(
+            GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+            "legacy adapter cannot carry authenticated configuration-resource authority",
+        )
+    if adapter_schema_version == 4 and authenticated_configuration is None:
+        raise GitAuthorityError(
+            GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+            "adapter-v4 requires authenticated configuration-resource authority",
+        )
+    if adapter_schema_version not in {3, 4}:
+        raise GitAuthorityError(
+            GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+            "readiness-v2 adapter schema generation is unsupported",
+        )
+    if adapter_schema_version == 4:
+        from orev3.execution.readiness_record import (
+            PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY,
+            PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY,
+        )
+
+        selected_schema_policy = PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY
+        selected_document_policy = (
+            PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY
+        )
+    else:
+        selected_schema_policy = READINESS_V1_1_SCHEMA_POLICY
+        selected_document_policy = READINESS_V1_1_SCHEMA_DOCUMENT_POLICY
     # Slice 4 and the final independent validator intentionally share the
     # same owner-level reconstruction primitives.  The legacy whole-record
     # checks below remain defense in depth, but do not define a parallel
@@ -1226,8 +1258,8 @@ def validate_record_v2_git_bindings(
         raw = _validate_blob_binding(repository, source, declaration, "prospective schema")
         schema = parse_json(raw, max_bytes=1_048_576)
         kind = declaration["object_kind"]
-        expected_id, expected_digest = READINESS_V1_1_SCHEMA_DOCUMENT_POLICY[kind]
-        _, expected_path = READINESS_V1_1_SCHEMA_POLICY[kind]
+        expected_id, expected_digest = selected_document_policy[kind]
+        _, expected_path = selected_schema_policy[kind]
         if (
             schema.get("$id") != expected_id
             or hashlib.sha256(raw).hexdigest() != expected_digest
@@ -1358,13 +1390,31 @@ def validate_record_v2_git_bindings(
         policy = prerequisites.readiness_test_policy.material
         implementation = record.material["implementation"]
         if (
-            adapter["schema_version"] != 3
+            adapter["schema_version"] != adapter_schema_version
             or adapter["adapter_identity"] != implementation["adapter_identity"]
             or adapter["adapter_identifier"] != implementation["adapter_identifier"]
             or adapter["external_inputs"]["declarations"] != record.material["external_inputs"]["declarations"]
             or adapter["artifacts"]["declarations"] != record.material["artifacts"]["declarations"]
         ):
-            raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, "adapter-v3 authority differs from record")
+            raise GitAuthorityError(GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH, "adapter authority differs from record")
+        if adapter_schema_version == 4:
+            authenticated = prerequisites.authenticated_experiment_configuration_resource
+            resource = adapter["configuration"]["experiment_configuration_resource"]
+            if (
+                authenticated.approved_source_commit != source
+                or authenticated.adapter_identifier != adapter["adapter_identifier"]
+                or authenticated.adapter_identity != adapter["adapter_identity"]
+                or authenticated.configuration_resource_identity
+                != resource["configuration_resource_identity"]
+                or authenticated.experiment_specific_configuration_identity
+                != resource["experiment_specific_configuration_identity"]
+                or authenticated.profiled_experiment_configuration_identity
+                != resource["profiled_experiment_configuration_identity"]
+            ):
+                raise GitAuthorityError(
+                    GitDiagnosticCode.GOVERNED_OBJECT_MISMATCH,
+                    "authenticated configuration-resource authority differs from record",
+                )
         authority_material = authority.material
         control_by_role = {
             item["role"]: item
