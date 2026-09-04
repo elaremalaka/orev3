@@ -22,9 +22,9 @@
 
 ## 1. Purpose and controlling authority
 
-This adopted decision freezes prospectively the bounded-streaming processing
-model required before the exact Experiment 005 source graph can be processed
-safely. It is subordinate to and does not alter:
+This adopted clarification preserves the adopted bounded-streaming processing
+model and prospectively freezes only its numeric-envelope measurement mode.
+The preserved decision is subordinate to and does not alter:
 
 - `docs/research/experiments/rq003-experiment-005-signed-share-imbalance-predictive-evaluation.md`, SHA-256
   `38afa9005bb43050d23e430335e11654c374d4e2d6f4a9f541782c005bffefdc`;
@@ -515,6 +515,15 @@ controller policy and have no duplicate Experiment-configuration field; each
 must nevertheless be carried explicitly into and enforced by every applicable
 worker request. Snapshot admission, projection, Replay, and independent
 reconstruction all bind the same adopted policy identity.
+
+The sole measurement-only exception to final numeric representation is the
+closed mode `BOUNDED_STREAMING_MEASUREMENT_CANDIDATE` defined in Section 12.
+It does not weaken source limits or five-limit equality: the four frozen source
+values remain integers and exact, and projection uses the identical finite
+measurement-run integer in both Experiment and generic policy material. Only
+the four RSS/watchdog fields use the exact non-null pending object while this
+mode is selected. No other mode, marker, omission, or mixed representation is
+valid.
 
 Darwin 24.0.0 arm64 with CPython 3.14.5 supplies no usable instantaneous hard
 memory quota for this authority: finite `RLIMIT_AS` installation fails,
@@ -1907,56 +1916,193 @@ configuration SHA/Git/decoder and Experiment-specific configuration bindings.
 
 ## 12. Prospective numeric-envelope adoption procedure
 
-This adopted decision does not fabricate the remaining output, disk, or memory
-literals. After this governance freeze is independently verified, a separately
-authorized implementation candidate must produce the following read-only
-evidence before its configuration/policy literals can be frozen:
+The numeric cycle is explicit: the first full-envelope run must measure final
+projection, disk, RSS, and watchdog values, while final policy identity cannot
+exist until those values are adopted. The sole bridge is
+`BOUNDED_STREAMING_MEASUREMENT_CANDIDATE`. It is non-authoritative,
+implementation-candidate-only, and measurement-only. It cannot satisfy a
+readiness prerequisite, appear in a production descriptor or registry, become
+Source S, authorize Experiment 005 execution, or be promoted automatically.
 
-1. Two independent complete runs over exactly the Section 2 envelope establish
-   one canonical projection byte count, SHA-256, record count, record identity
-   vector, and all existing projection/content identities. The proposed
-   `maximum_projection_bytes` is exactly that reviewed canonical byte count;
-   any extra byte rejects.
-2. The prescribed sequential schedule establishes the disk requirement. The
-   proposed temporary-disk ceiling is the exact conservative sum of the
-   authenticated aggregate source snapshot bytes, two canonical projection
-   candidate byte counts used for streaming comparison, and the maximum
-   in-progress source-publication member bytes. Fixed metadata measured in
-   bytes must be enumerated separately and added exactly; no unexplained
-   reserve is allowed.
-3. Peak resident use is acceptance evidence only. The controller and worker
-   invocations are exactly the fixed descriptor-backed vectors in Section
-   10.1; neither contains a request path, and each ends in the sole fixed
-   `--governed-fixed-fds-v1` control argument. The sole authoritative
-   line is exactly optional ASCII horizontal whitespace, one base-10 integer,
-   two spaces, and `maximum resident set size`. On this governed Darwin host
-   the integer unit is bytes. The exact parser
-   `parse_darwin_time_l_maximum_resident_set_size` in `runtime.py` requires that
-   label exactly once, rejects signs, separators, overflow, duplicate, absent,
-   or malformed fields, and attributes each result to the authenticated command
-   identity. Controller and each worker are measured separately. Five cold
-   runs use fresh processes, operation roots, worker roots, and no pre-existing
-   operation-created snapshots/projections; a reused warm operation cannot
-   substitute. Evidence records per-run values, the maximum, host/runtime/time
-   executable identities, child lifetimes, exact-bound cases, and short-spike
-   characterization. The numeric adoption uses the maximum observed accepted
-   peak and the adopted acceptance rule.
-   A separate status-only resource-envelope adoption freezes one explicit
-   finite peak-RSS acceptance ceilings, watchdog values, and their acceptance
-   rationale. The implementation
-   cannot choose it, infer it from machine capacity, or proceed to production
-   descriptor construction before that adoption is independently verified.
-4. The same adoption freezes exact source, projection, temporary-disk,
-   controller/worker peak-RSS acceptance, watchdog threshold/interval, and
-   timeout literals. It regenerates and rereviews bounded policy bytes, SHA,
-   Git object, schema validation, and policy identity; source-processing
-   configuration bytes, SHA, Git object, decoder/configuration identity, and
-   bounded-policy binding identity; every schema const/literal; affected
-   component, resource, Experiment-specific and profiled configuration
-   identities; and every test byte changed by final numeric literals.
+This is a closed sub-mode of generation
+`ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING`, not a second generation. The exact
+serialized mode field in both bounded policy and Experiment source-processing
+configuration is:
 
-This is a narrow value-materialization step, not permission to change the
-architecture, source graph, scientific result, or identity domains.
+```text
+numeric_envelope_mode: "BOUNDED_STREAMING_MEASUREMENT_CANDIDATE"
+```
+
+The existing frozen paths
+`config/research/readiness/evidence-preparation-policy-bounded-streaming-v1.json`,
+`src/orev3/execution/schemas/v1/evidence-preparation-policy-bounded-streaming-v1.schema.json`,
+`config/research/readiness/rq003-experiment-005-source-processing-v1.json`, and
+`src/orev3/execution/schemas/v1/rq003-experiment-005-configuration.schema.json`
+own this representation. No new policy, schema, or configuration path exists.
+The final numeric adoption replaces the mode value with exact literal
+`BOUNDED_STREAMING_NUMERIC_ENVELOPE_ADOPTED`; no other string, alias, latest
+lookup, fallback, retry, or ambient selection is accepted.
+
+The exact deferred-field vector is lexically ordered and appears identically in
+both policy and source-processing configuration:
+
+```text
+deferred_numeric_fields: [
+  "max_controller_peak_rss_bytes",
+  "max_projection_bytes",
+  "max_temporary_disk_bytes",
+  "max_worker_peak_rss_bytes",
+  "watchdog_poll_interval_milliseconds",
+  "watchdog_rss_bytes"
+]
+```
+
+The only canonical pending representation is the closed object
+`{"status":"measurement_pending"}`. In measurement mode it is the exact value
+of `max_controller_peak_rss_bytes`, `max_worker_peak_rss_bytes`,
+`watchdog_rss_bytes`, and `watchdog_poll_interval_milliseconds`. JSON null,
+omission, empty object/string, alternate status, extension field, numeric
+sentinel, maximum integer, infinity, host-capacity value, percentage, power of
+two, or multiplier is invalid. Projection and disk need enforceable
+measurement-run safety bounds and therefore remain finite integers while also
+remaining in the deferred vector because those integers are not final adopted
+operational ceilings.
+
+The four source-derived limits remain fully authoritative and exactly enforced
+in measurement mode:
+
+```text
+maximum_members = max_collection_members = 256
+maximum_member_bytes = max_file_bytes = 227867665
+maximum_aggregate_bytes = max_aggregate_collection_bytes = 1749809411
+maximum_records = max_source_records = 1442676
+```
+
+The finite measurement-run projection ceiling is mechanically derived without
+output evidence. A projection contains at most one record per structurally
+scanned lifecycle record, therefore no more than `maximum_records` records.
+Measurement mode additionally rejects any single canonical projection record
+whose LF-inclusive byte count exceeds `maximum_member_bytes`. Consequently:
+
+```text
+MEASUREMENT_MAX_PROJECTION_BYTES
+  = maximum_records * maximum_member_bytes
+  = 1442676 * 227867665
+  = 328739211471540
+```
+
+Both `maximum_projection_bytes` and `max_projection_bytes` equal exactly
+`328739211471540`. Checked unsigned-64 multiplication is required before use.
+This is a finite safety ceiling for the exact authenticated source, not an
+estimate, headroom rule, final operational value, or permission to expand
+membership. Exact source hashes and the structural projection schema continue
+to constrain actual output. The later numeric adoption replaces both values
+with the independently reviewed exact canonical projection byte count.
+
+Measurement-mode logical disk admission is also mechanical. The ledger charges
+the exact Section 9 simultaneous schedule: authenticated source snapshots, two
+complete measurement-ceiling projection candidates, one maximum in-progress
+source publication, and fixed bounded file payloads consisting only of the
+4,194,304-byte bootstrap request plus existing 1,048,576-byte stdout and
+1,048,576-byte stderr maxima. Lease and directories have zero logical file
+length; reservation frames are socket bytes and are not disk charge. Thus:
+
+```text
+MEASUREMENT_FIXED_FILE_BYTES = 4194304 + 1048576 + 1048576 = 6291456
+MEASUREMENT_MAX_TEMPORARY_DISK_BYTES
+  = maximum_aggregate_bytes
+    + 2 * MEASUREMENT_MAX_PROJECTION_BYTES
+    + maximum_member_bytes
+    + MEASUREMENT_FIXED_FILE_BYTES
+  = 1749809411 + 2 * 328739211471540 + 227867665 + 6291456
+  = 657480406911612
+```
+
+`max_temporary_disk_bytes` equals exactly `657480406911612` in measurement
+mode, with checked unsigned-64 arithmetic. This logical ceiling neither
+preallocates space nor claims physical capacity. Every write still requires a
+reservation, filesystem exhaustion remains a closed failure, and the measured
+peak logical charge—not this safety maximum—supplies the proposed final disk
+ceiling. No other operation-created regular-file category is permitted; adding
+one requires governance rather than an unexplained reserve.
+
+Memory safety remains the structural allocation contract in Section 10. Peak
+RSS is evidence only. Because the authenticated source, parser dimensions,
+retained-state shapes, process count, and output/disk growth are already finite,
+measurement mode runs without an RSS acceptance threshold. The watchdog is
+also inactive in measurement mode: both its threshold and cadence are pending,
+and selecting either before observing governed behavior would recreate the
+cycle. This does not claim watchdog protection or final RSS acceptance. The
+candidate records that watchdog status is exactly
+`measurement_pending_not_active`; final adoption must provide finite threshold
+and cadence and the final-byte rerun must exercise them. Structural violation,
+unexpected materialization, allocation overflow, OS allocation failure, or
+filesystem exhaustion still rejects atomically.
+
+Five-limit equality remains exact. The four source pairs equal the frozen
+integers above and the projection pair equals the measurement ceiling above.
+The deferred vector and mode must also be byte-identical across the two
+objects. No marker/integer negotiation, minimum, override, or mixed mode is
+permitted.
+
+The measurement policy retains identifier
+`experiment-evidence-preparation-policy-bounded-streaming-v1`, revision `1`,
+and its already frozen path, but its identity material additionally binds
+`authority_generation`, `numeric_envelope_mode`, the exact deferred vector,
+all known source integers, both measurement-run safety integers, all four
+pending objects, worker profiles, wrapper/runtime authority, and every other
+closed policy field. Domain remains
+`orev3:readiness-evidence-preparation-policy:v1\n`. The mode and pending objects
+make its identity cryptographically distinct from the later final policy.
+
+`bounded_evidence_preparation_policy_binding_identity` is reconstructed in
+measurement mode over the same frozen domain and material from Section 11.1,
+with the exact mode, deferred vector, policy identity, five paired limits, and
+source-processing configuration identity included. Phase-3B accepts this
+binding only through an explicit measurement-candidate entry point. Final
+readiness candidate, current-readiness, final Git reconstruction, production
+descriptor, and registry authority reject either measurement mode, its policy
+identity, its binding, or any resource derived from it. Coordinated mode,
+policy, configuration, identity, or binding resealing cannot establish final
+authority.
+
+The governed measurement output contains exact implementation-candidate path
+hashes; exact 21-member manifest/input identities and source counts; projection
+byte count, SHA-256, ordered record identities, lifecycle hashes, and all
+dataset/content/projection identities; peak logical disk charge and schedule;
+five cold-run controller and per-worker RSS byte values; exact host, runtime,
+measurement-wrapper, sandbox, command, and policy identities; watchdog status
+`measurement_pending_not_active`; timeout observations; and sequential two-run
+byte/identity equality. Cold-run and `/usr/bin/time -l` parsing rules remain
+exactly those already frozen. No warm run substitutes.
+
+After independent evidence review, a separately authorized numeric adoption
+must replace the mode, remove the deferred vector, replace all four pending
+objects and both measurement bounds with final finite adopted integers, and
+regenerate and rereview policy bytes/SHA/Git object/schema/identity;
+source-processing bytes/SHA/Git object/configuration identity; bounded-policy
+binding identity; schema constants; component, resource, Experiment-specific,
+profiled-configuration and readiness identities; and every affected test byte.
+There is no same-identity promotion and no automatic mutation. Measurement-mode
+material remains rejected by final readiness after adoption.
+
+The corrected acyclic sequence is:
+
+```text
+governance clarification freeze
+  -> independently verified remote-backed clarification commit
+  -> non-authoritative bounded-streaming implementation candidate using measurement mode
+  -> governed full-envelope measurement evidence
+  -> independent review of measurement evidence
+  -> bounded numeric-envelope adoption
+  -> dependent identity regeneration
+  -> post-adoption exact-byte full-envelope rerun
+  -> independent implementation review/freeze
+```
+
+This is a narrow value-measurement bridge, not permission to change the
+architecture, source graph, scientific result, identity domains, or downstream
+authority.
 
 ## 13. Outcome isolation
 
@@ -1994,9 +2140,9 @@ table authorizes no edit.
 
 | Path | Disposition | Reason |
 | --- | --- | --- |
-| `config/research/readiness/rq003-experiment-005-source-processing-v1.json` | REQUIRED | Bind adopted source, record, projection, and related identities. |
-| `config/research/readiness/evidence-preparation-policy-bounded-streaming-v1.json` | REQUIRED | New closed generic policy, bounded launch/cwd/bootstrap authority, and separate measurement-wrapper identity; legacy v1 remains byte-identical. |
-| `src/orev3/execution/schemas/v1/evidence-preparation-policy-bounded-streaming-v1.schema.json` | REQUIRED | New closed policy schema and memory/disk/source-record fields. |
+| `config/research/readiness/rq003-experiment-005-source-processing-v1.json` | REQUIRED | Bind adopted source and record limits plus the exact measurement mode, deferred vector, projection safety bound, policy binding, and later regenerated final identities. |
+| `config/research/readiness/evidence-preparation-policy-bounded-streaming-v1.json` | REQUIRED | New closed generic policy, exact measurement/final mode representation, bounded launch/cwd/bootstrap authority, and separate measurement-wrapper identity; legacy v1 remains byte-identical. |
+| `src/orev3/execution/schemas/v1/evidence-preparation-policy-bounded-streaming-v1.schema.json` | REQUIRED | New closed policy schema, measurement-pending object and mode constraints, and final memory/disk/source-record fields. |
 | `src/orev3/execution/readiness_record.py` | REQUIRED | Define bounded Phase-3B/final schema and document overlays without changing readiness-record schemas. |
 | `src/orev3/execution/registry.py` | REQUIRED | Authenticate the new same-kind schema overlay and preserve finite registry counts. |
 | `src/orev3/execution/readiness_contracts.py` | REQUIRED | Add the exact final generation and policy-map reconstruction. |
@@ -2009,7 +2155,7 @@ table authorizes no edit.
 | `src/orev3/execution/current_readiness.py` | REQUIRED | Independently reload the exact generation and selected policy. |
 | `src/orev3/execution/git_state.py` | REQUIRED | Reconstruct the same schema/document/policy bindings from the approved commit. |
 | `src/orev3/execution/test_policy.py` | REQUIRED | Carry the selected generic policy identity into exact readiness-test authority. |
-| `src/orev3/execution/schemas/v1/rq003-experiment-005-configuration.schema.json` | REQUIRED | Update the frozen source-processing resource byte/SHA constants mechanically; no scientific field changes. |
+| `src/orev3/execution/schemas/v1/rq003-experiment-005-configuration.schema.json` | REQUIRED | Update the frozen source-processing resource byte/SHA constants and constrain exact measurement/final mode material mechanically; no scientific field changes. |
 | `src/orev3/execution/external_inputs.py` | REQUIRED | Stream immutable snapshot creation and aggregate admission. |
 | `src/orev3/execution/filesystem_capability.py` | REQUIRED | Provide bounded streaming content-addressed publication with stable-descriptor and atomicity checks. |
 | `src/orev3/execution/runtime.py` | REQUIRED | Reconstruct launch, cwd, detached-worktree, separate measurement-wrapper authority, and exact `construct_bounded_streaming_runtime_bundle_material` parity with existing `reconstruct_runtime_bundle_identity`; own `os.pipe`, scratch normalization, atomic `os.posix_spawn` file actions, fixed descriptors, positional FD-6 authentication, process/FD/argv checks, sole PID ownership/waitpid, dedicated status-70 integrity mapping and external cleanup, RSS/watchdog, reservation IPC, recovery, and Seatbelt confinement. |
@@ -2072,11 +2218,13 @@ Before implementation freeze, evidence must prove:
 14. cleanup removes incomplete private output without deleting authenticated
     content-addressed authority.
 
-Memory evidence proves the structural retained-state contract, checked index
-arithmetic, controller/worker coverage, descendant prohibition, sustained
-watchdog termination with `RESOURCE_MEMORY_EXCEEDED`, no trusted partial
-result, and explicit characterization that a short spike is not hard-quota
-contained. It covers exact-bound and one-over record bytes, decoded string and
+Memory evidence before numeric adoption proves the structural retained-state
+contract, checked index arithmetic, controller/worker coverage, descendant
+prohibition, no trusted partial result, and explicit characterization that a
+short spike is not hard-quota contained. After numeric adoption the exact-byte
+rerun additionally proves sustained watchdog termination with
+`RESOURCE_MEMORY_EXCEEDED`. The evidence covers exact-bound and one-over record
+bytes, decoded string and
 key bytes, canonical non-string scalar bytes, nesting depth, object members,
 array items, lifecycle references, offset arithmetic, and count
 multiplication/addition overflow, rejecting before oversized construction.
@@ -2111,8 +2259,11 @@ and one-byte-over rejection before growth.
 The governed-host positive topology test uses the real `/usr/bin/time -l` to
 `sandbox-exec` to authenticated Python-worker command. It proves the persistent
 wrapper, same-instance sandbox exec transition, two-member active group,
-start-gate authentication, intended worker RSS target, watchdog sample, clean
+start-gate authentication, intended worker RSS target, clean
 completion, and absence of false `RESOURCE_PROCESS_INSTANCE_MISMATCH`.
+Measurement-mode topology evidence records the authenticated RSS target but
+marks watchdog sampling inactive; the watchdog sample and termination clauses
+apply to the mandatory post-adoption rerun.
 Negatives cover unexpected group member, missing wrapper or worker, wrapper or
 worker executable substitution, legitimate versus substituted exec transition,
 PID and descendant-PID reuse, start-time mismatch, query/permission failure,
@@ -2433,11 +2584,25 @@ It also rejects omitted, substituted, or legacy
 configuration/policy resealing, cross-generation binding, each paired-limit
 mismatch, and current-readiness/Git reconstruction mismatch.
 
-Unit evidence may run locally. Stable-source mutation tests, RSS measurement
-and watchdog behavior, disk ceiling, Seatbelt capability confinement, worker
-boundary, crash/interruption, full 21-member projection, double reconstruction,
-and end-to-end Replay evidence must run on the governed sandbox-capable host.
-No skip or sandbox bypass can establish acceptance.
+Measurement-mode evidence proves the exact candidate mode can run only the
+bounded preparation pipeline over the exact source envelope and that final
+readiness, current-readiness, final Git reconstruction, descriptor, and
+registry surfaces reject it. Direct tests distinguish measurement and final
+policy identities; accept only the exact pending object; reject null, omitted,
+unknown, malformed, or extended markers; reject mode/deferred-vector/
+projection-bound/disk-bound substitution and cross-mode resealing; and prove
+the four source pairs plus projection pair remain exactly equal. No test helper
+may promote or rewrite policy bytes automatically. Post-adoption tests require
+measurement-mode rejection and prove that every policy, binding,
+source-processing, schema, component, resource, profile, and affected test
+identity listed in Section 12 changes and reconstructs from the final bytes.
+
+Unit evidence may run locally. Stable-source mutation tests, RSS measurement,
+disk ceiling, Seatbelt capability confinement, worker boundary,
+crash/interruption, full 21-member projection, double reconstruction, and
+end-to-end Replay evidence must run on the governed sandbox-capable host.
+Watchdog behavior must run there after numeric adoption, when its exact values
+exist. No skip or sandbox bypass can establish acceptance.
 
 ## 17. Slice-3 relationship and sequencing
 
@@ -2448,12 +2613,15 @@ adapter. It is not a scientific experiment revision.
 Required order is:
 
 ```text
-governance adoption/freeze complete
-  -> independent exact-byte and remote verification
-  -> separately authorized bounded-streaming implementation candidate
-  -> exact output/disk/memory evidence
-  -> narrow numeric resource-envelope adoption and independent verification
-  -> implementation review and freeze
+governance clarification freeze
+  -> independently verified remote-backed clarification commit
+  -> non-authoritative bounded-streaming implementation candidate using measurement mode
+  -> governed full-envelope measurement evidence
+  -> independent review of measurement evidence
+  -> bounded numeric-envelope adoption
+  -> dependent identity regeneration
+  -> post-adoption exact-byte full-envelope rerun
+  -> independent implementation review/freeze
   -> only then later Slice-3 descriptor and readiness boundaries
 ```
 
@@ -2463,7 +2631,7 @@ does not define or implement it.
 
 ## 18. Explicit non-authorizations
 
-This adopted decision creates no authority for production or test implementation,
+This adopted clarification creates no authority for production or test implementation,
 source membership changes, C2 inclusion, protocol or scientific revision,
 external-input descriptor materialization, Experiment configuration instance,
 ranking/evaluation schemas, profile contracts, thin entry point,
@@ -2472,5 +2640,6 @@ Source S, readiness candidate/evidence/E/R, allocation, provider/control
 authority, execution, outcome access or evaluation, confirmation selection,
 Paper Miner, wallet, transaction, capital, or SOL work.
 
-This decision freezes prospective design authority only. Every successor step
-remains separately bounded and independently reviewed.
+This clarification freezes prospective measurement-mode design authority only.
+Every successor step remains separately bounded
+and independently reviewed.
