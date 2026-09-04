@@ -23,8 +23,8 @@
 ## 1. Purpose and controlling authority
 
 This adopted clarification preserves the adopted bounded-streaming processing
-model and prospectively freezes only its numeric-envelope measurement mode.
-The preserved decision is subordinate to and does not alter:
+and numeric-measurement models and freezes prospectively only their closed
+schema locations. The preserved decision is subordinate to and does not alter:
 
 - `docs/research/experiments/rq003-experiment-005-signed-share-imbalance-predictive-evaluation.md`, SHA-256
   `38afa9005bb43050d23e430335e11654c374d4e2d6f4a9f541782c005bffefdc`;
@@ -1809,7 +1809,7 @@ The bounded implementation prospectively creates exactly:
   and
 - schema title `EvidencePreparationPolicyBoundedStreamingV1`.
 
-The new policy is closed. Its top-level fields are exactly `schema_version`,
+The new policy is closed. Its top-level fields remain exactly `schema_version`,
 `policy_identifier`, `policy_revision`, `policy_identity`,
 `profile_renderer_identity`, `bounded_launch_authority`, `limits`, and
 `worker_profiles`.
@@ -1829,6 +1829,64 @@ The new policy is closed. Its top-level fields are exactly `schema_version`,
 "09cc63835b888387783d32d0011fd0a0d344c3ba9620a947dfabd5bcfd521201"`.
 These fields enter the existing policy identity and are independently compared
 before every bounded launch and during current-readiness/Git reconstruction.
+
+The numeric-measurement clarification does not extend that eight-field policy
+top level. It prospectively refines only the exact closed shape of its existing
+`limits` member. In measurement mode `limits` contains exactly these 18 fields
+(the list is lexical and names, not object insertion order, are authority):
+
+```text
+deferred_numeric_fields
+max_aggregate_collection_bytes
+max_collection_members
+max_controller_peak_rss_bytes
+max_file_bytes
+max_open_files
+max_processes
+max_projection_bytes
+max_replay_units
+max_source_records
+max_stderr_bytes
+max_stdout_bytes
+max_subprocess_seconds
+max_temporary_disk_bytes
+max_worker_peak_rss_bytes
+numeric_envelope_mode
+watchdog_poll_interval_milliseconds
+watchdog_rss_bytes
+```
+
+In final adopted mode `limits` contains exactly these 17 fields:
+
+```text
+max_aggregate_collection_bytes
+max_collection_members
+max_controller_peak_rss_bytes
+max_file_bytes
+max_open_files
+max_processes
+max_projection_bytes
+max_replay_units
+max_source_records
+max_stderr_bytes
+max_stdout_bytes
+max_subprocess_seconds
+max_temporary_disk_bytes
+max_worker_peak_rss_bytes
+numeric_envelope_mode
+watchdog_poll_interval_milliseconds
+watchdog_rss_bytes
+```
+
+The pre-existing finite
+integer meanings of `max_open_files`, `max_processes`, `max_replay_units`,
+`max_stderr_bytes`, `max_stdout_bytes`, and `max_subprocess_seconds` are
+unchanged in both branches. Measurement mode requires the exact source,
+projection, disk, and pending values in Section 12. Final mode requires every
+numeric limit, including the four RSS/watchdog members, to be a positive
+adopted integer and prohibits the pending object. `numeric_envelope_mode` is
+therefore `policy.limits.numeric_envelope_mode`, and the deferred vector is
+`policy.limits.deferred_numeric_fields`; neither is a policy top-level field.
 
 One new member is added identically to all three finite generation enums:
 `ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING`, serialized exactly as
@@ -1863,9 +1921,120 @@ duplicate Experiment field; the Experiment configuration instead binds the
 exact new policy identity. A mismatch is authority failure, not minimum-value
 negotiation.
 
+For legacy generations, the Experiment-specific source-processing
+configuration retains exactly these pre-existing 27 top-level fields and no
+bounded field:
+
+```text
+candidate_order
+configuration_identifier
+controller_identifier
+dataset_version
+decision_selection_identifier
+decision_selection_identity
+decoder_identifier
+identity_domains
+lifecycle_schema_authority
+lifecycle_schema_identity
+lifecycle_schema_version
+maximum_aggregate_bytes
+maximum_member_bytes
+maximum_members
+maximum_projection_bytes
+maximum_records
+minimum_effect_clarification_sha256
+observation_schema_authorities
+observation_schema_identities
+observation_schema_versions
+projection_schema_identity
+projection_schema_path
+projection_schema_sha256
+projector_identifier
+protocol_sha256
+source_processing_prerequisite_sha256
+supported_protocol_revision
+```
+
+Only generation `ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING` prospectively
+extends that closed shape. Its measurement-mode configuration contains exactly
+these 30 top-level fields:
+
+```text
+bounded_evidence_preparation_policy_binding_identity
+candidate_order
+configuration_identifier
+controller_identifier
+dataset_version
+decision_selection_identifier
+decision_selection_identity
+decoder_identifier
+deferred_numeric_fields
+identity_domains
+lifecycle_schema_authority
+lifecycle_schema_identity
+lifecycle_schema_version
+maximum_aggregate_bytes
+maximum_member_bytes
+maximum_members
+maximum_projection_bytes
+maximum_records
+minimum_effect_clarification_sha256
+numeric_envelope_mode
+observation_schema_authorities
+observation_schema_identities
+observation_schema_versions
+projection_schema_identity
+projection_schema_path
+projection_schema_sha256
+projector_identifier
+protocol_sha256
+source_processing_prerequisite_sha256
+supported_protocol_revision
+```
+
+Its final adopted-mode configuration contains exactly these 29 top-level
+fields:
+
+```text
+bounded_evidence_preparation_policy_binding_identity
+candidate_order
+configuration_identifier
+controller_identifier
+dataset_version
+decision_selection_identifier
+decision_selection_identity
+decoder_identifier
+identity_domains
+lifecycle_schema_authority
+lifecycle_schema_identity
+lifecycle_schema_version
+maximum_aggregate_bytes
+maximum_member_bytes
+maximum_members
+maximum_projection_bytes
+maximum_records
+minimum_effect_clarification_sha256
+numeric_envelope_mode
+observation_schema_authorities
+observation_schema_identities
+observation_schema_versions
+projection_schema_identity
+projection_schema_path
+projection_schema_sha256
+projector_identifier
+protocol_sha256
+source_processing_prerequisite_sha256
+supported_protocol_revision
+```
+
+The final branch omits `deferred_numeric_fields`; omission is required there
+and prohibited in the measurement branch. This exact three-field/two-field bounded-generation delta
+supersedes the earlier description that the bounded generation adds exactly
+one top-level field. It does not change any legacy configuration shape.
+
 The Experiment-specific configuration at
 `config/research/readiness/rq003-experiment-005-source-processing-v1.json`
-adds exactly one top-level lowercase-64-hex field named
+therefore adds the top-level lowercase-64-hex field named
 `bounded_evidence_preparation_policy_binding_identity`. Its schema authority
 is the closed `_CONFIGURATION_FIELDS` and validation in
 `src/orev3/experiments/rq003_experiment5_source_processing.py`, plus the
@@ -1889,7 +2058,10 @@ from exactly:
     "max_projection_bytes": "<policy integer>",
     "max_source_records": "<policy integer>"
   },
+  "numeric_envelope_mode": "<identical source-processing and policy.limits literal>",
+  "deferred_numeric_fields": "<identical source-processing and policy.limits vector; measurement mode only>",
   "source_processing_configuration_identifier": "rq003-experiment-005-source-processing-v1",
+  "source_processing_configuration_material_identity": "<reconstructed identity excluding only the claimed binding field>",
   "source_processing_limits": {
     "maximum_aggregate_bytes": "<configuration integer>",
     "maximum_member_bytes": "<configuration integer>",
@@ -1901,7 +2073,21 @@ from exactly:
 ```
 
 Angle-bracket strings above denote the named reconstructed scalar values, not
-literal material. The function first reconstructs and authenticates policy
+literal material. In final adopted mode `deferred_numeric_fields` is absent
+from the binding material and both governed documents; in measurement mode it
+is required in all three and has one identical value.
+
+The configuration-material identity domain is exactly
+`orev3:rq003-experiment-005:bounded-source-processing-configuration-material:v1\n`.
+Its material is the complete parsed source-processing configuration excluding
+only `bounded_evidence_preparation_policy_binding_identity`, encoded by the
+existing `domain_identity` canonical authority. This single exclusion breaks
+the claimed-binding cycle while binding every other source-processing field,
+including mode, the measurement-only deferred vector, and all five source-side
+limits. It is a derived comparison value, not another stored configuration
+field.
+
+The function first reconstructs and authenticates policy
 bytes, schema, Git object, SHA-256, and `policy_identity`; then it requires all
 five paired integers to be equal; then it reconstructs the binding and compares
 the claimed field. `validate_rq003_experiment5_bounded_streaming_policy_binding`
@@ -1926,8 +2112,9 @@ Source S, authorize Experiment 005 execution, or be promoted automatically.
 
 This is a closed sub-mode of generation
 `ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING`, not a second generation. The exact
-serialized mode field in both bounded policy and Experiment source-processing
-configuration is:
+serialized mode is at `policy.limits.numeric_envelope_mode` in the bounded
+policy and top-level `numeric_envelope_mode` in the Experiment source-
+processing configuration:
 
 ```text
 numeric_envelope_mode: "BOUNDED_STREAMING_MEASUREMENT_CANDIDATE"
@@ -1943,8 +2130,9 @@ The final numeric adoption replaces the mode value with exact literal
 `BOUNDED_STREAMING_NUMERIC_ENVELOPE_ADOPTED`; no other string, alias, latest
 lookup, fallback, retry, or ambient selection is accepted.
 
-The exact deferred-field vector is lexically ordered and appears identically in
-both policy and source-processing configuration:
+The exact deferred-field vector is lexically ordered and appears identically at
+`policy.limits.deferred_numeric_fields` and top-level
+`source_processing.deferred_numeric_fields` in measurement mode:
 
 ```text
 deferred_numeric_fields: [
@@ -1959,8 +2147,12 @@ deferred_numeric_fields: [
 
 The only canonical pending representation is the closed object
 `{"status":"measurement_pending"}`. In measurement mode it is the exact value
-of `max_controller_peak_rss_bytes`, `max_worker_peak_rss_bytes`,
-`watchdog_rss_bytes`, and `watchdog_poll_interval_milliseconds`. JSON null,
+of `policy.limits.max_controller_peak_rss_bytes`,
+`policy.limits.max_worker_peak_rss_bytes`,
+`policy.limits.watchdog_rss_bytes`, and
+`policy.limits.watchdog_poll_interval_milliseconds`. These four fields are
+generic-policy-only and are not duplicated in the Experiment source-processing
+configuration. JSON null,
 omission, empty object/string, alternate status, extension field, numeric
 sentinel, maximum integer, infinity, host-capacity value, percentage, power of
 two, or multiplier is invalid. Projection and disk need enforceable
@@ -1991,7 +2183,8 @@ MEASUREMENT_MAX_PROJECTION_BYTES
   = 328739211471540
 ```
 
-Both `maximum_projection_bytes` and `max_projection_bytes` equal exactly
+Both top-level `source_processing.maximum_projection_bytes` and
+`policy.limits.max_projection_bytes` equal exactly
 `328739211471540`. Checked unsigned-64 multiplication is required before use.
 This is a finite safety ceiling for the exact authenticated source, not an
 estimate, headroom rule, final operational value, or permission to expand
@@ -2018,8 +2211,9 @@ MEASUREMENT_MAX_TEMPORARY_DISK_BYTES
   = 657480406911612
 ```
 
-`max_temporary_disk_bytes` equals exactly `657480406911612` in measurement
-mode, with checked unsigned-64 arithmetic. This logical ceiling neither
+`policy.limits.max_temporary_disk_bytes` equals exactly `657480406911612` in
+measurement mode and has no Experiment-configuration duplicate, with checked
+unsigned-64 arithmetic. This logical ceiling neither
 preallocates space nor claims physical capacity. Every write still requires a
 reservation, filesystem exhaustion remains a closed failure, and the measured
 peak logical charge—not this safety maximum—supplies the proposed final disk
@@ -2045,10 +2239,52 @@ The deferred vector and mode must also be byte-identical across the two
 objects. No marker/integer negotiation, minimum, override, or mixed mode is
 permitted.
 
+The five paired paths are exactly:
+
+```text
+source_processing.maximum_members
+  == policy.limits.max_collection_members
+source_processing.maximum_aggregate_bytes
+  == policy.limits.max_aggregate_collection_bytes
+source_processing.maximum_member_bytes
+  == policy.limits.max_file_bytes
+source_processing.maximum_records
+  == policy.limits.max_source_records
+source_processing.maximum_projection_bytes
+  == policy.limits.max_projection_bytes
+```
+
+Mode equality is exactly
+`source_processing.numeric_envelope_mode ==
+policy.limits.numeric_envelope_mode`. In measurement mode deferred equality is
+exactly `source_processing.deferred_numeric_fields ==
+policy.limits.deferred_numeric_fields`; in final mode both paths must be absent.
+Temporary disk, controller RSS, worker RSS, watchdog RSS, and watchdog cadence
+have no source-processing-side pair and occur only under `policy.limits`.
+
+The bounded policy schema is an exact two-branch discriminator on
+`limits.numeric_envelope_mode`. The measurement branch requires all 18 limit
+fields, the exact deferred vector, four exact pending objects, projection value
+`328739211471540`, and temporary-disk value `657480406911612`; it prohibits a
+final integer in any pending-object field. The adopted branch requires exactly
+the 17-field limits set, prohibits `deferred_numeric_fields` and every pending
+object, and requires final adopted positive integers for projection, temporary
+disk, controller RSS, worker RSS, watchdog RSS, and watchdog cadence. The
+source-processing schema discriminates identically on top-level mode: its
+measurement branch requires the exact 30-field set, deferred vector, and
+projection safety integer; its adopted branch requires the exact 29-field set,
+prohibits the deferred vector, and requires the adopted projection integer.
+Both branches retain the four source-limit integers. Any extra, missing,
+moved, duplicated, cross-branch, or mixed representation rejects.
+
 The measurement policy retains identifier
 `experiment-evidence-preparation-policy-bounded-streaming-v1`, revision `1`,
-and its already frozen path, but its identity material additionally binds
-`authority_generation`, `numeric_envelope_mode`, the exact deferred vector,
+and its already frozen path. Its identity material is exactly the closed object
+with fields `authority_generation` and `policy`; `authority_generation` is the
+bounded generation literal and `policy` is the complete closed policy excluding
+only `policy_identity`. Existing `domain_identity` canonical encoding is used.
+It therefore binds `limits.numeric_envelope_mode`,
+`limits.deferred_numeric_fields`,
 all known source integers, both measurement-run safety integers, all four
 pending objects, worker profiles, wrapper/runtime authority, and every other
 closed policy field. Domain remains
@@ -2058,13 +2294,30 @@ make its identity cryptographically distinct from the later final policy.
 `bounded_evidence_preparation_policy_binding_identity` is reconstructed in
 measurement mode over the same frozen domain and material from Section 11.1,
 with the exact mode, deferred vector, policy identity, five paired limits, and
-source-processing configuration identity included. Phase-3B accepts this
+derived source-processing configuration-material identity included. Phase-3B accepts this
 binding only through an explicit measurement-candidate entry point. Final
 readiness candidate, current-readiness, final Git reconstruction, production
 descriptor, and registry authority reject either measurement mode, its policy
 identity, its binding, or any resource derived from it. Coordinated mode,
 policy, configuration, identity, or binding resealing cannot establish final
 authority.
+
+Policy identity reconstruction reads mode, deferred material, and all numeric
+values only from the exact nested `policy.limits` paths above; moving either
+control to policy top level changes the closed shape and rejects before
+identity comparison. Source-processing material identity reconstruction reads
+mode and the optional measurement-only deferred vector only from their exact
+top-level source-processing paths. The existing decoder/configuration byte,
+SHA-256, Git-object, component, Experiment-specific, profiled, and resource
+identities continue to bind the resulting complete canonical file bytes; no
+special serializer or placement-normalization step exists.
+
+Measurement-mode rejection in readiness candidate, current readiness, Git
+reconstruction, descriptor, and registry processing reads exactly top-level
+`source_processing.numeric_envelope_mode` and independently requires it to
+equal `policy.limits.numeric_envelope_mode`. Absence, nesting it elsewhere, or
+disagreement is structural failure rather than an alternate mode-detection
+route.
 
 The governed measurement output contains exact implementation-candidate path
 hashes; exact 21-member manifest/input identities and source counts; projection
@@ -2089,8 +2342,8 @@ material remains rejected by final readiness after adoption.
 The corrected acyclic sequence is:
 
 ```text
-governance clarification freeze
-  -> independently verified remote-backed clarification commit
+schema-location governance freeze complete
+  -> independent exact-byte and remote-backed verification
   -> non-authoritative bounded-streaming implementation candidate using measurement mode
   -> governed full-envelope measurement evidence
   -> independent review of measurement evidence
@@ -2597,6 +2850,18 @@ measurement-mode rejection and prove that every policy, binding,
 source-processing, schema, component, resource, profile, and affected test
 identity listed in Section 12 changes and reconstructs from the final bytes.
 
+Schema-location tests additionally require the exact eight-field policy top
+level; exact 18-field measurement and 17-field adopted `policy.limits` sets;
+exact 30-field measurement, 29-field adopted, and unchanged 27-field legacy
+source-processing sets; and all five exact field-path equalities. They reject
+policy-top-level mode or deferred controls, a missing or moved deferred vector,
+RSS/watchdog controls outside `policy.limits`, temporary-disk duplication in
+source processing, every unexpected top-level placement, mixed-mode cross-
+placement, and coordinated identity resealing around a structurally wrong
+location. Existing authorized policy/configuration, source-processing,
+readiness-candidate, current-readiness, and Git-reconstruction test paths own
+these cases; no new test path is required.
+
 Unit evidence may run locally. Stable-source mutation tests, RSS measurement,
 disk ceiling, Seatbelt capability confinement, worker boundary,
 crash/interruption, full 21-member projection, double reconstruction, and
@@ -2613,8 +2878,8 @@ adapter. It is not a scientific experiment revision.
 Required order is:
 
 ```text
-governance clarification freeze
-  -> independently verified remote-backed clarification commit
+schema-location governance freeze complete
+  -> independent exact-byte and remote-backed verification
   -> non-authoritative bounded-streaming implementation candidate using measurement mode
   -> governed full-envelope measurement evidence
   -> independent review of measurement evidence
@@ -2640,6 +2905,7 @@ Source S, readiness candidate/evidence/E/R, allocation, provider/control
 authority, execution, outcome access or evaluation, confirmation selection,
 Paper Miner, wallet, transaction, capital, or SOL work.
 
-This clarification freezes prospective measurement-mode design authority only.
-Every successor step remains separately bounded
-and independently reviewed.
+This clarification freezes prospective schema-location authority only.
+Implementation remains unauthorized until this commit is independently
+remote-backed and exact-byte verified. Every successor step remains separately
+bounded and independently reviewed.
