@@ -30,18 +30,31 @@ from orev3.experiments.rq003_experiment5 import (
 )
 from orev3.experiments.rq003_experiment5_source_processing import (
     SourceMember,
+    SnapshotSourceMember,
     SourceProcessingAuthority,
     SourceProcessingLimits,
+    StreamingSourceProcessingResult,
     authenticate_configuration,
     authority_byte_parity,
     construct_selected_source_binding,
     process_source_collection,
+    reconstruct_bounded_source_processing_material_identity,
+    reconstruct_rq003_experiment5_bounded_policy_binding_identity,
     reconstruct_source_authority,
     reconstruct_tracked_schema_identities,
     validate_projection_population,
+    validate_streaming_projection,
     _identity,
     _lifecycle_core_from_projection,
     _process_source_collection,
+    _SelectiveParser,
+    MAX_ARRAY_CARDINALITY,
+    MAX_CANONICAL_SCALAR_BYTES,
+    MAX_DECODED_OBJECT_KEY_BYTES,
+    MAX_DECODED_STRING_VALUE_BYTES,
+    MAX_FRAMED_RECORD_BYTES,
+    MAX_JSON_DEPTH,
+    MAX_OBJECT_MEMBERS,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -51,6 +64,23 @@ CONFIGURATION = json.loads((ROOT / "config/research/readiness/rq003-experiment-0
 
 def _h(label: str) -> str:
     return hashlib.sha256(label.encode()).hexdigest()
+
+
+def test_bounded_measurement_source_configuration_and_binding_are_exact() -> None:
+    raw = (ROOT / "config/research/readiness/rq003-experiment-005-source-processing-v1.json").read_bytes()
+    configuration, _, _ = authenticate_configuration(
+        raw,
+        expected_byte_count=len(raw),
+        expected_sha256=hashlib.sha256(raw).hexdigest(),
+    )
+    policy = json.loads(
+        (ROOT / "config/research/readiness/evidence-preparation-policy-bounded-streaming-v1.json").read_text()
+    )
+    assert len(configuration) == 30
+    assert reconstruct_bounded_source_processing_material_identity(configuration)
+    assert reconstruct_rq003_experiment5_bounded_policy_binding_identity(
+        configuration, policy
+    ) == configuration["bounded_evidence_preparation_policy_binding_identity"]
 
 
 def _line(value: object) -> bytes:
@@ -212,6 +242,147 @@ def test_projection_is_deterministic_outcome_blind_closed_and_selects_boundary()
     text = first.projection_bytes.decode()
     for forbidden in ("winning_square", "finalized_outcome", "ignored_extra", "secret", "outcome"):
         assert forbidden not in text
+
+
+def test_path_backed_members_authenticate_before_selective_semantics(
+    tmp_path: Path,
+) -> None:
+    members, authority = _fixture()
+    lifecycle_path = tmp_path / "lifecycle.jsonl"
+    observations_path = tmp_path / "observations.jsonl"
+    lifecycle_path.write_bytes(members[0].persisted_bytes)
+    observation_bytes = members[1].persisted_bytes + b"not-json\n"
+    observations_path.write_bytes(observation_bytes)
+    path_members = (
+        SnapshotSourceMember(
+            members[0].logical_identifier,
+            members[0].member_path,
+            members[0].member_order,
+            lifecycle_path,
+            lifecycle_path.stat().st_size,
+            hashlib.sha256(members[0].persisted_bytes).hexdigest(),
+        ),
+        SnapshotSourceMember(
+            members[1].logical_identifier,
+            members[1].member_path,
+            members[1].member_order,
+            observations_path,
+            observations_path.stat().st_size,
+            hashlib.sha256(observation_bytes).hexdigest(),
+        ),
+    )
+    result = _synthetic_process(path_members, authority)
+    assert len(result.records) == 1
+    assert result.records[0]["observation_count"] == 3
+    assert b"not-json" not in result.projection_bytes
+
+
+def test_path_backed_projection_stream_matches_legacy_identities(tmp_path: Path) -> None:
+    members, authority = _fixture()
+    legacy = _synthetic_process(members, authority)
+    path_members = []
+    for member in members:
+        content = tmp_path / f"member-{member.member_order}"
+        content.write_bytes(member.persisted_bytes)
+        path_members.append(
+            SnapshotSourceMember(
+                member.logical_identifier, member.member_path, member.member_order,
+                content, member.expected_byte_count, member.expected_sha256,
+            )
+        )
+    output = tmp_path / "private-projection"
+    streamed = _process_source_collection(
+        path_members, authority=authority, projection_schema=SCHEMA,
+        expected_lifecycle_sha256=members[0].expected_sha256,
+        limits=SourceProcessingLimits(
+            maximum_members=256, maximum_aggregate_bytes=268_435_456,
+            maximum_member_bytes=67_108_864, maximum_records=100_000,
+            maximum_projection_bytes=134_217_728,
+        ),
+        private_projection_path=output,
+    )
+    assert isinstance(streamed, StreamingSourceProcessingResult)
+    assert output.read_bytes() == legacy.projection_bytes
+    assert streamed.byte_count == len(legacy.projection_bytes)
+    assert streamed.record_count == len(legacy.records)
+    assert streamed.projection_sha256 == legacy.projection_sha256
+    assert streamed.projection_record_identities == legacy.projection_record_identities
+    assert streamed.dataset_content_identity == legacy.dataset_content_identity
+    assert streamed.logical_projection_content_identity == legacy.logical_projection_content_identity
+    assert streamed.projection_identity == legacy.projection_identity
+    validate_streaming_projection(streamed, authority=authority, projection_schema=SCHEMA)
+    output.write_bytes(output.read_bytes()[:-1])
+    with pytest.raises(CanonicalControlError, match="PROJECTION_SUBSTITUTION"):
+        validate_streaming_projection(streamed, authority=authority, projection_schema=SCHEMA)
+
+
+@pytest.mark.parametrize(
+    ("value", "accepted"),
+    (
+        ("x" * MAX_DECODED_STRING_VALUE_BYTES, True),
+        ("x" * (MAX_DECODED_STRING_VALUE_BYTES + 1), False),
+    ),
+)
+def test_selective_parser_string_value_boundary(value: str, accepted: bool) -> None:
+    payload = json.dumps({"value": value}, separators=(",", ":")).encode()
+    if accepted:
+        assert _SelectiveParser(payload, frozenset({"value"})).parse()["value"] == value
+    else:
+        with pytest.raises(CanonicalControlError, match="RESOURCE_MEMORY_EXCEEDED"):
+            _SelectiveParser(payload, frozenset({"value"})).parse()
+
+
+def test_selective_parser_closed_shape_boundaries() -> None:
+    exact_key = "k" * MAX_DECODED_OBJECT_KEY_BYTES
+    assert _SelectiveParser(
+        json.dumps({exact_key: 1}, separators=(",", ":")).encode(),
+        frozenset({exact_key}),
+    ).parse()[exact_key] == 1
+    with pytest.raises(CanonicalControlError, match="RESOURCE_MEMORY_EXCEEDED"):
+        key = "k" * (MAX_DECODED_OBJECT_KEY_BYTES + 1)
+        _SelectiveParser(
+            json.dumps({key: 1}, separators=(",", ":")).encode(), frozenset({key})
+        ).parse()
+    exact_object = {f"k{i}": i for i in range(MAX_OBJECT_MEMBERS)}
+    _SelectiveParser(
+        json.dumps(exact_object, separators=(",", ":")).encode(),
+        frozenset(exact_object),
+    ).parse()
+    one_over_object = {**exact_object, "overflow": 1}
+    with pytest.raises(CanonicalControlError, match="RESOURCE_MEMORY_EXCEEDED"):
+        _SelectiveParser(
+            json.dumps(one_over_object, separators=(",", ":")).encode(),
+            frozenset(one_over_object),
+        ).parse()
+    exact_array = list(range(MAX_ARRAY_CARDINALITY))
+    _SelectiveParser(
+        json.dumps({"value": exact_array}, separators=(",", ":")).encode(),
+        frozenset({"value"}),
+    ).parse()
+    with pytest.raises(CanonicalControlError, match="RESOURCE_MEMORY_EXCEEDED"):
+        _SelectiveParser(
+            json.dumps({"value": exact_array + [0]}, separators=(",", ":")).encode(),
+            frozenset({"value"}),
+        ).parse()
+    assert MAX_CANONICAL_SCALAR_BYTES == 20
+
+
+def test_selective_parser_depth_and_framed_record_boundaries() -> None:
+    depth_four = {"value": [[1]]}
+    _SelectiveParser(
+        json.dumps(depth_four, separators=(",", ":")).encode(),
+        frozenset({"value"}),
+    ).parse()
+    with pytest.raises(CanonicalControlError, match="RESOURCE_MEMORY_EXCEEDED"):
+        _SelectiveParser(
+            json.dumps({"value": [[[1]]]}, separators=(",", ":")).encode(),
+            frozenset({"value"}),
+        ).parse()
+    core = b'{"value":1}'
+    exact = core + b" " * (MAX_FRAMED_RECORD_BYTES - 1 - len(core))
+    assert _SelectiveParser(exact, frozenset({"value"})).parse()["value"] == 1
+    with pytest.raises(CanonicalControlError, match="RESOURCE_MEMORY_EXCEEDED"):
+        _SelectiveParser(exact + b" ", frozenset({"value"}))
 
 
 @pytest.mark.parametrize("coverage", ["complete", "partial_start", "partial_end", "partial_both"])

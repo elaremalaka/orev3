@@ -108,19 +108,20 @@ def test_intermediate_substitution_is_descriptor_pinned(tmp_path: Path, monkeypa
     original_directory.mkdir(); replacement_directory.mkdir()
     (original_directory / "input").write_bytes(b"A")
     (replacement_directory / "input").write_bytes(b"B")
-    actual_open = capability.os.open
+    actual_acquire = capability.DescriptorAcquisition.acquire
     swapped = False
 
-    def racing_open(path: object, flags: int, *args: object, **kwargs: object) -> int:
+    def racing_acquire(cell):
         nonlocal swapped
-        descriptor = actual_open(path, flags, *args, **kwargs)
+        path = cell.arguments[0]
+        actual_acquire(cell)
         if path == original_directory.name and not swapped:
             swapped = True
             original_directory.rename(tmp_path / "pinned-original")
             original_directory.symlink_to(replacement_directory, target_is_directory=True)
-        return descriptor
+        return None
 
-    monkeypatch.setattr(capability.os, "open", racing_open)
+    monkeypatch.setattr(capability.DescriptorAcquisition, "acquire", racing_acquire)
     member = snapshot_regular_file(
         original_directory / "input",
         logical_identifier="x",
@@ -140,20 +141,21 @@ def test_deleted_recreated_parent_cannot_redirect_pinned_traversal(
     original_directory = tmp_path / "source-directory"
     original_directory.mkdir()
     (original_directory / "input").write_bytes(b"A")
-    actual_open = capability.os.open
+    actual_acquire = capability.DescriptorAcquisition.acquire
     replaced = False
 
-    def racing_open(path: object, flags: int, *args: object, **kwargs: object) -> int:
+    def racing_acquire(cell):
         nonlocal replaced
-        descriptor = actual_open(path, flags, *args, **kwargs)
+        path = cell.arguments[0]
+        actual_acquire(cell)
         if path == original_directory.name and not replaced:
             replaced = True
             original_directory.rename(tmp_path / "pinned-original")
             original_directory.mkdir()
             (original_directory / "input").write_bytes(b"B")
-        return descriptor
+        return None
 
-    monkeypatch.setattr(capability.os, "open", racing_open)
+    monkeypatch.setattr(capability.DescriptorAcquisition, "acquire", racing_acquire)
     member = snapshot_regular_file(
         original_directory / "input",
         logical_identifier="x",
@@ -172,17 +174,18 @@ def test_leaf_substitution_before_open_rejects(tmp_path: Path, monkeypatch: pyte
     parent = tmp_path / "source"; parent.mkdir()
     leaf = parent / "input"; leaf.write_bytes(b"A")
     replacement = tmp_path / "replacement"; replacement.write_bytes(b"B")
-    actual_open = capability.os.open
+    actual_acquire = capability.DescriptorAcquisition.acquire
     swapped = False
 
-    def racing_open(path: object, flags: int, *args: object, **kwargs: object) -> int:
+    def racing_acquire(cell):
         nonlocal swapped
+        path = cell.arguments[0]
         if path == leaf.name and not swapped:
             swapped = True
             leaf.unlink(); leaf.symlink_to(replacement)
-        return actual_open(path, flags, *args, **kwargs)
+        return actual_acquire(cell)
 
-    monkeypatch.setattr(capability.os, "open", racing_open)
+    monkeypatch.setattr(capability.DescriptorAcquisition, "acquire", racing_acquire)
     with pytest.raises(InputSnapshotError, match="INPUT_UNSAFE_TYPE"):
         snapshot_regular_file(leaf, logical_identifier="x", declared_byte_count=1, declared_sha256=hashlib.sha256(b"A").hexdigest(), object_store=tmp_path / "store", max_file_bytes=10)
 
@@ -191,18 +194,19 @@ def test_leaf_replacement_after_open_rejects_link_policy_change(tmp_path: Path, 
     import orev3.execution.filesystem_capability as capability
     parent = tmp_path / "source"; parent.mkdir()
     leaf = parent / "input"; leaf.write_bytes(b"A")
-    actual_open = capability.os.open
+    actual_acquire = capability.DescriptorAcquisition.acquire
     swapped = False
 
-    def racing_open(path: object, flags: int, *args: object, **kwargs: object) -> int:
+    def racing_acquire(cell):
         nonlocal swapped
-        descriptor = actual_open(path, flags, *args, **kwargs)
+        path = cell.arguments[0]
+        actual_acquire(cell)
         if path == leaf.name and not swapped:
             swapped = True
             leaf.unlink(); leaf.write_bytes(b"B")
-        return descriptor
+        return None
 
-    monkeypatch.setattr(capability.os, "open", racing_open)
+    monkeypatch.setattr(capability.DescriptorAcquisition, "acquire", racing_acquire)
     with pytest.raises(InputSnapshotError, match="INPUT_UNSAFE_TYPE"):
         snapshot_regular_file(leaf, logical_identifier="x", declared_byte_count=1, declared_sha256=hashlib.sha256(b"A").hexdigest(), object_store=tmp_path / "store", max_file_bytes=10)
     assert swapped and leaf.read_bytes() == b"B"
@@ -212,19 +216,20 @@ def test_store_substitution_cannot_redirect_publication(tmp_path: Path, monkeypa
     import orev3.execution.filesystem_capability as capability
     store = tmp_path / "store"; store.mkdir()
     attacker = tmp_path / "attacker"; attacker.mkdir()
-    actual_open = capability.os.open
+    actual_acquire = capability.DescriptorAcquisition.acquire
     swapped = False
 
-    def racing_open(path: object, flags: int, *args: object, **kwargs: object) -> int:
+    def racing_acquire(cell):
         nonlocal swapped
-        descriptor = actual_open(path, flags, *args, **kwargs)
+        path = cell.arguments[0]
+        actual_acquire(cell)
         if path == store.name and not swapped:
             swapped = True
             store.rename(tmp_path / "pinned-store")
             store.symlink_to(attacker, target_is_directory=True)
-        return descriptor
+        return None
 
-    monkeypatch.setattr(capability.os, "open", racing_open)
+    monkeypatch.setattr(capability.DescriptorAcquisition, "acquire", racing_acquire)
     payload = b"projection"
     publish_projection(payload, store=store, expected_sha256=hashlib.sha256(payload).hexdigest())
     assert swapped
@@ -243,15 +248,23 @@ def test_store_substitution_cannot_redirect_publication(tmp_path: Path, monkeypa
     ),
 )
 def test_v1_locator_grammar_rejects_ambiguous_paths(raw: str) -> None:
-    with pytest.raises(Exception):
-        open_pinned_regular(raw, error_code="INPUT_UNSAFE_TYPE")
+    from orev3.execution.filesystem_capability import DescriptorOwner, CanonicalControlError
+    with DescriptorOwner("INPUT_UNSAFE_TYPE") as owner, pytest.raises(CanonicalControlError, match="INPUT_UNSAFE_TYPE"):
+        open_pinned_regular(raw, owner=owner, error_code="INPUT_UNSAFE_TYPE")
 
 
 def test_v1_locator_grammar_accepts_absolute_unicode_path(tmp_path: Path) -> None:
     candidate = tmp_path / "café-資料"
     candidate.write_bytes(b"x")
-    descriptor, _ = open_pinned_regular(candidate, error_code="INPUT_UNSAFE_TYPE")
-    try:
+    from orev3.execution.filesystem_capability import DescriptorOwner
+    with DescriptorOwner("INPUT_UNSAFE_TYPE") as owner:
+        descriptor, _ = open_pinned_regular(candidate, owner=owner, error_code="INPUT_UNSAFE_TYPE")
         assert os.read(descriptor, 1) == b"x"
-    finally:
-        os.close(descriptor)
+
+
+@pytest.fixture(autouse=True)
+def _synthetic_controller_acquisition_policy():
+    # These direct-library fixtures are synthetic controller callers.
+    from orev3.execution.runtime import controller_acquisition_policy
+    with controller_acquisition_policy():
+        yield

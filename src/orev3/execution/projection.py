@@ -18,7 +18,7 @@ from orev3.execution.canonical import (
     validate_json_schema_instance,
 )
 from orev3.execution.dataset_validation import reconstruct_dataset_content_identity
-from orev3.execution.filesystem_capability import open_pinned_regular, verify_opened_regular
+from orev3.execution.filesystem_capability import DescriptorOwner, open_pinned_regular, verify_opened_regular
 
 
 def _require_closed_schema(schema: Mapping[str, Any], *, label: str) -> tuple[str, ...]:
@@ -103,21 +103,23 @@ def canonical_jsonl(records: Sequence[Mapping[str, Any]], *, projection_schema: 
 
 
 def _verified_regular_file(path: Path, *, expected_sha256: str, expected_size: int, limit: int) -> bytes:
-    try:
-        descriptor, _ = open_pinned_regular(path, error_code="INPUT_MISMATCH")
-    except CanonicalControlError as exc:
-        raise CanonicalControlError("INPUT_MISMATCH") from exc
-    try:
-        return verify_opened_regular(
-            descriptor,
-            expected_size=expected_size,
-            expected_sha256=expected_sha256,
-            limit=limit,
-            error_code="INPUT_MISMATCH",
-            mutation_error_code="INPUT_MUTATED",
-        )
-    finally:
-        os.close(descriptor)
+    with DescriptorOwner("INPUT_MISMATCH") as owner:
+        try:
+            descriptor, _ = open_pinned_regular(path, owner=owner, error_code="INPUT_MISMATCH")
+        except CanonicalControlError as exc:
+            raise CanonicalControlError("INPUT_MISMATCH") from exc
+        try:
+            return verify_opened_regular(
+                descriptor,
+                expected_size=expected_size,
+                expected_sha256=expected_sha256,
+                limit=limit,
+                error_code="INPUT_MISMATCH",
+                mutation_error_code="INPUT_MUTATED",
+            )
+        finally:
+            owner.close_one(descriptor)
+            owner.check()
 
 
 def project_jsonl(

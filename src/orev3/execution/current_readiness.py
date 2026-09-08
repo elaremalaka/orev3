@@ -25,7 +25,9 @@ from orev3.execution.canonical import (
     validate_exact_fields,
     validate_json_schema_instance,
 )
+from orev3.execution.runtime import controller_acquisition_policy
 from orev3.execution.filesystem_capability import (
+    DescriptorOwner,
     open_pinned_regular,
     verify_opened_regular,
 )
@@ -174,156 +176,157 @@ def _evaluate_current_readiness_for_test(
 def _evaluate_current_readiness(
     evaluation: CurrentReadinessInput, *, allow_test_file_remote: bool
 ) -> CurrentReadinessResult:
-    try:
-        identifier = normalize_experiment_identifier(evaluation.experiment_identifier)
-        if not isinstance(evaluation.repository_authority, RepositoryAuthorityV1):
-            raise CanonicalControlError("repository authority is unavailable")
-        if not isinstance(evaluation.current_input_locators, Mapping):
-            raise CanonicalControlError("current input locator configuration is invalid")
-        for values in evaluation.current_input_locators.values():
-            if isinstance(values, (str, Path)):
-                values = (values,)
-            if not isinstance(values, Sequence) or any(
-                not isinstance(value, (str, Path)) for value in values
-            ):
-                raise CanonicalControlError("current input locators must be paths")
-        receipt_schema = _load_governed_receipt_schema()
-        _serializer_self_check()
-    except Exception:
-        return CANONICAL_RECEIPT_UNAVAILABLE
+    with controller_acquisition_policy():
+        try:
+            identifier = normalize_experiment_identifier(evaluation.experiment_identifier)
+            if not isinstance(evaluation.repository_authority, RepositoryAuthorityV1):
+                raise CanonicalControlError("repository authority is unavailable")
+            if not isinstance(evaluation.current_input_locators, Mapping):
+                raise CanonicalControlError("current input locator configuration is invalid")
+            for values in evaluation.current_input_locators.values():
+                if isinstance(values, (str, Path)):
+                    values = (values,)
+                if not isinstance(values, Sequence) or any(
+                    not isinstance(value, (str, Path)) for value in values
+                ):
+                    raise CanonicalControlError("current input locators must be paths")
+            receipt_schema = _load_governed_receipt_schema()
+            _serializer_self_check()
+        except Exception:
+            return CANONICAL_RECEIPT_UNAVAILABLE
 
-    state = _State(authority_generation=evaluation.authority_generation)
-    try:
-        for invariant in CURRENT_READINESS_EVALUATION_ORDER:
-            state.active = invariant
-            if invariant == "git_authority":
-                try:
-                    if not allow_test_file_remote:
-                        _reject_remote_url_rewrite(
-                            evaluation.repository, evaluation.remote_alias
+        state = _State(authority_generation=evaluation.authority_generation)
+        try:
+            for invariant in CURRENT_READINESS_EVALUATION_ORDER:
+                state.active = invariant
+                if invariant == "git_authority":
+                    try:
+                        if not allow_test_file_remote:
+                            _reject_remote_url_rewrite(
+                                evaluation.repository, evaluation.remote_alias
+                            )
+                        remote = fetch_remote_head(
+                            evaluation.repository,
+                            evaluation.repository_authority,
+                            evaluation.remote_alias,
+                            allow_test_file=allow_test_file_remote,
                         )
-                    remote = fetch_remote_head(
-                        evaluation.repository,
-                        evaluation.repository_authority,
-                        evaluation.remote_alias,
-                        allow_test_file=allow_test_file_remote,
-                    )
-                    state.remote_head = remote.remote_head_commit
-                except GitAuthorityError as exc:
-                    disposition = (
-                        CurrentReadinessDisposition.READINESS_AMBIGUOUS
-                        if exc.code
-                        in {
-                            GitDiagnosticCode.SEAL_AMBIGUOUS,
-                            GitDiagnosticCode.SEAL_COMMIT_SHAPE_INVALID,
-                        }
-                        else CurrentReadinessDisposition.READINESS_UNRESOLVED_REMOTE
-                    )
-                    raise _InvariantFailure(invariant, disposition) from exc
-            elif invariant == "canonical_readiness_record":
-                _load_current_record(evaluation, identifier, state)
-            elif invariant == "schema_registry":
-                _check_schema_registry(evaluation.repository, state)
-            elif invariant in CURRENT_READINESS_EVALUATION_ORDER[3:19]:
-                _check_current_semantic(evaluation, identifier, state, invariant)
-            elif invariant == "readiness_seal_and_ancestry":
-                assert state.record is not None and state.remote_head is not None
-                try:
-                    state.seal = derive_readiness_seal(
-                        evaluation.repository,
-                        remote_head_commit=state.remote_head,
-                        record=state.record,
-                        record_blob_identity=str(state.record_blob),
-                        validate_governed_source=False,
-                    )
-                    if state.detached_graph is None:
-                        raise GitAuthorityError(
-                            GitDiagnosticCode.SEAL_NOT_FOUND,
-                            "detached evidence graph is unavailable",
+                        state.remote_head = remote.remote_head_commit
+                    except GitAuthorityError as exc:
+                        disposition = (
+                            CurrentReadinessDisposition.READINESS_AMBIGUOUS
+                            if exc.code
+                            in {
+                                GitDiagnosticCode.SEAL_AMBIGUOUS,
+                                GitDiagnosticCode.SEAL_COMMIT_SHAPE_INVALID,
+                            }
+                            else CurrentReadinessDisposition.READINESS_UNRESOLVED_REMOTE
                         )
-                    if state.evidence_publication_orphaned:
-                        raise EvidencePublicationHistoryError(ambiguous=False)
-                    validate_evidence_publication_history(
-                        evaluation.repository,
-                        graph=state.detached_graph,
-                        record=state.record,
-                        seal=state.seal,
-                        remote_head_commit=state.remote_head,
+                        raise _InvariantFailure(invariant, disposition) from exc
+                elif invariant == "canonical_readiness_record":
+                    _load_current_record(evaluation, identifier, state)
+                elif invariant == "schema_registry":
+                    _check_schema_registry(evaluation.repository, state)
+                elif invariant in CURRENT_READINESS_EVALUATION_ORDER[3:19]:
+                    _check_current_semantic(evaluation, identifier, state, invariant)
+                elif invariant == "readiness_seal_and_ancestry":
+                    assert state.record is not None and state.remote_head is not None
+                    try:
+                        state.seal = derive_readiness_seal(
+                            evaluation.repository,
+                            remote_head_commit=state.remote_head,
+                            record=state.record,
+                            record_blob_identity=str(state.record_blob),
+                            validate_governed_source=False,
+                        )
+                        if state.detached_graph is None:
+                            raise GitAuthorityError(
+                                GitDiagnosticCode.SEAL_NOT_FOUND,
+                                "detached evidence graph is unavailable",
+                            )
+                        if state.evidence_publication_orphaned:
+                            raise EvidencePublicationHistoryError(ambiguous=False)
+                        validate_evidence_publication_history(
+                            evaluation.repository,
+                            graph=state.detached_graph,
+                            record=state.record,
+                            seal=state.seal,
+                            remote_head_commit=state.remote_head,
+                        )
+                    except EvidencePublicationHistoryError as exc:
+                        disposition = (
+                            CurrentReadinessDisposition.READINESS_AMBIGUOUS
+                            if exc.ambiguous
+                            else CurrentReadinessDisposition.READINESS_ORPHANED
+                        )
+                        raise _InvariantFailure(invariant, disposition) from exc
+                    except GitAuthorityError as exc:
+                        disposition = _seal_disposition(exc.code)
+                        raise _InvariantFailure(invariant, disposition) from exc
+                elif invariant == "current_external_inputs":
+                    assert state.record is not None
+                    _check_current_inputs(
+                        state.record.material["external_inputs"]["declarations"],
+                        evaluation.current_input_locators,
                     )
-                except EvidencePublicationHistoryError as exc:
-                    disposition = (
-                        CurrentReadinessDisposition.READINESS_AMBIGUOUS
-                        if exc.ambiguous
-                        else CurrentReadinessDisposition.READINESS_ORPHANED
-                    )
-                    raise _InvariantFailure(invariant, disposition) from exc
-                except GitAuthorityError as exc:
-                    disposition = _seal_disposition(exc.code)
-                    raise _InvariantFailure(invariant, disposition) from exc
-            elif invariant == "current_external_inputs":
-                assert state.record is not None
-                _check_current_inputs(
-                    state.record.material["external_inputs"]["declarations"],
-                    evaluation.current_input_locators,
-                )
-        assert state.record is not None
-        assert state.seal is not None
-        assert state.remote_head is not None
-        return ExecutionReady(
-            CurrentReadinessDisposition.EXECUTION_READY,
-            state.record.source_commit,
-            state.seal.readiness_seal_commit,
-            state.remote_head,
-            state.record.readiness_identity,
-            state.record.canonical_record_path,
-            str(state.record_blob),
-            state.record,
-        )
-    except _InvariantFailure as failure:
-        failed = failure.invariant
-        disposition = failure.disposition
-    except Exception:
-        failed = state.active
-        disposition = CurrentReadinessDisposition.READINESS_INVALID_RECORD
+            assert state.record is not None
+            assert state.seal is not None
+            assert state.remote_head is not None
+            return ExecutionReady(
+                CurrentReadinessDisposition.EXECUTION_READY,
+                state.record.source_commit,
+                state.seal.readiness_seal_commit,
+                state.remote_head,
+                state.record.readiness_identity,
+                state.record.canonical_record_path,
+                str(state.record_blob),
+                state.record,
+            )
+        except _InvariantFailure as failure:
+            failed = failure.invariant
+            disposition = failure.disposition
+        except Exception:
+            failed = state.active
+            disposition = CurrentReadinessDisposition.READINESS_INVALID_RECORD
 
-    try:
-        receipt = build_readiness_failure_receipt(
-            experiment_identifier=identifier,
-            repository_authority_identifier=(
-                evaluation.repository_authority.repository_authority_identifier
-            ),
-            approved_branch_ref=evaluation.repository_authority.approved_branch_ref,
-            failed_invariant_identifier=failed,
-            candidate_source_commit=state.source_commit,
-            readiness_identity=state.readiness_identity,
-            schema=receipt_schema,
-            receipt_class="CURRENT_READINESS",
-            current_readiness_disposition=disposition.value,
-        )
-        receipt_bytes = canonical_bytes(receipt)
-        context = ReceiptValidationContext(
-            experiment_identifier=identifier,
-            repository_authority_identifier=(
-                evaluation.repository_authority.repository_authority_identifier
-            ),
-            approved_branch_ref=evaluation.repository_authority.approved_branch_ref,
-            failed_invariant_identifier=failed,
-            candidate_source_commit=state.source_commit,
-            readiness_identity=state.readiness_identity,
-            receipt_class="CURRENT_READINESS",
-            current_readiness_disposition=disposition.value,
-        )
-        loaded = load_readiness_failure_receipt_bytes(
-            receipt_bytes, context=context, schema=receipt_schema
-        )
-        return CurrentReadinessRejected(
-            disposition,
-            receipt_bytes,
-            loaded["failure_receipt_identity"],
-            loaded,
-        )
-    except Exception:
-        return CANONICAL_RECEIPT_UNAVAILABLE
+        try:
+            receipt = build_readiness_failure_receipt(
+                experiment_identifier=identifier,
+                repository_authority_identifier=(
+                    evaluation.repository_authority.repository_authority_identifier
+                ),
+                approved_branch_ref=evaluation.repository_authority.approved_branch_ref,
+                failed_invariant_identifier=failed,
+                candidate_source_commit=state.source_commit,
+                readiness_identity=state.readiness_identity,
+                schema=receipt_schema,
+                receipt_class="CURRENT_READINESS",
+                current_readiness_disposition=disposition.value,
+            )
+            receipt_bytes = canonical_bytes(receipt)
+            context = ReceiptValidationContext(
+                experiment_identifier=identifier,
+                repository_authority_identifier=(
+                    evaluation.repository_authority.repository_authority_identifier
+                ),
+                approved_branch_ref=evaluation.repository_authority.approved_branch_ref,
+                failed_invariant_identifier=failed,
+                candidate_source_commit=state.source_commit,
+                readiness_identity=state.readiness_identity,
+                receipt_class="CURRENT_READINESS",
+                current_readiness_disposition=disposition.value,
+            )
+            loaded = load_readiness_failure_receipt_bytes(
+                receipt_bytes, context=context, schema=receipt_schema
+            )
+            return CurrentReadinessRejected(
+                disposition,
+                receipt_bytes,
+                loaded["failure_receipt_identity"],
+                loaded,
+            )
+        except Exception:
+            return CANONICAL_RECEIPT_UNAVAILABLE
 
 
 def _load_current_record(
@@ -941,53 +944,55 @@ def _check_current_inputs(
     declarations: Sequence[Mapping[str, Any]],
     locators: Mapping[str, Sequence[PathArgument]],
 ) -> None:
-    expected_identifiers = [item["external_input_identifier"] for item in declarations]
-    if set(locators) != set(expected_identifiers):
-        missing = set(expected_identifiers) - set(locators)
-        disposition = (
-            CurrentReadinessDisposition.READINESS_BLOCKED_INPUT_UNAVAILABLE
-            if missing
-            else CurrentReadinessDisposition.READINESS_INPUT_MISMATCH
-        )
-        raise _InvariantFailure("current_external_inputs", disposition)
-    for declaration in declarations:
-        supplied = locators[declaration["external_input_identifier"]]
-        if isinstance(supplied, (str, Path)):
-            supplied = (supplied,)
-        if not isinstance(supplied, Sequence) or len(supplied) != len(declaration["members"]):
-            raise _InvariantFailure(
-                "current_external_inputs",
-                CurrentReadinessDisposition.READINESS_INPUT_MISMATCH,
+    with DescriptorOwner("INPUT_UNSAFE_TYPE") as owner:
+        expected_identifiers = [item["external_input_identifier"] for item in declarations]
+        if set(locators) != set(expected_identifiers):
+            missing = set(expected_identifiers) - set(locators)
+            disposition = (
+                CurrentReadinessDisposition.READINESS_BLOCKED_INPUT_UNAVAILABLE
+                if missing
+                else CurrentReadinessDisposition.READINESS_INPUT_MISMATCH
             )
-        for member, path in zip(declaration["members"], supplied, strict=True):
-            try:
-                descriptor, _ = open_pinned_regular(
-                    path,
-                    error_code="INPUT_UNSAFE_TYPE",
-                    missing_error_code="INPUT_UNAVAILABLE",
-                    nonblocking=True,
-                )
-            except CanonicalControlError as exc:
-                raise _InvariantFailure(
-                    "current_external_inputs",
-                    CurrentReadinessDisposition.READINESS_BLOCKED_INPUT_UNAVAILABLE,
-                ) from exc
-            try:
-                verify_opened_regular(
-                    descriptor,
-                    expected_size=member["byte_count"],
-                    expected_sha256=member["sha256"],
-                    limit=max(member["byte_count"], 1),
-                    error_code="INPUT_MISMATCH",
-                    mutation_error_code="INPUT_MUTATED",
-                )
-            except CanonicalControlError as exc:
+            raise _InvariantFailure("current_external_inputs", disposition)
+        for declaration in declarations:
+            supplied = locators[declaration["external_input_identifier"]]
+            if isinstance(supplied, (str, Path)):
+                supplied = (supplied,)
+            if not isinstance(supplied, Sequence) or len(supplied) != len(declaration["members"]):
                 raise _InvariantFailure(
                     "current_external_inputs",
                     CurrentReadinessDisposition.READINESS_INPUT_MISMATCH,
-                ) from exc
-            finally:
-                os.close(descriptor)
+                )
+            for member, path in zip(declaration["members"], supplied, strict=True):
+                try:
+                    descriptor, _ = open_pinned_regular(
+                        path, owner=owner,
+                        error_code="INPUT_UNSAFE_TYPE",
+                        missing_error_code="INPUT_UNAVAILABLE",
+                        nonblocking=True,
+                    )
+                except CanonicalControlError as exc:
+                    raise _InvariantFailure(
+                        "current_external_inputs",
+                        CurrentReadinessDisposition.READINESS_BLOCKED_INPUT_UNAVAILABLE,
+                    ) from exc
+                try:
+                    verify_opened_regular(
+                        descriptor,
+                        expected_size=member["byte_count"],
+                        expected_sha256=member["sha256"],
+                        limit=max(member["byte_count"], 1),
+                        error_code="INPUT_MISMATCH",
+                        mutation_error_code="INPUT_MUTATED",
+                    )
+                except CanonicalControlError as exc:
+                    raise _InvariantFailure(
+                        "current_external_inputs",
+                        CurrentReadinessDisposition.READINESS_INPUT_MISMATCH,
+                    ) from exc
+                finally:
+                    owner.close_one(descriptor)
+                    owner.check()
 
 
 def _seal_disposition(code: GitDiagnosticCode) -> CurrentReadinessDisposition:

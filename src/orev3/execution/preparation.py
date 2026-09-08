@@ -82,6 +82,9 @@ class PreparationAuthorityGeneration(str, Enum):
     ADAPTER_V4_CONFIGURATION_RESOURCE = (
         "prospective-v1.1-adapter-v4-configuration-resource"
     )
+    ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING = (
+        "prospective-v1.1-adapter-v4-experiment5-bounded-streaming"
+    )
 
 
 class PreparationEvidenceDisposition(str, Enum):
@@ -147,10 +150,16 @@ def load_prospective_phase3a_schemas(
     source_commit: str,
     generation: PreparationAuthorityGeneration = PreparationAuthorityGeneration.PROSPECTIVE_V1_1,
 ) -> Mapping[str, Mapping[str, object]]:
+    if type(generation) is not PreparationAuthorityGeneration:
+        raise CanonicalControlError("prospective Phase-3A generation is unsupported")
     if generation is PreparationAuthorityGeneration.PROSPECTIVE_V1_1:
         policy = PROSPECTIVE_PHASE3A_SCHEMA_POLICY
         documents = PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY
-    elif generation is PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE:
+    elif (
+        generation is PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
+        or generation
+        is PreparationAuthorityGeneration.ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING
+    ):
         policy = PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_POLICY
         documents = PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_DOCUMENT_POLICY
         if (
@@ -192,12 +201,16 @@ def load_prospective_phase3a_schemas(
 def _selected_phase3a_authority(
     generation: PreparationAuthorityGeneration,
 ) -> tuple[str, str]:
+    if type(generation) is not PreparationAuthorityGeneration:
+        raise CanonicalControlError("preparation authority generation is unsupported")
     if generation is PreparationAuthorityGeneration.HISTORICAL:
         return READINESS_TEST_POLICY_PATH, READINESS_SPECIFICATION_PATH
-    if generation in {
-        PreparationAuthorityGeneration.PROSPECTIVE_V1_1,
-        PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE,
-    }:
+    if (
+        generation is PreparationAuthorityGeneration.PROSPECTIVE_V1_1
+        or generation is PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
+        or generation
+        is PreparationAuthorityGeneration.ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING
+    ):
         return READINESS_TEST_POLICY_V2_PATH, READINESS_SPECIFICATION_V1_1_PATH
     raise CanonicalControlError("preparation authority generation is unsupported")
 
@@ -488,7 +501,11 @@ def _discover_requirements(
         descriptor["execution_specification"]["path"]: ("execution_specification", "top_level", ""),
         runtime.dependency_lock_path: ("dependency_manifest", "top_level", ""),
     }
-    if generation is PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE:
+    if (
+        generation is PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
+        or generation
+        is PreparationAuthorityGeneration.ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING
+    ):
         resource = descriptor["configuration"]["experiment_configuration_resource"]
         scopes[resource["configuration_path"]] = (
             "configuration", "top_level", ""

@@ -4,47 +4,131 @@ from __future__ import annotations
 
 import hashlib
 import os
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Iterable, Iterator, Mapping, Sequence
 
 from orev3.execution.canonical import CanonicalControlError, canonical_bytes, domain_identity, parse_json, validate_json_schema_instance
-from orev3.execution.filesystem_capability import open_pinned_regular, verify_opened_regular
+from orev3.execution.filesystem_capability import (
+    DescriptorOwner,
+    open_pinned_regular,
+    verify_opened_regular_digest,
+)
 
 REPLAY_EVIDENCE_DOMAIN = "orev3:experiment-replay-evidence:v1\n"
 POPULATION_EVIDENCE_DOMAIN = "orev3:experiment-population-accounting-evidence:v1\n"
 SOURCE_UNIT_DOMAIN = "orev3:experiment-replay-source-unit:v1\n"
 DECISION_DOMAIN = "orev3:experiment-selected-decision:v1\n"
 REPLAY_UNIT_DOMAIN = "orev3:experiment-replay-unit:v1\n"
+_STREAM_READ_BYTES = 64 * 1024
+
+
+def _iter_projection_lines(
+    descriptor: int, *, maximum_record_bytes: int
+) -> Iterator[bytes]:
+    """Yield LF-inclusive records without retaining the projection payload."""
+
+    pending = bytearray()
+    while True:
+        chunk = os.read(descriptor, _STREAM_READ_BYTES)
+        if not chunk:
+            break
+        pending.extend(chunk)
+        while True:
+            newline = pending.find(b"\n")
+            if newline < 0:
+                if len(pending) > maximum_record_bytes:
+                    raise CanonicalControlError("RESOURCE_LIMIT_EXCEEDED")
+                break
+            framed_size = newline + 1
+            if framed_size > maximum_record_bytes:
+                raise CanonicalControlError("RESOURCE_LIMIT_EXCEEDED")
+            line = bytes(pending[:framed_size])
+            del pending[:framed_size]
+            if line == b"\n" or b"\r" in line:
+                raise CanonicalControlError("PROJECTION_INVALID")
+            yield line
+    if pending:
+        raise CanonicalControlError("PROJECTION_INVALID")
+
+
+@dataclass(frozen=True, slots=True)
+class VerifiedProjectionStream:
+    """Re-openable, completely authenticated projection record stream."""
+
+    path: Path
+    projection_schema: Mapping[str, Any]
+    maximum_record_bytes: int
+    record_count: int
+
+    def __len__(self) -> int:
+        return self.record_count
+
+    def __iter__(self) -> Iterator[Mapping[str, Any]]:
+        with DescriptorOwner("PROJECTION_INVALID") as owner:
+            descriptor, _ = open_pinned_regular(
+                self.path, owner=owner, error_code="PROJECTION_INVALID"
+            )
+            try:
+                for line in _iter_projection_lines(
+                    descriptor, maximum_record_bytes=self.maximum_record_bytes
+                ):
+                    record = parse_json(line[:-1], max_bytes=self.maximum_record_bytes)
+                    if not isinstance(record, Mapping):
+                        raise CanonicalControlError("PROJECTION_INVALID")
+                    validate_json_schema_instance(
+                        record, self.projection_schema, schema_registry={}
+                    )
+                    yield record
+            finally:
+                owner.close_one(descriptor)
+                owner.check()
+
+
 def load_verified_projection(
     path: Path, *, expected_sha256: str, expected_size: int,
     projection_schema: Mapping[str, Any], max_bytes: int, max_units: int,
-) -> list[Mapping[str, Any]]:
-    try:
-        descriptor, _ = open_pinned_regular(path, error_code="PROJECTION_INVALID")
-    except CanonicalControlError as exc:
-        raise CanonicalControlError("PROJECTION_INVALID") from exc
-    try:
-        payload = verify_opened_regular(
-            descriptor,
-            expected_size=expected_size,
-            expected_sha256=expected_sha256,
-            limit=max_bytes,
-            error_code="PROJECTION_INVALID",
+) -> VerifiedProjectionStream:
+    with DescriptorOwner("PROJECTION_INVALID") as owner:
+        try:
+            descriptor, _ = open_pinned_regular(path, owner=owner, error_code="PROJECTION_INVALID")
+        except CanonicalControlError as exc:
+            raise CanonicalControlError("PROJECTION_INVALID") from exc
+        try:
+            verify_opened_regular_digest(
+                descriptor,
+                expected_size=expected_size,
+                expected_sha256=expected_sha256,
+                limit=max_bytes,
+                error_code="PROJECTION_INVALID",
+            )
+        finally:
+            owner.close_one(descriptor)
+            owner.check()
+        maximum_record_bytes = min(max_bytes, 227_867_665)
+        record_count = 0
+        descriptor, _ = open_pinned_regular(path, owner=owner, error_code="PROJECTION_INVALID")
+        try:
+            for line in _iter_projection_lines(
+                descriptor, maximum_record_bytes=maximum_record_bytes
+            ):
+                record = parse_json(line[:-1], max_bytes=maximum_record_bytes)
+                if not isinstance(record, Mapping):
+                    raise CanonicalControlError("PROJECTION_INVALID")
+                validate_json_schema_instance(record, projection_schema, schema_registry={})
+                record_count += 1
+                if record_count > max_units:
+                    raise CanonicalControlError("RESOURCE_LIMIT_EXCEEDED")
+        finally:
+            owner.close_one(descriptor)
+            owner.check()
+        return VerifiedProjectionStream(
+            Path(path), projection_schema, maximum_record_bytes, record_count
         )
-    finally:
-        os.close(descriptor)
-    records: list[Mapping[str, Any]] = []
-    for line in payload.splitlines():
-        record = parse_json(line, max_bytes=max_bytes)
-        if not isinstance(record, Mapping): raise CanonicalControlError("PROJECTION_INVALID")
-        validate_json_schema_instance(record, projection_schema, schema_registry={})
-        records.append(record)
-        if len(records) > max_units: raise CanonicalControlError("RESOURCE_LIMIT_EXCEEDED")
-    return records
 
 
 def build_replay_evidence(
-    records: Sequence[Mapping[str, Any]],
+    records: Iterable[Mapping[str, Any]],
     *,
     dataset_identity: str,
     projection_identity: str,
@@ -60,13 +144,15 @@ def build_replay_evidence(
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     if schema_version not in {1, 2}:
         raise CanonicalControlError("unsupported Replay evidence schema version")
-    if len(records) > max_units:
-        raise CanonicalControlError("RESOURCE_LIMIT_EXCEEDED")
     if selector_identifier != "latest-eligible-observation-selector-v1":
         raise CanonicalControlError("REPLAY_IDENTITY_MISMATCH")
     grouped: dict[str, list[Mapping[str, Any]]] = {}
     source_order: list[str] = []
+    record_count = 0
     for record in records:
+        record_count += 1
+        if record_count > max_units:
+            raise CanonicalControlError("RESOURCE_LIMIT_EXCEEDED")
         if record.get("candidates") != list(candidate_order):
             raise CanonicalControlError("REPLAY_IDENTITY_MISMATCH: candidate order differs")
         source_key = record.get("source_unit_key")

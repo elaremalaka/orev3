@@ -12,8 +12,32 @@ from orev3.execution.projection import canonical_jsonl, project_jsonl
 from orev3.execution.replay_preparation import build_replay_evidence, load_verified_projection, require_deterministic_reconstruction
 from orev3.execution.phase3b_components import require_projection_contract_binding
 from orev3.execution.registry import ARTIFACT_DECLARATION_DOMAIN
+from orev3.execution.evidence_preparation import _require_stream_equal
 
 H = "1" * 64
+
+
+@pytest.mark.parametrize("position", (0, 32768, 65535, 131071))
+def test_projection_stream_comparison_detects_every_mismatch_position(
+    tmp_path: Path, position: int
+) -> None:
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    payload = bytearray(b"a" * 131072)
+    first.write_bytes(payload)
+    payload[position] = ord("b")
+    second.write_bytes(payload)
+    with pytest.raises(CanonicalControlError, match="nondeterministic projection"):
+        _require_stream_equal(first, second)
+
+
+def test_projection_stream_comparison_accepts_equal_large_streams(tmp_path: Path) -> None:
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    payload = b"bounded-comparison\n" * 10000
+    first.write_bytes(payload)
+    second.write_bytes(payload)
+    _require_stream_equal(first, second)
 
 
 def bound_artifact(**material: object) -> dict[str, object]:
@@ -380,3 +404,11 @@ def test_dataset_identity_binds_parser_schema_content_and_order() -> None:
     for field, value in (("parser_component_identity", "7" * 64), ("schema_identity", "8" * 64), ("dataset_content_identity", "9" * 64), ("record_ordering", "reverse_source_order")):
         changed = dict(base); changed[field] = value
         assert dataset_evidence(**changed)["dataset_identity"] != original["dataset_identity"]
+
+
+@pytest.fixture(autouse=True)
+def _synthetic_controller_acquisition_policy():
+    # These direct-library fixtures are synthetic controller callers.
+    from orev3.execution.runtime import controller_acquisition_policy
+    with controller_acquisition_policy():
+        yield

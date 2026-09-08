@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from orev3.execution.canonical import CanonicalControlError, domain_identity
-from orev3.execution.filesystem_capability import publish_content_addressed_bytes
+from orev3.execution.filesystem_capability import (
+    DescriptorOwner,
+    open_pinned_regular,
+    publish_content_addressed_bytes,
+    publish_opened_regular_stream,
+)
 
 DATASET_EVIDENCE_DOMAIN = "orev3:experiment-dataset-evidence:v1\n"
 DATASET_CONTENT_DOMAIN = "orev3:experiment-dataset-content:v1\n"
@@ -63,6 +69,39 @@ def projection_evidence(
         "raw_input_snapshot_identity": raw_snapshot_identity,
         "schema_version": 1,
         "sha256": hashlib.sha256(projection_bytes).hexdigest(),
+    }
+    return _with_identity(PROJECTION_EVIDENCE_DOMAIN, "projection_evidence_identity", material)
+
+
+def projection_evidence_from_metadata(
+    *,
+    raw_snapshot_identity: str,
+    raw_dataset_identity: str,
+    parser_component_identity: str,
+    projector_component_identity: str,
+    projection_schema_identity: str,
+    allowed_fields: Sequence[str],
+    byte_count: int,
+    sha256: str,
+    record_count: int,
+) -> dict[str, Any]:
+    projection_identity = domain_identity(PROJECTION_EVIDENCE_DOMAIN, {
+        "byte_count": byte_count, "ordered_record_count": record_count,
+        "projection_schema_identity": projection_schema_identity,
+        "parser_component_identity": parser_component_identity,
+        "projector_component_identity": projector_component_identity,
+        "sha256": sha256,
+    })
+    material = {
+        "allowed_fields": list(allowed_fields), "byte_count": byte_count,
+        "dataset_identity": raw_dataset_identity,
+        "ordered_record_count": record_count,
+        "parser_component_identity": parser_component_identity,
+        "projector_component_identity": projector_component_identity,
+        "projection_identity": projection_identity,
+        "projection_schema_identity": projection_schema_identity,
+        "raw_input_snapshot_identity": raw_snapshot_identity,
+        "schema_version": 1, "sha256": sha256,
     }
     return _with_identity(PROJECTION_EVIDENCE_DOMAIN, "projection_evidence_identity", material)
 
@@ -125,6 +164,22 @@ def publish_projection(projection: bytes, *, store: Path, expected_sha256: str) 
         limit=max(len(projection), 1),
         error_code="PROJECTION_INVALID",
     )
+
+
+def publish_projection_path(
+    projection: Path, *, store: Path, expected_size: int, expected_sha256: str
+) -> Path:
+    with DescriptorOwner("PROJECTION_INVALID") as owner:
+        descriptor, _ = open_pinned_regular(projection, owner=owner, error_code="PROJECTION_INVALID")
+        try:
+            return publish_opened_regular_stream(
+                descriptor, store=store, expected_size=expected_size,
+                expected_sha256=expected_sha256, limit=max(expected_size, 1),
+                error_code="PROJECTION_INVALID", mutation_error_code="INPUT_MUTATED",
+            )
+        finally:
+            owner.close_one(descriptor)
+            owner.check()
 
 
 __all__ = ["DATASET_CONTENT_DOMAIN", "DATASET_EVIDENCE_DOMAIN", "PROJECTION_EVIDENCE_DOMAIN", "dataset_evidence", "projection_evidence", "publish_projection", "reconstruct_dataset_content_identity"]

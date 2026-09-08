@@ -1461,3 +1461,11 @@ def test_profile_conformance_v2_closed_branches() -> None:
     contracts = [f"{index:x}" * 64 for index in range(1, 7)]
     outcome = {"authorization_contract_identity": contracts[0], "outcome_capability": "outcome_aware_authorized_only", "profile_conformance_evidence_identity": SHA, "profile_contract_identities": contracts, "profile_identity": SHA, "profile_name": "outcome_aware_v1", "reconciled_artifact_declaration_identities": [SHA], "schema_version": 2, "validated_artifact_identifiers": ["ranking"]}
     validate_json_schema_instance(outcome, schema, schema_registry={})
+
+
+@pytest.fixture(autouse=True)
+def _synthetic_controller_acquisition_policy():
+    # These direct-library fixtures are synthetic controller callers.
+    from orev3.execution.runtime import controller_acquisition_policy
+    with controller_acquisition_policy():
+        yield

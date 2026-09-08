@@ -14,9 +14,9 @@ from typing import Any, Mapping, Sequence
 
 from orev3.execution.canonical import CanonicalControlError, domain_identity
 from orev3.execution.filesystem_capability import (
+    DescriptorOwner,
     open_pinned_regular,
-    publish_content_addressed_bytes,
-    verify_opened_regular,
+    publish_opened_regular_stream,
 )
 
 INPUT_SNAPSHOT_DOMAIN = "orev3:experiment-input-snapshot:v1\n"
@@ -62,10 +62,10 @@ class ImmutableInputSnapshot:
 PathArgument = str | PathLike[str]
 
 
-def _open_regular_unlinked(path: PathArgument) -> tuple[int, os.stat_result]:
+def _open_regular_unlinked(path: PathArgument, *, owner: DescriptorOwner) -> tuple[int, os.stat_result]:
     try:
         return open_pinned_regular(
-            path,
+            path, owner=owner,
             error_code="INPUT_UNSAFE_TYPE: symlink component",
             missing_error_code="INPUT_UNAVAILABLE",
             nonblocking=True,
@@ -84,12 +84,13 @@ def snapshot_regular_file(
     max_file_bytes: int,
 ) -> SnapshotMember:
     """Snapshot one descriptor-pinned source and publish verified bytes."""
+    with DescriptorOwner("INPUT_UNSAFE_TYPE: symlink component") as owner:
 
-    descriptor, _ = _open_regular_unlinked(source)
-    try:
+        descriptor, _ = _open_regular_unlinked(source, owner=owner)
         try:
-            payload = verify_opened_regular(
+            destination = publish_opened_regular_stream(
                 descriptor,
+                store=object_store,
                 expected_size=declared_byte_count,
                 expected_sha256=declared_sha256,
                 limit=max_file_bytes,
@@ -99,19 +100,10 @@ def snapshot_regular_file(
         except CanonicalControlError as exc:
             message = "RESOURCE_LIMIT_EXCEEDED" if declared_byte_count > max_file_bytes else str(exc)
             raise InputSnapshotError(message) from exc
-    finally:
-        os.close(descriptor)
-    try:
-        destination = publish_content_addressed_bytes(
-            payload,
-            store=object_store,
-            expected_sha256=declared_sha256,
-            limit=max_file_bytes,
-            error_code="INPUT_MISMATCH: content-addressed collision",
-        )
-    except CanonicalControlError as exc:
-        raise InputSnapshotError(str(exc)) from exc
-    return SnapshotMember(logical_identifier, len(payload), declared_sha256, destination)
+        finally:
+            owner.close_one(descriptor)
+            owner.check()
+        return SnapshotMember(logical_identifier, declared_byte_count, declared_sha256, destination)
 
 
 def snapshot_declared_input(

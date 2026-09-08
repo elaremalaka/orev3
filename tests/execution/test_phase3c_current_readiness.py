@@ -864,3 +864,11 @@ def test_rehashed_current_receipt_is_still_context_bound(tmp_path: Path) -> None
     )
     with pytest.raises(Exception):
         load_readiness_failure_receipt_bytes(canonical_bytes(forged), context=context)
+
+
+@pytest.fixture(autouse=True)
+def _synthetic_controller_acquisition_policy():
+    # These direct-library fixtures are synthetic controller callers.
+    from orev3.execution.runtime import controller_acquisition_policy
+    with controller_acquisition_policy():
+        yield

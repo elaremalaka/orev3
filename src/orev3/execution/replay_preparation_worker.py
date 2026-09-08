@@ -12,6 +12,57 @@ from pathlib import Path
 COMMANDS = frozenset({"reconstruct_replay"})
 
 
+# One-shot actor policy. Generic unsuccessful transport retains its meaning.
+_PINNED_INPUT_FAILED = False
+_PINNED_INPUT_EXIT = os._exit
+
+
+def _pinned_input_acquisition(acquisition):
+    import signal
+    global _PINNED_INPUT_FAILED
+    if _PINNED_INPUT_FAILED:
+        _PINNED_INPUT_EXIT(10)
+    flags = acquisition.arguments[1]
+    if acquisition.operation != "open" or flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC):
+        raise ValueError("PROJECTION_INVALID")
+    installed = {}
+
+    def terminal():
+        global _PINNED_INPUT_FAILED
+        _PINNED_INPUT_FAILED = True
+        _PINNED_INPUT_EXIT(10)
+
+    def guarded(original):
+        def handle(number, frame):
+            if _PINNED_INPUT_FAILED:
+                terminal()
+            try:
+                original(number, frame)
+            except BaseException:
+                if acquisition.unprovable:
+                    terminal()
+                raise
+        return handle
+
+    try:
+        for number in signal.valid_signals():
+            original = signal.getsignal(number)
+            if callable(original):
+                installed[number] = original
+                signal.signal(number, guarded(original))
+        try:
+            acquisition.acquire()
+        except BaseException:
+            if acquisition.unprovable:
+                terminal()
+            raise
+    finally:
+        if _PINNED_INPUT_FAILED:
+            terminal()
+        for number, original in installed.items():
+            signal.signal(number, original)
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         return 2
@@ -24,28 +75,30 @@ def main() -> int:
         return 3
     source = Path(request["source_root"]).resolve(); dependency = Path(request["dependency_root"]).resolve()
     sys.path[:] = [str(source / "src"), str(dependency), *[entry for entry in sys.path if "lib/python" in entry and "site-packages" not in entry]]
+    from orev3.execution.filesystem_capability import pinned_acquisition_policy
     from orev3.execution.canonical import canonical_bytes, parse_canonical_bytes
     from orev3.execution.replay_preparation import build_replay_evidence, load_verified_projection
     projection = Path(request["projection_path"])
     schema = parse_canonical_bytes(Path(request["projection_schema_path"]).read_bytes())
-    records = load_verified_projection(
-        projection, expected_sha256=request["expected_projection_sha256"],
-        expected_size=request["expected_projection_size"], projection_schema=schema,
-        max_bytes=request["max_projection_bytes"], max_units=request["max_units"],
-    )
-    replay, population = build_replay_evidence(
-        records, dataset_identity=request["dataset_identity"],
-        projection_identity=request["projection_identity"],
-        selector_identifier=request["selector_identifier"],
-        selector_component_identity=request["selector_component_identity"],
-        replay_preparer_component_identity=request["replay_preparer_component_identity"],
-        configuration_identity=request["configuration_identity"],
-        candidate_order=request["candidate_order"],
-        allowed_exclusion_reasons=request["allowed_exclusion_reasons"],
-        max_units=request["max_units"],
-        decision_selection_identity=request.get("decision_selection_identity"),
-        schema_version=request.get("schema_version", 1),
-    )
+    with pinned_acquisition_policy(_pinned_input_acquisition):
+        records = load_verified_projection(
+            projection, expected_sha256=request["expected_projection_sha256"],
+            expected_size=request["expected_projection_size"], projection_schema=schema,
+            max_bytes=request["max_projection_bytes"], max_units=request["max_units"],
+        )
+        replay, population = build_replay_evidence(
+            records, dataset_identity=request["dataset_identity"],
+            projection_identity=request["projection_identity"],
+            selector_identifier=request["selector_identifier"],
+            selector_component_identity=request["selector_component_identity"],
+            replay_preparer_component_identity=request["replay_preparer_component_identity"],
+            configuration_identity=request["configuration_identity"],
+            candidate_order=request["candidate_order"],
+            allowed_exclusion_reasons=request["allowed_exclusion_reasons"],
+            max_units=request["max_units"],
+            decision_selection_identity=request.get("decision_selection_identity"),
+            schema_version=request.get("schema_version", 1),
+        )
     target = Path(request["private_output"])
     payload = canonical_bytes({"population": population, "replay": replay})
     with target.open("xb") as stream:

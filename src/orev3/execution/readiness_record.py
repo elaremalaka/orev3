@@ -342,6 +342,20 @@ PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_DOCUMENT_POLICY = {
         "adapter-declaration"
     ],
 }
+PROSPECTIVE_BOUNDED_STREAMING_PHASE3B_SCHEMA_POLICY = {
+    **PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_POLICY,
+    "evidence-preparation-policy": (
+        "evidence-preparation-policy-bounded-streaming-v1",
+        "src/orev3/execution/schemas/v1/evidence-preparation-policy-bounded-streaming-v1.schema.json",
+    ),
+}
+PROSPECTIVE_BOUNDED_STREAMING_PHASE3B_SCHEMA_DOCUMENT_POLICY = {
+    **PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_DOCUMENT_POLICY,
+    "evidence-preparation-policy": (
+        "orev3://schemas/execution-readiness/v1/evidence-preparation-policy-bounded-streaming-v1",
+        "2a89187c8f07a57b92ba1ddf209c5e68079823dd0f3a4bbe25307b162ea011b3",
+    ),
+}
 READINESS_V1_1_SCHEMA_REGISTRY_IDENTIFIER = "readiness-v1-schema-registry-v1"
 READINESS_V1_1_SCHEMA_POLICY = dict(
     sorted(
@@ -478,6 +492,18 @@ PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY = {
     **READINESS_V1_1_SCHEMA_DOCUMENT_POLICY,
     "adapter-declaration": PROSPECTIVE_ADAPTER_V4_PHASE3A_SCHEMA_DOCUMENT_POLICY[
         "adapter-declaration"
+    ],
+}
+PROSPECTIVE_BOUNDED_STREAMING_READINESS_SCHEMA_POLICY = {
+    **PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY,
+    "evidence-preparation-policy": PROSPECTIVE_BOUNDED_STREAMING_PHASE3B_SCHEMA_POLICY[
+        "evidence-preparation-policy"
+    ],
+}
+PROSPECTIVE_BOUNDED_STREAMING_READINESS_SCHEMA_DOCUMENT_POLICY = {
+    **PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY,
+    "evidence-preparation-policy": PROSPECTIVE_BOUNDED_STREAMING_PHASE3B_SCHEMA_DOCUMENT_POLICY[
+        "evidence-preparation-policy"
     ],
 }
 

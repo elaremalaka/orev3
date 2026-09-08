@@ -61,15 +61,15 @@ def main() -> int:
     try:
         from orev3.execution.canonical import domain_identity, parse_canonical_bytes, validate_json_schema_instance
         from orev3.execution.contract_validation import PROFILE_CONTRACT_DOMAIN, reconstruct_profile_binding_identity, validate_artifact_declarations, validate_profile_contract, validate_profile_contract_v2
-        from orev3.execution.dataset_validation import dataset_evidence, projection_evidence, publish_projection
-        from orev3.execution.evidence_preparation import EvidenceAuthorityGeneration, aggregate_evidence, load_evidence_policy, load_phase3b_schemas, load_prospective_phase3b_schemas, reconstruct_projection_twice, reconstruct_prospective_phase3a_worker, reconstruct_replay_twice, require_phase3b_governance_closure
+        from orev3.execution.dataset_validation import dataset_evidence, projection_evidence, projection_evidence_from_metadata, publish_projection, publish_projection_path
+        from orev3.execution.evidence_preparation import EvidenceAuthorityGeneration, PathBackedProjection, aggregate_evidence, load_evidence_policy, load_phase3b_schemas, load_prospective_phase3b_schemas, reconstruct_projection_twice, reconstruct_prospective_phase3a_worker, reconstruct_replay_twice, require_phase3b_governance_closure
         from orev3.execution.external_inputs import ResourceLimits, snapshot_declared_input
         from orev3.execution.git_state import GitRepository
         from orev3.execution.phase3b_components import COMPONENT_POLICIES, DECODER_COMPONENT_POLICIES, PROJECTION_SCHEMA_CONTRACT_DOMAIN, RAW_SCHEMA_CONTRACT_DOMAIN, require_projection_contract_binding, resolve_component
         from orev3.execution.preparation import PreparationAuthorityGeneration, READINESS_TEST_POLICY_PATH, _blob, _collection_affecting_paths, _load_adapter_material, _validate_scope_objects
         from orev3.execution.readiness_record import READINESS_TEST_POLICY_V2_PATH, validate_readiness_test_policy, validate_readiness_test_policy_v2
         from orev3.execution.zero_input_phase3b import build_zero_input_replay_evidence
-        from orev3.execution.runtime import NETWORK_SANDBOX_PROFILE, PHASE3B_WORKER_EVIDENCE_DOMAIN, _run_preparation_worker
+        from orev3.execution.runtime import controller_acquisition_policy, NETWORK_SANDBOX_PROFILE, PHASE3B_WORKER_EVIDENCE_DOMAIN, _run_preparation_worker
         from orev3.execution.test_policy import run_readiness_tests
 
         repository = GitRepository(source_root)
@@ -239,14 +239,15 @@ def main() -> int:
         ):
             raise ValueError("zero-input adapter authority is not canonically empty")
         for declaration in declarations:
-            snapshot = snapshot_declared_input(
-                declaration,
-                # Preserve the exact lexical spelling until the detached
-                # descriptor-relative traversal validates it.
-                locator_paths=dict(request["operational_input_locators"]),
-                object_store=input_store,
-                limits=limits,
-            )
+            with controller_acquisition_policy():
+                snapshot = snapshot_declared_input(
+                    declaration,
+                    # Preserve the exact lexical spelling until the detached
+                    # descriptor-relative traversal validates it.
+                    locator_paths=dict(request["operational_input_locators"]),
+                    object_store=input_store,
+                    limits=limits,
+                )
             validate_json_schema_instance(snapshot.material, schemas["immutable-input-snapshot"], schema_registry={})
             snapshots.append(snapshot)
             contract = contracts[declaration["external_input_identifier"]]
@@ -394,7 +395,7 @@ def main() -> int:
                 semantic_component_identities.append(decoder_binding.component_identity)
             elif decoder is not None and decoder.get("decoder_kind") != "not_required":
                 raise ValueError("declared decoder authority kind is unsupported")
-            projection_bytes, projector_ids, projector_result = reconstruct_projection_twice(
+            projection_result, projector_ids, projector_result = reconstruct_projection_twice(
                 source_root=source_root,
                 dependency_root=dependency_root,
                 raw_snapshot=raw_projection_input,
@@ -414,12 +415,27 @@ def main() -> int:
                 governed_decoder_read_files=governed_decoder_read_files,
             )
             worker_evidence_identities.extend(projector_ids)
-            record_count = projection_bytes.count(b"\n")
+            record_count = (
+                int(projector_result["record_count"])
+                if isinstance(projection_result, PathBackedProjection)
+                else projection_result.count(b"\n")
+            )
             dataset = dataset_evidence(external_input_identity=declaration["external_input_identity"], snapshot_identity=snapshot.identity, source_class=contract["source_class"], dataset_version=contract["dataset_version"], container=contract["container"], parser_component_identity=raw_parser.component_identity, validator_component_identity=dataset_validator.component_identity, schema_identity=declaration["schema_identity"], protocol_revision=contract["protocol_revision"], record_count=record_count, record_ordering=contract["record_ordering"], candidate_order=contract["candidate_order"], projection_required=contract["projection_required"], dataset_content_identity=projector_result["dataset_content_identity"])
             validate_json_schema_instance(dataset, schemas["dataset-validation-evidence"], schema_registry={})
-            projection = projection_evidence(raw_snapshot_identity=snapshot.identity, raw_dataset_identity=dataset["dataset_identity"], parser_component_identity=raw_parser.component_identity, projector_component_identity=projector.component_identity, projection_schema_identity=contract["projection_schema_identity"], allowed_fields=sorted(projection_schema["properties"]), projection_bytes=projection_bytes, record_count=record_count)
+            if isinstance(projection_result, PathBackedProjection):
+                projection = projection_evidence_from_metadata(raw_snapshot_identity=snapshot.identity, raw_dataset_identity=dataset["dataset_identity"], parser_component_identity=raw_parser.component_identity, projector_component_identity=projector.component_identity, projection_schema_identity=contract["projection_schema_identity"], allowed_fields=sorted(projection_schema["properties"]), byte_count=projection_result.byte_count, sha256=projection_result.sha256, record_count=record_count)
+            else:
+                projection = projection_evidence(raw_snapshot_identity=snapshot.identity, raw_dataset_identity=dataset["dataset_identity"], parser_component_identity=raw_parser.component_identity, projector_component_identity=projector.component_identity, projection_schema_identity=contract["projection_schema_identity"], allowed_fields=sorted(projection_schema["properties"]), projection_bytes=projection_result, record_count=record_count)
             validate_json_schema_instance(projection, schemas["outcome-blind-projection-evidence"], schema_registry={})
-            projection_paths.append(publish_projection(projection_bytes, store=projection_store, expected_sha256=projection["sha256"]))
+            if isinstance(projection_result, PathBackedProjection):
+                try:
+                    with controller_acquisition_policy():
+                        projection_paths.append(publish_projection_path(projection_result.path, store=projection_store, expected_size=projection_result.byte_count, expected_sha256=projection["sha256"]))
+                finally:
+                    projection_result.cleanup()
+            else:
+                with controller_acquisition_policy():
+                    projection_paths.append(publish_projection(projection_result, store=projection_store, expected_sha256=projection["sha256"]))
             datasets.append(dataset)
             projections.append(projection)
         if not prospective and len(projection_paths) != 1:

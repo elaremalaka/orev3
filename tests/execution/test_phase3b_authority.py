@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from orev3.execution.canonical import domain_identity, parse_json, validate_json_schema_instance
-from orev3.execution.evidence_preparation import EVIDENCE_POLICY_DOMAIN, EVIDENCE_PREPARATION_DOMAIN, PHASE3B_REMAINING_PREDICATES, EvidenceAuthorityGeneration, EvidencePreparationDisposition, aggregate_evidence, load_evidence_policy, load_prospective_phase3b_schemas, require_phase3b_governance_closure
+from orev3.execution.evidence_preparation import EVIDENCE_POLICY_DOMAIN, EVIDENCE_PREPARATION_DOMAIN, PHASE3B_REMAINING_PREDICATES, EvidenceAuthorityGeneration, EvidencePreparationDisposition, _collect_evidence_preparation_evidence, aggregate_evidence, load_bounded_streaming_evidence_policy, load_evidence_policy, load_prospective_phase3b_schemas, require_phase3b_governance_closure
 from orev3.execution.preparation import PreparationAuthorityGeneration, load_prospective_phase3a_schemas
 from orev3.execution.readiness_contracts import (
     ProspectiveRegistryGeneration,
@@ -54,6 +54,23 @@ def test_schema_policy_is_exactly_twenty() -> None:
     assert policy["limits"]["max_file_bytes"] == 67_108_864
 
 
+def test_bounded_measurement_policy_has_exact_closed_shape_and_identity() -> None:
+    schema = parse_json(
+        Path("src/orev3/execution/schemas/v1/evidence-preparation-policy-bounded-streaming-v1.schema.json").read_bytes()
+    )
+    raw = Path(
+        "config/research/readiness/evidence-preparation-policy-bounded-streaming-v1.json"
+    ).read_bytes()
+    policy = load_bounded_streaming_evidence_policy(raw, schema=schema)
+    assert len(policy) == 8
+    assert len(policy["limits"]) == 18
+    assert policy["policy_identity"] == (
+        "e8d05be3129135535dbc9a8575cae0f32934b3a8e8773f84f3d7bbd0610ee61f"
+    )
+    assert "numeric_envelope_mode" not in policy
+    assert "deferred_numeric_fields" not in policy
+
+
 def test_adapter_v4_generation_and_overlays_are_exact() -> None:
     value = "prospective-v1.1-adapter-v4-configuration-resource"
     assert ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE.value == value
@@ -86,6 +103,26 @@ def test_unknown_and_cross_stage_generations_reject_without_fallback() -> None:
     with pytest.raises(Exception, match="generation"):
         load_prospective_phase3b_schemas(
             None, "0" * 40, PreparationAuthorityGeneration.PROSPECTIVE_V1_1
+        )
+    bounded_policy, bounded_documents, bounded_count = prospective_schema_policy(
+        ProspectiveRegistryGeneration.ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING
+    )
+    assert bounded_count == 29
+    assert bounded_policy["evidence-preparation-policy"][0] == (
+        "evidence-preparation-policy-bounded-streaming-v1"
+    )
+    assert bounded_documents["evidence-preparation-policy"][0] == (
+        "orev3://schemas/execution-readiness/v1/evidence-preparation-policy-bounded-streaming-v1"
+    )
+    with pytest.raises(Exception, match="not implemented"):
+        _collect_evidence_preparation_evidence(
+            None,
+            "rq003-experiment-005-signed-share-imbalance-predictive-evaluation",
+            operational_input_locators={},
+            authority=None,
+            generation=(
+                EvidenceAuthorityGeneration.ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING
+            ),
         )
     for wrong in (
         PreparationAuthorityGeneration.PROSPECTIVE_V1_1,

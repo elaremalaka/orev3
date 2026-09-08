@@ -10,13 +10,16 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import re
+import stat
 import unicodedata
+from array import array
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
-from pathlib import PurePosixPath
-from typing import Any, Mapping, Sequence
+from pathlib import Path, PurePosixPath
+from typing import Any, Iterator, Mapping, Sequence
 
 from pydantic import TypeAdapter, ValidationError
 
@@ -52,6 +55,15 @@ _IDENTIFIER = re.compile(r"[a-z][a-z0-9_.-]*")
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _UTC = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z")
 _TRACKED_INTEGER_ADAPTER = TypeAdapter(int)
+MAX_FRAMED_RECORD_BYTES = 22_694
+MAX_DECODED_STRING_VALUE_BYTES = 64
+MAX_DECODED_OBJECT_KEY_BYTES = 37
+MAX_CANONICAL_SCALAR_BYTES = 20
+MAX_JSON_DEPTH = 4
+MAX_OBJECT_MEMBERS = 18
+MAX_ARRAY_CARDINALITY = 146
+MAX_LIFECYCLE_REFERENCES = 146
+MAX_PROJECTION_RECORD_BYTES = 227_867_665
 _CONFIGURATION_FIELDS = frozenset({
     "candidate_order", "configuration_identifier", "controller_identifier",
     "dataset_version", "decision_selection_identifier",
@@ -67,6 +79,39 @@ _CONFIGURATION_FIELDS = frozenset({
     "projector_identifier", "protocol_sha256",
     "source_processing_prerequisite_sha256", "supported_protocol_revision",
 })
+BOUNDED_STREAMING_MEASUREMENT_MODE = "BOUNDED_STREAMING_MEASUREMENT_CANDIDATE"
+BOUNDED_STREAMING_ADOPTED_MODE = "BOUNDED_STREAMING_NUMERIC_ENVELOPE_ADOPTED"
+BOUNDED_STREAMING_AUTHORITY_GENERATION = (
+    "prospective-v1.1-adapter-v4-experiment5-bounded-streaming"
+)
+BOUNDED_STREAMING_POLICY_IDENTIFIER = (
+    "experiment-evidence-preparation-policy-bounded-streaming-v1"
+)
+BOUNDED_STREAMING_POLICY_PATH = (
+    "config/research/readiness/evidence-preparation-policy-bounded-streaming-v1.json"
+)
+BOUNDED_STREAMING_POLICY_REVISION = "1"
+BOUNDED_SOURCE_CONFIGURATION_MATERIAL_DOMAIN = (
+    "orev3:rq003-experiment-005:bounded-source-processing-configuration-material:v1\n"
+)
+BOUNDED_POLICY_BINDING_DOMAIN = (
+    "orev3:rq003-experiment-005:bounded-evidence-preparation-policy-binding:v1\n"
+)
+DEFERRED_NUMERIC_FIELDS = (
+    "max_controller_peak_rss_bytes",
+    "max_projection_bytes",
+    "max_temporary_disk_bytes",
+    "max_worker_peak_rss_bytes",
+    "watchdog_poll_interval_milliseconds",
+    "watchdog_rss_bytes",
+)
+_BOUNDED_COMMON_FIELDS = frozenset(
+    {"bounded_evidence_preparation_policy_binding_identity", "numeric_envelope_mode"}
+)
+_BOUNDED_MEASUREMENT_FIELDS = _CONFIGURATION_FIELDS | _BOUNDED_COMMON_FIELDS | {
+    "deferred_numeric_fields"
+}
+_BOUNDED_ADOPTED_FIELDS = _CONFIGURATION_FIELDS | _BOUNDED_COMMON_FIELDS
 
 _LIFECYCLE_PATHS = frozenset(
     {
@@ -206,7 +251,16 @@ def authenticate_configuration(
     if len(raw) != expected_byte_count or _sha(raw) != expected_sha256:
         raise _fail("CONFIGURATION_SUBSTITUTION")
     parsed = parse_json(raw)
-    if not isinstance(parsed, dict) or set(parsed) != _CONFIGURATION_FIELDS:
+    if not isinstance(parsed, dict):
+        raise _fail("CONFIGURATION_INVALID")
+    fields = set(parsed)
+    if fields == _CONFIGURATION_FIELDS:
+        configuration_mode = "legacy"
+    elif fields == _BOUNDED_MEASUREMENT_FIELDS:
+        configuration_mode = "measurement"
+    elif fields == _BOUNDED_ADOPTED_FIELDS:
+        configuration_mode = "adopted"
+    else:
         raise _fail("CONFIGURATION_INVALID")
     if canonical_bytes(parsed) != raw:
         raise _fail("CONFIGURATION_NONCANONICAL")
@@ -219,8 +273,6 @@ def authenticate_configuration(
         "lifecycle_schema_version": 1,
         "candidate_order": list(EXPERIMENT5_CANDIDATES),
         "decision_selection_identity": EXPERIMENT5_DECISION_SELECTION_IDENTITY,
-        "maximum_members": 256,
-        "maximum_records": 100_000,
         "minimum_effect_clarification_sha256": EXPERIMENT5_MINIMUM_EFFECT_CLARIFICATION_SHA256,
         "observation_schema_versions": [1, 2],
         "projection_schema_path": "src/orev3/execution/schemas/v1/rq003-experiment-005-projection.schema.json",
@@ -245,14 +297,33 @@ def authenticate_configuration(
     if parsed.get("observation_schema_versions") != [1, 2]:
         raise _fail("CONFIGURATION_AUTHORITY_MISMATCH")
     reconstruct_tracked_schema_identities(parsed)
-    if {key: parsed.get(key) for key in (
-        "maximum_aggregate_bytes", "maximum_member_bytes",
-        "maximum_projection_bytes",
-    )} != {
-        "maximum_aggregate_bytes": 268_435_456,
-        "maximum_member_bytes": 67_108_864,
-        "maximum_projection_bytes": 134_217_728,
-    }:
+    expected_limits = (
+        {
+            "maximum_aggregate_bytes": 268_435_456,
+            "maximum_member_bytes": 67_108_864,
+            "maximum_members": 256,
+            "maximum_projection_bytes": 134_217_728,
+            "maximum_records": 100_000,
+        }
+        if configuration_mode == "legacy"
+        else {
+            "maximum_aggregate_bytes": 1_749_809_411,
+            "maximum_member_bytes": 227_867_665,
+            "maximum_members": 256,
+            "maximum_projection_bytes": 328_739_211_471_540,
+            "maximum_records": 1_442_676,
+        }
+    )
+    if {key: parsed.get(key) for key in expected_limits} != expected_limits:
+        raise _fail("CONFIGURATION_AUTHORITY_MISMATCH")
+    if configuration_mode == "measurement" and (
+        parsed.get("numeric_envelope_mode") != BOUNDED_STREAMING_MEASUREMENT_MODE
+        or parsed.get("deferred_numeric_fields") != list(DEFERRED_NUMERIC_FIELDS)
+    ):
+        raise _fail("CONFIGURATION_AUTHORITY_MISMATCH")
+    if configuration_mode == "adopted" and parsed.get(
+        "numeric_envelope_mode"
+    ) != BOUNDED_STREAMING_ADOPTED_MODE:
         raise _fail("CONFIGURATION_AUTHORITY_MISMATCH")
     schema_sha = parsed.get("projection_schema_sha256")
     if not isinstance(schema_sha, str) or _SHA256.fullmatch(schema_sha) is None:
@@ -267,6 +338,77 @@ def authenticate_configuration(
     if _SHA256.fullmatch(schema_identity) is None:
         raise _fail("CONFIGURATION_INVALID")
     return parsed, configuration_identity, schema_identity
+
+
+def reconstruct_bounded_source_processing_material_identity(
+    configuration: Mapping[str, Any],
+) -> str:
+    material = dict(configuration)
+    material.pop("bounded_evidence_preparation_policy_binding_identity", None)
+    return domain_identity(BOUNDED_SOURCE_CONFIGURATION_MATERIAL_DOMAIN, material)
+
+
+def reconstruct_rq003_experiment5_bounded_policy_binding_identity(
+    configuration: Mapping[str, Any], policy: Mapping[str, Any]
+) -> str:
+    mode = configuration.get("numeric_envelope_mode")
+    limits = policy.get("limits")
+    if not isinstance(limits, Mapping) or limits.get("numeric_envelope_mode") != mode:
+        raise _fail("PROFILE_POLICY_MISMATCH")
+    if mode == BOUNDED_STREAMING_MEASUREMENT_MODE:
+        deferred = configuration.get("deferred_numeric_fields")
+        if deferred != limits.get("deferred_numeric_fields") or deferred != list(
+            DEFERRED_NUMERIC_FIELDS
+        ):
+            raise _fail("PROFILE_POLICY_MISMATCH")
+    elif mode == BOUNDED_STREAMING_ADOPTED_MODE:
+        if "deferred_numeric_fields" in configuration or "deferred_numeric_fields" in limits:
+            raise _fail("PROFILE_POLICY_MISMATCH")
+        deferred = None
+    else:
+        raise _fail("PROFILE_POLICY_MISMATCH")
+    generic_limits = {
+        "max_aggregate_collection_bytes": limits.get("max_aggregate_collection_bytes"),
+        "max_collection_members": limits.get("max_collection_members"),
+        "max_file_bytes": limits.get("max_file_bytes"),
+        "max_projection_bytes": limits.get("max_projection_bytes"),
+        "max_source_records": limits.get("max_source_records"),
+    }
+    source_limits = {
+        "maximum_aggregate_bytes": configuration.get("maximum_aggregate_bytes"),
+        "maximum_member_bytes": configuration.get("maximum_member_bytes"),
+        "maximum_members": configuration.get("maximum_members"),
+        "maximum_projection_bytes": configuration.get("maximum_projection_bytes"),
+        "maximum_records": configuration.get("maximum_records"),
+    }
+    if any(
+        configuration[source_name] != limits[policy_name]
+        for source_name, policy_name in (
+            ("maximum_members", "max_collection_members"),
+            ("maximum_aggregate_bytes", "max_aggregate_collection_bytes"),
+            ("maximum_member_bytes", "max_file_bytes"),
+            ("maximum_records", "max_source_records"),
+            ("maximum_projection_bytes", "max_projection_bytes"),
+        )
+    ):
+        raise _fail("PROFILE_POLICY_MISMATCH")
+    material: dict[str, Any] = {
+        "authority_generation": BOUNDED_STREAMING_AUTHORITY_GENERATION,
+        "evidence_preparation_policy_identifier": BOUNDED_STREAMING_POLICY_IDENTIFIER,
+        "evidence_preparation_policy_identity": policy.get("policy_identity"),
+        "evidence_preparation_policy_path": BOUNDED_STREAMING_POLICY_PATH,
+        "evidence_preparation_policy_revision": BOUNDED_STREAMING_POLICY_REVISION,
+        "generic_limits": generic_limits,
+        "numeric_envelope_mode": mode,
+        "source_processing_configuration_identifier": CONFIGURATION_IDENTIFIER,
+        "source_processing_configuration_material_identity": reconstruct_bounded_source_processing_material_identity(
+            configuration
+        ),
+        "source_processing_limits": source_limits,
+    }
+    if deferred is not None:
+        material["deferred_numeric_fields"] = deferred
+    return domain_identity(BOUNDED_POLICY_BINDING_DOMAIN, material)
 
 
 def _integer(name: str, value: object, minimum: int = 0) -> int:
@@ -314,6 +456,8 @@ class _SelectiveParser:
     """Strict JSON parser that never materializes values outside a whitelist."""
 
     def __init__(self, raw: bytes, paths: frozenset[str]) -> None:
+        if len(raw) + 1 > MAX_FRAMED_RECORD_BYTES:
+            raise _fail("RESOURCE_MEMORY_EXCEEDED")
         if raw.startswith(b"\xef\xbb\xbf") or b"\r" in raw:
             raise _fail("INVALID_JSON_FRAMING")
         try:
@@ -327,7 +471,7 @@ class _SelectiveParser:
         self.opaque_shapes: dict[str, object] = {}
 
     def parse(self) -> dict[str, Any]:
-        result = self._value(())
+        result = self._value((), 1)
         self._ws()
         if self.i != len(self.text) or not isinstance(result, dict):
             raise _fail("MALFORMED_JSON")
@@ -343,29 +487,36 @@ class _SelectiveParser:
         prefix = any(item.startswith(key + ".") for item in self.paths) if key else True
         return exact, prefix
 
-    def _string(self) -> str:
+    def _string(self, *, key: bool = False) -> str:
         try:
             value, end = self.decoder.raw_decode(self.text, self.i)
         except (json.JSONDecodeError, ValueError) as exc:
             raise _fail("MALFORMED_JSON") from exc
         if not isinstance(value, str) or unicodedata.normalize("NFC", value) != value:
             raise _fail("INVALID_STRING")
+        maximum = (
+            MAX_DECODED_OBJECT_KEY_BYTES if key else MAX_DECODED_STRING_VALUE_BYTES
+        )
+        if len(value.encode("utf-8")) > maximum:
+            raise _fail("RESOURCE_MEMORY_EXCEEDED")
         self.i = end
         return value
 
-    def _value(self, path: tuple[str, ...]) -> Any:
+    def _value(self, path: tuple[str, ...], depth: int) -> Any:
+        if depth > MAX_JSON_DEPTH:
+            raise _fail("RESOURCE_MEMORY_EXCEEDED")
         self._ws()
         exact, prefix = self._wanted(path)
         if not exact and not prefix:
-            self._skip(path)
+            self._skip(path, depth)
             return _OMITTED
         if self.i >= len(self.text):
             raise _fail("MALFORMED_JSON")
         char = self.text[self.i]
         if char == "{":
-            return self._object(path)
+            return self._object(path, depth)
         if char == "[":
-            return self._array(path)
+            return self._array(path, depth)
         try:
             value, end = self.decoder.raw_decode(self.text, self.i)
         except (json.JSONDecodeError, ValueError) as exc:
@@ -375,10 +526,15 @@ class _SelectiveParser:
                 raise _fail("MALFORMED_JSON")
             lexeme = self.text[self.i:end]
             value = lexeme
+        elif isinstance(value, str):
+            if len(value.encode("utf-8")) > MAX_DECODED_STRING_VALUE_BYTES:
+                raise _fail("RESOURCE_MEMORY_EXCEEDED")
+        elif len(self.text[self.i:end].encode("utf-8")) > MAX_CANONICAL_SCALAR_BYTES:
+            raise _fail("RESOURCE_MEMORY_EXCEEDED")
         self.i = end
         return value
 
-    def _object(self, path: tuple[str, ...]) -> dict[str, Any]:
+    def _object(self, path: tuple[str, ...], depth: int) -> dict[str, Any]:
         self.i += 1
         result: dict[str, Any] = {}
         seen: set[str] = set()
@@ -388,16 +544,18 @@ class _SelectiveParser:
             return result
         while True:
             self._ws()
-            key = self._string()
+            key = self._string(key=True)
             if key in seen:
                 raise _fail("DUPLICATE_JSON_KEY")
             seen.add(key)
+            if len(seen) > MAX_OBJECT_MEMBERS:
+                raise _fail("RESOURCE_MEMORY_EXCEEDED")
             self.seen_paths.add(".".join(path + (key,)))
             self._ws()
             if self.i >= len(self.text) or self.text[self.i] != ":":
                 raise _fail("MALFORMED_JSON")
             self.i += 1
-            value = self._value(path + (key,))
+            value = self._value(path + (key,), depth + 1)
             if value is not _OMITTED:
                 result[key] = value
             self._ws()
@@ -410,9 +568,10 @@ class _SelectiveParser:
             if char != ",":
                 raise _fail("MALFORMED_JSON")
 
-    def _array(self, path: tuple[str, ...]) -> list[Any]:
+    def _array(self, path: tuple[str, ...], depth: int) -> list[Any]:
         self.i += 1
         result: list[Any] = []
+        cardinality = 0
         exact, _ = self._wanted(path)
         child_path = path if exact else path + ("*",)
         self._ws()
@@ -420,7 +579,10 @@ class _SelectiveParser:
             self.i += 1
             return result
         while True:
-            value = self._value(child_path)
+            if cardinality >= MAX_ARRAY_CARDINALITY:
+                raise _fail("RESOURCE_MEMORY_EXCEEDED")
+            value = self._value(child_path, depth + 1)
+            cardinality += 1
             if value is not _OMITTED:
                 result.append(value)
             self._ws()
@@ -433,8 +595,10 @@ class _SelectiveParser:
             if char != ",":
                 raise _fail("MALFORMED_JSON")
 
-    def _skip(self, path: tuple[str, ...] = ()) -> object:
+    def _skip(self, path: tuple[str, ...] = (), depth: int = 1) -> object:
         """Validate one JSON value lexically without decoding its semantics."""
+        if depth > MAX_JSON_DEPTH:
+            raise _fail("RESOURCE_MEMORY_EXCEEDED")
         self._ws()
         if self.i >= len(self.text):
             raise _fail("MALFORMED_JSON")
@@ -444,6 +608,8 @@ class _SelectiveParser:
             start = self.i
             self._skip_string()
             value = json.loads(self.text[start:self.i])
+            if len(value.encode("utf-8")) > MAX_DECODED_STRING_VALUE_BYTES:
+                raise _fail("RESOURCE_MEMORY_EXCEEDED")
             shape: object = ("string", _tracked_integer_accepted(value))
             if path_key in _TRACKED_OPAQUE_OBSERVATION_SHAPES:
                 self.opaque_shapes[path_key] = shape
@@ -457,11 +623,14 @@ class _SelectiveParser:
                     self.opaque_shapes[path_key] = shape
                 return shape
             while True:
-                self._ws(); key = self._string()
+                self._ws(); key = self._string(key=True)
                 if key in seen: raise _fail("DUPLICATE_JSON_KEY")
-                seen.add(key); self._ws()
+                seen.add(key)
+                if len(seen) > MAX_OBJECT_MEMBERS:
+                    raise _fail("RESOURCE_MEMORY_EXCEEDED")
+                self._ws()
                 if self.i >= len(self.text) or self.text[self.i] != ":": raise _fail("MALFORMED_JSON")
-                self.i += 1; self._skip(path + (key,)); self._ws()
+                self.i += 1; self._skip(path + (key,), depth + 1); self._ws()
                 if self.i >= len(self.text): raise _fail("MALFORMED_JSON")
                 token = self.text[self.i]; self.i += 1
                 if token == "}":
@@ -479,7 +648,9 @@ class _SelectiveParser:
                     self.opaque_shapes[path_key] = shape
                 return shape
             while True:
-                element_shapes.append(self._skip(path + ("*",))); self._ws()
+                if len(element_shapes) >= MAX_ARRAY_CARDINALITY:
+                    raise _fail("RESOURCE_MEMORY_EXCEEDED")
+                element_shapes.append(self._skip(path + ("*",), depth + 1)); self._ws()
                 if self.i >= len(self.text): raise _fail("MALFORMED_JSON")
                 token = self.text[self.i]; self.i += 1
                 if token == "]":
@@ -496,6 +667,8 @@ class _SelectiveParser:
             if match is None:
                 raise _fail("MALFORMED_JSON")
             lexeme = match.group(0)
+            if len(lexeme.encode("utf-8")) > MAX_CANONICAL_SCALAR_BYTES:
+                raise _fail("RESOURCE_MEMORY_EXCEEDED")
             self.i += len(lexeme)
             semantic_scalar = json.loads(lexeme)
             if lexeme == "null":
@@ -574,6 +747,142 @@ class SourceMember:
             "member_order": self.member_order, "member_path": self.member_path,
             "sha256": self.expected_sha256,
         })
+
+
+@dataclass(frozen=True, slots=True)
+class SnapshotSourceMember:
+    """Authenticated path-backed member; source payload bytes are never retained."""
+
+    logical_identifier: str
+    member_path: str
+    member_order: int
+    content_object: Path
+    expected_byte_count: int
+    expected_sha256: str
+    declared_member_identity: str = ""
+
+    def __post_init__(self) -> None:
+        if _IDENTIFIER.fullmatch(self.logical_identifier) is None:
+            raise _fail("INVALID_MEMBER_IDENTIFIER")
+        path = PurePosixPath(self.member_path)
+        if str(path) != self.member_path or path.is_absolute() or ".." in path.parts:
+            raise _fail("INVALID_MEMBER_PATH")
+        _integer("member_order", self.member_order)
+        if (
+            _SHA256.fullmatch(self.expected_sha256) is None
+            or self.expected_byte_count < 1
+        ):
+            raise _fail("INPUT_SUBSTITUTION")
+        if self.declared_member_identity and self.declared_member_identity != self.member_identity:
+            raise _fail("MEMBER_IDENTITY_SUBSTITUTION")
+
+    @property
+    def member_identity(self) -> str:
+        return _identity(_EXTERNAL_INPUT_MEMBER_DOMAIN, {
+            "byte_count": self.expected_byte_count,
+            "logical_identifier": self.logical_identifier,
+            "member_order": self.member_order,
+            "member_path": self.member_path,
+            "sha256": self.expected_sha256,
+        })
+
+
+class _IndexedRecords(Sequence[tuple[bytes, dict[str, Any]]]):
+    """Compact offsets over a descriptor-pinned, completely authenticated member."""
+
+    __slots__ = ("_descriptor", "_lengths", "_offsets", "_paths")
+
+    def __init__(
+        self, member: SnapshotSourceMember, paths: frozenset[str]
+    ) -> None:
+        flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+        try:
+            descriptor = os.open(member.content_object, flags)
+        except OSError as exc:
+            raise _fail("INPUT_SUBSTITUTION") from exc
+        self._descriptor = descriptor
+        self._paths = paths
+        self._offsets = array("Q")
+        self._lengths = array("I")
+        try:
+            opened = os.fstat(descriptor)
+            if (
+                not stat.S_ISREG(opened.st_mode)
+                or opened.st_nlink != 1
+                or opened.st_size != member.expected_byte_count
+            ):
+                raise _fail("INPUT_SUBSTITUTION")
+            digest = hashlib.sha256()
+            total = 0
+            line_start = 0
+            pending = bytearray()
+            while True:
+                chunk = os.read(descriptor, 1024 * 1024)
+                if not chunk:
+                    break
+                digest.update(chunk)
+                total += len(chunk)
+                if total > member.expected_byte_count:
+                    raise _fail("INPUT_SUBSTITUTION")
+                pending.extend(chunk)
+                while True:
+                    newline = pending.find(b"\n")
+                    if newline < 0:
+                        if len(pending) >= MAX_FRAMED_RECORD_BYTES:
+                            raise _fail("RESOURCE_MEMORY_EXCEEDED")
+                        break
+                    framed = newline + 1
+                    if framed > MAX_FRAMED_RECORD_BYTES:
+                        raise _fail("RESOURCE_MEMORY_EXCEEDED")
+                    if framed == 1 or b"\r" in pending[:framed]:
+                        raise _fail("INVALID_JSONL_FRAMING")
+                    self._offsets.append(line_start)
+                    self._lengths.append(framed)
+                    del pending[:framed]
+                    line_start += framed
+            closed = os.fstat(descriptor)
+            fingerprint = lambda value: (
+                value.st_dev, value.st_ino, value.st_size,
+                value.st_mtime_ns, value.st_ctime_ns,
+            )
+            if (
+                pending
+                or total != member.expected_byte_count
+                or digest.hexdigest() != member.expected_sha256
+                or fingerprint(opened) != fingerprint(closed)
+            ):
+                raise _fail("INPUT_SUBSTITUTION")
+        except BaseException:
+            os.close(descriptor)
+            self._descriptor = -1
+            raise
+
+    def __len__(self) -> int:
+        return len(self._offsets)
+
+    def __getitem__(self, index: int) -> tuple[bytes, dict[str, Any]]:
+        if index < 0:
+            index += len(self)
+        if index < 0 or index >= len(self):
+            raise IndexError(index)
+        length = int(self._lengths[index])
+        raw = os.pread(self._descriptor, length, int(self._offsets[index]))
+        if len(raw) != length or not raw.endswith(b"\n"):
+            raise _fail("INPUT_MUTATED")
+        parser = _SelectiveParser(raw[:-1], self._paths)
+        return raw, _require_tracked_record(parser, self._paths)
+
+    def __iter__(self) -> Iterator[tuple[bytes, dict[str, Any]]]:
+        for index in range(len(self)):
+            yield self[index]
+
+    def close(self) -> None:
+        if self._descriptor >= 0:
+            os.close(self._descriptor)
+            self._descriptor = -1
+
+    def __del__(self) -> None:
+        self.close()
 
 
 @dataclass(frozen=True, slots=True)
@@ -727,6 +1036,68 @@ class SourceProcessingResult:
 
 
 @dataclass(frozen=True, slots=True)
+class StreamingSourceProcessingResult:
+    private_projection_path: Path
+    byte_count: int
+    record_count: int
+    projection_sha256: str
+    projection_identity: str
+    dataset_content_identity: str
+    logical_projection_content_identity: str
+    projection_record_identities: tuple[str, ...]
+    lifecycle_record_sha256s: tuple[str, ...]
+
+
+class _PrivateProjectionSink:
+    __slots__ = ("byte_count", "digest", "path", "record_count", "_descriptor", "_trusted")
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self._descriptor = os.open(
+            path,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_CLOEXEC", 0),
+            0o600,
+        )
+        self.byte_count = 0
+        self.record_count = 0
+        self.digest = hashlib.sha256()
+        self._trusted = False
+
+    def append(self, framed_record: bytes, *, maximum_bytes: int) -> None:
+        proposed = self.byte_count + len(framed_record)
+        if proposed > maximum_bytes:
+            raise _fail("RESOURCE_PROJECTION_BYTES_EXCEEDED")
+        view = memoryview(framed_record)
+        while view:
+            written = os.write(self._descriptor, view)
+            if written <= 0:
+                raise _fail("PROJECTION_WRITE_FAILED")
+            view = view[written:]
+        self.digest.update(framed_record)
+        self.byte_count = proposed
+        self.record_count += 1
+
+    def finish(self) -> None:
+        os.fsync(self._descriptor)
+        os.close(self._descriptor)
+        self._descriptor = -1
+        self._trusted = True
+
+    def abort(self) -> None:
+        if self._descriptor >= 0:
+            os.close(self._descriptor)
+            self._descriptor = -1
+        if not self._trusted:
+            try:
+                self.path.unlink()
+            except FileNotFoundError:
+                pass
+
+    def __del__(self) -> None:
+        self.abort()
+
+
+@dataclass(frozen=True, slots=True)
 class SourceProcessingLimits:
     maximum_members: int
     maximum_aggregate_bytes: int
@@ -746,12 +1117,9 @@ class SourceProcessingLimits:
         )
 
 
-def _records(member: SourceMember, paths: frozenset[str]) -> list[tuple[bytes, dict[str, Any]]]:
-    result = []
-    for line in member.persisted_bytes.splitlines(keepends=True):
-        if line == b"\n" or not line.endswith(b"\n"):
-            raise _fail("INVALID_JSONL_FRAMING")
-        parser = _SelectiveParser(line[:-1], paths)
+def _require_tracked_record(
+    parser: _SelectiveParser, paths: frozenset[str]
+) -> dict[str, Any]:
         parsed = parser.parse()
         if paths is _LIFECYCLE_PATHS:
             required = {
@@ -812,7 +1180,20 @@ def _records(member: SourceMember, paths: frozenset[str]) -> list[tuple[bytes, d
                     or entropy_shape[1] is not True
                 ):
                     raise _fail("MALFORMED_TRACKED_OBSERVATION_FIELD")
-        result.append((line, parsed))
+        return parsed
+
+
+def _records(
+    member: SourceMember | SnapshotSourceMember, paths: frozenset[str]
+) -> Sequence[tuple[bytes, dict[str, Any]]]:
+    if isinstance(member, SnapshotSourceMember):
+        return _IndexedRecords(member, paths)
+    result = []
+    for line in member.persisted_bytes.splitlines(keepends=True):
+        if line == b"\n" or not line.endswith(b"\n"):
+            raise _fail("INVALID_JSONL_FRAMING")
+        parser = _SelectiveParser(line[:-1], paths)
+        result.append((line, _require_tracked_record(parser, paths)))
     return result
 
 
@@ -995,10 +1376,10 @@ def _lifecycle_core_from_projection(record: Mapping[str, Any]) -> dict[str, Any]
 
 
 def _process_source_collection(
-    members: Sequence[SourceMember], *, authority: SourceProcessingAuthority,
+    members: Sequence[SourceMember | SnapshotSourceMember], *, authority: SourceProcessingAuthority,
     projection_schema: Mapping[str, Any], expected_lifecycle_sha256: str,
-    limits: SourceProcessingLimits,
-) -> SourceProcessingResult:
+    limits: SourceProcessingLimits, private_projection_path: Path | None = None,
+) -> SourceProcessingResult | StreamingSourceProcessingResult:
     """Authenticate, normalize, select, and project one ordered collection."""
     if len(members) > limits.maximum_members:
         raise _fail("RESOURCE_MEMBER_COUNT_EXCEEDED")
@@ -1028,6 +1409,13 @@ def _process_source_collection(
     if total_record_count > limits.maximum_records:
         raise _fail("RESOURCE_RECORD_COUNT_EXCEEDED")
     projected: list[dict[str, Any]] = []
+    sink = (
+        _PrivateProjectionSink(private_projection_path)
+        if private_projection_path is not None
+        else None
+    )
+    projection_record_identities: list[str] = []
+    lifecycle_record_sha256s: list[str] = []
     selected_map: dict[int, SourceDecisionObservation] = {}
     selected_parsed_identities: dict[int, str] = {}
     selected_members: dict[int, SourceMember] = {}
@@ -1111,10 +1499,11 @@ def _process_source_collection(
                 snapshot=snapshot,
                 measurement_vector_bytes=tuple(PIPELINE.compute(snapshot.execution_context(square)).canonical_bytes() for square in EXPERIMENT5_CANDIDATES),
             )
-            selected_map[round_id] = selected; selected_members[round_id] = member
-            selected_parsed_identities[round_id] = ref[
-                "canonical_parsed_observation_identity"
-            ]
+            if sink is None:
+                selected_map[round_id] = selected; selected_members[round_id] = member
+                selected_parsed_identities[round_id] = ref[
+                    "canonical_parsed_observation_identity"
+                ]
         lifecycle_core = _lifecycle_core(
             lifecycle_source_file=members[0].member_path,
             lifecycle_source_line_number=lifecycle_line_number,
@@ -1178,7 +1567,61 @@ def _process_source_collection(
             "total_miners_values": ([selected.snapshot.total_miners] if selected else []), "active_round_motherlode_values": ([selected.snapshot.active_round_motherlode] if selected else []), "pre_finalization_total_vaulted_values": ([selected.snapshot.pre_finalization_total_vaulted] if selected else []), "pre_finalization_total_winnings_values": ([selected.snapshot.pre_finalization_total_winnings] if selected else []), "production_cost_ema_values": ([selected.snapshot.production_cost_ema] if selected else []), "treasury_motherlode_values": ([selected.snapshot.treasury_motherlode] if selected else []),
         }
         if set(record) & _FORBIDDEN_PROJECTION_KEYS: raise _fail("OUTCOME_LEAKAGE")
-        validate_json_schema_instance(record, projection_schema, schema_registry={}); projected.append(record)
+        validate_json_schema_instance(record, projection_schema, schema_registry={})
+        framed_record = canonical_bytes(record)
+        projection_record_identities.append(
+            _identity("orev3:rq003-experiment-005:projection-record:v1", record)
+        )
+        lifecycle_record_sha256s.append(_sha(lifecycle_bytes))
+        if sink is None:
+            projected.append(record)
+        else:
+            sink.append(framed_record, maximum_bytes=limits.maximum_projection_bytes)
+            del framed_record, record, normalized_obs, normalized_refs, selected
+    if sink is not None:
+        sink.finish()
+        projection_sha = sink.digest.hexdigest()
+        projection_identity = _identity(_PROJECTION_EVIDENCE_DOMAIN, {
+            "byte_count": sink.byte_count,
+            "ordered_record_count": sink.record_count,
+            "parser_component_identity": authority.parser_component_identity,
+            "projection_schema_identity": authority.projection_schema_identity,
+            "projector_component_identity": authority.projector_component_identity,
+            "sha256": projection_sha,
+        })
+        dataset_content = _identity(_DATASET_CONTENT_DOMAIN, {
+            "ordered_record_sha256s": lifecycle_record_sha256s,
+            "record_count": sink.record_count,
+        })
+        projection_content = _identity(
+            "orev3:rq003-experiment-005:projection-content:v1",
+            {
+                "ordered_projection_record_identities": projection_record_identities,
+                "record_count": sink.record_count,
+            },
+        )
+        result = StreamingSourceProcessingResult(
+            private_projection_path,
+            sink.byte_count,
+            sink.record_count,
+            projection_sha,
+            projection_identity,
+            dataset_content,
+            projection_content,
+            tuple(projection_record_identities),
+            tuple(lifecycle_record_sha256s),
+        )
+        try:
+            validate_streaming_projection(
+                result, authority=authority, projection_schema=projection_schema
+            )
+        except BaseException:
+            try:
+                private_projection_path.unlink()
+            except FileNotFoundError:
+                pass
+            raise
+        return result
     projection = b"".join(canonical_bytes(record) for record in projected)
     if len(projection) > limits.maximum_projection_bytes:
         raise _fail("RESOURCE_PROJECTION_BYTES_EXCEEDED")
@@ -1195,14 +1638,111 @@ def _process_source_collection(
         "ordered_record_sha256s": [_sha(line) for line, _ in lifecycle_lines],
         "record_count": len(lifecycle_lines),
     })
-    projection_record_identities = tuple(
-        _identity("orev3:rq003-experiment-005:projection-record:v1", record)
-        for record in projected
-    )
-    projection_content = _identity("orev3:rq003-experiment-005:projection-content:v1", {"ordered_projection_record_identities": list(projection_record_identities), "record_count": len(projected)})
-    result = SourceProcessingResult(tuple(projected), projection, projection_sha, projection_identity, dataset_content, projection_content, projection_record_identities, selected_map, selected_parsed_identities, selected_members)
+    legacy_record_identities = tuple(projection_record_identities)
+    projection_content = _identity("orev3:rq003-experiment-005:projection-content:v1", {"ordered_projection_record_identities": list(legacy_record_identities), "record_count": len(projected)})
+    result = SourceProcessingResult(tuple(projected), projection, projection_sha, projection_identity, dataset_content, projection_content, legacy_record_identities, selected_map, selected_parsed_identities, selected_members)
     validate_projection_population(result, authority=authority)
     return result
+
+
+def validate_streaming_projection(
+    result: StreamingSourceProcessingResult,
+    *,
+    authority: SourceProcessingAuthority,
+    projection_schema: Mapping[str, Any],
+) -> None:
+    """Independently validate canonical projection bytes with bounded storage."""
+
+    descriptor = os.open(
+        result.private_projection_path,
+        os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
+    )
+    digest = hashlib.sha256()
+    byte_count = 0
+    record_count = 0
+    record_identities: list[str] = []
+    lifecycle_hashes: list[str] = []
+    pending = bytearray()
+    try:
+        opened = os.fstat(descriptor)
+        if not stat.S_ISREG(opened.st_mode) or opened.st_nlink != 1:
+            raise _fail("PROJECTION_SUBSTITUTION")
+        while True:
+            chunk = os.read(descriptor, 64 * 1024)
+            if not chunk:
+                break
+            digest.update(chunk)
+            byte_count += len(chunk)
+            if byte_count > result.byte_count:
+                raise _fail("PROJECTION_SUBSTITUTION")
+            pending.extend(chunk)
+            while True:
+                newline = pending.find(b"\n")
+                if newline < 0:
+                    if len(pending) >= MAX_PROJECTION_RECORD_BYTES:
+                        raise _fail("RESOURCE_MEMORY_EXCEEDED")
+                    break
+                framed_size = newline + 1
+                if framed_size > MAX_PROJECTION_RECORD_BYTES:
+                    raise _fail("RESOURCE_MEMORY_EXCEEDED")
+                framed = bytes(pending[:framed_size])
+                del pending[:framed_size]
+                record = parse_json(framed[:-1], max_bytes=MAX_PROJECTION_RECORD_BYTES)
+                if not isinstance(record, Mapping) or canonical_bytes(record) != framed:
+                    raise _fail("PROJECTION_SUBSTITUTION")
+                validate_json_schema_instance(
+                    record, projection_schema, schema_registry={}
+                )
+                record_identities.append(
+                    _identity(
+                        "orev3:rq003-experiment-005:projection-record:v1", record
+                    )
+                )
+                lifecycle_hash = record.get("lifecycle_record_byte_sha256")
+                if not isinstance(lifecycle_hash, str):
+                    raise _fail("PROJECTION_SUBSTITUTION")
+                lifecycle_hashes.append(lifecycle_hash)
+                record_count += 1
+        closed = os.fstat(descriptor)
+        fingerprint = lambda value: (
+            value.st_dev, value.st_ino, value.st_size,
+            value.st_mtime_ns, value.st_ctime_ns,
+        )
+        if pending or fingerprint(opened) != fingerprint(closed):
+            raise _fail("PROJECTION_SUBSTITUTION")
+    finally:
+        os.close(descriptor)
+    if (
+        byte_count != result.byte_count
+        or record_count != result.record_count
+        or digest.hexdigest() != result.projection_sha256
+        or tuple(record_identities) != result.projection_record_identities
+        or tuple(lifecycle_hashes) != result.lifecycle_record_sha256s
+    ):
+        raise _fail("PROJECTION_SUBSTITUTION")
+    if result.dataset_content_identity != _identity(
+        _DATASET_CONTENT_DOMAIN,
+        {"ordered_record_sha256s": lifecycle_hashes, "record_count": record_count},
+    ):
+        raise _fail("DATASET_CONTENT_IDENTITY_SUBSTITUTION")
+    if result.logical_projection_content_identity != _identity(
+        "orev3:rq003-experiment-005:projection-content:v1",
+        {
+            "ordered_projection_record_identities": record_identities,
+            "record_count": record_count,
+        },
+    ):
+        raise _fail("PROJECTION_CONTENT_IDENTITY_SUBSTITUTION")
+    expected_projection_identity = _identity(_PROJECTION_EVIDENCE_DOMAIN, {
+        "byte_count": byte_count,
+        "ordered_record_count": record_count,
+        "parser_component_identity": authority.parser_component_identity,
+        "projection_schema_identity": authority.projection_schema_identity,
+        "projector_component_identity": authority.projector_component_identity,
+        "sha256": result.projection_sha256,
+    })
+    if result.projection_identity != expected_projection_identity:
+        raise _fail("PROJECTION_IDENTITY_SUBSTITUTION")
 
 
 _SINGLE_SELECTED_CONTAINERS = (
@@ -1423,6 +1963,29 @@ def process_source_collection(
     )
 
 
+def process_source_collection_to_path(
+    members: Sequence[SnapshotSourceMember],
+    *,
+    authority: SourceProcessingAuthority,
+    projection_schema: Mapping[str, Any],
+    configuration: Mapping[str, Any],
+    private_projection_path: Path,
+) -> StreamingSourceProcessingResult:
+    """Governed bounded-generation entry point with no projection materialization."""
+
+    result = _process_source_collection(
+        members,
+        authority=authority,
+        projection_schema=projection_schema,
+        expected_lifecycle_sha256=EXPERIMENT5_DATASET_SHA256,
+        limits=SourceProcessingLimits.from_configuration(configuration),
+        private_projection_path=private_projection_path,
+    )
+    if not isinstance(result, StreamingSourceProcessingResult):
+        raise _fail("PROJECTION_INVALID")
+    return result
+
+
 def construct_selected_source_binding(
     result: SourceProcessingResult, *, round_id: int, authority: SourceProcessingAuthority,
     replay_evidence: Mapping[str, Any], dataset_identity: str,
@@ -1547,4 +2110,4 @@ def authority_byte_parity() -> Mapping[str, str]:
     return {"protocol": EXPERIMENT5_PROTOCOL_SHA256, "minimum_effect": EXPERIMENT5_MINIMUM_EFFECT_CLARIFICATION_SHA256, "source_processing": EXPERIMENT5_SOURCE_PROCESSING_PREREQUISITE_SHA256}
 
 
-__all__ = ["SourceMember", "SourceProcessingAuthority", "SourceProcessingResult", "authenticate_configuration", "authority_byte_parity", "construct_selected_source_binding", "process_source_collection", "reconstruct_source_authority"]
+__all__ = ["SourceMember", "SourceProcessingAuthority", "SourceProcessingResult", "authenticate_configuration", "authority_byte_parity", "construct_selected_source_binding", "process_source_collection", "reconstruct_bounded_source_processing_material_identity", "reconstruct_rq003_experiment5_bounded_policy_binding_identity", "reconstruct_source_authority"]

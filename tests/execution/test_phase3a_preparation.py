@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from orev3.execution.canonical import canonical_bytes, domain_identity
+from orev3.execution.evidence_preparation import EvidenceAuthorityGeneration
 from orev3.execution.git_state import GitAuthorityError, GitDiagnosticCode, GitRepository, SourceCandidate, resolve_source_candidate
 from orev3.execution.preparation import (
     PHASE3A_REMAINING_PREDICATES,
@@ -20,6 +21,7 @@ from orev3.execution.preparation import (
     _discover_requirements,
     _scope_mapping,
     _selected_phase3a_authority,
+    load_prospective_phase3a_schemas,
     validate_preparation_environment,
 )
 from orev3.execution.readiness_record import (
@@ -44,6 +46,22 @@ def test_adapter_v4_phase3a_generation_uses_exact_v11_authority_documents() -> N
     assert _selected_phase3a_authority(
         PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
     ) == (READINESS_TEST_POLICY_V2_PATH, READINESS_SPECIFICATION_V1_1_PATH)
+    assert _selected_phase3a_authority(
+        PreparationAuthorityGeneration.ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING
+    ) == (READINESS_TEST_POLICY_V2_PATH, READINESS_SPECIFICATION_V1_1_PATH)
+
+
+def test_phase3a_generation_dispatch_rejects_cross_enum_before_repository_access() -> None:
+    with pytest.raises(Exception, match="generation"):
+        _selected_phase3a_authority(
+            EvidenceAuthorityGeneration.ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING
+        )
+    with pytest.raises(Exception, match="generation"):
+        load_prospective_phase3a_schemas(
+            None,
+            "0" * 40,
+            EvidenceAuthorityGeneration.ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING,
+        )
 
 
 def git(root: Path, *args: str, check: bool = True) -> str:

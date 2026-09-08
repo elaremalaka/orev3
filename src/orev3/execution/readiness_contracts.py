@@ -45,6 +45,8 @@ from orev3.execution.readiness_record import (
     PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_POLICY,
     PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY,
     PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY,
+    PROSPECTIVE_BOUNDED_STREAMING_READINESS_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_BOUNDED_STREAMING_READINESS_SCHEMA_POLICY,
     PROSPECTIVE_PHASE2_SCHEMA_DOCUMENT_POLICY,
     PROSPECTIVE_PHASE2_SCHEMA_POLICY,
     PROSPECTIVE_PHASE3A_SCHEMA_DOCUMENT_POLICY,
@@ -110,6 +112,9 @@ class ProspectiveRegistryGeneration(str, Enum):
     ADAPTER_V4_CONFIGURATION_RESOURCE = (
         "prospective-v1.1-adapter-v4-configuration-resource"
     )
+    ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING = (
+        "prospective-v1.1-adapter-v4-experiment5-bounded-streaming"
+    )
 
 
 _PROSPECTIVE_POLICIES = {
@@ -136,6 +141,11 @@ _PROSPECTIVE_POLICIES = {
     ProspectiveRegistryGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE: (
         PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_POLICY,
         PROSPECTIVE_ADAPTER_V4_READINESS_SCHEMA_DOCUMENT_POLICY,
+        29,
+    ),
+    ProspectiveRegistryGeneration.ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING: (
+        PROSPECTIVE_BOUNDED_STREAMING_READINESS_SCHEMA_POLICY,
+        PROSPECTIVE_BOUNDED_STREAMING_READINESS_SCHEMA_DOCUMENT_POLICY,
         29,
     ),
 }
@@ -202,9 +212,12 @@ def _committed_blob(
 def prospective_schema_policy(
     generation: ProspectiveRegistryGeneration,
 ) -> tuple[Mapping[str, tuple[str, str]], Mapping[str, tuple[str, str]], int]:
-    if not isinstance(generation, ProspectiveRegistryGeneration):
+    if type(generation) is not ProspectiveRegistryGeneration:
         raise CanonicalControlError("prospective schema generation is not governed")
-    return _PROSPECTIVE_POLICIES[generation]
+    selected = _PROSPECTIVE_POLICIES.get(generation)
+    if selected is None:
+        raise CanonicalControlError("prospective schema generation is unsupported")
+    return selected
 
 
 def load_prospective_schemas(

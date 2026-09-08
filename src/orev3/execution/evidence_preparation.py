@@ -23,6 +23,8 @@ from orev3.execution.readiness_record import (
     PROSPECTIVE_PHASE3B_SCHEMA_POLICY,
     PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_DOCUMENT_POLICY,
     PROSPECTIVE_ADAPTER_V4_PHASE3B_SCHEMA_POLICY,
+    PROSPECTIVE_BOUNDED_STREAMING_PHASE3B_SCHEMA_DOCUMENT_POLICY,
+    PROSPECTIVE_BOUNDED_STREAMING_PHASE3B_SCHEMA_POLICY,
 )
 from orev3.execution.readiness_record import SourceScopeDeclarationV1
 from orev3.execution.runtime import PHASE3A_SANDBOX_TEMPLATE_IDENTITY, PHASE3B_PROFILE_RENDERER_DOMAIN, PHASE3B_PROFILE_RENDERER_IDENTITY, PHASE3B_WORKER_EVIDENCE_DOMAIN, DetachedSource, Phase3BWorkerEvidence, run_phase3b_controller, run_phase3b_worker
@@ -30,8 +32,44 @@ from orev3.execution.runtime import PHASE3A_SANDBOX_TEMPLATE_IDENTITY, PHASE3B_P
 EVIDENCE_PREPARATION_DOMAIN = "orev3:experiment-evidence-preparation:v1\n"
 EVIDENCE_POLICY_DOMAIN = "orev3:readiness-evidence-preparation-policy:v1\n"
 EVIDENCE_POLICY_PATH = "config/research/readiness/evidence-preparation-policy-v1.json"
+BOUNDED_STREAMING_EVIDENCE_POLICY_PATH = (
+    "config/research/readiness/evidence-preparation-policy-bounded-streaming-v1.json"
+)
+BOUNDED_STREAMING_EVIDENCE_POLICY_IDENTIFIER = (
+    "experiment-evidence-preparation-policy-bounded-streaming-v1"
+)
+BOUNDED_STREAMING_AUTHORITY_GENERATION = (
+    "prospective-v1.1-adapter-v4-experiment5-bounded-streaming"
+)
 PHASE3A_NORMALIZED_OUTPUT_REVISION = "phase3a-normalized-output-v1"
 PHASE3A_NORMALIZED_WORKER_REVISION = "phase3a-normalized-worker-v1"
+
+
+@dataclass(frozen=True, slots=True)
+class PathBackedProjection:
+    path: Path
+    private_root: Path
+    byte_count: int
+    sha256: str
+
+    def cleanup(self) -> None:
+        shutil.rmtree(self.private_root, ignore_errors=True)
+
+    def __del__(self) -> None:
+        self.cleanup()
+
+
+def _require_stream_equal(first: Path, second: Path, *, chunk_bytes: int = 64 * 1024) -> None:
+    """Require complete byte equality without retaining either payload."""
+
+    with first.open("rb", buffering=0) as left, second.open("rb", buffering=0) as right:
+        while True:
+            left_chunk = left.read(chunk_bytes)
+            right_chunk = right.read(chunk_bytes)
+            if left_chunk != right_chunk:
+                raise CanonicalControlError("PROJECTION_INVALID: nondeterministic projection")
+            if not left_chunk:
+                return
 PHASE3A_NORMALIZED_INVOCATION = "phase3a-validate-runtime"
 PHASE3A_NORMALIZED_CODE_PATHS = (
     "src/orev3/execution/canonical.py",
@@ -83,6 +121,9 @@ class EvidenceAuthorityGeneration(str, Enum):
     PROSPECTIVE_V1_1 = "prospective-v1.1-phase3b"
     ADAPTER_V4_CONFIGURATION_RESOURCE = (
         "prospective-v1.1-adapter-v4-configuration-resource"
+    )
+    ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING = (
+        "prospective-v1.1-adapter-v4-experiment5-bounded-streaming"
     )
 
 
@@ -308,6 +349,8 @@ def load_prospective_phase3b_schemas(
 ) -> Mapping[str, Mapping[str, Any]]:
     """Load the explicit complete-v1.1 overlay; never infer a latest revision."""
 
+    if type(generation) is not EvidenceAuthorityGeneration:
+        raise CanonicalControlError("prospective Phase-3B generation is unsupported")
     if generation is EvidenceAuthorityGeneration.PROSPECTIVE_V1_1:
         policy = PROSPECTIVE_PHASE3B_SCHEMA_POLICY
         documents = PROSPECTIVE_PHASE3B_SCHEMA_DOCUMENT_POLICY
@@ -327,6 +370,9 @@ def load_prospective_phase3b_schemas(
             )
         ):
             raise CanonicalControlError("prospective Phase-3B v4 overlay differs")
+    elif generation is EvidenceAuthorityGeneration.ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING:
+        policy = PROSPECTIVE_BOUNDED_STREAMING_PHASE3B_SCHEMA_POLICY
+        documents = PROSPECTIVE_BOUNDED_STREAMING_PHASE3B_SCHEMA_DOCUMENT_POLICY
     else:
         raise CanonicalControlError("prospective Phase-3B generation is unsupported")
     schemas: dict[str, Mapping[str, Any]] = {}
@@ -351,12 +397,7 @@ def load_prospective_phase3b_schemas(
     return schemas
 
 
-def load_evidence_policy(raw: bytes, *, schema: Mapping[str, Any]) -> Mapping[str, Any]:
-    material = parse_canonical_bytes(raw)
-    validate_json_schema_instance(material, schema, schema_registry={})
-    identity_material = dict(material); identity_material.pop("policy_identity")
-    if domain_identity(EVIDENCE_POLICY_DOMAIN, identity_material) != material["policy_identity"]:
-        raise CanonicalControlError("evidence-preparation policy identity differs")
+def _validate_evidence_policy_material(material: Mapping[str, Any]) -> None:
     if material["profile_renderer_identity"] != PHASE3B_PROFILE_RENDERER_IDENTITY:
         raise CanonicalControlError("Phase-3B profile renderer identity differs")
     expected = {
@@ -391,6 +432,37 @@ def load_evidence_policy(raw: bytes, *, schema: Mapping[str, Any]) -> Mapping[st
             )
         if declaration["sandbox_template_identity"] != expected_template_identity:
             raise CanonicalControlError("Phase-3B sandbox template identity differs")
+
+
+def load_evidence_policy(raw: bytes, *, schema: Mapping[str, Any]) -> Mapping[str, Any]:
+    material = parse_canonical_bytes(raw)
+    validate_json_schema_instance(material, schema, schema_registry={})
+    identity_material = dict(material); identity_material.pop("policy_identity")
+    if domain_identity(EVIDENCE_POLICY_DOMAIN, identity_material) != material["policy_identity"]:
+        raise CanonicalControlError("evidence-preparation policy identity differs")
+    _validate_evidence_policy_material(material)
+    return material
+
+
+def load_bounded_streaming_evidence_policy(
+    raw: bytes, *, schema: Mapping[str, Any]
+) -> Mapping[str, Any]:
+    material = parse_canonical_bytes(raw)
+    validate_json_schema_instance(material, schema, schema_registry={})
+    identity_material = dict(material)
+    identity_material.pop("policy_identity")
+    expected_identity = domain_identity(
+        EVIDENCE_POLICY_DOMAIN,
+        {
+            "authority_generation": BOUNDED_STREAMING_AUTHORITY_GENERATION,
+            "policy": identity_material,
+        },
+    )
+    if material["policy_identity"] != expected_identity:
+        raise CanonicalControlError("bounded evidence-preparation policy identity differs")
+    if material["policy_identifier"] != BOUNDED_STREAMING_EVIDENCE_POLICY_IDENTIFIER:
+        raise CanonicalControlError("bounded evidence-preparation policy identifier differs")
+    _validate_evidence_policy_material(material)
     return material
 
 
@@ -467,10 +539,12 @@ def reconstruct_projection_twice(
     capability_policy: Mapping[str, Any], raw_snapshot_identity: str,
     governed_decoder_request: Mapping[str, Any] | None = None,
     governed_decoder_read_files: Sequence[Path] = (),
-) -> tuple[bytes, tuple[str, ...], Mapping[str, Any]]:
+) -> tuple[bytes | PathBackedProjection, tuple[str, ...], Mapping[str, Any]]:
     root = Path(tempfile.mkdtemp(prefix="orev3-projection-reconstruction-"))
+    keep_root = False
     try:
         outputs: list[bytes] = []
+        output_paths: list[Path] = []
         worker_evidence: list[str] = []
         results: list[Mapping[str, Any]] = []
         for index in range(2):
@@ -486,13 +560,26 @@ def reconstruct_projection_twice(
             result = worker.result
             worker_evidence.append(worker.evidence_identity)
             results.append(result)
-            payload = _read_verified_worker_object(target, expected_size=result["byte_count"], expected_sha256=result["sha256"], limit=max_projection_bytes)
-            outputs.append(payload)
-        if outputs[0] != outputs[1] or results[0] != results[1]:
+            if governed_decoder_request is None:
+                payload = _read_verified_worker_object(target, expected_size=result["byte_count"], expected_sha256=result["sha256"], limit=max_projection_bytes)
+                outputs.append(payload)
+            else:
+                output_paths.append(target)
+        if results[0] != results[1]:
             raise CanonicalControlError("PROJECTION_INVALID: nondeterministic projection")
-        return outputs[0], tuple(worker_evidence), results[0]
+        if governed_decoder_request is None:
+            if outputs[0] != outputs[1]:
+                raise CanonicalControlError("PROJECTION_INVALID: nondeterministic projection")
+            return outputs[0], tuple(worker_evidence), results[0]
+        _require_stream_equal(output_paths[0], output_paths[1])
+        output_paths[1].unlink()
+        keep_root = True
+        return PathBackedProjection(
+            output_paths[0], root, results[0]["byte_count"], results[0]["sha256"]
+        ), tuple(worker_evidence), results[0]
     finally:
-        shutil.rmtree(root, ignore_errors=True)
+        if not keep_root:
+            shutil.rmtree(root, ignore_errors=True)
 
 
 def reconstruct_replay_twice(
@@ -532,15 +619,22 @@ def _collect_evidence_preparation_evidence(
 ) -> EvidencePreparationWorkerEvidence:
     """Private collector for production and synthetic tests; cannot mint status."""
 
-    phase3a_generation = (
-        PreparationAuthorityGeneration.HISTORICAL
-        if generation is EvidenceAuthorityGeneration.HISTORICAL
-        else (
+    if type(generation) is not EvidenceAuthorityGeneration:
+        raise CanonicalControlError("Phase-3B authority generation is unsupported")
+    if generation is EvidenceAuthorityGeneration.HISTORICAL:
+        phase3a_generation = PreparationAuthorityGeneration.HISTORICAL
+    elif generation is EvidenceAuthorityGeneration.PROSPECTIVE_V1_1:
+        phase3a_generation = PreparationAuthorityGeneration.PROSPECTIVE_V1_1
+    elif generation is EvidenceAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE:
+        phase3a_generation = (
             PreparationAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
-            if generation is EvidenceAuthorityGeneration.ADAPTER_V4_CONFIGURATION_RESOURCE
-            else PreparationAuthorityGeneration.PROSPECTIVE_V1_1
         )
-    )
+    elif generation is EvidenceAuthorityGeneration.ADAPTER_V4_EXPERIMENT5_BOUNDED_STREAMING:
+        raise CanonicalControlError(
+            "bounded-streaming Phase-3B generation is not implemented"
+        )
+    else:
+        raise CanonicalControlError("Phase-3B authority generation is unsupported")
     environment = _collect_preparation_environment_evidence(
         repository,
         experiment_identifier,

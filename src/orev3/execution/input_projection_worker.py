@@ -12,6 +12,57 @@ from pathlib import Path
 COMMANDS = frozenset({"project_canonical_jsonl"})
 
 
+# One-shot actor policy. Generic unsuccessful transport retains its meaning.
+_PINNED_INPUT_FAILED = False
+_PINNED_INPUT_EXIT = os._exit
+
+
+def _pinned_input_acquisition(acquisition):
+    import signal
+    global _PINNED_INPUT_FAILED
+    if _PINNED_INPUT_FAILED:
+        _PINNED_INPUT_EXIT(10)
+    flags = acquisition.arguments[1]
+    if acquisition.operation != "open" or flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC):
+        raise ValueError("PROJECTION_INVALID")
+    installed = {}
+
+    def terminal():
+        global _PINNED_INPUT_FAILED
+        _PINNED_INPUT_FAILED = True
+        _PINNED_INPUT_EXIT(10)
+
+    def guarded(original):
+        def handle(number, frame):
+            if _PINNED_INPUT_FAILED:
+                terminal()
+            try:
+                original(number, frame)
+            except BaseException:
+                if acquisition.unprovable:
+                    terminal()
+                raise
+        return handle
+
+    try:
+        for number in signal.valid_signals():
+            original = signal.getsignal(number)
+            if callable(original):
+                installed[number] = original
+                signal.signal(number, guarded(original))
+        try:
+            acquisition.acquire()
+        except BaseException:
+            if acquisition.unprovable:
+                terminal()
+            raise
+    finally:
+        if _PINNED_INPUT_FAILED:
+            terminal()
+        for number, original in installed.items():
+            signal.signal(number, original)
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         return 2
@@ -25,6 +76,7 @@ def main() -> int:
     source = Path(request["source_root"]).resolve()
     dependency = Path(request["dependency_root"]).resolve()
     sys.path[:] = [str(source / "src"), str(dependency), *[entry for entry in sys.path if "lib/python" in entry and "site-packages" not in entry]]
+    from orev3.execution.filesystem_capability import pinned_acquisition_policy
     from orev3.execution.canonical import parse_canonical_bytes
     if request.get("decoder_identifier") == "rq003-experiment-005-source-decoder-v1":
         # Broad package initializers expose unrelated outcome-aware APIs.
@@ -42,9 +94,9 @@ def main() -> int:
             package.__path__ = [str(source / "src" / relative)]
             sys.modules[package_name] = package
         from orev3.experiments.rq003_experiment5_source_processing import (
-            SourceMember,
+            SnapshotSourceMember,
             authenticate_configuration,
-            process_source_collection,
+            process_source_collection_to_path,
             reconstruct_source_authority,
         )
         from orev3.execution.canonical import parse_json
@@ -84,30 +136,27 @@ def main() -> int:
         if authority.projection_schema_identity != schema_identity:
             raise ValueError("PROJECTION_INVALID")
         members = tuple(
-            SourceMember(
+            SnapshotSourceMember(
                 logical_identifier=item["logical_identifier"],
                 member_path=item["member_path"],
                 member_order=item["member_order"],
-                persisted_bytes=Path(item["capability_path"]).read_bytes(),
+                content_object=Path(item["capability_path"]),
                 expected_byte_count=item["byte_count"],
                 expected_sha256=item["sha256"],
                 declared_member_identity=item["member_identity"],
             )
             for item in request["members"]
         )
-        result = process_source_collection(
+        target = Path(request["private_output"])
+        result = process_source_collection_to_path(
             members,
             authority=authority,
             projection_schema=projection_schema,
             configuration=configuration,
+            private_projection_path=target,
         )
-        target = Path(request["private_output"])
-        with target.open("xb") as stream:
-            stream.write(result.projection_bytes)
-            stream.flush()
-            os.fsync(stream.fileno())
         sys.stdout.write(json.dumps({
-            "byte_count": len(result.projection_bytes),
+            "byte_count": result.byte_count,
             "dataset_content_identity": result.dataset_content_identity,
             "logical_projection_content_identity": (
                 result.logical_projection_content_identity
@@ -116,7 +165,7 @@ def main() -> int:
             "projection_record_identities": list(
                 result.projection_record_identities
             ),
-            "record_count": len(result.records),
+            "record_count": result.record_count,
             "sha256": result.projection_sha256,
             "status": "evidence_passed",
         }, separators=(",", ":"), sort_keys=True))
@@ -124,16 +173,17 @@ def main() -> int:
     from orev3.execution.projection import project_jsonl
     raw_schema = parse_canonical_bytes(Path(request["raw_schema_path"]).read_bytes())
     projection_schema = parse_canonical_bytes(Path(request["projection_schema_path"]).read_bytes())
-    output, count, dataset_content_identity = project_jsonl(
-        Path(request["raw_snapshot"]),
-        raw_schema=raw_schema,
-        projection_schema=projection_schema,
-        expected_raw_sha256=request["expected_raw_sha256"],
-        expected_raw_size=request["expected_raw_size"],
-        max_raw_bytes=request["max_raw_bytes"],
-        max_projection_bytes=request["max_projection_bytes"],
-        max_records=request["max_records"],
-    )
+    with pinned_acquisition_policy(_pinned_input_acquisition):
+        output, count, dataset_content_identity = project_jsonl(
+            Path(request["raw_snapshot"]),
+            raw_schema=raw_schema,
+            projection_schema=projection_schema,
+            expected_raw_sha256=request["expected_raw_sha256"],
+            expected_raw_size=request["expected_raw_size"],
+            max_raw_bytes=request["max_raw_bytes"],
+            max_projection_bytes=request["max_projection_bytes"],
+            max_records=request["max_records"],
+        )
     target = Path(request["private_output"])
     with target.open("xb") as stream:
         stream.write(output); stream.flush(); os.fsync(stream.fileno())
