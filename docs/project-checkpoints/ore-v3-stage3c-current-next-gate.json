@@ -1,0 +1,756 @@
+{
+  "format": "ore-v3-current-next-gate-v2",
+  "status": "DRAFT-UNREVIEWED",
+  "repository": "/Users/erale/Documents/orev3",
+  "branch": "research/post-v1",
+  "upstream": "origin/research/post-v1",
+  "repository_head": "da41087f781f105ac44338e2a6a2530f882ac060",
+  "checkpoint": {
+    "path": "docs/project-checkpoints/ore-v3-stage3c-post-ar-rr-ar-pass-comprehensive-continuation.md",
+    "revision": "ore-v3-stage3c-post-ar-continuation/0.2.0",
+    "status": "DRAFT-UNREVIEWED",
+    "bytes": 2442815,
+    "lf_count": 33127,
+    "sha256": "773e1ee6192334d8ebc3832cd576adf9aa027addd207252fce2830920efc5ba5",
+    "blob": "f3e2d4dbe1cba5ab19fc63fa3cae301823448dee"
+  },
+  "lane_protocol": {
+    "path": "docs/research/governance/ore-v3-codex-lane-handoff-author-review-protocol.md",
+    "revision": "ore-v3-codex-lane-handoff/0.2.0",
+    "status": "DRAFT-UNREVIEWED",
+    "bytes": 45989,
+    "lf_count": 238,
+    "sha256": "10df214e0085eeb8e265249f5d2748e0a583af68cc36db1bf4ff87d29b5ff051",
+    "blob": "40f69b8ddf043905de35a7a41ef4e53c60bb4cfe"
+  },
+  "manifest_self_path": "docs/project-checkpoints/ore-v3-stage3c-current-next-gate.json",
+  "manifest_identity_rule": "Exact final path/revision/status/bytes/LF/SHA-256/blob come from the external persisted amendment report, then exact independent review. No self-hash; missing external binding is CS10 U.",
+  "current_accepted_frontier": "RR-AR-PASS",
+  "current_next_gate": "fresh independent HIGH-risk continuation-infrastructure review of the exact three amended DRAFT artifacts",
+  "current_next_gate_enabled": true,
+  "blocking_condition": "CD MAY NOT BEGIN until independent infrastructure PASS plus required adoption/commit/publication and a separately authorized CD live-canary task pass all prerequisites.",
+  "infrastructure_next_gate": "fresh independent HIGH-risk continuation-infrastructure review of the exact three amended DRAFT artifacts",
+  "exact_next_operation": "Authenticate exact amended candidates; emit CS01-CS25 evidence table and one preflight result. Only on CS-PREFLIGHT-PASS independently review continuation-content AND safety-control correctness, including AC01-AC20. Remain free to FAIL. No repair, adoption or CD.",
+  "required_lane_type": "CHECKPOINT REVIEW LANE (fresh independent HIGH-risk reviewer)",
+  "lane_name": "STAGE3C-POST-AR-INFRASTRUCTURE-REVIEW",
+  "architecture_next_gate_after_infrastructure_pass": "focused CD author correction consuming accepted RA/WP/OA/MI/AE/AR exports, only after required adoption and a new authorized live-canary task/manifest; not a current operation",
+  "required_frozen_inputs": [
+    "old checkpoint 736c9c04b62078f094642e612c94e495a599943796f06b23404003d5287fdddb",
+    "adopted workflow protocol, adoption and stronger-governance bindings",
+    "708-path pre-task manifest fddd397c641db3433cee46cb2b0ee8394fdeb7c172a0ce9be492d789a13dcf96 plus exactly three authorized additions",
+    "all exact originals and candidate/PASS bindings in checkpoint sections 9–11",
+    "RA-A-CFW/RR-CFW-PASS",
+    "WP-C/RR-WP-PASS",
+    "OA-C/RR-OA-PASS",
+    "MI-C/RR-MI-PASS",
+    "AE-C/RR-AE-PASS",
+    "AR-C/RR-AR-PASS",
+    "original CW-U, CD-U, AR-U, AE-U, MI-U, OA-U, WP-U, CA-U and narrowed post-AE AR-U",
+    "external exact creation identities for all three package artifacts"
+  ],
+  "prohibited_operations": [
+    "begin CD in review lane or before infrastructure PASS plus required adoption",
+    "treat DRAFT-UNREVIEWED infrastructure as canonical",
+    "substantive execution without CS-PREFLIGHT-PASS",
+    "reduce required controls or weaken definitions",
+    "reviewer reuse of author/amender lane",
+    "repair/supplement/reinterpret candidate to make it pass",
+    "implementation/runtime/code/tests/configuration edits",
+    "old checkpoint or other governance edits",
+    "qualification, signals or runtime mutation",
+    "create a fourth repository artifact",
+    "stage",
+    "commit",
+    "push",
+    "fetch or mutate refs",
+    "reset",
+    "clean",
+    "adoption or downstream execution in review lane"
+  ],
+  "outcome_routing": {
+    "INFRASTRUCTURE-PASS": "Freeze exact independent all-three review binding. Exactly one next administrative gate: separately authorized required adoption/publication under controlling workflow. No automatic adoption or CD. Only after fulfillment may a new authorized live-canary CD task become the next architecture gate.",
+    "FAIL": "STOP propagation. One focused authorized infrastructure correction; then fresh independent review of exact corrected bytes. No review-lane repair.",
+    "U": "STOP propagation. One focused evidence-recovery gate for exact missing proof; no baseline supersession/CD.",
+    "AUTHORITY-MISMATCH": "Treat established mismatch as preflight FAIL; preserve evidence, report the focused authority correction/diagnosis gate; no assumption-based repair."
+  },
+  "old_checkpoint_relation": "Old accepted checkpoint remains practical baseline until exact independent infrastructure PASS plus separately authorized adoption/commit/publication required by controlling workflow. Author completion never adopts drafts.",
+  "revision": "ore-v3-current-next-gate/0.2.0",
+  "infrastructure_status": "DRAFT-UNREVIEWED",
+  "lane_class": "CHECKPOINT REVIEW LANE",
+  "risk": "HIGH",
+  "accepted_frontier": "RR-AR-PASS",
+  "controlling_accepted_checkpoint": {
+    "path": "docs/project-checkpoints/ore-v3-stage3c-post-u1-u2-rr1-pass-comprehensive-continuation.md",
+    "revision": "post-u1-u2-rr1-pass (historical checkpoint identifier)",
+    "status": "REVIEWED-PASS",
+    "bytes": 1247123,
+    "lf_count": 15140,
+    "sha256": "736c9c04b62078f094642e612c94e495a599943796f06b23404003d5287fdddb",
+    "blob": "42f6a8b12900a3a8c299911447d04109d2df8844"
+  },
+  "controlling_authority_rule": "Old accepted checkpoint plus adopted execution protocol and separately issued exact review task govern. Draft manifest is a task specification to authenticate, not self-issued authorization; DRAFT files are review targets, not canonical authority.",
+  "authorization_condition": "Enabled identifies the sole next substantive gate; execution still requires a separately supplied review task under old accepted authority and CS-PREFLIGHT-PASS. This amendment does not authorize starting review.",
+  "current_substantive_operations": [
+    {
+      "id": "INFRASTRUCTURE-REVIEW",
+      "operation": "fresh independent HIGH-risk continuation-infrastructure review of the exact three amended DRAFT artifacts",
+      "lane_class": "CHECKPOINT REVIEW LANE",
+      "requires": "separate exact review authorization AND CS-PREFLIGHT-PASS"
+    }
+  ],
+  "future_architecture_gate": {
+    "operation": "focused CD author correction",
+    "enabled": false,
+    "prerequisites": [
+      "exact independent infrastructure PASS",
+      "separately authorized required adoption/commit/publication",
+      "new exact CD task and manifest with CD-specific HIGH-risk burdens",
+      "complete live-canary preflight before ANY CD reasoning"
+    ]
+  },
+  "required_controls": [
+    "CS01",
+    "CS02",
+    "CS03",
+    "CS04",
+    "CS05",
+    "CS06",
+    "CS07",
+    "CS08",
+    "CS09",
+    "CS10",
+    "CS11",
+    "CS12",
+    "CS13",
+    "CS14",
+    "CS15",
+    "CS16",
+    "CS17",
+    "CS18",
+    "CS19",
+    "CS20",
+    "CS21",
+    "CS22",
+    "CS23",
+    "CS24",
+    "CS25"
+  ],
+  "control_set_revision": "CS01-CS25/1",
+  "permitted_na_controls": [],
+  "control_applicability_rule": "All CS01-CS25 REQUIRED for this HIGH-risk CHECKPOINT REVIEW LANE. Effective requirements are union with protocol/stronger/task requirements; no lane-selected reduction.",
+  "preflight_evidence_format": {
+    "columns": [
+      "Control",
+      "Status",
+      "Evidence"
+    ],
+    "allowed_status": [
+      "PASS",
+      "FAIL",
+      "U",
+      "N/A"
+    ],
+    "rows": "one per CS01-CS25; no omission/duplication",
+    "na_rule": "none permitted in this lane",
+    "required_context": [
+      "lane/session/class/risk",
+      "external task authorization",
+      "exact accepted baseline and candidate identities",
+      "author/amender session IDs",
+      "expected and observed boundary",
+      "evidence command/record/clause locators and observation order",
+      "failed/uncertain IDs",
+      "one result and one resulting gate"
+    ]
+  },
+  "preflight_oracle": {
+    "CS-PREFLIGHT-PASS": "All 25 required controls PASS; no contradiction; exact candidates and authority ceiling; exactly one current substantive gate. No scoring.",
+    "CS-PREFLIGHT-FAIL": "Any established violation, stale identity, unauthorized drift, forbidden reviewer reuse or missing mandatory constraint. FAIL takes precedence over U; preserve all rows.",
+    "CS-PREFLIGHT-U": "No established FAIL, but required evidence/identity/ordering unresolved. Remote transport failure alone is U, not divergence/equality."
+  },
+  "preflight_routing": {
+    "CS-PREFLIGHT-PASS": "Only INFRASTRUCTURE-REVIEW within separately supplied authorization; not a substantive verdict.",
+    "CS-PREFLIGHT-FAIL": "STOP. One focused infrastructure/authority correction gate for exact established CS violations, starting with diagnosis and separate authorization; no unrelated repair or normalization. Fresh full preflight/review required.",
+    "CS-PREFLIGHT-U": "STOP. One focused evidence-recovery gate for exact unresolved CS IDs; no substantive review/CD until resolved and preflight rerun."
+  },
+  "repository_boundary": {
+    "origin": "https://github.com/elaremalaka/orev3.git",
+    "local_tracking_live_head": "da41087f781f105ac44338e2a6a2530f882ac060",
+    "ahead": 0,
+    "behind": 0,
+    "index_sha256": "1e1960f7db1a4157b7c53d07b685c9381fe4cdc5406677989c2d2e6027f5701d",
+    "staged_diff": "empty",
+    "tracked_modification_count": 5,
+    "untracked_count": 34,
+    "git_visible_count": 711,
+    "original_708_manifest_sha256": "fddd397c641db3433cee46cb2b0ee8394fdeb7c172a0ce9be492d789a13dcf96",
+    "full_711_manifest_binding": "External final amendment report; exclude exactly candidate_paths to reproduce original 708 digest, then include externally authenticated exact candidate identities. No self-referential full digest inside manifest.",
+    "tracked_modifications": [
+      "docs/research/RFC-007-CONTINUOUS-PAPER-COLLECTION.md",
+      "docs/research/RFC-008-OPERATOR-RUNBOOK.md",
+      "docs/research/backlog/RESEARCH-BACKLOG.md",
+      "src/orev3/execution/runtime.py",
+      "tests/execution/test_phase3b_worker_boundaries.py"
+    ],
+    "inherited_untracked_paths": [
+      "docs/project-checkpoints/ore-v3-stage3c-cancellation-capability-architecture-pre-implementation-comprehensive-continuation.md",
+      "docs/project-checkpoints/ore-v3-stage3c-post-i4-comprehensive-continuation.md",
+      "docs/research/findings/rq003-participant-state-synthesis.md",
+      "docs/research/governance-post-v1-investigation.md",
+      "docs/research/governance/rq003-delta-min-governance-decision.md",
+      "docs/research/governance/rq003-delta-min-governance-placement-review.md",
+      "docs/research/governance/rq003-delta-min-scientific-justification.md",
+      "docs/research/governance/rq003-experiment-2b-authorization-review.md",
+      "docs/research/governance/rq003-governance-consistency-review.md",
+      "docs/research/investigations/protocol-revision-strategy.md",
+      "docs/research/investigations/rb001-dataset-build-performance.md",
+      "docs/research/investigations/rb001a-freeze-verification-investigation.md",
+      "docs/research/investigations/rb001b-proof-carrying-snapshot-artifact.md",
+      "docs/research/investigations/rfc013-candidacy-assessment.md",
+      "docs/research/investigations/rq003-decision-quality-theory-design.md",
+      "docs/research/investigations/rq003-decision-quality-theory.md",
+      "docs/research/investigations/rq003-measurement-implementation-alignment.md",
+      "docs/research/investigations/rq003-participant-state-consistency-review.md",
+      "docs/research/investigations/rq003-phase3a-immutable-context.md",
+      "docs/research/investigations/rq003-phase4-pipeline-review.md",
+      "docs/research/investigations/rq003-protocol-state-discovery.md",
+      "docs/research/observer-transition-analysis.md",
+      "docs/research/post-v1-observer-validation.md",
+      "docs/research/promotion-domain-rfc012.md",
+      "docs/research/questions/RQ-003-phase3-feature-framework.md",
+      "docs/research/rfc012-readiness-review.md",
+      "docs/research/rfc012/rfc012-implementation-plan-readiness-review.md",
+      "docs/research/rfc012/rfc012-validation-analysis.md",
+      "docs/research/specifications/rq003-research-execution-profiles-proposal.md",
+      "src/orev3/execution/cancellation_capability.py",
+      "tests/execution/test_cancellation_capability.py"
+    ]
+  },
+  "candidate_paths": [
+    "docs/project-checkpoints/ore-v3-stage3c-post-ar-rr-ar-pass-comprehensive-continuation.md",
+    "docs/research/governance/ore-v3-codex-lane-handoff-author-review-protocol.md",
+    "docs/project-checkpoints/ore-v3-stage3c-current-next-gate.json"
+  ],
+  "candidate_binding": {
+    "checkpoint": "checkpoint object above",
+    "protocol": "lane_protocol object above",
+    "manifest": "external exact final amendment report required by CS10/CS13; no internal self-hash",
+    "author_amender_sessions": [
+      "01a0cfe0-15dc-7cb1-9ff4-12e3265cc9f6"
+    ],
+    "author_record_rule": "Authenticate final amendment report persisted session/record/message/time and all file identities from actual log before review; do not guess metadata before report exists. Independent review binds all three final files."
+  },
+  "exact_persisted_inputs": [
+    {
+      "name": "CW-U",
+      "session": "01a0bc96-c265-7e10-962c-aca29f93b912",
+      "record": 195,
+      "message": "msg_0084d5d9db4587d4016aaf477805e887d08e64ba65f583b259",
+      "timestamp": "2026-09-20T02:46:10.962Z",
+      "bytes": 58409,
+      "sha256": "c44bc786b5963a902cde1bfb9bf6688f043675ece1da6d85ffe77b83dba56a13"
+    },
+    {
+      "name": "CD-U",
+      "session": "01a0c0db-b606-77c3-9530-0eae7a5e4cb7",
+      "record": 218,
+      "message": "msg_06bf50887e953fc8016ab060195ce487d080f67cd6e18c6604",
+      "timestamp": "2026-09-20T22:43:53.854Z",
+      "bytes": 62615,
+      "sha256": "4b0f04c23dd9142376e60739fc8d12b52020eae6564bc490b6378395e1761216"
+    },
+    {
+      "name": "AR-U-original",
+      "session": "01a0c13b-15fb-7333-8cd5-ad4c9312687b",
+      "record": 221,
+      "message": "msg_06ccff939be011a7016ab077cd340487d0b1804197b57765f9",
+      "timestamp": "2026-09-21T00:25:13.265Z",
+      "bytes": 63371,
+      "sha256": "b379964dbfe118345b4340216a5532226cd8e911217ae2776fa65f0af081679f"
+    },
+    {
+      "name": "AE-U",
+      "session": "01a0c180-82d0-75b3-ba33-e0d7f66054d6",
+      "record": 187,
+      "message": "msg_0e9c185676617771016ab085b1f09087d0b9ce19b9f59716e4",
+      "timestamp": "2026-09-21T01:24:52.829Z",
+      "bytes": 68368,
+      "sha256": "9f7c2b39e4cb68da884a899ae62eb537b1b07d0dff050a14dbe9b90df893e4c8"
+    },
+    {
+      "name": "MI-U",
+      "session": "01a0c1a3-e3ea-7b70-846a-4e91ac4cd0c1",
+      "record": 190,
+      "message": "msg_0b505ac05894ef53016ab08ea941a087d088bbcd1bf8fe76a4",
+      "timestamp": "2026-09-21T02:02:14.337Z",
+      "bytes": 57126,
+      "sha256": "158fae3a2f34289aecd2dba0896cfdfa8acb07dd79a611a6c5773494e59004a0"
+    },
+    {
+      "name": "OA-U",
+      "session": "01a0c24f-0af6-7860-b7f4-314adf77ca8f",
+      "record": 194,
+      "message": "msg_0c0d80e15b783ebe016ab0baaa2c6487d097fefdc76dde57bd",
+      "timestamp": "2026-09-21T05:09:59.080Z",
+      "bytes": 54778,
+      "sha256": "46b0b1cbe89bc6a33e12fdeb7248fb571a36a2a8243523b2716609c5b56b8bf9"
+    },
+    {
+      "name": "WP-U",
+      "session": "01a0c260-b894-7132-92bc-1b74bc127dca",
+      "record": 200,
+      "message": "msg_00994244c5025f1c016ab0ca0a102c87d09ba6fd0eb17544df",
+      "timestamp": "2026-09-21T06:16:16.264Z",
+      "bytes": 62613,
+      "sha256": "c1b28ca039ec6e7eed5577d8f5cbbf03e904c6ffbc4dffa2ce3bdae57b781b64"
+    },
+    {
+      "name": "CA-U",
+      "session": "01a0c4e8-6b9b-7a01-8dad-c98caea486ea",
+      "record": 193,
+      "message": "msg_05119597ab4d4e72016ab16b576ab887d0bcdd46e2a08b5542",
+      "timestamp": "2026-09-21T17:44:38.931Z",
+      "bytes": 61621,
+      "sha256": "273570815bb356efa375a697e2a1b665bd29186b209958cb84ae23e76c30c604"
+    },
+    {
+      "name": "RA-A-original",
+      "session": "01a0c551-c430-7ca1-a5d8-9e00914fbf43",
+      "record": 224,
+      "message": "msg_0581353c44e25557016ab181e2fc8087d08889ef6d2edd6f36",
+      "timestamp": "2026-09-21T19:19:21.150Z",
+      "bytes": 50150,
+      "sha256": "b849e5c497667f68459a8d6e84d75c0a45e32746254d7673cf402d5286d81b55"
+    },
+    {
+      "name": "RR-RA-FAIL-CFW",
+      "session": "01a0c58f-2823-7271-9f4d-8975cd35b932",
+      "record": 187,
+      "message": "msg_0423a470b83e1cfa016ab190e01ff487d084adc5b8f291222d",
+      "timestamp": "2026-09-21T20:22:37.777Z",
+      "bytes": 42063,
+      "sha256": "5130b144128377ac25fe783e8e83fc0bfcbbebc46a9d9df25012ff2bfa3a4474"
+    },
+    {
+      "name": "RA-A-CFW",
+      "session": "01a0c58f-2823-7271-9f4d-8975cd35b932",
+      "record": 266,
+      "message": "msg_0423a470b83e1cfa016ab1a91d47c887d098b618d366abd93c",
+      "timestamp": "2026-09-21T22:06:04.029Z",
+      "bytes": 42605,
+      "sha256": "c69df14af8617fe031758e5adb46704a6b7e0e56c5b0054ced9e899c7e2777b8"
+    },
+    {
+      "name": "RR-CFW-PASS",
+      "session": "01a0c671-24e0-71c3-911b-915182ef1bb9",
+      "record": 200,
+      "message": "msg_0e604021f1189e4e016ab1cb2078f487d0af946a8de13b6cda",
+      "timestamp": "2026-09-22T00:32:18.515Z",
+      "bytes": 50139,
+      "sha256": "e9208d839499dc8debde173bfd07bc2f236f560d3057219b152aaf4c58985843"
+    },
+    {
+      "name": "WP-C",
+      "session": "01a0c6e5-ed1f-7693-81fc-695a908360b4",
+      "record": 225,
+      "message": "msg_0c011fd127922f14016ab2a15db97087d0b40e7fd40ede832d",
+      "timestamp": "2026-09-22T15:45:20.837Z",
+      "bytes": 45897,
+      "sha256": "fc37bc3347703f60eff75c3f9b50e07a5664f261954d6f896503f223d01f5ddf"
+    },
+    {
+      "name": "RR-WP-PASS",
+      "session": "01a0ca8f-23de-7bf0-8788-487d73e79cc0",
+      "record": 160,
+      "message": "msg_02e78b485d4e2a0b016ab305ffc2f887d0a7041459fd006097",
+      "timestamp": "2026-09-22T22:53:47.711Z",
+      "bytes": 34624,
+      "sha256": "fe12c7c79b60353144325056f2ed74dc8b0840d745a2c1708a686b4eb9d21b1d"
+    },
+    {
+      "name": "OA-C",
+      "session": "01a0cbd5-0c24-7e73-b48c-78a7d63dba02",
+      "record": 170,
+      "message": "msg_0aa5c444bf11679f016ab3319925f887d0b0602524282df469",
+      "timestamp": "2026-09-23T02:01:31.568Z",
+      "bytes": 53053,
+      "sha256": "2553db901d786c1d8bfef148907df4b649661c6b121e77e9c041ad46ec0685bf"
+    },
+    {
+      "name": "RR-OA-PASS",
+      "session": "01a0cc0b-0746-7f32-98c8-d58e119800e9",
+      "record": 177,
+      "message": "msg_076dc1b4f7dc0ae3016ab355c184f087d08f88d5a63ca00303",
+      "timestamp": "2026-09-23T04:34:09.210Z",
+      "bytes": 34600,
+      "sha256": "7db9468c49a4f876af5353bd970b2f61d9357a0c05133b6bccffce728c188b3d"
+    },
+    {
+      "name": "MI-C",
+      "session": "01a0cc9c-7517-7bf1-be5a-e9d42b56e0e1",
+      "record": 182,
+      "message": "msg_0343cc1ba3fc5e73016ab35e26f86487d0ba0b0a9ab673f880",
+      "timestamp": "2026-09-23T05:11:15.429Z",
+      "bytes": 49487,
+      "sha256": "e5a5a140426c7559e799d098a4e2aa47e35d5519f9015b2af1dba37339b2f7ac"
+    },
+    {
+      "name": "RR-MI-PASS",
+      "session": "01a0ccb6-e082-7f82-a840-f5c21406bb32",
+      "record": 160,
+      "message": "msg_0a35d6705b5152ca016ab364828dcc87d0b84d20f1a245f8fd",
+      "timestamp": "2026-09-23T05:37:36.762Z",
+      "bytes": 35562,
+      "sha256": "7e07dbad6cae290ee371a7f0d6bf4f2c923fb2e5fc1ef6d73d8b3ef0d2bf666c"
+    },
+    {
+      "name": "AE-C",
+      "session": "01a0cccc-d406-7960-aebf-cb855afcb6f8",
+      "record": 173,
+      "message": "msg_0f90ff7120791924016ab36b9f43ac87d0b62d855d5f9076c3",
+      "timestamp": "2026-09-23T06:08:42.584Z",
+      "bytes": 49580,
+      "sha256": "fcf8a964fcb46134adc2f257f1fdfa8292206ca8b36d3e71c61632394c177507"
+    },
+    {
+      "name": "RR-AE-PASS",
+      "session": "01a0ccf0-0aaa-70f1-833a-611971d6332f",
+      "record": 202,
+      "message": "msg_0d40617dff801323016ab373b3bbdc87d081400da1955e6bfd",
+      "timestamp": "2026-09-23T06:42:18.117Z",
+      "bytes": 36341,
+      "sha256": "95b371d7d9b170bde0cebcccbd158e875e20aedb19c4b68050c6c8839c1f6cb4"
+    },
+    {
+      "name": "AR-U-post-AE",
+      "session": "01a0cf3d-d38b-76c3-8eab-a8fb8c36fe64",
+      "record": 186,
+      "message": "msg_004ac59e5d79e932016ab40f8bdb4887d09abb1569fa3d0203",
+      "timestamp": "2026-09-23T17:46:47.158Z",
+      "bytes": 36527,
+      "sha256": "85ad1d210c085c74c6229c78194c414fbf77e4d7bc5c0acc4d000118b564f4d0"
+    },
+    {
+      "name": "AR-C",
+      "session": "01a0cf3d-d38b-76c3-8eab-a8fb8c36fe64",
+      "record": 301,
+      "message": "msg_004ac59e5d79e932016ab429c4bd9887d0a719bbbca0700337",
+      "timestamp": "2026-09-23T19:40:20.767Z",
+      "bytes": 53233,
+      "sha256": "ea7296c51a9a8718c131b5604d754ad8c01b09c9d96df3e33f2beaaff825d07e"
+    },
+    {
+      "name": "RR-AR-PASS",
+      "session": "01a0cfcb-ae45-7930-a843-a8299b4aabd3",
+      "record": 140,
+      "message": "msg_08e7674aec92d517016ab42d0dd7e087d0b4b02b1bcc13dcb6",
+      "timestamp": "2026-09-23T19:52:12.632Z",
+      "bytes": 28221,
+      "sha256": "7e45045357f84715192014c33ae102cce1489b61575b05a880c3be582cab47fa"
+    }
+  ],
+  "input_extraction_rule": "Checkpoint section 9 Rule S; section 11 exact embedded payloads reproduce originals. Session metadata binds UUID/cwd. Original logs where available; no summary substitution.",
+  "task_authority_ceiling": {
+    "purpose": "Read-only independent HIGH-risk review of exact three draft candidates after valid preflight",
+    "allowed": [
+      "read-only repository/remote/evidence authentication",
+      "preflight evidence report",
+      "read-only counterfactual/tabletop adverse-case gate traces",
+      "independent PASS/FAIL/U with exact identities and one route"
+    ],
+    "repository_mutations": [],
+    "must_preserve": "all 711 paths, index, HEAD, refs, configuration and existing diff; review never repairs its candidate",
+    "no_downstream_execution": true
+  },
+  "task_specific_adversarial_burdens": {
+    "required_domains": [
+      "continuation-content correctness",
+      "safety-control correctness"
+    ],
+    "required_checks": [
+      "checkpoint completeness and complete embedded originals",
+      "accepted RA/WP/OA/MI/AE/AR candidate/PASS chain and RR-AR-PASS",
+      "unresolved CD frontier and all downstream ceilings",
+      "protocol and manifest semantics",
+      "cross-artifact consistency",
+      "CS01-CS25 applicability and fail-closed PASS/FAIL/U oracle",
+      "AC01-AC20 BLOCK decisions with evidence/trace",
+      "periodic revalidation and protected drift",
+      "fallback/rollback",
+      "live-canary rule",
+      "DRAFT status versus accepted authority",
+      "non-circular final identity graph",
+      "valid draft-review envelope can pass without self-adoption",
+      "substantive answer without valid preflight is rejected"
+    ],
+    "case_classifications": [
+      "BLOCK",
+      "INCORRECTLY-ALLOW"
+    ],
+    "pass_condition": "Every consequential case BLOCK, all content/control requirements satisfied. Unresolved case means review U; author expectations are not observed results.",
+    "method": "Read-only counterfactual/tabletop evaluations with exact input/clauses and gate trace; no fault injection into this repository or runtime qualification."
+  },
+  "adversarial_cases": [
+    {
+      "id": "AC01",
+      "condition": "wrong repository path",
+      "controls": [
+        "CS01"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC02",
+      "condition": "wrong branch",
+      "controls": [
+        "CS02"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC03",
+      "condition": "local/tracking/live-remote HEAD mismatch",
+      "controls": [
+        "CS03"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC04",
+      "condition": "remote transport failure",
+      "controls": [
+        "CS03"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-U",
+      "required_classification": "BLOCK",
+      "transport_rule": "Blocks until fresh authoritative remote evidence recovered; never treat transport failure alone as divergence or equality."
+    },
+    {
+      "id": "AC05",
+      "condition": "unexpected staged file",
+      "controls": [
+        "CS05"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC06",
+      "condition": "unexpected tracked modification",
+      "controls": [
+        "CS06",
+        "CS07"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC07",
+      "condition": "unexpected untracked path in frozen boundary",
+      "controls": [
+        "CS06",
+        "CS07"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC08",
+      "condition": "stale checkpoint hash",
+      "controls": [
+        "CS08",
+        "CS23"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC09",
+      "condition": "stale manifest identity",
+      "controls": [
+        "CS10",
+        "CS23"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC10",
+      "condition": "protocol hash mismatch",
+      "controls": [
+        "CS09"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC11",
+      "condition": "candidate hash mismatch",
+      "controls": [
+        "CS13"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC12",
+      "condition": "author lane reused as reviewer",
+      "controls": [
+        "CS14"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC13",
+      "condition": "two substantive next gates",
+      "controls": [
+        "CS18"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC14",
+      "condition": "missing task-specific adversarial burdens",
+      "controls": [
+        "CS21"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC15",
+      "condition": "architecture PASS treated as implementation authorization",
+      "controls": [
+        "CS17",
+        "CS19"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC16",
+      "condition": "FAIL allowed to propagate downstream",
+      "controls": [
+        "CS20"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC17",
+      "condition": "U treated as PASS",
+      "controls": [
+        "CS20"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC18",
+      "condition": "reviewer silently repairs candidate",
+      "controls": [
+        "CS16"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC19",
+      "condition": "stale accepted frontier",
+      "controls": [
+        "CS12",
+        "CS23"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    },
+    {
+      "id": "AC20",
+      "condition": "DRAFT-UNREVIEWED infrastructure treated as canonical",
+      "controls": [
+        "CS08",
+        "CS09",
+        "CS10",
+        "CS24"
+      ],
+      "expected_preflight": "CS-PREFLIGHT-FAIL",
+      "required_classification": "BLOCK"
+    }
+  ],
+  "revalidation_points": [
+    "lane entry: full applicable set",
+    "immediately before authorized mutation: all affected/possibly changed controls, justified carry-forward only",
+    "before separately authorized staging/commit/push: full applicable set and exact intended transition",
+    "lane completion: full applicable set plus exact output/delta",
+    "before downstream PASS propagation: full applicable set; receiver independently preflights",
+    "long-running work whenever protected state could materially change"
+  ],
+  "drift_classifications": [
+    "EXPECTED-AUTHORIZED",
+    "UNEXPECTED-BLOCKING",
+    "UNCERTAIN-BLOCKING"
+  ],
+  "drift_rule": "Unexpected/uncertain drift blocks; never normalize, repair, reset, ignore or absorb into baseline. Authorized changes need prior exact scope and final identity verification.",
+  "migration_policy": {
+    "status_vocabulary": [
+      "DRAFT-UNREVIEWED",
+      "REVIEWED-PASS",
+      "SUPERSEDED"
+    ],
+    "before_adoption": "old accepted checkpoint/workflow remains baseline; manual/multipart authoritative fallback; three files experimental drafts",
+    "after_pass_and_required_adoption": "repository-backed bootstrap default; manual/multipart fallback remains",
+    "later_material_flaw": [
+      "freeze propagation",
+      "authenticate last independently accepted checkpoint/protocol",
+      "identify defective infrastructure under correction or SUPERSEDED via authorized record",
+      "revert operational coordination to accepted workflow without git reset/history rewrite",
+      "one focused authorized correction",
+      "fresh independent infrastructure review and required adoption before readoption"
+    ],
+    "status_identity_rule": "Effective REVIEWED-PASS needs exact external independent review/adoption binding to immutable bytes; cosmetic status edits invalidate identity, not automatic acceptance."
+  },
+  "live_canary": {
+    "target": "first real architecture lane after infrastructure PASS plus required adoption; expected focused CD correction",
+    "before_any_cd_reasoning": [
+      "authenticate accepted checkpoint/protocol/manifest and adoption",
+      "execute complete required CS preflight",
+      "emit control evidence table",
+      "establish CS-PREFLIGHT-PASS"
+    ],
+    "stop_conditions": [
+      "required control FAIL/U",
+      "reviewed protocol behaves differently",
+      "cross-artifact semantics differ",
+      "safeguards cannot be reproduced"
+    ],
+    "only_failure_route": "established violation -> one focused infrastructure correction; unavailable proof -> one focused evidence recovery; FAIL precedence if both; no CD reasoning"
+  },
+  "validation_of_validation": {
+    "candidate_protocol_revision": "ore-v3-codex-lane-handoff/0.2.0",
+    "accepted_new_lane_protocol": null,
+    "last_independently_reviewed_new_lane_protocol": null,
+    "accepted_exceptions": [],
+    "stable_controls": "CS01-CS25/1",
+    "change": "first concrete safety control set added to unreviewed draft",
+    "future_checkpoint_required_fields": [
+      "accepted protocol revision and exact identity/hash",
+      "stable CS set",
+      "control-definition changes",
+      "last independently reviewed protocol identity",
+      "accepted exceptions",
+      "infrastructure status"
+    ],
+    "material_control_change": "fresh independent infrastructure review before adoption; normal manifest cannot weaken definitions"
+  },
+  "identity_graph": [
+    "protocol finalized first",
+    "checkpoint binds protocol path/revision/status/bytes/hash/blob; manifest path/revision/role/status only",
+    "manifest binds checkpoint and protocol path/revision/status/bytes/hash/blob; no self-hash",
+    "external persisted amendment report and independent review bind final all-three identities and full inventory digest"
+  ]
+}
