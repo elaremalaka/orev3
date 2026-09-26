@@ -1,0 +1,143 @@
+C2-ADOPTION-BOOTSTRAP-B1 — DRAFT-UNREVIEWED
+
+Author: 01a0df01-ab17-7dc2-affe-5c7d1bb817c3. Risk: HIGH. Form: response-only prospective governance candidate; no repository path is authorized. This candidate has no operative effect, supplies no preflight PASS, and author completion is not acceptance.
+
+1. Authority and preserved status
+
+The original user authority is source session 01a0dafe-0ebf-7fa1-bbbd-5a4cdff22b65, record 251, message msg_01a0df00-4922-7a90-b046-653bdf6840d1, 2026-09-26T18:35:33.026Z: 3871 UTF-8 bytes, 12 LF, SHA-256 5e44210ec202e799ea9b7097b42ea047b00b2c87a41e85412916f35f37b51909. It expressly authorizes this bounded prospective drafting, not adoption or downstream review launch.
+
+The accepted lane protocol ore-v3-codex-lane-handoff/0.2.0 has SHA-256 10df214e0085eeb8e265249f5d2748e0a583af68cc36db1bf4ff87d29b5ff051. Its sections 1, 3, 4, 6, 14 and 16 supply the authority ceiling, response-only path rule, independent review, external identity/effectiveness and consequential governance-change mechanism. Sections 9 and 12 currently retain the blocking preflight. Section 16 requires fresh independent infrastructure review before adopting a consequential control change; it does not itself waive section 12. The accepted execution protocol, SHA-256 5139c876da9d3db8ddab5abb8c89673589413cb8b19406582537425d6558193f, retains stronger-governance precedence and separate action authorization.
+
+The accepted post-AR checkpoint, protocol and current-next-gate manifest remain bound to published commit 28027c258997426b6c622795f0ed82b4dfe97d90 through the original amendment, independent review, adoption and publication records indexed in the frozen anchors.json. Their literal historical draft banners do not undo acceptance. The bootstrap and C2 remain unaccepted. IR-U1=U, historical CS23=U, CS-PREFLIGHT-U and RR-AR-PASS remain unchanged. All accepted authority, protected contracts, negative evidence and no-silent-repair rules remain controlling. The historical missing 3,288-byte incident is not adjudicated.
+
+This is an explicit proposed governance change, not a claim that existing CS23 already permits these deltas. It proposes only a narrow prospective decision boundary for the named C2 adoption path. Neither C2 nor this bootstrap may authenticate or authorize its own effectiveness.
+
+2. Exact subject and immutable boundary
+
+The only eligible subject is CS23-C2-INTEGRATION-C1, authored by session 01a0d959-99f0-7c12-ad1b-a9a1a051bbbf. Its original completion is record 270, message msg_0c865a70f5e956c8016ab6e2365bec87d0a58b5d3a12fbff72, 2026-09-25T21:06:32.191Z, 3175 bytes, 23 LF, SHA-256 352b58e0eeec490a5738e008539c6f2d0574a4ad95bb6c5708c12dfec3f61514. The eight members below are an exact allowlist for identification, not permission to edit or stage. All modes are 100644; their frozen blob identities and exact author delta must also authenticate from the freeze receipt.
+
+| Repository-relative path | Bytes | LF | SHA-256 |
+|---|---:|---:|---|
+| docs/research/governance/ore-v3-cs23-ref-continuity-c2-integration.md | 42084 | 396 | 19bb852767b499138076dfe057418e2351be7ebcae00709f8f5a3dbae21d7c77 |
+| docs/project-checkpoints/ore-v3-cs23-c2-integration-continuation.md | 11920 | 64 | 1adf112541cb658e251209a2f8daca2182fbee14d5dfc9b8c3e5dfc5636f5e6c |
+| docs/project-checkpoints/ore-v3-cs23-c2-current-next-gate.json | 12660 | 309 | 510adb99e41c98a02457755a85b08235f308b4063c6e6e529e3eaa57b442d8cf |
+| docs/research/governance/evidence/cs23-ref-continuity-c2/c1.txt | 29841 | 317 | 2ff6b0a8c13bc2626a8db76c4f85d9786a3a6f5b3cefbcd900949695adcdd887 |
+| docs/research/governance/evidence/cs23-ref-continuity-c2/c1-review.txt | 16058 | 130 | 7ede0898ce174e1bca069e03ca4d629bb5bf607ef4b7960e684ab5e040b87ffa |
+| docs/research/governance/evidence/cs23-ref-continuity-c2/c2.txt | 25809 | 267 | 90eeb31b72cda585ce94b5e3085fdad2f94a1b29b1bce88f1d02cc3451329a2c |
+| docs/research/governance/evidence/cs23-ref-continuity-c2/c2-review.txt | 21108 | 196 | df2aa4613d2212b0a4b4352c857abad214f82297216b95c18f4913a124019ba9 |
+| docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json | 1082064 | 6603 | b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57 |
+
+B0 is the frozen C2 author boundary in /private/tmp/cs23-c2-integration-2d4t9w94/completion-freeze.json, SHA-256 95acca65e44813a232834c511d14e6fbd7cbd07b3abddc183f38eafdb7cc7768, completion observation 2026-09-25T21:05:04.758080+00:00. Its intended-delta.canonical.json hashes to e77b69d7c60952dd3f70eba39268a175615d21a898a14be260ec4d53d31a9369; completion-controls.json hashes to 1976416e65100362cbf4d0dc5924f5e72f2a9d58760861486f44a0897582bc32. These temporary receipts are retrieval aids externally bound by the original author; local presence is not durable acceptance.
+
+The anchors.json identity above binds 711 inherited path/content/size/mode/classification rows, authority/source mappings and unfiltered author refs. The complete frozen inventory is 719 paths, digest a5e6812b30436759b1996940ab6f143afa16c39307af741f66a3563fdb0287c5, with five inherited modifications and 39 untracked paths. The index digest is 0b6c00e7bf88b6bf6d430477d7133f4fc76b4799b1b40981ff054e3886f9e9f5; staged diff is empty. Root is /Users/erale/Documents/orev3; branch research/post-v1; upstream origin/research/post-v1; origin https://github.com/elaremalaka/orev3.git; local/tracking/live-remote HEAD is 28027c258997426b6c622795f0ed82b4dfe97d90, ahead/behind 0/0. The frozen config and existing diff identities also remain required.
+
+The bootstrap text is a separately frozen candidate. Its final response byte-range identity is externally bound by the author receipt, then by any independent review. Its own text contains no self-hash. Changing either candidate, its allowlist, any inherited classification or the normative boundary requires a new candidate and fresh authorization/review; no replacement inherits this bootstrap.
+
+3. Proposed narrow rule and authentication obligations
+
+Only additions/removals of complete ref names strictly beneath refs/codex/turn-diffs/captures/ or refs/codex/turn-diffs/checkpoints/ may be considered under this rule. Namespace membership is necessary but never sufficient. Eligible names must be absent at B0 and retained in the append-only observation ledger as post-B0 additions before any eligible removal. B0-present ref deletion is outside this rule. Post-B0 means first observed difference against B0, not proven creation time, producer, task identity or successful transaction history. No such missing provenance may be inferred from the name, timestamps, object equality, signed application code or likely lifecycle.
+
+For each prospective invocation, an independent checker must authenticate all of the following, with exact expected/observed evidence:
+
+(a) Both frozen candidates' bytes/identities and the eight-file allowlist are unchanged; all 711 inherited paths and all 719 inventory rows retain exact content, sizes, modes and tracked/untracked classifications.
+(b) Index bytes, staged state, inherited status/diff and configuration are unchanged; root, branch, upstream and origin are unchanged; local/tracking HEAD and a fresh independently queried live-remote HEAD agree with B0; ahead/behind remains 0/0. Use read-only Git with optional locks disabled, without fetch or index refresh. Transport failure is U, not equality or divergence.
+(c) Accepted governance/checkpoint/manifest/artifact identities, original author/review/acceptance bindings, stronger authority and RR-AR-PASS remain unchanged and current. Exact input/dependency closure must be retrievable; temporary copies are not promoted by use.
+(d) Full unfiltered ref observations and symbolic-ref relationships are retained. No branch, remote-tracking, tag, notes, stash, replacement, custom substantive or other unenumerated ref may change. No existing ref value or symbolic target may update. A same-name remove/re-add with a different observed value is an update, even across observations, and blocks. Reappearance must be checked against the complete retained ledger, not only adjacent snapshots.
+(e) Every observed addition/removal/value update is retained exactly with complete ref name, old/new OID or absence, symbolic relationship, object type where available, observation order/time, command/result and raw snapshot identity. No filtering, truncation, deletion or substitution is allowed. Unknown object types or unresolved relationship interpretation are U. Deltas are observations, not transaction receipts; hidden intermediate churn is neither proved absent nor reconstructed.
+(f) No evidence indicates substantive consumption of any eligible ref: as source/merge/rebase base, deployment or build input, accepted artifact locator, governance identity, branch substitute, recovery authority, publication refspec or any other consequential decision input. Review must inspect available repository configuration, hooks, scripts, governance/evidence references and task/action envelopes for such consumers and retain the coverage and findings. Diagnostic listing/diff inspection is not authority consumption. Any positive consumption evidence blocks regardless of namespace; unavailable required consumer evidence or ambiguous use is U, not presumed harmlessness.
+
+Only if every obligation independently authenticates may eligible observed bookkeeping additions/removals be retained without themselves blocking this narrowly authorized prospective governance operation. Record this as BOOTSTRAP-BOUNDARY-PASS for this invocation only, with all evidence and authority bindings. It is neither a producer-provenance PASS nor a historical CS23 PASS. It creates no general Codex-ref exemption. The old CS-PREFLIGHT-U remains an immutable historical/current blocked-continuation result until a separately effective governance decision supplies a prospective route; it is never silently relabeled.
+
+4. Authority phases, operations and expiration
+
+Current phase: author-only DRAFT-UNREVIEWED. No bootstrap provision is active. The sole next gate is a fresh independent HIGH-risk review of these exact bootstrap bytes, launched only with separate explicit authorization. That authorization must identify the candidate hash, accepted change mechanism, complete evidence boundary and the narrow prospective governance-review scope despite the retained old CS23 uncertainty. It must not say that this draft has already passed preflight. Without that external authority, the reviewer reports U and stops. The present author authority does not launch or authorize that review.
+
+Bootstrap review is distinct from C2 integration review. The reviewer must assess the proposed rule, its compatibility with stronger authority, all adverse cases, exact identity and the unresolved evidence; retain the accepted CS01-CS25 table including CS23=U wherever still applicable, and distinguish a prospective governance judgment from an accepted continuation PASS. The proposed rule can be evaluated as a counterfactual, not exercised as accepted authority. The reviewer may PASS, FAIL or U freely; must not repair, supplement or reinterpret frozen bytes to obtain PASS. A genuine unresolved authority conflict is U and requires an explicit bounded governance decision, not an invented exception. A demonstrated contradiction is FAIL.
+
+Only an exact independent bootstrap review PASS followed by separately explicit acceptance/adoption and required publication/effectiveness bindings can make this rule operative. The adopting authority must expressly identify the temporary change to the old blocking rule and its prospective scope. No draft, author report, namespace observation or review PASS alone can do so. Required publication cannot be waived to bootstrap effectiveness; an otherwise blocked adoption needs separate authority under the accepted change mechanism, not permission borrowed from this text.
+
+If made effective, permitted purposes are solely independently reviewing the unchanged named C2 integration package, read-only preparation/authentication of its separate adoption/publication, and boundary revalidation around those separately authorized governance operations. Each operation needs its own exact external envelope and fresh checks. This rule supplies zero staging, commit, push or publication authority, creates no repository path permission and cannot accept a durable evidence location. The accepted action controls remain mandatory.
+
+Any index, classification, HEAD, remote-tracking or artifact transition needed by later adoption is NOT excused as bookkeeping. At such a transition this fixed-boundary invocation ends. A separately authorized exact transition must authenticate under accepted section 13 and publication controls, preserving pre/post evidence and expected resulting identities; an unknown result remains blocked. No actor may reset B0, guess a future identity, or use the bootstrap as proof that changed substantive state is unchanged. Any later invocation requires a separately authenticated action-specific boundary binding under the accepted mechanism, retaining B0 and the entire chain; absent that binding, the fixed B0 check fails/returns U. This is not automatic rebasing or an enlargement of this draft's authority.
+
+Scope starts only at the externally authenticated bootstrap effective binding. Earlier observations in section 6 remain negative evidence; their later retention for prospective classification does not retroactively authorize or authenticate their production. The rule expires immediately when C2 is EFFECTIVE-ACCEPTED, or C2 adoption is rejected, fails, is abandoned or is cancelled, whichever occurs first. A FAIL in the C2 adoption path terminates its use; a U suspends all dependent work and cannot extend scope or authorize retries. A conclusive bootstrap review/adoption rejection leaves it inactive. Expiry cannot be reversed by renaming tasks, duplicating the candidate or restarting a lane. Uncertain effectiveness/expiry is U. Unrelated work, revised C2 bytes and CD are always outside scope. A new exception requires a new explicitly authorized governance change and independent review.
+
+5. Deterministic outcomes and anti-abuse
+
+Prospective boundary PASS requires all section 3 conditions plus independent effective authority, eligible temporal/purpose scope, no expiry and no conflicting stronger rule. PASS admits only the exact separately authorized operation; it is not substantive C2 PASS or readiness.
+
+FAIL means an established forbidden change, substantive consumption, identity mismatch, scope/expiry violation, suppressed delta, self-acceptance or other demonstrated contradiction. U means missing required proof, unknown refs/semantics, ambiguous consumption, authority ordering, completeness, remote equality or expiration. FAIL takes precedence overall while retaining all U evidence. Either blocks dependent action. The author does not resolve missing proof by calling it FAIL and does not resolve a known violation by calling it U.
+
+No ref may be deleted, restored, rewritten, hidden, normalized or manufactured to pass this rule. No staged/index cleanup, baseline reset, blanket namespace exclusion, evidence destruction, self-review, desired verdict or automatic follow-on task is authorized. One candidate identity and one independent review gate are exported. A changed candidate requires a new identity; all failed originals and complete deltas remain retained. Required raw-dependent evidence must be recovered and retained before reliance; temporary diagnostic locators cannot become accepted durable anchors by assertion.
+
+6. Unresolved evidence retained without provenance inference
+
+IR-U1 original: reviewer session 01a0da66-64a6-7d13-8ac8-f58be90fa28b, record 132, message msg_011490368b34ea02016ab6e3fa0b7487d0a9e322f347e04d22, 2026-09-25T21:14:09.337Z, 5299 bytes/66 LF, SHA-256 c4ce74ffa1c29a0636c9a5ad274e9cef37db6f8adc6145b2e00abfcf74ea8cf3.
+
+Correction original: session 01a0dafe-0ebf-7fa1-bbbd-5a4cdff22b65, record 211, message msg_00503c54dbf49b02016ab70be349b087d09c6446f276f82cae, 2026-09-26T00:03:56.271Z, 1366 bytes/12 LF, SHA-256 c69c3068ec7c11519d96782a4d93905dcaf924532699a6d5838e16d2bc10458c.
+
+Latest producer-recovery negative: session 01a0db27-edbb-7720-8756-13cb7d3ab45d, record 217, message msg_0c54df258077b4f1016ab716dbf31c87d097541a9624bca876, 2026-09-26T00:50:42.561Z, 1095 bytes/11 LF, SHA-256 610de96bd805b036c638b2316b271d9150c3556b87cbd1219ff171ccba29700a. Original JSONL assistant response_item extraction is ordered output_text concatenation without separators, trimming, normalization or appended newline, encoded UTF-8; session metadata/message/timestamp must authenticate.
+
+The correction and producer diagnostic packages remain /private/tmp/ir-u1-correction-01a0dafe/ and /private/tmp/ir-u1-producer-01a0db27/. Their exact negatives, coverage limits, full observations and all primary-source retrieval mappings are retained, not promoted. The correction disposition identity is 11250 bytes/80 LF, SHA-256 0d34028e97c650404cafb0ebf125763f90fd6769dd07d76bcdf955df4a8874b3; correction completion authentication hashes to 49bab1f0cf5dbb8b25b205909c45a10b960e6d6310af97fc9bbdccfc2863de17. Current author observations are in /private/tmp/c2-bootstrap-author-20260926/entry/authentication.json with full unfiltered snapshots beside it. Future reviewers must independently recover originals and bind every consumed diagnostic file by exact identity, not treat these directory names as authority.
+
+Exact producer/version/process/task/scope and successful creation/removal/replacement transactions remain unproved. Signed/current code and capture/checkpoint grammar, matching tree contents, turn-hash correspondence, task timing and capture-start logs support a possible bookkeeping explanation but do not prove those exact transactions or exclude other writers. Log/session/database/storage searches recovered no sufficient transaction binding; absence in that bounded search is not proof of universal absence. No process-memory, remote-telemetry, backup or replay evidence is claimed. The prior original, receiving and withdrawn PASS negatives, all other indexed unresolved evidence, and the pre-B0 snapshot/delta in anchors.json remain unchanged.
+
+Full show-ref snapshot identities, in observation order:
+
+| Observation | Bytes | LF | SHA-256 |
+|---|---:|---:|---|
+| B0 author | 5464 | 35 | e9936524698cfe580dd54379f21929069fb9cd81a168981c1faabcce591e66cd |
+| IR-U1 review | 5592 | 36 | 5b1bb07e48be7764ba248949ead1123f0425273c252a81a25e8c2c18cdd23055 |
+| Correction completion | 5848 | 37 | 58a5e40cecbf9fdc34c0d56c7f539c75bd22126f7bfb662aa24c1490feb1db9e |
+| Producer completion | 6104 | 38 | 9548ebb05f979090ea59cd0e4036989a3fc3428a827f3e69b4f7f4add831192b |
+| Bootstrap author entry | 6360 | 39 | 72191599735c8748dd1a69df9d0423faa23212bca6cc5e924b3ae62a3060ef5f |
+
+The following identifiers abbreviate full ref names only within the transition table. Every target is tree 513f2c698ad577e90ead4b23692bd0aa9cd8bde2; no producer attribution follows.
+
+R1: refs/codex/turn-diffs/captures/1790370539722/e1d68469-8f9e-43aa-b45e-23cc9ba196a5/base
+
+R2: refs/codex/turn-diffs/captures/1790380478749/69acd5bb-443f-45da-ada9-d1f72a11108c/base
+
+R3: refs/codex/turn-diffs/checkpoints/8776110e979e90089a0621fe1cf5b826ff9ed606aed94a64e4b4e0d35ed52be6/9a4a1274b27ca9438f885e90400a13545688486d0ef851fe593cad2ff41ab5cd/1790370849709/24530c32-551b-404b-876b-26e00cdcbd58
+
+R4: refs/codex/turn-diffs/captures/1790383222859/e729c5b8-91f6-4558-9e50-ae35161d43d3/base
+
+R5: refs/codex/turn-diffs/checkpoints/079cd170ed104f9647559e2b7a76f8d10d96b51e493767977197f73434003ae7/cc02006ab28d6545689ec9532dfcbc7810cbf18a5389312319d3124a1861f162/1790383231874/80360056-e1bc-44f6-9832-45f187384147
+
+R6: refs/codex/turn-diffs/captures/1790447826581/c5971b01-a7dd-4059-b475-3f79e06dd4bc/base
+
+R7: refs/codex/turn-diffs/checkpoints/beaac78145b51f4f6d7b1427eddf9f5e3dcb6bb7d1dcf3b9615aaf82cd898d98/6e3cb2428d28c65833a80145c23f31328c8f48d072058affd399d9e08e665f9b/1790383844263/954f1c8b-54bc-4f1c-a08d-ac565bcbada7
+
+| Transition | Added | Removed | Value updates |
+|---|---|---|---|
+| author -> review | R1 | none | none |
+| review -> correction | R2, R3 | R1 | none |
+| correction -> producer | R4, R5 | R2 | none |
+| producer -> entry | R6, R7 | R4 | none |
+
+No snapshot proves absence of intermediate activity. Author completion and every later invocation must append any further observed delta exactly; no completion/application cleanup is guessed in advance. Observation receipts are external to the frozen normative candidate so later raw observations can be appended without rewriting the rule. They cannot enlarge the allowed set, overwrite earlier evidence or supply missing authority. Missing required observations are U.
+
+7. Adversarial decision traces required for independent review
+
+These are author counterfactual traces and expected oracles, not independent test verdicts. The reviewer must reproduce them against exact clauses and evidence, record observed decisions and retain freedom to find additional defects. Repository-mutating probes are prohibited.
+
+| Case | Counterfactual input and decision trace | Required result |
+|---|---|---|
+| T1 | Each new task adds a new eligible capture, removes an observed eligible capture, and adds a new eligible checkpoint; every substantive invariant authenticates and all raw deltas are retained. Section 3 evaluates the finite observed delta without requiring a new candidate, producer proof or a globally quiescent ref set. | Once independently effective and separately authorized: boundary PASS for each eligible observation; no recursive review solely for that churn. Before effectiveness: evaluation only, no operative PASS. |
+| T2 | Any branch/tracking/tag/notes/stash/replacement/custom substantive ref changes while files remain equal. | FAIL/BLOCK under 3(d); unknown interpretation is U/BLOCK. |
+| T3 | One candidate byte, inherited path/content/mode/classification, index byte, staged entry, allowlist or accepted artifact changes. | FAIL/BLOCK; no absorption into B0. An adoption transition requires its separate exact authority and verification outside this unchanged-boundary permission. |
+| T4 | refs/codex/other/x or refs/unknown/x appears, or a B0-present ref disappears. | FAIL/BLOCK as outside enumerated scope; unresolved identity is U/BLOCK. |
+| T5 | A capture/checkpoint ref becomes a source, merge base or governance locator. | FAIL/BLOCK even with equal target and trusted-looking name; ambiguous consumption is U/BLOCK. |
+| T6 | A capture retains its name but changes OID, or disappears then reappears with a different OID. | FAIL/BLOCK using full-ledger comparison, not a disguised add/remove. |
+| T7 | C2 is effective, adoption has failed/cancelled, purpose is unrelated, or candidate is revised. | FAIL/BLOCK; uncertain expiration is U/BLOCK. No restart/rename renews scope. |
+| T8 | Missing raw snapshot, truncated delta, unavailable live remote, uncertain consumer evidence or missing external review/adoption authority. | U/BLOCK; known suppression or false claim is FAIL/BLOCK. |
+| T9 | Author treats this draft as authority, self-reviews, launches C2 review, stages or publishes. | FAIL/BLOCK. Author completion and bootstrap review PASS confer none of those permissions. |
+| T10 | A fresh reviewer inspects this proposal under separate explicit prospective governance-review authority while old CS23 remains U. | May judge the proposal without declaring old preflight/provenance PASS; absent such authority, U/BLOCK. No bootstrap self-activation. |
+
+T1 terminates the self-generated loop only because eligible observations append evidence rather than changing the normative candidate or requiring transaction provenance that this rule expressly does not claim. T2-T10 prevent that termination rule from swallowing substantive drift, uncertainty, expiration or authority requirements. The rule does not promise progress when any independent condition fails.
+
+8. Single handoff and exclusions
+
+Route exactly once to FRESH INDEPENDENT HIGH-RISK BOOTSTRAP-GOVERNANCE REVIEW of C2-ADOPTION-BOOTSTRAP-B1 with its externally frozen identity and complete evidence. This is a handoff designation only; launching that task requires separate explicit authorization. No C2 integration review is enabled now. Reviewer independence must be authenticated against this author and any amender; no desired verdict is specified.
+
+Author completion establishes only a frozen DRAFT-UNREVIEWED proposal. No frozen C2 member is changed; no staging, commit, push, publication, acceptance, historical incident adjudication, CD reasoning, implementation, qualification, Execution Readiness closure or mining-readiness inference is authorized or established.

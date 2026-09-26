@@ -1,0 +1,190 @@
+{
+  "schema": "ore-v3-c2-adoption-bootstrap-b1-current-next-gate/0.1.0",
+  "candidate": "C2-ADOPTION-BOOTSTRAP-B1-REPOSITORY-INTEGRATION-I1",
+  "status": "DRAFT-UNREVIEWED",
+  "risk": "HIGH",
+  "author_session": "01a0df3b-db0c-7010-ba6f-c03427c078a1",
+  "adopted": false,
+  "effective": false,
+  "published": false,
+  "review_launched": false,
+  "preserved": {
+    "IR-U1": "U",
+    "historical_CS23": "U",
+    "preflight": "CS-PREFLIGHT-U",
+    "architecture_frontier": "RR-AR-PASS",
+    "prior_adoption_determination": "U",
+    "response_only_B1_review": "PASS — original prospective governance review only",
+    "C2_package": "unchanged exact eight-file CS23-C2-INTEGRATION-C1"
+  },
+  "exactly_one_next_gate": "Fresh independent HIGH-risk review of this exact B1 repository integration/adoption package",
+  "launch_authority": "Requires separately issued compatible review task; this file is a designation only. No automatic launch.",
+  "authorized_new_paths": [
+    "docs/research/governance/ore-v3-c2-adoption-bootstrap-b1-integration.md",
+    "docs/project-checkpoints/ore-v3-c2-adoption-bootstrap-b1-continuation.md",
+    "docs/project-checkpoints/ore-v3-c2-adoption-bootstrap-b1-current-next-gate.json",
+    "docs/research/governance/evidence/c2-adoption-bootstrap-b1/b1.txt",
+    "docs/research/governance/evidence/c2-adoption-bootstrap-b1/b1-review.txt",
+    "docs/research/governance/evidence/c2-adoption-bootstrap-b1/observations.json",
+    "docs/research/governance/evidence/c2-adoption-bootstrap-b1/anchors.json"
+  ],
+  "members_except_this_gate": [
+    {
+      "path": "docs/research/governance/ore-v3-c2-adoption-bootstrap-b1-integration.md",
+      "bytes": 14256,
+      "lf": 61,
+      "sha256": "986b650cf059bdb4f36838fc498637d88d92c6774c053e034373f50069683ed1",
+      "git_blob_sha1": "1e234bd571efbb2b7fe11f081cedfb153e92196d",
+      "mode": "100644",
+      "classification": "untracked"
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-c2-adoption-bootstrap-b1-continuation.md",
+      "bytes": 7686,
+      "lf": 34,
+      "sha256": "530247204868814a226ebbf0c5aab3011c17ff620120b447acad07519c8b852c",
+      "git_blob_sha1": "e7378a9804c00b2730ae68950f2cb5fea3231146",
+      "mode": "100644",
+      "classification": "untracked"
+    },
+    {
+      "path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/b1.txt",
+      "bytes": 24827,
+      "lf": 142,
+      "sha256": "780e9e19bbfb0aac2000270c9465d8e972c9fc242836a2c0a220ea1d7c441a88",
+      "git_blob_sha1": "f0a34737ef9f8c39576f739d619e4db80ff0888f",
+      "mode": "100644",
+      "classification": "untracked"
+    },
+    {
+      "path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/b1-review.txt",
+      "bytes": 7094,
+      "lf": 67,
+      "sha256": "11a3218471d668a58265e0cd6c498eeee40249a05018ced853670845ef216bc5",
+      "git_blob_sha1": "f9fd7baf0d8bcf53a88ed388f13cc32026673916",
+      "mode": "100644",
+      "classification": "untracked"
+    },
+    {
+      "path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/observations.json",
+      "bytes": 724997,
+      "lf": 6454,
+      "sha256": "12646174fa4a6320d0583fd1c931f1d8cf43ef8ee3434cf9dea13f58fb992d3d",
+      "git_blob_sha1": "9e8628827495192887ecd84a7fa586c149f0effd",
+      "mode": "100644",
+      "classification": "untracked"
+    },
+    {
+      "path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/anchors.json",
+      "bytes": 4042560,
+      "lf": 3343,
+      "sha256": "429524ad28b94a8b6cc90dccdd63c82345d9f23fd2c07c33bf01368aac0b8d2f",
+      "git_blob_sha1": "7bcbe15074e4fc9d69ebd189e214574d4b3c19e2",
+      "mode": "100644",
+      "classification": "untracked"
+    }
+  ],
+  "this_gate_identity": "Exact bytes/LF/mode/SHA256/Git blob externally frozen in author completion; no self-hash.",
+  "intended_delta": {
+    "baseline_head": "28027c258997426b6c622795f0ed82b4dfe97d90",
+    "baseline_index_sha256": "0b6c00e7bf88b6bf6d430477d7133f4fc76b4799b1b40981ff054e3886f9e9f5",
+    "baseline_inventory_sha256": "a5e6812b30436759b1996940ab6f143afa16c39307af741f66a3563fdb0287c5",
+    "before_paths": 719,
+    "after_paths": 726,
+    "operations": [
+      {
+        "operation": "A",
+        "path": "docs/project-checkpoints/ore-v3-c2-adoption-bootstrap-b1-continuation.md",
+        "classification": "untracked",
+        "mode": "100644"
+      },
+      {
+        "operation": "A",
+        "path": "docs/project-checkpoints/ore-v3-c2-adoption-bootstrap-b1-current-next-gate.json",
+        "classification": "untracked",
+        "mode": "100644"
+      },
+      {
+        "operation": "A",
+        "path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/anchors.json",
+        "classification": "untracked",
+        "mode": "100644"
+      },
+      {
+        "operation": "A",
+        "path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/b1-review.txt",
+        "classification": "untracked",
+        "mode": "100644"
+      },
+      {
+        "operation": "A",
+        "path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/b1.txt",
+        "classification": "untracked",
+        "mode": "100644"
+      },
+      {
+        "operation": "A",
+        "path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/observations.json",
+        "classification": "untracked",
+        "mode": "100644"
+      },
+      {
+        "operation": "A",
+        "path": "docs/research/governance/ore-v3-c2-adoption-bootstrap-b1-integration.md",
+        "classification": "untracked",
+        "mode": "100644"
+      }
+    ],
+    "modifications": [],
+    "deletions": [],
+    "renames": [],
+    "git_mutations": [],
+    "external_freeze": "Canonical exact identity-bearing delta for all seven is bound externally after this file is frozen."
+  },
+  "independence": {
+    "must_differ_from_authors_and_amenders": true,
+    "known_authors": [
+      "01a0df3b-db0c-7010-ba6f-c03427c078a1",
+      "01a0df01-ab17-7dc2-affe-5c7d1bb817c3"
+    ],
+    "original_semantic_reviewer": "01a0df14-b06e-7152-8ab0-d47b56d38c9c",
+    "constraint": "Fresh exact repository-package review, authenticated actual independence, no self-review, no desired verdict, no repair of frozen candidate."
+  },
+  "prerequisites_for_later_effectiveness": [
+    "Independent exact repository integration and continuation review PASS",
+    "Separate explicit exact adoption and durable-location acceptance",
+    "Separately authorized governance-only transition under accepted controls while historical U remains",
+    "Separately authorized exact staging/commit",
+    "Authenticate resulting commit/parent/tree/path/blob/index identities",
+    "Separate publication authorization after commit authentication",
+    "Fresh local/tracking/live-remote equality, ahead/behind, configuration/index/inventory authentication",
+    "Independent retrieval/re-verification of all published required evidence",
+    "Authenticated external effectiveness binding; no fabricated identity or start time"
+  ],
+  "decision_rules": {
+    "PASS": "Integration review only; seek separately authorized next adoption prerequisite. No effectiveness or Git authority.",
+    "FAIL": "STOP; preserve all findings and identify only the exact separately authorized correction gate, then fresh review.",
+    "U": "STOP; preserve uncertainty and identify only the exact separately authorized evidence/authority gate.",
+    "precedence": "FAIL takes precedence while retaining U. No-silent-repair."
+  },
+  "prohibited_now": [
+    "Apply B1",
+    "C2 integration review",
+    "Adoption/effectiveness",
+    "Stage",
+    "Commit",
+    "Push",
+    "Publish",
+    "Modify any existing artifact",
+    "Normalize/delete/restore refs or refresh index",
+    "Adjudicate historical 3288-byte incident",
+    "CD reasoning",
+    "Implementation",
+    "Qualification",
+    "Execution Readiness closure",
+    "Mining-readiness inference",
+    "Downstream task launch"
+  ],
+  "raw_dependencies": "anchors.json and observations.json plus exact unchanged inherited repository anchors and committed terminals; complete originals mandatory; unavailable required bytes cause U.",
+  "fallback": "Receipt-confirmed exact transport only, no authority or proof waiver."
+}
