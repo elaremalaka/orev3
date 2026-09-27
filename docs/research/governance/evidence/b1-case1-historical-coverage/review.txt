@@ -1,0 +1,77 @@
+# B1-CASE1-HISTORICAL-COVERAGE-C1 — INDEPENDENT HIGH-RISK REVIEW R1
+
+Verdict: PASS for the exact prospective governance control change only. No blocking defect found. This verdict establishes neither adoption/effectiveness nor any current-boundary, preflight or substantive C2 PASS.
+
+Reviewer identity: fresh reviewer thread 01a0e145-5b7a-7621-9a68-69c613c2501f; agent /root/independent_high_risk_review; nickname Nash. Its original session_meta is record 1 of /Users/erale/.codex/sessions/2026/09/26/rollout-2026-09-26T22-10-14-01a0e145-5b7a-7621-9a68-69c613c2501f.jsonl, timestamp 2026-09-27T05:10:14.425Z. The metadata id is the distinct reviewer thread above; parent_thread_id and inherited session_id are 01a0e13f-5a25-7872-a9af-37df52f143e3. This is an independently reasoning child reviewer, not an unrelated top-level session. Independence rests on this fresh distinct reviewer identity, no contribution to the candidate, and unconstrained PASS/FAIL/U judgment. I did not author, amend, repair or supplement the frozen candidate. No additional reviewer was routed.
+
+External authority: original user message in author thread 01a0e13f-5a25-7872-a9af-37df52f143e3, record 9, 6,742 UTF-8 bytes, SHA-256 f4497c7fa6db8397a2f575bcc0e5fa36b12d2e2968706c6d1d73b52ac2e8c8b5. It explicitly authorizes this reassessment, a frozen draft if supportable, and exactly one fresh independent HIGH-risk review. The parent delegated that one review without a desired verdict. Neither draft nor effective B1 supplies authority for this review.
+
+## Exact subject and authentication
+
+Candidate: /private/tmp/b1-case1-reassessment-01a0e13f/candidate.md; 20,247 UTF-8 bytes; 102 LF; SHA-256 3cd37f71b7a261e9ccb08ec8f93bd81bbd79d8a46d21ea915ccfe7b7636085e8. Bytes matched before and after review. Its authored status remains DRAFT-UNREVIEWED in the preserved original; this external report records subsequent review without editing that banner.
+
+I read the candidate, authentication.json, effective B1 and correction, their repository anchors and original authority/review/adoption records, and the latest bounded recovery original. Authentication included:
+
+- B1 rule 780e9e19bbfb0aac2000270c9465d8e972c9fc242836a2c0a220ea1d7c441a88; complete original review 11a3218471d668a58265e0cd6c498eeee40249a05018ced853670845ef216bc5 from reviewer 01a0df14-b06e-7152-8ab0-d47b56d38c9c, record 188; integration review 5b6a3d1178ec5b4e1c6a6e24f8d41703c9b879486b305d6c107c3db7d9501db8; original adoption authority/completion 01a0df51-b1b4-7220-b05b-d1194f80032b records 9/207; effectiveness receipt 44f65dcc59af2db6e28bac4893b098f070fe3a2527504cbd4288da2f432d9e0b and publication retrieval receipt a24280602120932fb042606096cd4305923ef333d9caf63855be5003e32fc5fd. All 14 B1 anchored original raw records matched retained originals.
+- Correction candidate c254b9b7dc07085646734cc60f3ad30238605eea259c3e5fa582fb4db705f05b; original complete review 93fc4447e8b0f4b8e313285fcbd62d479fad74bdd17813f269e462f66e73bafc from 01a0df95-56df-7f21-9de9-e1b4515bffe6 record 131. This record is a tool-output text block, not ordinary message content; the complete 11,184-byte segment reproduces the hash.
+- Correction integration review 43167d98a6e37c54d6f7f7ff68a8a09135599d6a6f969a3f6562fe48af9b135c from 01a0e123-f632-77d3-b8fd-4216bbb4aa9d record 131. Extracted the JSON-decoded command output after its explicit review marker, excluding the expressly identified print-added terminal LF: 10,202 bytes, 80 LF. Adoption authority record 9 hashes to c447148c32b81959c44bfae9302602939529c6eae86308e53d92d78c126d015a; completion record 160 to eb479d8ed166001e454b727ba5a92e971fd80d0228f44631205a76de200e6de2. The latter externally binds effectiveness receipt 7262d2051deb65783f9c23c1002d2509da10f0f80d78724a7c6f3020e1f84eb1, whose exact bytes also authenticate.
+- Both seven-file units equal their published commit bytes: B1 at 1403cc47c1e6d938b85b5e5d1fe5db4e4808715e and correction at 9f8251f5d1ff46b51a7f26d4ab9a419f93c43e0b. Correction parent/tree reproduce 1403cc47c1e6d938b85b5e5d1fe5db4e4808715e / 3b0d3ca546a04a4672c3b6086eb0088be927b631. Eight C2 members and five accepted artifacts match anchored hashes. Nine stronger bindings match anchored hashes and their named commit bytes.
+- Lane protocol hash 10df214e0085eeb8e265249f5d2748e0a583af68cc36db1bf4ff87d29b5ff051 and execution protocol hash 5139c876da9d3db8ddab5abb8c89673589413cb8b19406582537425d6558193f reproduce. I inspected their authority, independent review, preservation, evidence and consequential-control-change requirements, especially lane section 16, and the stronger bindings' scope/precedence provisions. No source/acquisition/receipt/settlement or F2 requirement is changed by this proposal.
+- Latest bounded recovery: 01a0e13a-2222-72c3-be24-eec9b6f16319 record 113; 7,151 bytes; SHA-256 192294715ba96d21002204a9ba9eb58cfc186335d04a104e1d3229ebd8402c93. Original ordered output_text extraction authenticates its closed source register and both U conclusions. I did not repeat its consumer/alias searches or infer historical non-use.
+
+Fresh read-only remote authentication initially failed with sandbox DNS error; this proved neither equality nor divergence. A read-only approved retry returned 9f8251f5d1ff46b51a7f26d4ab9a419f93c43e0b for refs/heads/research/post-v1. Independently observed local/tracking HEAD agree and ahead/behind is 0/0. This is current publication authentication, not a B1 boundary application or continuous-history proof.
+
+## Independent decision basis
+
+The old universal burden remains necessary to support universal historical non-consumption/alias exclusion. The retained recovery cannot discharge it. That does not make the old historical propositions true, and proposal review cannot resolve them.
+
+The frozen candidate makes a different, supportable decision available: a narrowly authorized read-only review may derive its conclusions from independently selected, authenticated substantive inputs and their necessary authority dependencies while explicitly declining to prove historical harmlessness. Sections 3(1) and 3(3) are essential positive requirements. They include material ignored/external inputs and forbid reliance on a prior conclusion whose necessary authority is unauthenticated. A negative search or endpoint digest alone cannot satisfy those requirements.
+
+The changed burden is explicit in section 2: the exact named historical interval's universal non-consumption/alias coverage obligation and resulting block, including Case 2 only to the extent its reason is those irrecoverable gaps or unsupported hypothetical relationships. It is not disguised as an interpretation of the old correction. Concrete adverse evidence, substantive ambiguity and necessary missing dependencies still block. Sections 3–4 bar using the exception to validate historically dependent decisions or erase established forbidden history. Every other B1 control remains conjunctive.
+
+This accepts a bounded epistemic limitation: a completely unobserved historical event may remain undetected. The candidate says so and makes no continuity or complete harmlessness claim. The proposal would be unsafe if used to certify that no real drift occurred; its text prohibits that use. Established intermediate drift blocks even after equal endpoints. This is consistent with the original B1 review's distinction between observed forbidden changes and unproved entirely unobserved activity, while explicitly changing the narrower consumer/alias burden through the required governance mechanism.
+
+The rule is noncircular: external authority permits proposal review, separate adoption/effectiveness is mandatory, and a future authorized independent checker must authenticate the finite substantive dependency closure without obtaining missing authority from this draft. A closure that cannot be established yields U rather than another invented proof. A real stronger-governance conflict remains U/BLOCK and cannot be cured by the candidate's subordination sentence.
+
+The historical loop is bounded: one exact name/OID/retained interval and one unchanged C2 package, read-only scope, finite positive evidence obligations, no renewed exhausted generic search, and no requirement that all unrelated processes be archived. New eligible bookkeeping observations use original B1 duties; this exception does not extend automatically to their missing histories. Termination here means a finite decision with PASS/FAIL/U, not guaranteed C2 progress. Expiry, separately authenticated transitions and new-invocation authorization prevent repeated tasks from renewing authority.
+
+Prospective receipts are proportionate: retain consequential selected inputs, dependencies, substantive snapshots, observed deltas/relationships and limitations with external integrity and durable retrieval. Coalescing identical diagnostics cannot discard distinct evidence. This creates no retroactive misconduct finding or producer implementation authority.
+
+## Independently executed adverse traces
+
+These are read-only counterfactual evaluations of frozen clauses, not runtime tests, historical fact findings or a current invocation.
+
+| Trace | Independent disposition and decisive requirement |
+|---|---|
+| Real branch/tag/governance-ref mutation later revealed between equal endpoints | FAIL/BLOCK under sections 3(4), 4; concrete unresolved indication U. Entirely unobserved activity remains unknown, never continuity PASS. |
+| Exact ref consumed by git log --all approval history, wildcard/refspec traversal or authority-bearing diagnostic output | Established consequential use FAIL/BLOCK under 3(5), 4; ambiguous actual use U. Code existence alone establishes neither execution nor non-execution. |
+| Unknown namespace or unresolved substantive ref identity | Outside section 2; known scope violation FAIL, unresolved identity U; both BLOCK. |
+| B0-present ref deleted | FAIL/BLOCK; original B0 cannot be reset to erase presence. |
+| Same-name OID mutation | FAIL/BLOCK under 3(4). |
+| Remove/re-add with different OID in nonadjacent observations | FAIL/BLOCK using full ledger, not adjacent endpoints. |
+| Symbolic chain to substantive authority, even unused or same resolved OID | Established alias FAIL; concrete unresolved chain U; both BLOCK under 3(5), 4. |
+| Incomplete Git-visible inventory, material external input or necessary review dependency | U/BLOCK under 3(1), 3(3); endpoint equality alone insufficient. |
+| Missing fresh remote evidence or remote mismatch | Missing/failed authentication U; observed mismatch FAIL; both BLOCK under 3(2). |
+| Candidate, inherited content/mode/classification, index or staged-state drift | Established mismatch FAIL; missing comparison U; both BLOCK. |
+| Deliberate destruction, adverse-row omission or known false completeness | FAIL/BLOCK under 3(5), 4; unresolved material tampering U. No cleanup recovery. |
+| Future avoidable retention failure | Outside closed section 2 exception; ordinary FAIL/U blocks. |
+| Different repository, candidate revision, name/OID/interval or operational reuse | FAIL/BLOCK for established scope abuse. Later same-name/same-OID appearance is not this interval. |
+| Relabel bounded result provenance PASS, exact continuity, old CS23 PASS or effectiveness | FAIL/BLOCK under 4 and 6. Historical U and prior negatives remain. |
+| Universal historical coverage exhausted; all finite positive duties independently PASS; no concrete adverse evidence | Conditional HISTORICAL-BOOKKEEPING-NONBLOCKING only after separate effectiveness and invocation authority. Both universal historical propositions remain U. No current result is supplied. |
+| New eligible task bookkeeping churn | Apply unchanged B1 duties; append observations. No automatic historical exception or normative-candidate rewrite. |
+| Positive input closure depends on an earlier approval conclusion possibly selected through this ref, with necessary authority unavailable | U/BLOCK under 3(3), even if current files and remote match. An independently authenticated review cannot launder a necessary unsupported prior conclusion. |
+| A known intermediate mutation is dismissed as irrelevant because fresh review inputs are independent | FAIL/BLOCK under section 4's explicit established-forbidden-history rule. |
+| Pure unsupported historical possibility is promoted into proof of safety | Rejected. Historical fields stay U; only limited-evidence statement plus independently PASS positive duties is allowed. |
+| Later evidence contradicts a relied-on bounded receipt | Freeze reliance/propagation immediately; append evidence and withdraw receipt from reliance while preserving original bytes; established violation FAIL, unresolved material significance/authenticity U; separate independent reassessment. |
+| B1 expired, task renamed, invocation restarted, or substantive/index/HEAD/artifact transition occurs | Expiry cannot be revived; uncertain expiry U. Transition ends fixed-boundary invocation and needs separately authorized exact transition mechanism. |
+| Review PASS is used immediately for C2, adoption, publication or implementation | FAIL/BLOCK. Sections 4 and 6 require separate gates, authority and exact resulting identities; draft never self-activates. |
+
+No trace required amendment or an unstated exception to obtain these outcomes. No blocking issue or missing semantic obligation was identified.
+
+## Preservation and ceiling
+
+I made no repository or Git mutation, candidate edit, historical recovery search, current-boundary application, substantive C2 review, adoption or effectiveness determination. Only this separately authorized external review report was written. Parent independently reported all 733 Git-visible paths/modes/status/classification preserved, index SHA-256 1d87182ef812e3cc23d73039ba2777fd2e492b881d25fb84d99e551faf50e7bd unchanged, staged diff empty, and no observed entry-to-completion ref additions/removals. Parent also reported 351 feature tests passed in 6.78s with bytecode/cache disabled. Those are attributed preservation/test results, not my independent rerun or runtime qualification. My exact candidate and authority-byte comparisons are independent as described above.
+
+Preserved: EFFECTIVE-ACCEPTED B1 and symbolic correction; immutable published baseline; frozen eight-file C2; historical direct/symbolic relationship, exact target, non-consumption and substantive-alias exclusion U; IR-U1=U; historical CS23=U and CS-PREFLIGHT-U; all prior negative/withdrawn records; RR-AR-PASS; stronger authority/F2; no-silent-repair; FAIL precedence with residual U retained. No 3,288-byte incident adjudication, CD, implementation, qualification, Execution Readiness or mining-readiness inference occurred.
+
+Sole next gate designation: separately authorized repository-backed integration/adoption preparation for this exact reviewed control change, followed by the independently reviewed adoption/publication/effectiveness mechanism required by section 6. This report grants no authority to execute that gate. Stop after review reporting; no next task or reviewer was launched. Until separately effective, existing authority continues to block C2 on the preserved historical coverage U.

@@ -1,0 +1,102 @@
+# B1-CASE1-HISTORICAL-COVERAGE-C1
+
+DRAFT-UNREVIEWED. Frozen author proposal only. HIGH risk.
+Author: 01a0e13f-5a25-7872-a9af-37df52f143e3. Repository: /Users/erale/Documents/orev3.
+No acceptance, effectiveness, invocation, current-boundary PASS or substantive C2 review is established. This document is outside the repository and is not an accepted durable authority location.
+
+## 1. Authenticated authority and finding
+
+The current user authorizes this bounded reassessment and, if supportable, one frozen draft and exactly one fresh independent HIGH-risk governance review. This authority permits proposal evaluation while the existing boundary remains U; it does not waive that boundary for C2 or operational work.
+
+Immutable EFFECTIVE-ACCEPTED B1 is published at 1403cc47c1e6d938b85b5e5d1fe5db4e4808715e. Rule SHA-256: 780e9e19bbfb0aac2000270c9465d8e972c9fc242836a2c0a220ea1d7c441a88. Its independent original review is session 01a0df14-b06e-7152-8ab0-d47b56d38c9c, record 188, full response SHA-256 11a3218471d668a58265e0cd6c498eeee40249a05018ced853670845ef216bc5; the embedded verdict is ec1c8818bd9df2c8f7d456d4cb239ce6e767ac45907f7070ff6e4ed67c890fb6. Integration reviewer 01a0df49-3914-7652-8634-10e48621a984 record 159 hashes to 5b6a3d1178ec5b4e1c6a6e24f8d41703c9b879486b305d6c107c3db7d9501db8. Adoption authorization/completion are 01a0df51-b1b4-7220-b05b-d1194f80032b records 9/207. Effectiveness receipt: 44f65dcc59af2db6e28bac4893b098f070fe3a2527504cbd4288da2f432d9e0b; published retrieval: a24280602120932fb042606096cd4305923ef333d9caf63855be5003e32fc5fd.
+
+Immutable EFFECTIVE-ACCEPTED historical symbolic correction has candidate SHA-256 c254b9b7dc07085646734cc60f3ad30238605eea259c3e5fa582fb4db705f05b and complete independent review 93fc4447e8b0f4b8e313285fcbd62d479fad74bdd17813f269e462f66e73bafc (01a0df95-56df-7f21-9de9-e1b4515bffe6 record 131). Independent integration review: 01a0e123-f632-77d3-b8fd-4216bbb4aa9d record 131, 10,202 bytes/80 LF, SHA-256 43167d98a6e37c54d6f7f7ff68a8a09135599d6a6f969a3f6562fe48af9b135c. Adoption authorization is 01a0e12a-c9d7-7263-939c-98232dd9d369 record 9, SHA-256 c447148c32b81959c44bfae9302602939529c6eae86308e53d92d78c126d015a; completion record 160 hashes to eb479d8ed166001e454b727ba5a92e971fd80d0228f44631205a76de200e6de2. Effectiveness receipt: 7262d2051deb65783f9c23c1002d2509da10f0f80d78724a7c6f3020e1f84eb1. Published baseline: 9f8251f5d1ff46b51a7f26d4ab9a419f93c43e0b; parent 1403cc47c1e6d938b85b5e5d1fe5db4e4808715e; tree 3b0d3ca546a04a4672c3b6086eb0088be927b631.
+
+Both seven-file authority units match their published bytes. The eight frozen C2 members, five accepted artifacts and nine stronger bindings match their anchored identities. Original review/authorization records authenticate from retained originals, with reviewers distinct from respective authors. Historical draft banners are preserved. Exact source locators and embedded records are in the published correction anchors at docs/research/governance/evidence/b1-symbolic-relationship-correction/anchors.json; B1 originals are in its published evidence/c2-adoption-bootstrap-b1/anchors.json. Correction effectiveness and publication receipts are bound by the original adoption completion, with verification copies at /private/tmp/b1-symbolic-adoption-01a0e12a/. Temporary copies are not acceptance.
+
+Latest bounded consumer/alias recovery: session 01a0e13a-2222-72c3-be24-eec9b6f16319, record 113, 2026-09-27T05:02:28.363Z; 7,151 UTF-8 bytes, SHA-256 192294715ba96d21002204a9ba9eb58cfc186335d04a104e1d3229ebd8402c93. Ordered output_text extraction, without normalization or appended newline. Its closed source register found no sufficient complete execution audit, continuous ref-relationship history or consumer ledger. Both propositions remain U. Authentication of that result is not a renewed search or independent proof of non-use. No historical fact recovery is reopened here.
+
+Finding: the current Case-1 universal burden cannot be discharged from the retained system. It remains appropriate if claiming complete historical harmlessness, but is unnecessarily strong for a prospective, independently grounded review of exact authenticated governance bytes. A narrowly scoped change is supportable only by reducing the claim and explicitly accepting this bounded epistemic limit. It cannot prove that real undetected historical drift never occurred. If stronger authority requires that proof for a particular substantive decision, that decision still blocks; this proposal supplies no override.
+
+The proposed wording in the user task is insufficient standing alone: unchanged endpoints and a negative search do not establish complete substantive inputs or authority. Sections 3–5 add those positive requirements and disqualifiers. This is an explicit change to a control, requiring the lane protocol /0.2.0 section 16 independent review and subsequent adoption mechanism. It is not an interpretation that the effective Case-1 rule already allows this outcome. Stronger execution governance, nine bindings and F2 retain precedence; unresolved conflict is U/BLOCK.
+
+## 2. Closed historical subject and exact change
+
+Only this name/OID/retained interval is eligible:
+
+refs/codex/turn-diffs/captures/1790370539722/e1d68469-8f9e-43aa-b45e-23cc9ba196a5/base
+Resolved observed OID: 513f2c698ad577e90ead4b23692bd0aa9cd8bde2.
+Absent at original B0 2026-09-25T21:05:04.758080+00:00; present at IR-U1 observation 2026-09-25T21:11:21.694519+00:00 (original record 119 reaffirms snapshot); absent at correction entry 23:58:01.165264 and completion 2026-09-26T00:02:04.275284+00:00. These delimit retained observations, not a reconstructed lifetime or transaction interval.
+
+Original B0 freeze: 95acca65e44813a232834c511d14e6fbd7cbd07b3abddc183f38eafdb7cc7768. Exact subject package: unchanged eight-file CS23-C2-INTEGRATION-C1, whose paths/hashes are B1 section 2 and published correction anchors. Preserve original B0 and every separately authorized transition, including both seven-file publications; never reset B0 to the latest matching endpoint.
+
+Proposed qualification, only after separate effectiveness: for this exact historical subject, replace the correction's universal non-consumption AND alias-exclusion burden and the corresponding B1 section 3(f)/section 5 incomplete-historical-coverage block with the conjunctive bounded rule below. Also qualify correction Case 2 solely where its only reason to block is those known irrecoverable coverage gaps or an unsupported hypothetical relationship consistent with them. This does not resolve Case 1 under the old rule. Label the distinct outcome HISTORICAL-BOOKKEEPING-NONBLOCKING, never HISTORICAL-NONUSE-PASS.
+
+All remaining B1 obligations remain conjunctive. No other name, OID, interval, repository, candidate revision, namespace, current ambiguous relationship or future loss inherits the qualification. The changed control is confined to the separately authorized read-only C2 governance integration review and its read-only boundary authentication. Adoption, publication, implementation and operational invocations do not inherit it. Any broader application needs new explicit governance authority and review.
+
+## 3. Positive boundary and bounded evidence obligations
+
+A later independent checker, under separate effective authority and invocation authorization, must positively authenticate each item, with exact expected/observed identities and sources, before this historical gap can be non-blocking:
+
+1. Exact candidate/package bytes, full inherited Git-visible repository path/content/size/mode/classification boundary, inherited status/diff and configuration unchanged against the authenticated action-specific boundary and original transition chain. All ignored or external inputs actually material to the review must also be identified and authenticated; an incomplete substantive boundary is U. No archive of unrelated caches or processes is required.
+2. Exact index bytes and staged state unchanged; root, branch/upstream/origin unchanged; local/tracking/fresh independently queried live-remote HEAD and ahead/behind agree with the authenticated boundary. Missing remote proof is U. No fetch, index refresh or mutation may manufacture equality.
+3. Accepted governance/artifact identities, author/review/adoption/publication bindings and stronger authority unchanged and current; exact review inputs and their dependency closure independently selected by immutable identities. The substantive review must derive its conclusions from these authenticated inputs, not a prior conclusion whose necessary authority remains unauthenticated. An unknown or substantive ref cannot serve as an input. If a necessary substantive dependency is ambiguous or missing, U/BLOCK. This is evidence for this review's finite inputs, not a demand to reconstruct every historical process.
+4. Full retained observations and deltas preserved exactly and considered across the full ledger, not only adjacent/end snapshots. No observed unauthorized substantive-ref addition, removal or value/target change; no eligible-ref OID update, same-name remove/re-add laundering or known symbolic-target update. The already authorized publication transitions must authenticate separately and cannot be excused as bookkeeping.
+5. Authenticate the bounded recovery register above and its coverage limitations, and inspect any subsequently available relevant evidence already presented to the review. Address actual retained actions, indirect enumeration/wildcards/refspecs/traversal/dereferencing, governance selections and the identified git log --all consumer. Do not repeat exhausted generic recovery. No affirmative evidence of substantive consumption or aliasing; no unresolved concrete evidence suggesting either; no contradiction in available evidence; no demonstrated suppression or destruction. Code existence alone is neither invocation nor non-invocation. A newly supplied material lead must be resolved or remain U; this is not permission to ignore adverse evidence because the recovery was bounded.
+6. Eligible historical identity and observation ordering are authenticated, including B0 absence and observed addition before removal. Names, tree object type, matching OIDs, timing or likely producer behavior are insufficient by themselves. Preserve full names, old/new OIDs or absence, raw identities, commands/results, symbolic information where retained and observation times/order. No missing field may be fabricated.
+
+The bounded review may find “no affirmative evidence of substantive consumption or aliasing in the authenticated retained evidence within the specified review coverage.” It MUST separately state “complete historical non-consumption and complete substantive-alias exclusion remain U.” The first is a limited evidence finding and a disqualifier screen combined with positive boundary proofs; it is never positive proof of the second.
+
+## 4. Decisions, claims and later evidence
+
+Proposal-review PASS means only that this prospective control change is acceptable for separately gated adoption. It is not effectiveness or an application result.
+
+Future invocation PASS requires all section 3 obligations independently PASS, valid effective authority, scope and expiry, and no stronger conflict. Only then may the exact historical gap receive HISTORICAL-BOOKKEEPING-NONBLOCKING for that read-only invocation. Every other control must independently pass before a broader preflight could pass. No such invocation occurs here.
+
+FAIL/BLOCK: established forbidden change/use/alias, contradiction, identity mismatch, suppression/destruction, false completeness, scope/expiry abuse, self-acceptance or silent repair. U/BLOCK: missing positive boundary/dependency/remote/authority evidence, ambiguous substantive ref or concrete use/alias indication, uncertain scope/expiry, unavailable required retained source, or unresolved stronger conflict. FAIL takes precedence while preserving residual U. Historical U exempted by section 2 remains U in its own fields; no generic U-to-PASS conversion is allowed.
+
+Permitted claim ceiling, only after a successful separately authorized invocation:
+“Within the identified authenticated retained evidence and bounded review coverage, substantive drift or substantive use/aliasing of the exact historical Codex bookkeeping ref is not established. The substantive inputs and authorities of this exact read-only governance review independently satisfy every required invariant. Producer, transaction, historical direct/symbolic relationship, exact target, complete non-consumption and complete alias history remain U. Solely for this invocation, those named historical bookkeeping gaps do not independently block review. No complete historical harmlessness or continuity is proved.”
+
+Do not use this sentence if any prerequisite fails or remains U. It does not mean no real historical drift occurred. An entirely unobserved mutation cannot be detected by an observation-based rule; accepting that limit for this precise review claim must not validate any historically dependent decision. Discovery of a real hidden intermediate substantive change blocks even when endpoints match. Independent authenticated review inputs cannot erase established forbidden history.
+
+Later contrary evidence immediately freezes affected reliance and downstream propagation; append exact evidence, preserve the prior receipt and mark it withdrawn from reliance. Established violation is FAIL, unresolved material authenticity/significance U. Separately authorized independent reassessment is required. No automatic repair, cleanup, retry or restored PASS.
+
+Preserve EFFECTIVE-ACCEPTED B1 and correction verbatim, published baseline, frozen C2, all prior negative/withdrawn records and RR-AR-PASS. Historical relationship, target, non-consumption, substantive-alias exclusion, IR-U1 and historical CS23 remain U; prior CS-PREFLIGHT-U is never rewritten. No producer/task/lifecycle, transaction, exact continuity, provenance PASS, historical incident, CD, qualification, Execution Readiness or mining-readiness conclusion follows.
+
+## 5. Mandatory adverse traces for independent review
+
+These are proposed oracles, not executed independent review results. Reviewer must record its own decisions and may find further defects.
+
+| Counterfactual | Required disposition |
+|---|---|
+| Real branch/tag/governance-ref mutation revealed between equal endpoints | FAIL/BLOCK; equality cannot erase it. A concrete unresolved indication is U. Purely unobserved activity remains unknown, never continuity PASS. |
+| Exact Codex ref affirmatively consumed by git log --all approval history or another substantive decision | FAIL/BLOCK even with equal content; indirect selection counts. Ambiguous actual use is U. Mere code existence does not prove execution. |
+| Unknown namespace or unresolved substantive ref identity | Outside exception: FAIL for known scope violation, U for unresolved identity; both BLOCK. |
+| B0-present ref deleted | FAIL/BLOCK; cannot relabel post-B0. |
+| Same-name OID mutation | FAIL/BLOCK. |
+| Remove/re-add with changed OID, including nonadjacent observations | FAIL/BLOCK against full retained ledger. |
+| Evidence of symbolic chain to substantive authority, even unused | Established alias FAIL; concrete unresolved indication U; BLOCK. Do not relabel it as generic missing metadata. |
+| Incomplete substantive repository or review dependency boundary | U/BLOCK; endpoint digest alone insufficient. |
+| Missing/failed fresh remote authentication | U/BLOCK; observed mismatch FAIL. |
+| Candidate, inherited content/mode/classification, index or staged drift | FAIL/BLOCK; missing comparison U. |
+| Deliberate evidence destruction, selectively omitted adverse observations or claimed completeness known false | FAIL/BLOCK; suspected material tampering unresolved U. No recovery by erasing the evidence. |
+| Future avoidable retention failure | Outside closed exception; ordinary FAIL/U rules block. |
+| Other repository/candidate/ref/interval or operational reuse | FAIL/BLOCK; same name and OID later are not this interval. |
+| Bounded result relabeled provenance PASS, exact continuity, old CS23 PASS or effectiveness | FAIL/BLOCK. |
+| Exhausted historical universal coverage, but every positive obligation independently passes and no contrary/concrete adverse evidence | After separate effectiveness and invocation only: historical gap non-blocking, historical fields U. Before then, proposal evaluation only. |
+| New eligible task bookkeeping churn | Original B1 conditions still apply; append observations without rewriting this candidate. This exception does not automatically extend to new missing-history incidents. |
+
+## 6. Expiry, retention and acceptance separation
+
+Original B1 expiry is not extended or revived: C2 effectiveness, adoption rejection/failure/abandonment/cancellation terminates use, whichever occurs first; C2-path FAIL terminates, U suspends dependent work without retry authority. Uncertain effectiveness/expiry is U. This narrower qualification also ends at the end of each authorized read-only invocation; a new invocation requires fresh positive checks and authorization within B1's remaining scope. Any substantive/index/HEAD/artifact transition ends the fixed-boundary invocation and needs the original separately authorized exact transition mechanism. Renaming tasks, copying the draft or restarting cannot renew scope.
+
+Prospectively, before relying on future bookkeeping exceptions, retain a bounded decision receipt for each consequential governance operation: operation identity and envelope, exact selected substantive inputs and dependency identities, pre/post substantive authority snapshots, exact observed bookkeeping deltas, known direct/symbolic relationships and targets at observation, commands/results and limitations, and any successful bookkeeping transactions the producer can actually attest. Use explicit substantive authority selection rather than unbounded ref enumeration for consequential decisions; if enumeration is necessary, retain its resolved input set and role. This is a prospective requirement, not a claim about historical implementation and not implementation authorization.
+
+Retain decision-affecting changes and contradiction/exception evidence append-only through the accepted governance retention period, with durable retrieval and external integrity bindings before reliance. Routine identical diagnostics may be coalesced with count/time/hash references only when no distinct retained evidence is discarded or completeness misrepresented. Do not archive every transient process/observation or assert continuous tracking without instrumentation. Retention failures must surface as FAIL/U under normal rules, never renew this historical exception. Separate design authorization is needed for producer changes. No new retention duty retroactively changes historical U into misconduct or proof.
+
+A fresh independent HIGH-risk reviewer must authenticate exact frozen bytes and its independence from this author and all contributors, review stronger-governance compatibility and all adverse traces, and issue PASS/FAIL/U freely. No amendment or supplementation of frozen normative bytes in review. Exactly one review is routed by this author; no desired verdict and no automatic second review.
+
+Even a review PASS requires separate explicit adoption of the exact changed burden, accepted durable-location mechanism, any necessary separately authorized repository integration and independent integration review, exact authorized Git/publication transitions and independently authenticated resulting identities, and external effectiveness binding. The current draft cannot authorize any step. Required publication cannot be waived. Existing authorities remain operative until that process completes. A rejected or U draft leaves C2 blocked under existing authority; this lane neither adopts nor applies it.
+
+Sole author handoff: FRESH INDEPENDENT HIGH-RISK GOVERNANCE REVIEW — B1-CASE1-HISTORICAL-COVERAGE-C1, exactly once, under the current user's explicit routing authorization. STOP after review reporting; do not launch adoption or C2 review.

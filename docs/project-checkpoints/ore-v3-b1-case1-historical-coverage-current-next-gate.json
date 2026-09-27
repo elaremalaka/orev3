@@ -1,0 +1,90 @@
+{
+  "schema": "ore-v3-b1-case1-historical-coverage-next-gate/1",
+  "status": "DRAFT-UNREVIEWED",
+  "package": "B1-CASE1-HISTORICAL-COVERAGE-INTEGRATION-C1",
+  "author_session": "01a0e14d-10ee-7953-b783-fe24d98e1498",
+  "members_except_self": [
+    {
+      "path": "docs/research/governance/ore-v3-b1-case1-historical-coverage-rule-integration.md",
+      "bytes": 8915,
+      "lf": 48,
+      "sha256": "61392e777d3d3474f86b04508be65aa1bfb4d7582a09ee2fc95b4a38b0092661",
+      "git_blob_sha1": "94d0e862af17d29e28ca31b9faed4e7a446f4d54",
+      "filesystem_mode": "0644",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-b1-case1-historical-coverage-continuation.md",
+      "bytes": 2171,
+      "lf": 27,
+      "sha256": "e6ce0e0435a02d111c9ebff121976c94352ae8d1682e3e1eeed531e6b602e94a",
+      "git_blob_sha1": "7a8a1eaec7e5418e0609a56ff5936e1a3a6ee651",
+      "filesystem_mode": "0644",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-case1-historical-coverage/candidate.txt",
+      "bytes": 20247,
+      "lf": 102,
+      "sha256": "3cd37f71b7a261e9ccb08ec8f93bd81bbd79d8a46d21ea915ccfe7b7636085e8",
+      "git_blob_sha1": "7e287ab6e09254c4fc72e07dbdd7cbffaf89899a",
+      "filesystem_mode": "0644",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-case1-historical-coverage/review.txt",
+      "bytes": 15208,
+      "lf": 77,
+      "sha256": "9a240661b945335044187f54e2b36fe1057ab33b422e87b861b5ef3ad1521351",
+      "git_blob_sha1": "45a41c2c1e7422348125bbe204dcb5cd37c4a2d4",
+      "filesystem_mode": "0644",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-case1-historical-coverage/recovery.json",
+      "bytes": 67580,
+      "lf": 276,
+      "sha256": "24785cb4966a8b773cdc9c0a5729a63d44f3cf8324cbb6710130105b61f46292",
+      "git_blob_sha1": "f4a984d7f0c5e6f29de0f4ba95fb1a83f7728508",
+      "filesystem_mode": "0644",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-case1-historical-coverage/anchors.json",
+      "bytes": 763211,
+      "lf": 8465,
+      "sha256": "daf7ed5a3ae948ec036f13144e3383b9c36caf59b8b8b4e023d00bd2690dcf7f",
+      "git_blob_sha1": "2c7bf4286db2ea057febbc31619cf79e048f36c6",
+      "filesystem_mode": "0644",
+      "mode": "100644"
+    }
+  ],
+  "self_path": "docs/project-checkpoints/ore-v3-b1-case1-historical-coverage-current-next-gate.json",
+  "self_identity": "Externally bound in author completion; never self-hashed",
+  "preserved_states": {
+    "complete_historical_non_consumption": "U",
+    "complete_historical_substantive_alias_exclusion": "U",
+    "historical_direct_versus_symbolic": "U",
+    "exact_symbolic_target_if_any": "U",
+    "producer_task_transaction_facts": "U",
+    "IR-U1": "U",
+    "historical_CS23": "U",
+    "historical_preflight": "CS-PREFLIGHT-U",
+    "frontier": "RR-AR-PASS",
+    "B1": "EFFECTIVE-ACCEPTED, unchanged scope/protections/expiry",
+    "symbolic_correction": "EFFECTIVE-ACCEPTED",
+    "this_package": "DRAFT-UNREVIEWED",
+    "adopted": false,
+    "effective": false,
+    "current_boundary_pass": false
+  },
+  "next_gate": "Fresh independent HIGH-risk review of this exact repository integration/adoption package",
+  "next_gate_count": 1,
+  "launch_authorized_by_this_file": false,
+  "adoption": false,
+  "effectiveness": false,
+  "current_boundary_application": false,
+  "C2_review_rerun": false,
+  "authority_ceiling": "Author-only frozen package. Separate explicit review authority and independent checks required. No Git/publication or downstream work.",
+  "freeze_rule": "All seven exact whole-file identities and ordered delta digest in external author completion. Any byte/mode/path change invalidates that freeze."
+}
