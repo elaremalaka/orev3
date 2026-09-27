@@ -1,0 +1,228 @@
+{
+  "schema": "ore-v3-b1-symbolic-correction-current-next-gate/0.1.0",
+  "package": "B1-SYMBOLIC-RELATIONSHIP-CORRECTION-INTEGRATION-I1",
+  "revision": "0.1.0",
+  "status": "DRAFT-UNREVIEWED",
+  "author_session": "01a0e077-af2d-7800-92bd-19cae300d1fd",
+  "risk": "HIGH",
+  "adopted": false,
+  "effective": false,
+  "published": false,
+  "current_boundary_applied": false,
+  "C2_review_rerun": false,
+  "self_identity": "Exact final whole-file bytes, LF, mode, SHA-256 and Git blob are bound externally by author completion and subsequent independent review. No self-hash.",
+  "current_next_gate": {
+    "name": "fresh independent HIGH-risk review of the exact B1 symbolic-relationship correction repository integration/adoption package",
+    "risk": "HIGH",
+    "target_paths": [
+      "docs/research/governance/ore-v3-b1-historical-symbolic-relationship-correction-integration.md",
+      "docs/project-checkpoints/ore-v3-b1-symbolic-correction-continuation.md",
+      "docs/project-checkpoints/ore-v3-b1-symbolic-correction-current-next-gate.json",
+      "docs/research/governance/evidence/b1-symbolic-relationship-correction/candidate.txt",
+      "docs/research/governance/evidence/b1-symbolic-relationship-correction/review.txt",
+      "docs/research/governance/evidence/b1-symbolic-relationship-correction/recovery.json",
+      "docs/research/governance/evidence/b1-symbolic-relationship-correction/anchors.json"
+    ],
+    "execution_authorized": false,
+    "launch_requires": "Separate explicit compatible review authority while historical U remains; complete exact source recovery and fresh authenticated reviewer independence.",
+    "reviewer_must_differ_from": [
+      "01a0e077-af2d-7800-92bd-19cae300d1fd",
+      "01a0df8b-7c04-7d03-9c12-f5a7d2885a4c",
+      "every actual amender or contributor to the package or correction"
+    ],
+    "outcomes": [
+      "PASS",
+      "FAIL",
+      "U"
+    ],
+    "no_silent_repair": true
+  },
+  "exact_members": [
+    {
+      "path": "docs/research/governance/ore-v3-b1-historical-symbolic-relationship-correction-integration.md",
+      "bytes": 17407,
+      "lf": 89,
+      "sha256": "06786cc775037f09b442906e682dd9e99ae8b43a78da03534e9423f6942ebfec",
+      "git_blob_sha1": "fa0bd6b146b547d8c3cc296ac410a2e157f1c62d",
+      "mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-b1-symbolic-correction-continuation.md",
+      "bytes": 7784,
+      "lf": 36,
+      "sha256": "e0a0506beb091721d9f06d04b3dcdc02b99d7065d78b4e4006e2768fda4ee65d",
+      "git_blob_sha1": "1fcc1574280978b4fdddcd221f1883edc825dcfc",
+      "mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/candidate.txt",
+      "bytes": 20494,
+      "lf": 97,
+      "sha256": "c254b9b7dc07085646734cc60f3ad30238605eea259c3e5fa582fb4db705f05b",
+      "git_blob_sha1": "4da9d8e2d24b47cfa52c2d523747fcc374418cf4",
+      "mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/review.txt",
+      "bytes": 11184,
+      "lf": 97,
+      "sha256": "93fc4447e8b0f4b8e313285fcbd62d479fad74bdd17813f269e462f66e73bafc",
+      "git_blob_sha1": "a6ea02de9c9ff07ef1761968d6507ebc765b4de6",
+      "mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/recovery.json",
+      "bytes": 39398,
+      "lf": 196,
+      "sha256": "ccbaaa839e71f8f7e974cf1d198038cb492eed54b07defe797ba7f56b4cc8fe9",
+      "git_blob_sha1": "7a9fcd6420b9ea0667c42529574242b7a2612690",
+      "mode": "100644",
+      "filesystem_mode": "0644"
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/anchors.json",
+      "bytes": 550824,
+      "lf": 5973,
+      "sha256": "e02d486b8a8608e34091e2ab1dd09084613892fd653007bf9594c2596946fbec",
+      "git_blob_sha1": "4aaf2d2d5910839ff0f549ecd2b60333ffd7bbc7",
+      "mode": "100644",
+      "filesystem_mode": "0644"
+    }
+  ],
+  "intended_repository_delta": {
+    "operations": [
+      {
+        "operation": "A",
+        "path": "docs/project-checkpoints/ore-v3-b1-symbolic-correction-continuation.md",
+        "mode": "100644",
+        "filesystem_mode": "0644",
+        "classification": "untracked"
+      },
+      {
+        "operation": "A",
+        "path": "docs/project-checkpoints/ore-v3-b1-symbolic-correction-current-next-gate.json",
+        "mode": "100644",
+        "filesystem_mode": "0644",
+        "classification": "untracked"
+      },
+      {
+        "operation": "A",
+        "path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/anchors.json",
+        "mode": "100644",
+        "filesystem_mode": "0644",
+        "classification": "untracked"
+      },
+      {
+        "operation": "A",
+        "path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/candidate.txt",
+        "mode": "100644",
+        "filesystem_mode": "0644",
+        "classification": "untracked"
+      },
+      {
+        "operation": "A",
+        "path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/recovery.json",
+        "mode": "100644",
+        "filesystem_mode": "0644",
+        "classification": "untracked"
+      },
+      {
+        "operation": "A",
+        "path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/review.txt",
+        "mode": "100644",
+        "filesystem_mode": "0644",
+        "classification": "untracked"
+      },
+      {
+        "operation": "A",
+        "path": "docs/research/governance/ore-v3-b1-historical-symbolic-relationship-correction-integration.md",
+        "mode": "100644",
+        "filesystem_mode": "0644",
+        "classification": "untracked"
+      }
+    ],
+    "inherited_modifications": 0,
+    "deletions": 0,
+    "renames": 0,
+    "inherited_mode_or_classification_changes": 0,
+    "Git_mutations": 0,
+    "external_freeze_encoding": "UTF-8 JSON array of seven records sorted by path. Each record has exactly operation, path, bytes, lf, mode, sha256, git_blob_sha1. json.dumps(records, sort_keys=True, separators=(comma,colon), ensure_ascii=False), without terminal LF. External author completion supplies all seven records and canonical bytes/SHA-256; no self-referential hash.",
+    "expected_entry_rows": 726,
+    "expected_completion_rows": 733,
+    "expected_inherited_tracked_modifications": 5,
+    "expected_total_untracked_files": 46
+  },
+  "preserved": {
+    "historical_direct_versus_symbolic": "U",
+    "exact_symbolic_target_if_any": "U",
+    "IR_U1": "U",
+    "historical_CS23": "U",
+    "historical_preflights": "CS-PREFLIGHT-U retained; no retroactive PASS",
+    "current_C2_integration_review": "U retained; not retroactively PASS and not rerun",
+    "prior_negative_records": "All preserved with exact repository dependency bindings; no suppression or silent repair",
+    "accepted_frontier": "RR-AR-PASS",
+    "B1": "EFFECTIVE-ACCEPTED under its immutable original authority, purpose, protections and expiry",
+    "B1_publication_commit": "1403cc47c1e6d938b85b5e5d1fe5db4e4808715e",
+    "original_B0": "2026-09-25T21:05:04.758080+00:00; freeze 95acca65e44813a232834c511d14e6fbd7cbd07b3abddc183f38eafdb7cc7768; not reset",
+    "eight_file_C2_package": "CS23-C2-INTEGRATION-C1 unchanged; all eight identities in anchors"
+  },
+  "closed_scope": {
+    "ref": "refs/codex/turn-diffs/captures/1790370539722/e1d68469-8f9e-43aa-b45e-23cc9ba196a5/base",
+    "resolved_oid": "513f2c698ad577e90ead4b23692bd0aa9cd8bde2",
+    "interval": "Already-retained observations: absent at B0; present at IR-U1; absent at subsequent correction. No transaction-time inference.",
+    "additional_names_automatically_eligible": false,
+    "future_avoidable_loss_inherits": false
+  },
+  "prospective_rule": {
+    "normative_file": "docs/research/governance/evidence/b1-symbolic-relationship-correction/candidate.txt",
+    "sha256": "c254b9b7dc07085646734cc60f3ad30238605eea259c3e5fa582fb4db705f05b",
+    "proposed_qualification": "Only B1 3(d-e) historical relationship requirement and section 5 blocking consequence for this exact Case 1 gap; preservation duties and 3(f) remain unchanged.",
+    "case_1": "Independent historical evidence proves non-consumption AND excludes substantive aliasing without assuming directness or guessing a target; every materially relevant possible relationship is independently non-substantive or excluded. Missing fact cannot change consumption, aliasing or authority. All remaining B1 conditions conjunctively required.",
+    "case_2": "Unavailable metadata material to consumption, aliasing or authority, live unexplained substantive alias, or incomplete required coverage: U/BLOCK. Established substantive use/alias/forbidden change: FAIL/BLOCK; retain residual U.",
+    "actual_case_1_finding": false,
+    "other_B1_eligibility_requirements": "All unchanged, including substantive-ref protection, unknown namespaces, B0-present deletions, existing-ref OID or symbolic-target updates, full-ledger remove/re-add, consumer coverage, authority, boundary controls, contradictions and expiry.",
+    "provenance_inferences": "None: no historical directness, symbolic target, producer provenance, transaction provenance or exact continuity.",
+    "later_contradictory_evidence": "Freeze affected reliance/propagation immediately; append exact evidence, withdraw affected receipt from reliance while preserving its bytes; separately authorized independent reassessment. Established violation FAIL; unresolved material significance/authenticity U.",
+    "expiry": "Original B1 expiry unchanged; no extension/revival/reset. C2 effectiveness, adoption rejection/failure/abandonment/cancellation terminates, whichever first. C2-path FAIL terminates; U suspends and grants no retry."
+  },
+  "evidence_retrieval": {
+    "anchors": "docs/research/governance/evidence/b1-symbolic-relationship-correction/anchors.json",
+    "recovery": "docs/research/governance/evidence/b1-symbolic-relationship-correction/recovery.json",
+    "full_review": "docs/research/governance/evidence/b1-symbolic-relationship-correction/review.txt",
+    "candidate": "docs/research/governance/evidence/b1-symbolic-relationship-correction/candidate.txt",
+    "instructions": "Decode embedded JSON text as exact UTF-8 without normalization or base64 data directly; verify retained identities. Published dependencies: git show <bound-commit>:<path>. Frozen untracked C2 terminals require exact bound bytes; never invent a publication identity. Missing direct/indirect required dependency is U."
+  },
+  "author_validation": {
+    "features": "351 passed in 4.91s with PYTHONDONTWRITEBYTECODE=1 and pytest cache disabled using existing .venv",
+    "pre_gate_preservation": "All 726 inherited rows and index, staged/diff/configuration/refs/symbolic relationships, Git control files and repository identity observations match entry; exactly six authorized additions present before writing this gate.",
+    "final_verification": "Required after this file is written; all seven identities, complete intended delta and endpoint preservation results are externally frozen. No B1 invocation or independent review is represented."
+  },
+  "effectiveness_prerequisites": [
+    "Independent HIGH-risk review of this exact repository package",
+    "Explicit exact adoption and durable-location acceptance",
+    "Separately authorized exact Git staging and commit under accepted governance, preserving original B0 and action-specific transition evidence",
+    "Separately authorized publication after resulting commit/parent/tree/path/blob/index authentication",
+    "Independent published retrieval and resulting-identity verification",
+    "Authenticated external effectiveness binding; author completion and prior correction review PASS are insufficient"
+  ],
+  "prohibited_now": [
+    "Modifying any existing accepted artifact",
+    "Applying the correction to current B1 boundary",
+    "Re-running C2 integration review",
+    "Staging, commit, push or publication",
+    "Adoption or effectiveness claim",
+    "Adjudicating historical 3288-byte incident",
+    "CD reasoning",
+    "Implementation",
+    "Qualification",
+    "Execution Readiness closure",
+    "Mining-readiness inference",
+    "Automatic downstream launch",
+    "Silent repair or evidence suppression"
+  ],
+  "stop": "Freeze exact seven-file delta, verify inherited boundary unchanged except authorized additions, and STOP. Exactly one next gate above."
+}
