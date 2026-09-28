@@ -1,0 +1,309 @@
+{
+  "schema": "ore-v3-cs23-c2-next-gate/0.1.0",
+  "status": "DRAFT-UNREVIEWED",
+  "author_session": "01a0d959-99f0-7c12-ad1b-a9a1a051bbbf",
+  "self_identity": "Externally bound by frozen author completion and subsequent independent review; no self-hash.",
+  "current_accepted_frontier": "RR-AR-PASS",
+  "historical_cs23": "U",
+  "continuation_preflight": "CS-PREFLIGHT-U",
+  "governance_candidate_status": "REVIEWED-PASS for exact C2 governance only",
+  "integration_status": "DRAFT-UNREVIEWED",
+  "adopted": false,
+  "effective": false,
+  "published": false,
+  "accepted_cases": [],
+  "current_next_gate": {
+    "name": "fresh independent HIGH-risk integration review",
+    "risk": "HIGH",
+    "execution_authorized": false,
+    "requires": "Separate explicit review task under accepted authority while preserving historical U; no automatic launch.",
+    "target_paths": [
+      "docs/research/governance/ore-v3-cs23-ref-continuity-c2-integration.md",
+      "docs/project-checkpoints/ore-v3-cs23-c2-integration-continuation.md",
+      "docs/project-checkpoints/ore-v3-cs23-c2-current-next-gate.json",
+      "docs/research/governance/evidence/cs23-ref-continuity-c2/c1.txt",
+      "docs/research/governance/evidence/cs23-ref-continuity-c2/c1-review.txt",
+      "docs/research/governance/evidence/cs23-ref-continuity-c2/c2.txt",
+      "docs/research/governance/evidence/cs23-ref-continuity-c2/c2-review.txt",
+      "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json"
+    ],
+    "reviewer_must_differ_from": [
+      "01a0d959-99f0-7c12-ad1b-a9a1a051bbbf",
+      "01a0d1fe-0c82-78f2-a001-3fc2c0b49251",
+      "01a0d755-1e76-7e13-97af-16f765e13672"
+    ],
+    "outcomes": [
+      "PASS",
+      "FAIL",
+      "U"
+    ],
+    "no_silent_repair": true
+  },
+  "exact_members": [
+    {
+      "path": "docs/research/governance/ore-v3-cs23-ref-continuity-c2-integration.md",
+      "bytes": 42084,
+      "lf": 396,
+      "sha256": "19bb852767b499138076dfe057418e2351be7ebcae00709f8f5a3dbae21d7c77",
+      "git_blob_sha1": "edc7c9b0e5922250bfab51b439f1578950125858",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-cs23-c2-integration-continuation.md",
+      "bytes": 11920,
+      "lf": 64,
+      "sha256": "1adf112541cb658e251209a2f8daca2182fbee14d5dfc9b8c3e5dfc5636f5e6c",
+      "git_blob_sha1": "b51f5c9612303112363aef3cf4561be462fadf50",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-ref-continuity-c2/c1.txt",
+      "bytes": 29841,
+      "lf": 317,
+      "sha256": "2ff6b0a8c13bc2626a8db76c4f85d9786a3a6f5b3cefbcd900949695adcdd887",
+      "git_blob_sha1": "015208a2b3f8f1077fe5286ddd6da867f5c10bca",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-ref-continuity-c2/c1-review.txt",
+      "bytes": 16058,
+      "lf": 130,
+      "sha256": "7ede0898ce174e1bca069e03ca4d629bb5bf607ef4b7960e684ab5e040b87ffa",
+      "git_blob_sha1": "f8d06942ccf598e8b5e778411506c3bcb004d970",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-ref-continuity-c2/c2.txt",
+      "bytes": 25809,
+      "lf": 267,
+      "sha256": "90eeb31b72cda585ce94b5e3085fdad2f94a1b29b1bce88f1d02cc3451329a2c",
+      "git_blob_sha1": "d54a5c128fb92a4245e2b150862c6eb3f58cc9d5",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-ref-continuity-c2/c2-review.txt",
+      "bytes": 21108,
+      "lf": 196,
+      "sha256": "df2aa4613d2212b0a4b4352c857abad214f82297216b95c18f4913a124019ba9",
+      "git_blob_sha1": "d3283ece39f88891a00440df6106d26a655e9bd2",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+      "bytes": 1082064,
+      "lf": 6603,
+      "sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+      "git_blob_sha1": "b784c8820c2ef74cd021ef56c5644a3382fcadd8",
+      "mode": "100644"
+    }
+  ],
+  "authority_graph": {
+    "accepted_artifacts": [
+      {
+        "path": "docs/project-checkpoints/ore-v3-stage3c-post-ar-rr-ar-pass-comprehensive-continuation.md",
+        "bytes": 2442815,
+        "lf": 33127,
+        "sha256": "773e1ee6192334d8ebc3832cd576adf9aa027addd207252fce2830920efc5ba5",
+        "git_blob_sha1": "f3e2d4dbe1cba5ab19fc63fa3cae301823448dee",
+        "mode": "100644",
+        "retrieval_commit": "28027c258997426b6c622795f0ed82b4dfe97d90"
+      },
+      {
+        "path": "docs/research/governance/ore-v3-codex-lane-handoff-author-review-protocol.md",
+        "bytes": 45989,
+        "lf": 238,
+        "sha256": "10df214e0085eeb8e265249f5d2748e0a583af68cc36db1bf4ff87d29b5ff051",
+        "git_blob_sha1": "40f69b8ddf043905de35a7a41ef4e53c60bb4cfe",
+        "mode": "100644",
+        "retrieval_commit": "28027c258997426b6c622795f0ed82b4dfe97d90"
+      },
+      {
+        "path": "docs/project-checkpoints/ore-v3-stage3c-current-next-gate.json",
+        "bytes": 32185,
+        "lf": 756,
+        "sha256": "628da1666ed24d02ff9d67ddd84da0271eb95e6bbffab497c25938d85484f202",
+        "git_blob_sha1": "57ffa87b55c66b976e0bb61e532a9e431a3083f9",
+        "mode": "100644",
+        "retrieval_commit": "28027c258997426b6c622795f0ed82b4dfe97d90"
+      },
+      {
+        "path": "docs/research/governance/ore-v3-execution-continuation-protocol.md",
+        "bytes": 26214,
+        "lf": 202,
+        "sha256": "5139c876da9d3db8ddab5abb8c89673589413cb8b19406582537425d6558193f",
+        "git_blob_sha1": "4ca7a219b92267d9f6bfcbc7db90cfb85ff94946",
+        "mode": "100644",
+        "retrieval_commit": "28027c258997426b6c622795f0ed82b4dfe97d90"
+      },
+      {
+        "path": "docs/project-checkpoints/ore-v3-execution-protocol-adoption-continuation-supplement.md",
+        "bytes": 9366,
+        "lf": 86,
+        "sha256": "5f5c44a3822d6e0e61aa6730b4d9f9e6e5fa47ebc5e9cbc3465141c08c8d5649",
+        "git_blob_sha1": "5ebaa43e5359330cb3237130059a8228d1e37815",
+        "mode": "100644",
+        "retrieval_commit": "28027c258997426b6c622795f0ed82b4dfe97d90"
+      }
+    ],
+    "anchor_index": {
+      "path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+      "bytes": 1082064,
+      "lf": 6603,
+      "sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+      "git_blob_sha1": "b784c8820c2ef74cd021ef56c5644a3382fcadd8",
+      "mode": "100644"
+    },
+    "integration": {
+      "path": "docs/research/governance/ore-v3-cs23-ref-continuity-c2-integration.md",
+      "bytes": 42084,
+      "lf": 396,
+      "sha256": "19bb852767b499138076dfe057418e2351be7ebcae00709f8f5a3dbae21d7c77",
+      "git_blob_sha1": "edc7c9b0e5922250bfab51b439f1578950125858",
+      "mode": "100644"
+    },
+    "continuation": {
+      "path": "docs/project-checkpoints/ore-v3-cs23-c2-integration-continuation.md",
+      "bytes": 11920,
+      "lf": 64,
+      "sha256": "1adf112541cb658e251209a2f8daca2182fbee14d5dfc9b8c3e5dfc5636f5e6c",
+      "git_blob_sha1": "b51f5c9612303112363aef3cf4561be462fadf50",
+      "mode": "100644"
+    },
+    "old_control_set": "CS01-CS25/1",
+    "proposed_control_set": "CS01-CS25/2",
+    "new_control_set_active": false
+  },
+  "required_controls": [
+    "CS01",
+    "CS02",
+    "CS03",
+    "CS04",
+    "CS05",
+    "CS06",
+    "CS07",
+    "CS08",
+    "CS09",
+    "CS10",
+    "CS11",
+    "CS12",
+    "CS13",
+    "CS14",
+    "CS15",
+    "CS16",
+    "CS17",
+    "CS18",
+    "CS19",
+    "CS20",
+    "CS21",
+    "CS22",
+    "CS23",
+    "CS24",
+    "CS25"
+  ],
+  "required_review_burdens": {
+    "c1_cases": 27,
+    "c2_cases": 17,
+    "retained_c2_additional_attacks": 24,
+    "integration": [
+      "exact originals and full composition",
+      "DA1–DA7 and supplemental precedence",
+      "all eight identities and allowed delta",
+      "original/provenance/dependency closure and terminal retrieval",
+      "indirect missing anchors",
+      "temporary or hash-only false durability",
+      "non-anchor transient loss and legitimate unrelated progress",
+      "author/reviewer independence and verdict freedom",
+      "no circular hashes or self-adoption",
+      "historical U and negatives preserved",
+      "both bootstrap forms and successor carry-forward",
+      "publication identity/retention gates and migration ordering",
+      "positive supported retention versus unsupported claims"
+    ]
+  },
+  "authoring_scope": {
+    "authorization_sha256": "21290b03ab30422e50a1c2410aaa8971a4acad2299ca21df2612ac9377b2db2c",
+    "paths": [
+      "docs/research/governance/ore-v3-cs23-ref-continuity-c2-integration.md",
+      "docs/project-checkpoints/ore-v3-cs23-c2-integration-continuation.md",
+      "docs/project-checkpoints/ore-v3-cs23-c2-current-next-gate.json",
+      "docs/research/governance/evidence/cs23-ref-continuity-c2/c1.txt",
+      "docs/research/governance/evidence/cs23-ref-continuity-c2/c1-review.txt",
+      "docs/research/governance/evidence/cs23-ref-continuity-c2/c2.txt",
+      "docs/research/governance/evidence/cs23-ref-continuity-c2/c2-review.txt",
+      "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json"
+    ],
+    "action": "new untracked files only; freeze and stop",
+    "expected_delta": {
+      "additions": 8,
+      "modifications": 0,
+      "deletions": 0,
+      "renames": 0,
+      "new_mode": "100644"
+    },
+    "baseline": {
+      "head": "28027c258997426b6c622795f0ed82b4dfe97d90",
+      "index_sha256": "0b6c00e7bf88b6bf6d430477d7133f4fc76b4799b1b40981ff054e3886f9e9f5",
+      "inventory_sha256": "e17bfc25fc4150f6fe7c83ebe709f08b4cb0a14397d550d115c6041deacda299",
+      "paths": 711,
+      "modified": 5,
+      "untracked": 31
+    },
+    "expected_after": {
+      "paths": 719,
+      "modified": 5,
+      "untracked": 39
+    }
+  },
+  "standing_rule": {
+    "status": "proposed, inactive pending effectiveness",
+    "definition": "Full DA1–DA7 in exact C2 and integration composition",
+    "admit_anchor_only_after": "Required exact bytes and claim-specific provenance/boundary/transition bindings are durably retrievable and independently verified before acceptance.",
+    "missing_required_anchor": "dependent U; established FAIL takes precedence; indirect dependencies count",
+    "non_authoritative_transients": "No blanket archival or automatic unrelated-work block; independently required controls still apply.",
+    "carry_forward": [
+      "comprehensive checkpoints",
+      "current-next-gate packages",
+      "new-chat bootstraps",
+      "new-Codex-lane bootstraps"
+    ],
+    "retrieval": "Use authenticated anchors.json dependencies and terminal retrieval methods, not unavailable raw digests.",
+    "historical_limits": "No DA5 rebasing/adjudication of this incident; no historical U upgrade; no automatic future-loss exception."
+  },
+  "conditional_routes": {
+    "integration_review_PASS": "Only seek separately authorized explicit acceptance/adoption of exact reviewed unit and durable location; subsequent Git bootstrap, staging/commit and publication remain separately gated.",
+    "FAIL": "STOP; one exact focused correction gate under separate compatible authority, then fresh review.",
+    "U": "STOP; one exact focused evidence/authority gate under separate compatible authority.",
+    "after_all_effectiveness_conditions": "Only then identify separately authorized case-specific adjudication of the existing 3,288-byte incident; no automatic launch."
+  },
+  "prohibited_now": [
+    "staging",
+    "commit",
+    "push",
+    "publication",
+    "adoption/effectiveness claim",
+    "current-CS23 adjudication",
+    "CD reasoning",
+    "implementation",
+    "qualification",
+    "Execution Readiness closure",
+    "mining-readiness inference",
+    "downstream task launch",
+    "branch/worktree switch",
+    "mutation of any inherited path",
+    "silent repair",
+    "evidence deletion"
+  ],
+  "effectiveness_prerequisites": [
+    "independent exact integration PASS",
+    "explicit exact acceptance/adoption and durable-location acceptance",
+    "separately authorized governance-only bootstrap while historical CS23 remains U",
+    "exact allowed Git transition and required validation",
+    "separate staging/commit authorization",
+    "commit/parent/tree/path/blob verification",
+    "separate publication authorization after commit authentication",
+    "fresh local/tracking/live-remote equality, ahead/behind, branch/upstream/index/inventory verification",
+    "independent retrieval and re-verification of required published evidence",
+    "authenticated external effectiveness binding"
+  ],
+  "fallback": "Exact receipt-confirmed manual transport; cannot waive authority, independence, primary evidence or preflight."
+}

@@ -1,0 +1,131 @@
+**RR-CS23-REF-CONTINUITY-AMENDMENT-C1 — GOVERNANCE REVIEW PASS**
+
+The exact candidate is suitable for separately authorized governance adoption/integration. This verdict does **not** adopt it, accept a substitute-evidence case, or establish receiving-preflight PASS.
+
+**Existing CS23 remains U; continuation remains CS-PREFLIGHT-U; RR-AR-PASS remains the accepted frontier. CD remains blocked.**
+
+This entire response is the frozen independent verdict and review report. Reviewer session: `01a0d74a-84bc-7ec2-a0fe-eb682d146a8f`, independently authenticated and distinct from the author.
+
+**Authenticated candidate and authority**
+
+| Field | Verified original value |
+|---|---|
+| Candidate | CS23-REF-CONTINUITY-AMENDMENT-C1 |
+| Revision | `ore-v3-cs23-ref-continuity-amendment/0.1.0` |
+| Author session | `01a0d1fe-0c82-78f2-a001-3fc2c0b49251` |
+| One-based record | 147 |
+| Message ID | `msg_0b8e30ffabac38fe016ab4bd2e80d887d0999d000737e87766` |
+| Timestamp | `2026-09-24T06:06:41.456Z` |
+| UTF-8 bytes / LF | 29,841 / 317 |
+| Output-text blocks | 1 |
+| SHA-256 | `2ff6b0a8c13bc2626a8db76c4f85d9786a3a6f5b3cefbcd900949695adcdd887` |
+
+I extracted the whole original assistant message using ordered `output_text` concatenation, without separators, normalization, trimming or appended newline.
+
+The explicit review authorization authenticated in the author session, record 157, message `msg_01a0d748-a4e7-76a1-8386-c6b8d93f30fc`, timestamp `2026-09-25T06:37:37.383Z`: 2,068 bytes, 2 LF, SHA-256 `4651e50d9d5658b7f02d34222529785956e541f6f25b32a0878baef4e99cf1bd`. It supplies this prospective governance-review authority while preserving U. The unreviewed candidate supplies no authority for its own review.
+
+I independently authenticated the 48 indexed originals, the additional recovery/adjudication records, original author authorization, and the infrastructure amendment/review/adoption/publication chain. Repository bytes and committed blobs match:
+
+| Accepted artifact | SHA-256 |
+|---|---|
+| Post-AR checkpoint | `773e1ee6192334d8ebc3832cd576adf9aa027addd207252fce2830920efc5ba5` |
+| Lane protocol | `10df214e0085eeb8e265249f5d2748e0a583af68cc36db1bf4ff87d29b5ff051` |
+| Historical next-gate manifest | `628da1666ed24d02ff9d67ddd84da0271eb95e6bbffab497c25938d85484f202` |
+| Execution-continuation protocol | `5139c876da9d3db8ddab5abb8c89673589413cb8b19406582537425d6558193f` |
+| Adoption supplement | `5f5c44a3822d6e0e61aa6730b4d9f9e6e5fa47ebc5e9cbc3465141c08c8d5649` |
+
+Nine stronger-governance commit/blob/ancestry bindings and protected F2 also verified. Deeper architecture history was authenticated through these records and the accepted checkpoint; its substance was not reopened.
+
+**Review findings**
+
+The proposed change is sufficiently narrow because clauses 3–7 permit substitution only for historical ephemeral-ref continuity. Missing substantive-ref evidence, repository/index evidence, candidate/review records and qualification proof remain outside the exception.
+
+Classification is conservative and adequate. Clause 4 starts with every ref substantive, limits namespace eligibility, and requires corroborated producer/version/repository/task/lifecycle attribution, target assessment and absence of substantive use. A matching name or object ID cannot carry the decision. The broad substantive-use definition remains controlling: an application ref used by repository tooling to select content cannot obtain an exemption merely because that use appears harmless. Eligible namespace membership never guarantees eligibility.
+
+The dossier does not turn absence into proof. Clause 5 requires positive evidence establishing the complete substantive boundary across the gap. Clause 6 separately requires historical preservation, attribution, contradictions and residual uncertainty. An authenticated manifest proves the identity of its contents; it cannot prove their substantive sufficiency. The procedure can therefore remain U indefinitely.
+
+PASS/FAIL/U semantics are adequate: established violations take FAIL precedence; uncertain attribution or completeness yields U; neither permits reliance. Clauses 7, 9 and 10 separate governance review, case acceptance and receiving preflight. Clauses 6–7 require durable retention before reliance. Clause 10 requires reviewed integration, explicit adoption, separately authorized Git transitions/publication and independent resulting-identity verification. Clause 11 freezes reliance and dependent propagation when contrary evidence emerges, without authorizing Git rollback.
+
+These findings require no repair or supplemental rule. They do not establish that the present incident can satisfy the proposed conditions.
+
+**Executed clause-8 tabletop cases**
+
+All scenarios below are counterfactual procedural evaluations, not injected repository events or factual findings about the present case. Each row gives the supplied evidence/event order, controlling candidate clauses and observed decision.
+
+For positive case 1, I evaluated a capture-only historical gap: an independent complete substantive enumeration and continuous substantive-transition evidence survive; contemporaneous independent observations establish exhaustive classification, authenticated producer/version/scope, grammar compliance and expected target content; only a capture’s ephemeral identity is unavailable. Surrounding full snapshots, historical/current preservation evidence, recovery coverage, contradictions assessment, independent review and durable dossier retention are supplied. Substantively consumed checkpoint refs remain in the substantive enumeration. This explicitly supplied evidence profile—not endpoint equality or presumed innocence—supports the positive decision. Removing its classification-completeness evidence produces U.
+
+| # | Counterfactual input and event order | Clauses | Observed decision |
+|---:|---|---|---|
+| 1 | Complete positive dossier described above; independent review occurs after evidence freeze and effective amendment. | 4–7, 10 | Eligible for bounded case PASS only. Downstream execution remains closed. |
+| 2 | Original listing is subsequently recovered and authenticates exactly. | 5, 7, 11 | Use exact evidence; compare and reassess. Prior U remains historical fact. |
+| 3 | Prefix matches; producer attribution is absent. | 4.2, 4.6, 7 | U; BLOCK. Naming supplies no provenance. |
+| 4 | Manual creation of a valid-looking application ref is established; alternatively, writer identity is uncertain. | 4, 7 | Established spoof: FAIL. Uncertain writer: U. Both BLOCK. |
+| 5 | Repository tooling begins consuming an application ref as authoritative input. | 4 | Substantive classification; exception unavailable. Missing substantive proof BLOCKS. |
+| 6 | An unknown custom ref exists before the gap and disappears afterward. | 4–7 | U for unexplained disappearance; FAIL for established unauthorized deletion. BLOCK. |
+| 7 | An unauthorized branch/upstream/origin or local/tracking/live-remote mismatch is established. | 5, 7 | FAIL; BLOCK regardless of ephemeral evidence. |
+| 8 | Live-remote query fails and no fresh authoritative result is available. | 5, 7 | U; BLOCK. Neither equality nor divergence is inferred. |
+| 9 | Unexpected index or staged-byte change occurs after entry. | 5, 6.5, 7 | FAIL; BLOCK. Restoring expected bytes cannot erase the event. |
+| 10 | Unexpected content, mode, classification or accepted-artifact identity change occurs. | 5, 6.5, 7 | FAIL; BLOCK. Matching path counts cannot cure it. |
+| 11 | Current files match; complete historical substantive-boundary evidence is absent. | 5, 6.4–5 | U; BLOCK. Current equality cannot supply historical proof. |
+| 12 | Endpoints match, but intermediate mutate-and-restore evidence appears. | 6.9, 7 | Established unauthorized mutation: FAIL; unresolved evidence: U. BLOCK. |
+| 13 | Target type/content contradicts producer behavior; alternatively, necessary target evidence is absent. | 4.3, 6.8, 7 | Contradiction: FAIL; missing necessary proof: U. BLOCK. |
+| 14 | Current installed code is offered without historical-version applicability evidence. | 4.2, 6.6 | U; BLOCK. Present installation does not establish historical producer identity. |
+| 15 | Offered logs belong to another repository/task/scope. | 4.2, 6.6, 7 | Falsely asserted attribution: FAIL; unresolved attribution: U. BLOCK. |
+| 16 | Clock or ordering ambiguity prevents lifecycle attribution. | 4.5, 6.9, 7 | U; BLOCK. Plausible timestamps do not establish order. |
+| 17 | Manifest authenticates, but a required member is missing or altered. | 6, 7 | Missing member: U; established alteration: FAIL. BLOCK. |
+| 18 | Recovery skips a relevant accessible source without justification. | 5, 6.3 | U; BLOCK. Deliberate material omission additionally invokes FAIL. |
+| 19 | Evidence is deliberately destroyed before requesting substitution. | 6.9, 7 | FAIL; BLOCK. Search exhaustion cannot cure deliberate destruction. |
+| 20 | Missing candidate/review/raw qualification evidence is labeled ephemeral. | 3, 7 | FAIL; BLOCK. The artifact class is expressly excluded. |
+| 21 | After bounded substitute acceptance, an actor declares historical preflight PASS. | 6 claim, 7, 9 | FAIL; BLOCK. The permitted claim expressly excludes that conclusion. |
+| 22 | Author self-reviews, reviewer repairs the draft, or task prescribes PASS. | 7, 10 | FAIL; BLOCK. Independence and verdict freedom are mandatory. |
+| 23 | Draft or locally adopted but unpublished amendment is applied to a case. | 3, 5, 10 | FAIL; BLOCK. Required effectiveness has not occurred. |
+| 24 | Accepted case is reused for another gap or future raw-dependent work. | 5, 7, 9 | FAIL; BLOCK. Case identity and permissible claim do not transfer. |
+| 25 | Credible conflicting evidence arrives after acceptance. | 7, 11 | Freeze reliance and downstream propagation immediately; reassess FAIL/U. |
+| 26 | Application bookkeeping changes during review. | 4–6, 10 | Preserve exact delta and revalidate affected controls. Unresolved attribution BLOCKS propagation; known lifecycle alone is insufficient. |
+| 27 | Substitute conditions hold, but another required control remains U or FAIL. | 5, 7, 9 | Overall preflight remains U/FAIL; BLOCK. Case PASS cannot override it. |
+
+**Additional consequential attacks**
+
+| Attack and order | Clauses | Observed decision |
+|---|---|---|
+| A namespace lookalike, unexpected grammar or new producer version is introduced, then claimed eligible. | 4 | No inherited eligibility; U pending necessary evidence/review, or FAIL for established misuse. BLOCK. |
+| A hidden symbolic relationship, replacement ref or custom ref is omitted from a branch-only enumeration. | 4, 5, 6.4 | Incomplete substantive boundary: U; deliberate omission: FAIL. BLOCK. |
+| Several copies of one log are presented as independent corroboration. | 6.3, 7 | Copies add no independence. Required corroboration remains absent: U; BLOCK. |
+| Concurrent writer coverage is missing despite matching endpoints and familiar application logs. | 5, 6.9, 7 | U; BLOCK. Producer plausibility does not prove exclusive attribution. |
+| An ephemeral ref becomes substantive during the claimed interval. | 4, 5, 6.4/9 | The interval must account for that substantive role. Missing evidence BLOCKS; classification cannot be frozen at its earlier state. |
+| A future avoidable retention failure is renamed a historical incident and attached to an older acceptance. | 5, 7 | Separate control failure; no automatic exception or inherited case acceptance. BLOCK pending diagnosis and compatible authorization. |
+| Temporary dossier files disappear before reliance, leaving only a manifest and narrative. | 6.11, 7 | Durability/evidence obligation unsatisfied: U; BLOCK. |
+| Integration changes reviewed semantics, or adoption claims effectiveness without verifying published identities. | 10 | Changed identity requires appropriate fresh review; absent effectiveness proof BLOCKS application. |
+| A later exact listing contradicts an accepted substitute claim, but an actor treats acceptance as irrevocable. | 7, 11 | Reliance freezes; dependent claims must be identified and reassessed. Ignoring the contradiction is prohibited. |
+| A checkpoint omits residual uncertainty or expands the accepted interval. | 6 claim, 7, 9–11 | Prohibited laundering/scope expansion: FAIL; BLOCK. |
+
+No tested adverse path permitted unsupported reliance. The positive control admitted only the bounded claim explicitly permitted by the candidate.
+
+**Control disposition and preservation**
+
+The entry control table is original reviewer record 76, message `msg_0a56a63c021017a3016ab617b1653087d09b2a9938d5995f87`, timestamp `2026-09-25T06:42:14.619Z`: 3,079 bytes, 30 LF, SHA-256 `632d0a6db220cfaeb182e2139dd17babde34ff54870300593453095dd0c6f0bd`.
+
+Completion retains **CS01–CS22 PASS, CS23 U, CS24–CS25 PASS; no N/A**. CS14 authenticates this independent reviewer; CS15 preserves negative-verdict freedom; CS16 records no repair. CS17–CS21 reflect only this explicitly authorized governance review and its conditional routing. **Overall remains CS-PREFLIGHT-U.**
+
+Entry authentication at `2026-09-25T06:40:16.600996Z` and completion revalidation at `06:44:04.687958Z`, followed by fresh successful live-remote authentication, verified:
+
+- Expected checkout, origin, branch and upstream; local/tracking/live HEAD `28027c258997426b6c622795f0ed82b4dfe97d90`; ahead/behind `0/0`.
+- Index SHA-256 `0b6c00e7bf88b6bf6d430477d7133f4fc76b4799b1b40981ff054e3886f9e9f5`; empty staged diff.
+- Exact five modified and 31 untracked path sets preserved.
+- All 711 inventory rows preserved; digest `e17bfc25fc4150f6fe7c83ebe709f08b4cb0a14397d550d115c6041deacda299`; inherited 708-path digest `fddd397c641db3433cee46cb2b0ee8394fdeb7c172a0ce9be492d789a13dcf96`.
+- Entry/completion refs, configuration, existing diff and authenticated catalog identical.
+- Ordinary and staged `git diff --check`: exit 0.
+
+The full current ref snapshot is 4,568 bytes, SHA-256 `306b3097f215538527122425732eecabab816206b8e362df64ad79c8dd775c12`. Relative to the author’s snapshot: one removal, two additions, zero value updates and 30 unchanged entries. All changed entries point to `2dd60c337ee4be79fd00fe21ec0ce88f8fda312b`. The [exact delta](/private/tmp/cs23-independent-review/entry-ref-delta.json) retains every changed name/value. No ref was silently excluded or granted an exemption.
+
+The missing 3,288-byte listing remains missing at SHA-256 `fc03122d5d31df7be7d3089517d9086cad1fc25c6f24515629017e0adaea089b`. Original records 92/168 bind its digest only. I verified the complete 3,544-byte listing from original record 96; record 200 binds its completion digest. Original failures, the withdrawn premature PASS and all recovery/adjudication negatives retain their dispositions.
+
+All members of the author manifest, corrected adjudication completion manifest and three recovery manifests verified. The corrected adjudication locator is `/private/tmp/cs23-authority/completion/evidence-manifest.json`; its scope is its 54 members.
+
+No repository/Git mutation, runtime tests, executable fault injection, CD reasoning, implementation, qualification, readiness closure, mining inference or downstream launch occurred.
+
+The [review evidence manifest](/private/tmp/cs23-independent-review/evidence-manifest.json) binds 129 temporary evidence members: 17,551 bytes, SHA-256 `685fa5aa5fd0261958d2c6798bfa001a8cf3820fb529a0485fc6af7160cb73b0`. Temporary evidence is not durable adoption authority.
+
+**Exactly one conditional next gate: separately authorized governance adoption/integration of the exact reviewed candidate bytes.** This review grants no staging, commit, publication or case-application authority.
+
+The verdict’s original record number, message ID, timestamp and exact byte identity require a subsequent read-only identity receipt after this response persists. No self-hash or prematurely computed original-record identity is asserted. Adoption must authenticate that receipt before relying on this verdict.
