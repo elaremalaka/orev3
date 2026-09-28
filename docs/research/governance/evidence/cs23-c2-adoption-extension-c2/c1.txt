@@ -1,0 +1,122 @@
+CS23-C2-ADOPTION-HISTORICAL-COVERAGE-EXTENSION-C1
+Status: DRAFT-UNREVIEWED. Risk: HIGH. Response-only author candidate.
+Author session: 01a0e1e2-0c77-7dc0-a55d-038bcf01b372.
+Repository: /Users/erale/Documents/orev3.
+
+1. Purpose and authority separation
+
+This proposes one explicit governance extension, not an interpretation of the existing rule. Section 2 of the EFFECTIVE-ACCEPTED B1 Case-1 historical-coverage rule excludes adoption, publication, implementation and operational invocations from its read-only exception. That clause remains unchanged. The existing rule supplies no authority for the transition below.
+
+Only after this exact extension independently passes HIGH-risk review and separately obtains explicit acceptance, required durable-location/publication bindings and authenticated effectiveness under the accepted change mechanism may its narrow qualification be invoked. Review PASS alone is insufficient. Required publication cannot be waived. This extension cannot authorize or exempt its own review, integration, adoption or publication, or cure a stronger-authority conflict. An unresolved authority conflict is U/BLOCK.
+
+Even when effective, this extension supplies only the historical-bookkeeping qualification defined below. Separate explicit action authorization must identify the exact package, adoption, durable locations, operations, phase boundaries and publication destination. Neither this candidate, its review PASS, its effectiveness nor the eight-file review PASS itself supplies staging, commit, push, publication or C2-effectiveness authority. No action is authorized or executed by this author completion.
+
+2. Immutable bindings and preservation
+
+Current published baseline P: d6975a139558bf96b2d8143d69613d98d6af41ea.
+P parent: 9f8251f5d1ff46b51a7f26d4ab9a419f93c43e0b.
+P tree: 0642c3d9d0a51cf35283864f3f19bb8e945c6ebf.
+Preserve P as immutable history; no rewrite, replacement or silent baseline reset.
+
+Preserve EFFECTIVE-ACCEPTED C2-ADOPTION-BOOTSTRAP-B1, published at 1403cc47c1e6d938b85b5e5d1fe5db4e4808715e, and the EFFECTIVE-ACCEPTED B1 historical symbolic-relationship correction, published at 9f8251f5d1ff46b51a7f26d4ab9a419f93c43e0b.
+Preserve the EFFECTIVE-ACCEPTED B1 Case-1 historical-coverage rule: SHA-256 3cd37f71b7a261e9ccb08ec8f93bd81bbd79d8a46d21ea915ccfe7b7636085e8, published effectiveness commit P; effectiveness receipt SHA-256 c1aab667620adcc5daaae63701b0986c08b75b57603e7e9e3c217ed08644e9df.
+Their exact texts, stronger-authority precedence, protections, retained evidence and original expiry remain unchanged except for this explicitly separate, conditional action-scope qualification.
+
+Subject package: exact independently reviewed eight-file CS23-C2-INTEGRATION-C1.
+Independent reviewer: 01a0e1aa-8b4d-7202-b5c5-d76cfc5c9796.
+Complete verdict: SHA-256 c9e5597e9c0d053e5f31f8b959e491fd39a641b554d0fa63822e24c459e94ac1; 13158 UTF-8 bytes, 120 LF, no terminal LF.
+Frozen original delta: SHA-256 e77b69d7c60952dd3f70eba39268a175615d21a898a14be260ec4d53d31a9369.
+Original B0 freeze: SHA-256 95acca65e44813a232834c511d14e6fbd7cbd07b3abddc183f38eafdb7cc7768.
+
+The following repository-relative paths are the complete closed allowlist. Every file is regular mode 100644; all complete byte/LF/size/SHA-256/blob identities in the authenticated verdict and frozen delta remain mandatory, incorporated unchanged:
+docs/project-checkpoints/ore-v3-cs23-c2-current-next-gate.json
+docs/project-checkpoints/ore-v3-cs23-c2-integration-continuation.md
+docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json
+docs/research/governance/evidence/cs23-ref-continuity-c2/c1-review.txt
+docs/research/governance/evidence/cs23-ref-continuity-c2/c1.txt
+docs/research/governance/evidence/cs23-ref-continuity-c2/c2-review.txt
+docs/research/governance/evidence/cs23-ref-continuity-c2/c2.txt
+docs/research/governance/ore-v3-cs23-ref-continuity-c2-integration.md
+
+Preserve original B0 and the complete authenticated chain of subsequent transitions. The frozen delta describes its original author boundary; its hash is not the hash of a current raw Git diff. Authenticate that unchanged original record, then independently require the staged additions to reproduce exactly its eight path/mode/blob/content identities against P. Never rewrite its original baseline fields to manufacture a match.
+
+3. Closed historical subject and claim ceiling
+
+The only historical subject qualified is:
+refs/codex/turn-diffs/captures/1790370539722/e1d68469-8f9e-43aa-b45e-23cc9ba196a5/base
+Observed resolved OID: 513f2c698ad577e90ead4b23692bd0aa9cd8bde2.
+Retained observations: absent at B0 2026-09-25T21:05:04.758080+00:00; present at IR-U1 2026-09-25T21:11:21.694519+00:00; absent at correction entry 2026-09-25T23:58:01.165264 and completion 2026-09-26T00:02:04.275284+00:00. These are observations, not a reconstructed lifetime.
+
+Only the already-reviewed historical gaps for that name/OID/interval may receive HISTORICAL-BOOKKEEPING-NONBLOCKING during the exact transition in section 4. They may cease independently blocking a phase only when every substantive condition for that phase independently authenticates. This changes only the action-scope applicability of the bounded treatment; it does not broaden the historical claim or turn a missing substantive prerequisite into bookkeeping.
+
+Historical non-consumption=U; historical substantive-alias exclusion=U; historical direct-versus-symbolic relationship=U; exact historical symbolic target, if any=U; producer/task/transaction history=U. IR-U1=U, historical CS23=U, historical CS-PREFLIGHT-U, all prior negative and withdrawn records, and RR-AR-PASS remain unchanged.
+
+This extension does not prove historical non-consumption or alias exclusion. It does not infer producer/task/transaction provenance, historical directness or a symbolic target. It does not retroactively PASS IR-U1, historical CS23 or any old preflight. It proves no historical harmlessness, complete continuity or absence of hidden intermediate activity. Absence of affirmative evidence is not positive proof of non-use. Any necessary substantive decision that depends on an unresolved historical fact still blocks.
+
+No other ref, OID, interval, namespace, missing-history incident, revised package, repository or future avoidable evidence loss inherits this treatment. Current relationship and action evidence remain required. There is no general action-stage exception or general Codex-ref exemption.
+
+4. Single eligible transition and substantive phase evidence
+
+The sole eligible transition is one separately authorized adoption/publication of exactly the eight frozen additions from P on research/post-v1, upstream origin/research/post-v1, origin https://github.com/elaremalaka/orev3.git. It creates one new single-parent commit C, publishes that exact C to origin/research/post-v1, independently retrieves it and conditionally establishes C2 effectiveness. No amendment, merge, rebase, replacement commit, additional path or second package is eligible.
+
+The complete expected tree for P plus exactly those eight additions is be36de92bf3749d1bb10c74442e9b07542dfc17a. Independently reproduce this tree before reliance; equality of selected paths alone is insufficient. C must have exactly P as its sole parent. C's actual complete identity must be authenticated and bound once in the transition receipt before publication; this candidate does not invent its future commit hash. Another parent, tree or resulting commit requires separate governance authority and a new reviewed scope, never substitution into this freeze. If separately adopting this extension changes P before the C2 transition, this candidate cannot silently rebase its scope.
+
+At every phase retain positive expected/observed evidence and explicit PASS/FAIL/U for all applicable controls. Before the next dependent action, authenticate the completed phase and freshly revalidate its necessary preconditions. An unperformed later action is pending, never PASS.
+
+A. Entry: independently authenticate effective authorities, this extension's exact effective binding, review independence and verdict, explicit action envelope, durable-location acceptance, all substantive inputs and their dependency closure, original B0 and subsequent action boundaries, exact package and inherited repository state. Record root, branch/upstream/origin, configuration, accepted artifacts, full index bytes and entries, empty staged diff, full material worktree inventory/status/diff, and complete ref snapshots with observed symbolic relationships. Authenticate local HEAD=tracking HEAD=fresh independently queried live-remote HEAD=P and ahead/behind 0/0. Existing unrelated worktree changes must be authenticated and preserved, never cleaned or staged. Include material ignored/external inputs; unrelated caches need no blanket archive.
+
+B. Staging: only under separate exact staging authority, stage exactly the eight additions. Independently read staged blobs and modes; reproduce all reviewed identities and the exact eight-addition set against P. Require no extra staged path, deletion, rename, conflict stage, candidate transformation or inherited-path difference. Authenticate the full expected tree, pre/post index evidence, unchanged inherited worktree content/modes and all non-authorized state. Expected classification/index changes for those eight additions must be explicitly evidenced; hidden refreshes or unrelated changes are not excused.
+
+C. Commit: only under separate exact commit authority, commit the authenticated staged state. Independently authenticate C's full object identity, sole parent P, full expected tree, exact path/mode/blob/byte identities and complete parent-to-C delta of eight additions only. Authenticate resulting index and empty staged diff, preserved inherited content and configuration, and exact authorized local branch movement P to C. Bind C in the append-only action receipt. A successful command exit alone proves none of these requirements.
+
+D. Publication: only under separate explicit publication authority, publish exactly C to the named origin branch. Immediately before publication, independently authenticate local C, tracking P and fresh live-remote P, and the exact authorized fast-forward C/P relationship. Immediately afterward independently authenticate local HEAD=tracking HEAD=fresh live-remote HEAD=C, correct branch/upstream/origin, and ahead/behind 0/0. Retain command/result and ref transition evidence. The expressly authorized temporary local-C/remote-P state between commit and publication is a phase-specific expectation, not final equality or a bookkeeping exception. Any other divergence, or failure to establish required equality at its designated phase, blocks.
+
+E. Retrieval and effectiveness: independently retrieve published C and all eight files from the accepted published location, reproduce commit/parent/full-tree/path/mode/blob/byte/LF/size/SHA-256 identities and required dependency retrieval, and retain durable externally bound receipts under the accepted retention mechanism. A local working copy, temporary receipt alone, successful push message or hash-only assertion is insufficient. Authenticate all final preservation controls and independent publication equality again. Establish C2 effectiveness only under separate explicit conditional authority after every required result independently authenticates and an external effectiveness binding identifies exact C, package, evidence and accepted durable locations. No missing retrieval or action evidence may be deferred past effectiveness.
+
+5. Ref protection and mandatory blockers
+
+No ref change is authorized by this exception. The separately authorized local branch P-to-C and exact remote/tracking P-to-C publication movements in section 4 are substantive Git actions and require their own positive evidence. They are never classified as historical bookkeeping. All other existing-ref value/target updates remain blocking; no implicit exemption follows from a matching tree, namespace, timing or equal endpoints.
+
+BLOCK on any staged path outside the eight-file allowlist; candidate byte/path/mode/blob mismatch; inherited-path modification caused by the transition; unexpected index or staged-state change; unexpected branch/upstream/origin change; local/tracking/live-remote divergence outside the exact authorized phase expectations; unexpected substantive-ref change; any existing-ref value/target update outside the separately authorized section 4 movements; any unapproved remove/re-add behavior; configuration or accepted-artifact drift; unexpected commit parent/tree/path/blob content; publication mismatch; missing durable retrieval; or missing material action evidence.
+
+Existing B1 substantive-ref protections, unknown-namespace restrictions, B0-present deletion prohibition and full-ledger anti-laundering checks remain conjunctive. Retain every observed snapshot/delta, including intervening changes, without inferring unseen transactions. New bookkeeping observations require the original applicable B1 conditions; this historical qualification does not cover new metadata loss.
+
+Affirmative evidence of substantive use or aliasing contradicting historical-bookkeeping treatment blocks, including indirect enumeration, wildcards, traversal, dereferencing or authority-bearing diagnostic use. Authenticate the existing bounded recovery register and consider newly available material evidence without reopening an exhausted generic proof search. A concrete unresolved adverse lead is U/BLOCK, not generic historical uncertainty eligible for this exception. Current input selection must use independently authenticated immutable authority; unresolved historical dependencies cannot be laundered through a previous PASS.
+
+6. Decisions, later evidence and expiry
+
+Established forbidden changes, false claims, identity mismatches, substantive use/aliasing, suppression, silent repair or scope violations are FAIL/BLOCK. Missing material proof, unresolved concrete contradictions, uncertain remote state, authority, scope, effectiveness or expiry are U/BLOCK. FAIL takes precedence while retaining every residual U. No-silent-repair applies throughout: no cleanup, ref restoration, index refresh, artifact rewriting, evidence omission or baseline reset to obtain PASS.
+
+Later material contrary evidence immediately freezes affected reliance and propagation. Preserve original records, append the evidence and withdraw affected receipts from reliance. Established violation is FAIL; unresolved authenticity/significance is U. Separate independent reassessment is required; no automatic repair or restored PASS follows, including after publication.
+
+This extension expires immediately when the single transition becomes EFFECTIVE-ACCEPTED, FAILs, is rejected, is abandoned/cancelled or becomes superseded, whichever occurs first. Existing B1 and correction expiry can terminate eligibility earlier; this extension never extends or revives them. U suspends all dependent action and does not automatically authorize retry, commit replacement, another push or a new invocation. Resumption requires separate explicit authorization, resolution of every material U and fresh phase evidence within the same unexpired scope; it cannot erase a terminal FAIL. Renaming, copying or restarting cannot renew authority. Expiry does not terminate preservation or later-contradiction duties.
+
+7. Mandatory adversarial cases
+
+These are proposed decision oracles for fresh independent review, not executed Git operations or independent review results.
+
+1) Exact clean eight-file staged delta, preserved inherited state, effective extension, separate action authority and every substantive phase condition authenticated: historical gaps alone may be HISTORICAL-BOOKKEEPING-NONBLOCKING for that phase; all historical fields stay U. No advance PASS for later phases.
+2) Unexpected ninth staged file: FAIL/BLOCK, even if benign or this extension's own text; no silent unstaging.
+3) Same eight paths but changed bytes, LF, mode or blob: FAIL/BLOCK; apparent semantic equivalence does not cure identity.
+4) Correct-looking content with wrong commit parent: FAIL/BLOCK.
+5) Correct-looking eight paths with wrong full tree: FAIL/BLOCK; inherited content must also match.
+6) Remote publishes another commit, branch or content: FAIL/BLOCK; do not repair by an automatic push.
+7) Live-remote identity unavailable or uncertain: U/BLOCK; tracking state and a push receipt are insufficient.
+8) Substantive ref drifts during staging or publication outside the separately authorized exact movements: FAIL/BLOCK; concrete unresolved evidence is U/BLOCK. Equal endpoints do not erase it.
+9) Hidden index refresh or unrelated worktree mutation: established unexpected change FAIL/BLOCK; missing action coverage or unexplained material evidence U/BLOCK. No normalization to pass.
+10) Later evidence contradicts historical-bookkeeping assumptions: freeze affected reliance, preserve and withdraw affected receipts, FAIL/U as section 6 requires; no retrospective harmlessness.
+11) Reuse for another commit, parent, package, revised bytes or adoption attempt: FAIL/BLOCK. The singleton C binding cannot be replaced.
+12) Treat extension review PASS as Git-action authority: FAIL/BLOCK; draft/review/effectiveness and separate action authorization remain distinct.
+13) Correct publication without durable independent retrieval or a material action receipt: U/BLOCK; known false evidence FAIL/BLOCK; C2 effectiveness withheld.
+14) Existing ref value update or unapproved remove/re-add disguised as bookkeeping: FAIL/BLOCK; missing required relationship evidence U/BLOCK. The exception supplies no permission.
+15) Unresolved stronger-governance conflict or an inactive/expired extension: U/BLOCK for uncertainty, FAIL/BLOCK for established prohibited reliance.
+
+8. Author boundary and sole next gate
+
+This response-only DRAFT-UNREVIEWED candidate changes no repository file or accepted artifact. It does not stage, commit, push, publish, execute eight-file adoption, establish acceptance/effectiveness or declare C2 effective. Any later repository integration needs a separately authorized exact-path gate; this candidate is not a ninth member of the C2 package.
+
+It does not authorize implementation, qualification, Execution Readiness closure, mining, mining-readiness inference, CD reasoning, adjudication of the historical 3288-byte incident or unrelated governance changes.
+
+Exactly one next gate: fresh independent HIGH-risk governance review of this exact bounded action-authority extension. Authenticate the response-only freeze, all dependencies and reviewer independence from this author and contributors; assess stronger-authority compatibility and every adverse case; issue PASS, FAIL or U freely without modifying or supplementing frozen normative bytes. Missing required authority/evidence stays U. This is a gate designation only, not a launched review or Git-action authorization.
+
+Author completion establishes only this frozen proposal. STOP.

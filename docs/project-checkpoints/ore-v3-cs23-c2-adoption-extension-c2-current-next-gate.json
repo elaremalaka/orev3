@@ -1,0 +1,229 @@
+{
+  "schema": "ore-v3-cs23-c2-adoption-extension-c2-next-gate/1",
+  "status": "DRAFT-UNREVIEWED",
+  "risk": "HIGH",
+  "package": "CS23-C2-ADOPTION-HISTORICAL-COVERAGE-EXTENSION-C2-INTEGRATION-C1",
+  "governance_subject": "CS23-C2-ADOPTION-HISTORICAL-COVERAGE-EXTENSION-C2",
+  "author_session": "01a0e4ed-4395-7822-ab19-08750b1e2d05",
+  "adopted": false,
+  "effective": false,
+  "published": false,
+  "P0": {
+    "commit": "d6975a139558bf96b2d8143d69613d98d6af41ea",
+    "parent": "9f8251f5d1ff46b51a7f26d4ab9a419f93c43e0b",
+    "tree": "0642c3d9d0a51cf35283864f3f19bb8e945c6ebf",
+    "role": "immutable historical baseline"
+  },
+  "P1": "UNBOUND",
+  "T1": "NOT COMPUTED; UNBOUND",
+  "C": "UNBOUND",
+  "members_except_self": [
+    {
+      "path": "docs/project-checkpoints/ore-v3-cs23-c2-adoption-extension-c2-continuation.md",
+      "bytes": 5459,
+      "lf": 24,
+      "terminal_lf": true,
+      "sha256": "4257e6212fc2ecaee265443811a412660e0b05006f8c91bd24317b657250a356",
+      "git_blob_sha1": "6f73b4a228f7afc9fa4d599f26b84fcd374f3e75",
+      "filesystem_mode": "0644",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/anchors.json",
+      "bytes": 3842164,
+      "lf": 10581,
+      "terminal_lf": true,
+      "sha256": "17f774b7b3707efec34e2132d7d56e5a95b2675002db3f919eb08e1a1c327566",
+      "git_blob_sha1": "30aab4f3ffa84b38305709408f68dae0026b6bac",
+      "filesystem_mode": "0644",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c1-review.txt",
+      "bytes": 14318,
+      "lf": 97,
+      "terminal_lf": false,
+      "sha256": "4916037a5efd5d259cf6aea09f48a0dea3971f4a73b85c7e8e97f4042b307ccf",
+      "git_blob_sha1": "d293058a5d9a1113b5283cb0d1701c27c62f4baf",
+      "filesystem_mode": "0644",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c1.txt",
+      "bytes": 19077,
+      "lf": 121,
+      "terminal_lf": false,
+      "sha256": "982f171af855436aa74d556b95747d64943c0502b9d46dc82d978bceddb280c1",
+      "git_blob_sha1": "680e2df0d54b42a6019483c75faee8978d23ffa8",
+      "filesystem_mode": "0644",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c2-review.txt",
+      "bytes": 18307,
+      "lf": 118,
+      "terminal_lf": false,
+      "sha256": "13a9c9d3ef9f206803f422d80f4a3afa5e1b34d325048030a37055245c2b8565",
+      "git_blob_sha1": "2445a03c021cbb9162e3656461a0c47de0c3e7d3",
+      "filesystem_mode": "0644",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c2.txt",
+      "bytes": 15765,
+      "lf": 76,
+      "terminal_lf": false,
+      "sha256": "c741476c812659713727cbaa22c95ceb77ee1a28f8c8247f436228f38800b899",
+      "git_blob_sha1": "052832dad9d4c48ce3536f122e70b5f77fc571b5",
+      "filesystem_mode": "0644",
+      "mode": "100644"
+    },
+    {
+      "path": "docs/research/governance/ore-v3-cs23-c2-adoption-historical-coverage-extension-c2-integration.md",
+      "bytes": 23791,
+      "lf": 106,
+      "terminal_lf": true,
+      "sha256": "58a33e4aa674c9fee89b17b4a96e005c914d42ed70fb9d23eb4c7be53650cd35",
+      "git_blob_sha1": "7bf311723c26dff5be580e6f146a3891d7af65a1",
+      "filesystem_mode": "0644",
+      "mode": "100644"
+    }
+  ],
+  "self_path": "docs/project-checkpoints/ore-v3-cs23-c2-adoption-extension-c2-current-next-gate.json",
+  "self_identity": "Externally frozen in author completion and later independently bound review. No circular self-hash.",
+  "complete_delta_recipe": {
+    "encoding": "UTF-8 JSON; sort_keys=True; separators=(comma,colon); ensure_ascii=False; no terminal LF",
+    "schema": {
+      "package": "CS23-C2-ADOPTION-HISTORICAL-COVERAGE-EXTENSION-C2-INTEGRATION-C1",
+      "baseline_head": "d6975a139558bf96b2d8143d69613d98d6af41ea",
+      "baseline_index_sha256": "607cfc0222528c0c261a176305da500a7f4b34d44ad7480a9421247554355495",
+      "additions": "List sorted by path of all eight member identity dictionaries, including this file, each with exactly path, bytes, lf, terminal_lf, sha256, git_blob_sha1, filesystem_mode, mode, operation=A, classification=untracked.",
+      "modifications": [],
+      "deletions": [],
+      "renames": [],
+      "git_mutations": []
+    },
+    "freeze_location": "Exact delta SHA-256 and complete eight-member identities in author completion; seven members independently cross-bound above. No operative transition tree."
+  },
+  "allowed_author_delta": {
+    "paths": [
+      "docs/research/governance/ore-v3-cs23-c2-adoption-historical-coverage-extension-c2-integration.md",
+      "docs/project-checkpoints/ore-v3-cs23-c2-adoption-extension-c2-continuation.md",
+      "docs/project-checkpoints/ore-v3-cs23-c2-adoption-extension-c2-current-next-gate.json",
+      "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c1.txt",
+      "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c1-review.txt",
+      "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c2.txt",
+      "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c2-review.txt",
+      "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/anchors.json"
+    ],
+    "additions": 8,
+    "modifications": 0,
+    "deletions": 0,
+    "renames": 0,
+    "filesystem_mode": "0644",
+    "git_mode": "100644",
+    "classification": "untracked",
+    "git_mutations": []
+  },
+  "preserved_states": {
+    "EFFECTIVE_ACCEPTED_B1": "unchanged",
+    "IR-U1": "U",
+    "historical_CS23": "U",
+    "historical_preflight": "CS-PREFLIGHT-U",
+    "historical_non_consumption": "U",
+    "historical_substantive_alias_exclusion": "U",
+    "historical_direct_versus_symbolic": "U",
+    "exact_historical_symbolic_target_if_any": "U",
+    "producer_task_transaction_history": "U",
+    "negative_and_withdrawn_records": "all retained unchanged",
+    "frontier": "RR-AR-PASS",
+    "frozen_eight_file_C2_package": "unchanged; separate package excluded from this delta",
+    "no_historical_U_becomes_PASS": true
+  },
+  "baseline_rules": {
+    "binding_now": false,
+    "future_rule": "P1 is the terminal commit of the exact closed independently accepted extension-adoption/publication unit, only after complete gap-free first-parent interval and all C2 review/action/publication/effectiveness/protected-state requirements independently authenticate.",
+    "publication_may_later_create_only_eligible_interval": true,
+    "self_nomination_as_P1_by_new_HEAD": false,
+    "arbitrary_current_HEAD_substitution": false,
+    "no_advance_case": "P1=P0 only with independent proof of complete required adoption/publication/effectiveness and no required intervening commit; never a waiver.",
+    "first_parent_interval": "Each commit sole parent previous; first sole parent P0; final P1. Full objects, recursive trees, complete bytes, exact path/operation/old-new modes/blobs, reviews, acceptance, action authorization, adoption, publication, retrieval, effectiveness, independence, durable locations and closure. Action/ref evidence required beyond topology.",
+    "forbidden_interval": "Unrelated docs, implementation, other governance changes, inherited or accepted artifact edits, frozen C2 changes, unexplained paths, merges, rebases, amendments, replacement commits, history rewrites, omissions.",
+    "frozen_C2": "All eight remain exact at every retained intervening boundary; absent from P0 and P1 trees; no inclusion in extension adoption, alteration/restoration or premature staging.",
+    "after_P1_binding": "Any further branch advance before C2 staging blocks and requires fresh governance review. No second rebinding, refreshed baseline or return-to-P1 cure.",
+    "T1_requirement": "Before C2 staging/commit, independently recompute and freeze from entire authenticated P1 tree plus exactly eight frozen C2 additions; immutable independent receipt binds full interval, P0/P1/package/protected state/T1.",
+    "eventual_C": "Sole parent P1, full tree T1, complete delta exactly eight additions; full object identity authenticated and bound once before publication.",
+    "operational_amendments_only": "C2 section 5 only; historical P0/B0/old tree remain historical. All unamended C1 phases A-E and protections remain conjunctive."
+  },
+  "authority_separation": {
+    "source_reviews": "Prospective source-composition PASS only; integration remains unreviewed.",
+    "author_completion": "No adoption, effectiveness, P1 binding, baseline substitution or Git-action authority.",
+    "future_actions": "Separate explicit compatible authorization and independent prerequisites for extension adoption/staging/commit/publication/effectiveness and each C2 action. No self-bootstrap.",
+    "durability": "Exact evidence is repository-backed candidate retention only; accepted durable locations/publication/independent retrieval/external effectiveness remain separately gated."
+  },
+  "current_next_gate": {
+    "name": "fresh independent HIGH-risk review of this exact corrected-extension repository integration/adoption package",
+    "risk": "HIGH",
+    "execution_authorized": false,
+    "launched": false,
+    "target_paths": [
+      "docs/research/governance/ore-v3-cs23-c2-adoption-historical-coverage-extension-c2-integration.md",
+      "docs/project-checkpoints/ore-v3-cs23-c2-adoption-extension-c2-continuation.md",
+      "docs/project-checkpoints/ore-v3-cs23-c2-adoption-extension-c2-current-next-gate.json",
+      "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c1.txt",
+      "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c1-review.txt",
+      "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c2.txt",
+      "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c2-review.txt",
+      "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/anchors.json"
+    ],
+    "reviewer_independence": "Must differ from integration author and every candidate contributor; authenticate independence, do not infer from a label.",
+    "known_authors": [
+      "01a0e4ed-4395-7822-ab19-08750b1e2d05",
+      "01a0e1e2-0c77-7dc0-a55d-038bcf01b372",
+      "01a0e1fe-1e1d-76f2-b2fa-4536cc40bbc7"
+    ],
+    "review_scope": [
+      "all exact identities and complete intended delta",
+      "C1+C2 exact composition and complete independent reviews",
+      "authority/dependency/durable retrieval closure",
+      "P0 identity and P1 UNBOUND",
+      "complete interval and no-self-nomination/no-arbitrary-HEAD/no-second-transition",
+      "all C1 cases, C2 A1-A14 and C2 independent review consequential traces",
+      "all unchanged phase A-E, historical ceilings, expiry and no-silent-repair",
+      "740 inherited identities and complete protected boundary preservation",
+      "new gate alone; no adoption or Git-action authority"
+    ],
+    "judgment": [
+      "PASS",
+      "FAIL",
+      "U"
+    ],
+    "no_silent_repair": true
+  },
+  "prohibited_now": [
+    "modify any existing artifact",
+    "P1 binding",
+    "operative T1 computation/binding",
+    "staging",
+    "commit",
+    "push",
+    "publication",
+    "extension adoption",
+    "eight-file C2 adoption",
+    "incident adjudication",
+    "CD reasoning",
+    "implementation",
+    "qualification",
+    "Execution Readiness closure",
+    "mining-readiness inference",
+    "review/downstream task launch"
+  ],
+  "completion_required": [
+    "exact eight-file identity and complete delta freeze",
+    "all inherited files, accepted authorities, frozen C2 files, full index/entries, refs/symbolic relationships, config, administrative inventory and mutable boundary unchanged except exact additions",
+    "branch/upstream/origin unchanged",
+    "local HEAD=tracking HEAD=fresh independently queried live-remote HEAD=P0; ahead/behind 0/0",
+    "STOP"
+  ],
+  "fail_u": "Established violation FAIL/BLOCK with residual U preserved; missing material evidence U/BLOCK; no repair, silent resume or second transition. Historical U never becomes PASS."
+}
