@@ -1,0 +1,301 @@
+**BEGIN ORE-PROSPECTIVE-BOUNDARY-C1**
+
+**Status: FROZEN DRAFT-UNREVIEWED. Risk: HIGH.**  
+Revision: `ore-v3-prospective-continuation-boundary/0.1.0`  
+Form: response-only governance candidate.  
+Author lane: `01a0e6c1-6b56-7d40-a85e-e843fa7be5e2`.
+
+This candidate proposes a prospective authority boundary. It neither establishes that boundary nor supplies present continuation permission.
+
+**1. Authentication and scope**
+
+Read-only authentication in `/Users/erale/Documents/orev3` established:
+
+| Item | Observed identity |
+|---|---|
+| Branch | `research/post-v1` |
+| Upstream | `origin/research/post-v1` |
+| Origin | `https://github.com/elaremalaka/orev3.git` |
+| Local, tracking and freshly queried live-remote HEAD | `051a54d9e9ca356b771fe98531cd54384d8250ae` |
+| Ahead/behind | `0/0` |
+| Commit’s sole parent | `e7f4b18dba545dacfd15a3895739fc3ef2e3c164` |
+| Complete committed tree identity | `a54ce96bf1549fd589ff21d40634351a1b533ac1` |
+| C2 effectiveness receipt SHA-256 | `401e687e0b0484670f686162266ef2056ad2a9b8e54ccf08765202433ba17c97` |
+
+The receipt’s eight package members matched their recorded hashes and committed bytes. Its sixteen bound external evidence objects matched their recorded SHA-256 identities. The five accepted artifact identities indexed by the C2 gate matched working and committed bytes.
+
+These checks authenticate the specified baseline and receipt for this authoring task. They do **not** constitute complete N0 authentication, establish current substantive-ref continuity, or certify every transitive authority dependency.
+
+The effective composition identifies `CS01-CS25/2`. C2 DA4 distinguishes dependent from unrelated claims; DA5 permits prospective boundaries but expressly does not establish one for the current case or displace C1 clause 9. Consequently, this proposal requires an explicit reviewed protocol change. It cannot operate through reinterpretation of the existing exception.
+
+No missing historical facts were sought. No CD architecture reasoning was performed.
+
+**2. Immutable historical record**
+
+The following remain permanently recorded with their existing meanings:
+
+- The missing historical **3,288-byte ref listing remains unavailable**.
+- The historical substantive-ref boundary across that missing observation remains **U**.
+- Historical non-consumption, substantive-alias exclusion, direct-versus-symbolic relationship and exact symbolic target remain **U**.
+- Producer/task/transaction history remains **U**.
+- `IR-U1=U`; historical `CS23=U`; historical `CS-PREFLIGHT-U`.
+- All prior negative and withdrawn records remain unchanged.
+- `RR-AR-PASS` retains its exact accepted scope.
+- There is no historical harmlessness finding, exact historical continuity finding or retroactive PASS.
+
+A boundary may delimit future claims. It cannot rewrite these past claims, validate work that depended on unavailable proof, or convert failed and withdrawn results into accepted inputs.
+
+**3. Proposed rule**
+
+A new boundary `N0` may be established only when a separately authorized, fresh independent HIGH-risk process:
+
+1. Authenticates the complete current substantive repository and governance state.
+2. Verifies positive evidence for every claim proposed for export.
+3. Audits the complete direct and indirect dependency graph of those claims.
+4. Identifies and permanently carries excluded historical intervals and their ceilings.
+5. Independently accepts the exact boundary package under an effective version of this redesign.
+6. Completes required adoption, durable retention, publication and resulting-identity verification.
+
+Current endpoint equality satisfies only an endpoint observation. It does not satisfy this rule.
+
+`N0` is a reviewed authority package with an exact effective start and claim scope, not an alias for current HEAD. No self-authenticating manifest, author declaration or favorable review alone can establish it.
+
+The narrow permissible change is to replace an inherited blanket requirement for continuity across the unresolved interval **only for independently demonstrated current/prospective claims**. Any genuinely required historical premise remains required and unresolved.
+
+**4. Mandatory N0 package**
+
+Every row below requires exact expected and observed values, source attribution, observation ordering, retrieval instructions and independently reproducible evidence.
+
+| Bound component | Required positive evidence |
+|---|---|
+| Repository identity | Resolved root, Git/common directory and worktree identity; applicable configuration and mechanisms affecting object/ref interpretation. |
+| Branch and remote identity | Branch, configured upstream, origin and relevant refspecs; local HEAD, tracking HEAD, independent fresh live-remote HEAD and exact ahead/behind. |
+| Committed state | Commit, parents, complete recursive tree, paths, object identities, modes and retrievable contents. Submodules, external content or alternate object sources must be included wherever substantive. |
+| Material working state | Complete inventory of tracked, modified, deleted, untracked and material ignored paths; filesystem types, modes, content or symlink-target identities and classifications. Counts alone are insufficient. |
+| Index | Exact index and applicable shared-index objects; complete entries, flags, stages, modes and blobs; staged delta and conflict state. An “empty staged diff” is not a substitute for index identity. |
+| Refs | Complete current ref observation and independently reviewed substantive classification; direct values, symbolic targets, resolution chains and dependencies required for future authority. Uncertain classification blocks affected exports. |
+| Governance | Exact accepted checkpoint, protocols, amendments, acceptance/review/adoption/effectiveness bindings, stronger governance and precedence. Historical banners must be distinguished from authenticated current status. |
+| Architecture | Exact accepted frontier and consumed author/review exports, including their exclusions, unresolved burdens and prohibited promotions. |
+| Current next gate | Exact task, specification, issuance, applicability, permitted operations, prohibited operations, prerequisites and deterministic routing. |
+| Durable anchors | Exact required raw bytes, hashes, extraction rules, provenance and claim-required transition bindings, independently retrieved from accepted durable locations. |
+| Historical ledger | Exact known interval locators and surviving endpoint identities, unavailable observations, U/FAIL/withdrawn records, affected claims and permanent non-export guarantees. Unknown endpoints remain explicitly unknown. |
+| Review and activation | Independent reviewer identity, exact reviewed package identity, acceptance authority, effective protocol identity and final activation receipt. |
+
+Materiality cannot be decided solely by filename, Git visibility or a `codex` namespace. The inventory must enumerate excluded storage classes and explain why they cannot affect the proposed claims. If that exclusion cannot be proved, inventory completeness remains U.
+
+Existing dirty files are not silently accepted as architecture or implementation. Their exact bytes and classifications may be preserved as current state while their authority remains unchanged.
+
+Authentication must address changes during collection. Use a coherent observation procedure with recorded ordering, independent re-observation and evidence sufficient for the consistency claimed. Equal first and last observations do not prove absence of intervening changes. Uncontrolled concurrent mutation or uncertain consistency blocks activation.
+
+**5. Dependency admission**
+
+Each exported claim must have a reviewable record containing:
+
+`claim ID → exact proposition → temporal scope → direct dependencies → transitive evidence terminals → authority basis → permitted consumers → exclusions → invalidation conditions`
+
+The independent reviewer must examine actual dependencies, not merely approve an author’s list.
+
+Permitted roots are:
+
+- Freshly proved facts about the state at N0.
+- Exact accepted normative artifacts whose identity, applicable acceptance and current authority are independently authenticated at N0.
+- Subsequently authenticated facts and authorized transitions beginning at or after N0.
+
+An older artifact may supply an authenticated normative contract. Its age does not itself require reconstruction of unrelated bookkeeping. However, a historical execution assertion inside that artifact retains its original evidentiary burden. Re-authenticating its bytes does not re-prove the historical assertion.
+
+A claim whose truth requires an unresolved pre-N0 event cannot acquire a new dependency start merely by being copied, renamed, summarized or reissued.
+
+Unknown dependency scope means **U/BLOCK**, not presumed independence. Established contradictory evidence means **FAIL/BLOCK**, with residual U retained.
+
+**6. Guarantees exported and excluded**
+
+If properly established, N0 exports only:
+
+- The exact positively authenticated state and authority recorded at its effective start.
+- The enumerated currently applicable normative contracts and accepted architecture exports, within their existing ceilings.
+- The dependency graph and permitted scope of future reliance.
+- A durable, independently verifiable evidence basis for those claims.
+- A starting point from which subsequent continuity can be proved using retained evidence of authorized transitions.
+- The exact gate eligible for a new receiving-lane preflight, subject to separate execution authority.
+
+N0 does **not** export:
+
+- Exact continuity from any older boundary across the unresolved interval.
+- Absence of historical substantive drift, consumption or aliases.
+- Historical directness, symbolic targets or producer/task/transaction provenance.
+- Historical CS23 PASS or historical preflight PASS.
+- Historical harmlessness.
+- Validation of previous work whose prerequisites were unavailable.
+- Implementation conformance, qualification, Execution Readiness closure or mining readiness.
+- Automatic future continuity merely because later endpoints match.
+
+Future continuity is conditional on evidence and revalidation. N0 cannot promise that later actors will preserve state or retain evidence.
+
+**7. CD dependency assessment**
+
+This assessment concerns the CD task’s dependency contract, not a solution to CD.
+
+Authenticated CD-SPEC-C1 has SHA-256:
+
+`ba9b641a463c5daa1b69d345a89295000059804832db39efafa5caea1b30deb4`
+
+Its original acceptance/issuance message has SHA-256:
+
+`3f9194ff4d3223d339b480a5b986df80a07d2f98498fb8e8eb7c7193ed29abb3`
+
+The original task’s A–I inputs are:
+
+| Input | Required original |
+|---|---|
+| A | U4 Physical Source Transaction |
+| B | U4 Native-Original Provenance |
+| C | SIGUSR1 Origin / Source-Instance PATH-U |
+| D | SIGUSR1 Terminal-Handoff TH-B |
+| E | SIGUSR1 O_s Production-Origin OE-U |
+| F | Controller / Source Startup Contract DS-X |
+| G | I5 Source Attachment / Startup I5-U |
+| H | F2 / Source Lifetime Compatibility FS-U |
+| I | S Coverage / Workload Attachment CW-U |
+
+The task requires their complete authenticated originals and exact consequential exports. Their unresolved statuses are substantive constraints; this redesign does not remove them.
+
+The inspected specification and issuance distinguish:
+
+- Architecture inputs: A–I, CD-U, accepted RA→WP→OA→MI→AE→AR exports, stronger governance, protected source contracts and exact task burdens.
+- Continuation-entry evidence: repository, inventory, index, refs, accepted-artifact currency and the applicable CS preflight.
+
+The missing bookkeeping observation is required by the presently unresolved continuation path. The inspected task contract does not identify it as a cancellation-domain semantic input.
+
+That distinction supports **prospective eligibility in principle**, not a finding that CD is currently dependency-clear. This authoring task has not independently certified the complete transitive A–I evidence closure at N0.
+
+A later boundary review must positively establish that every required CD premise is either:
+
+1. An exact currently authenticated accepted contract or preserved unresolved constraint;
+2. A fact independently proved about the N0 repository/governance state; or
+3. Evidence that will be generated prospectively under separately authorized CD work.
+
+If any necessary premise instead requires the missing substantive-ref boundary, historical non-consumption, provenance or another unresolved pre-N0 fact, **CD remains U/BLOCK**.
+
+Only if that dependency audit passes may an effective redesign support a **fresh** live-canary preflight from N0. Its basis must be an explicit accepted supplement binding the unchanged substantive CD specification to the new prospective control scope and exact N0 state. It must identify precisely which historical baseline/control references receive prospective replacement. No silent amendment of the old issuance is permitted.
+
+All original CD burdens remain: complete A–I and other required inputs, original burden reconciliation, CD01–CD17, required matrices and classifications, all 42 completion propositions, attacks, oracles, evidence requirements, authority ceilings and routing. A new preflight cannot satisfy any of those substantive burdens.
+
+This candidate supplies neither that supplement nor CD execution authority.
+
+**8. Proposed CS model**
+
+The model should distinguish historical continuity from current/prospective authority, but must do so through a new reviewed definition and applicability revision.
+
+Do not reuse `CS01-CS25/2` with changed meanings. Preserve its exact historical definitions and results. A proposed successor must carry an explicit clause-by-clause change record.
+
+Retain the recognizable CS01–CS25 subjects while recording each consequential claim with:
+
+`control revision | control ID | claim | interval | dependency scope | status | evidence`
+
+Use separate historical and prospective assessments:
+
+- **Historical assessment:** preserves the old CS23 and preflight U, and any other historical failures or uncertainties.
+- **Prospective assessment:** evaluates the complete current task’s controls against N0 and its authenticated subsequent transitions.
+
+Do not classify entire controls as purely historical. CS01, CS08–CS13 and CS22–CS24 can each contain both temporal and current-authority claims. Split the claims explicitly; do not conceal mixed dependencies within one PASS.
+
+All 25 controls remain visible for the proposed HIGH-risk CD preflight. Historical U is neither deleted nor relabeled N/A. A separately reviewed applicability decision may establish that a particular historical claim is not a prerequisite of the exact prospective gate.
+
+A prospective PASS requires:
+
+- Every required current/prospective claim PASS.
+- Complete dependency assessment.
+- No unresolved historical dependency of that gate.
+- No established contradiction or unauthorized drift affecting it.
+- Exact task authority, independence and adverse-case requirements.
+- Complete required durable anchors.
+
+Report the result with its revision, N0 identity and task scope, for example:
+
+`PROSPECTIVE-PREFLIGHT[N0, task, revision]=PASS; HISTORICAL-PREFLIGHT=U`
+
+Never emit an unqualified PASS that could be read as upgrading the historical record.
+
+FAIL takes precedence over U for the affected gate; both remain recorded. No majority or weighted result is allowed.
+
+**9. Prospective bookkeeping and retention**
+
+No future raw-dependent authority anchor may be accepted unless its required exact bytes are durably retrievable and independently re-verifiable before acceptance. Preserve C2 DA1–DA7’s identity, provenance, transition, retention and migration requirements.
+
+For future transient bookkeeping:
+
+- Observe and classify current refs sufficiently to establish the substantive boundary.
+- Determine exclusion by actual authority and consumption relationships, not naming.
+- Once independently proved non-authoritative for an exact claim scope, transient historical bookkeeping is not recursively required by unrelated future checkpoints.
+- If later work requires its exact old bytes, that new dependency must be proved. Unavailable bytes yield U/BLOCK.
+- Any bookkeeping that becomes an authority input must satisfy anchor admission before reliance.
+
+A hash, session locator, temporary copy, conversational history or promise to archive later does not establish accepted durability.
+
+Anchor loss after N0 freezes affected reliance. It does not authorize another boundary to erase the failure.
+
+**10. Checkpoints, activation and non-recursion**
+
+Every future comprehensive checkpoint and new-chat/new-lane bootstrap must provide, directly or through verified durable retrieval:
+
+- Effective N0 identity, start, review, acceptance and authority.
+- Complete current state plus authenticated authorized deltas since N0.
+- Effective control definitions and precedence.
+- Exact accepted architecture and task inputs.
+- Complete evidence dependency closure for exported claims.
+- Historical U/FAIL/withdrawn ledger and claim ceilings.
+- Exactly one current next gate and its authority.
+- Anchor retrieval and integrity verification procedures.
+- Revocation, supersession and failure-routing records.
+
+A receiver must be able to authenticate this package without the author’s conversational memory or pre-N0 transient bookkeeping. Exact older bytes remain required wherever a substantive dependency genuinely consumes them.
+
+The activation sequence must remain acyclic:
+
+`reviewed rule → explicit adoption/effectiveness → independently authenticated boundary candidate → independent boundary review → explicit acceptance and required publication verification → externally bound N0 activation`
+
+Each arrow is a separately authorized future operation. Governance transitions needed to make the rule effective require explicit action authority and complete positive evidence for their own claims; they cannot invoke the unaccepted rule to pass themselves.
+
+The boundary’s exact start must cover the finally accepted state. Any change between collection, review, publication and activation requires authenticated authorized transition evidence or a stopped activation. No convenient HEAD substitution is permitted.
+
+This rule grants no automatic N1/N2 reset mechanism. Later checkpoints must preserve N0 lineage and subsequent failures. Any proposed new discontinuous boundary requires a distinct HIGH-risk governance decision, retained failure history and proof that it is not evading an unresolved dependency.
+
+**11. Required adversarial oracles**
+
+These are proposed review obligations, not claimed test results.
+
+| Adversarial case | Required disposition |
+|---|---|
+| Old substantive dependency disguised as prospective work | Traverse indirect dependencies; unresolved old premise remains U/BLOCK. |
+| Current endpoint equality offered as historical proof | Reject historical claim; FAIL/BLOCK for the prohibited promotion. |
+| Hidden branch, ref or index drift at N0 | Established mismatch FAIL/BLOCK; incomplete evidence U/BLOCK. |
+| Incomplete material inventory | No N0 activation; missing proof U, established omission of mandatory scope FAIL. |
+| Missing durable anchor | Dependent U/BLOCK; no hash-only substitution. |
+| Accepted-artifact or candidate mismatch | FAIL/BLOCK; no silent repair or acceptance transfer. |
+| Future gate reaches backward across N0 | Recompute dependency scope; historical U blocks the dependent gate. |
+| Arbitrary rebasing to current HEAD | Reject: HEAD is not a reviewed authority boundary. |
+| Repeated boundaries used to evade failures | Reject; retain failures and dependent blocks; no automatic reset authority. |
+| Implementation/readiness attempted under architecture authority | FAIL/BLOCK; separate exact authority remains mandatory. |
+| Ref called “Codex bookkeeping” but used as an alias or authority input | Treat actual dependency as substantive; require exact proof and retention. |
+| Accepted document contains an unsupported historical assertion | Authenticate bytes separately from truth; unsupported premise remains U. |
+| Mutation between review and activation | Stop; require exact authorized transition evidence and renewed affected checks. |
+| Immutable draft banner treated as evidence of current status, or vice versa | Require external exact acceptance/effectiveness binding. |
+| Historical U omitted from a bootstrap | Reject checkpoint/continuation package; omission cannot imply PASS. |
+| Rule used to authenticate its own adoption | Reject circular authority. |
+| Complete current evidence and independently proved absence of backward dependency | Eligible for boundary acceptance and later fresh preflight only; no historical upgrade or substantive-task PASS. |
+
+**12. Freeze, routing and completion**
+
+This complete BEGIN-to-END text is the single frozen candidate. Its external identity must be computed from the persisted original message using ordered output-text concatenation, UTF-8 encoding, and no trimming, normalization, separators or appended newline. No self-hash is asserted. Any amendment creates a different candidate requiring separate review.
+
+**Exactly one next gate: FRESH INDEPENDENT HIGH-RISK GOVERNANCE REVIEW OF ORE-PROSPECTIVE-BOUNDARY-C1.**
+
+The reviewer must be fresh and distinct from the author and any contributors, authenticate these exact bytes and governing inputs, examine the dependency separation and every adversarial case, and remain free to PASS, FAIL or U without supplementing or repairing the candidate. This author-only response designates that review route; it does not execute the review.
+
+Review PASS would establish only a favorable review of this candidate. Acceptance, effectiveness, repository integration, publication, N0 establishment and any receiving-lane preflight would remain separately controlled.
+
+No repository files were authored or edited; no staging, commit, push, publication, implementation or qualification was performed. Completion checks found the same reported dirty-path set, unchanged HEAD, empty staged diff and index SHA-256 `9d6166d1a41d0ef789fe6dfc0c7ea8c92ed0d0f2e5b52a13f52ab99a130b346c`. Ordinary and staged whitespace checks passed. These checks are not an N0 inventory certificate.
+
+**Author completion establishes no acceptance, effectiveness, N0, CS-PREFLIGHT-PASS, CD authority, Execution Readiness closure or mining readiness.**
+
+**END ORE-PROSPECTIVE-BOUNDARY-C1**
