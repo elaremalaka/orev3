@@ -1,0 +1,508 @@
+{
+  "package": "ORE-N0-REPOSITORY-INTEGRATION-C1",
+  "revision": "ore-v3-n0-repository-integration/0.1.0",
+  "status": "DRAFT-UNREVIEWED",
+  "repository_baseline": {
+    "repository": "/Users/erale/Documents/orev3",
+    "git_directory": "/Users/erale/Documents/orev3/.git",
+    "common_directory": "/Users/erale/Documents/orev3/.git",
+    "branch": "research/post-v1",
+    "upstream": "origin/research/post-v1",
+    "origin_fetch": "https://github.com/elaremalaka/orev3.git",
+    "origin_push": "https://github.com/elaremalaka/orev3.git",
+    "fetch_refspec": "+refs/heads/*:refs/remotes/origin/*",
+    "push_refspec": "No configured remote.origin.push; actual resolved push URL recorded",
+    "head": "063d823dc97f1a3690e26f8bb328385acb9d0aef",
+    "tracking_head": "063d823dc97f1a3690e26f8bb328385acb9d0aef",
+    "queried_live_remote_head": "063d823dc97f1a3690e26f8bb328385acb9d0aef",
+    "ahead": 0,
+    "behind": 0,
+    "parents": [
+      "051a54d9e9ca356b771fe98531cd54384d8250ae"
+    ],
+    "tree": "3be16014d401531dbe3375de0fd1f6b6aee7a801",
+    "raw_index_sha256": "07d944187853f09e383860d24370e5c18052ff962e9bef5133082d739e647fc4",
+    "raw_index_bytes": 86080,
+    "material_files": 755,
+    "tracked_files": 724,
+    "tracked_modifications": 5,
+    "untracked_files": 31,
+    "refs": 39,
+    "staged_delta": "EMPTY",
+    "diff_check": "PASS exit 0",
+    "interpretation": "Current endpoint observations only. Existing dirty implementation is observed, not accepted. All refs remain preservation subjects; no namespace exemption."
+  },
+  "identities": {
+    "evidence/C6-CANDIDATE.md": {
+      "bytes": 32281,
+      "lf": 202,
+      "terminal_LF": true,
+      "sha256": "a025a8b007410cbd9bc30bb5f4f95246dbeac6c2f8caa34b6ed411803936cafa"
+    },
+    "evidence/C6-freeze-manifest.json": {
+      "bytes": 141886,
+      "lf": 4343,
+      "terminal_LF": true,
+      "sha256": "05ea5c04d499b93e94b1c0a4357e0d3f523673d9c8830f207b5a0621217c226f"
+    },
+    "evidence/C6-FREEZE-RECEIPT.json": {
+      "bytes": 3825,
+      "lf": 101,
+      "terminal_LF": true,
+      "sha256": "ff87e70dd5a643d22f4a88f62d39d26e30cbed2ff0d119ad14e9dccfa701eaa2"
+    },
+    "evidence/C6-PASS-VERDICT.md": {
+      "bytes": 18405,
+      "lf": 130,
+      "terminal_LF": true,
+      "sha256": "3996a05cfe2a24e3d0d88719cf51449a7dad419c55ac308e94abb6a5ce6f332e"
+    },
+    "evidence/governing-C1-effectiveness-receipt.json": {
+      "bytes": 169786,
+      "lf": 516,
+      "terminal_LF": true,
+      "sha256": "418c48ba1ce87291eca70876b65997bd081f6f77cbd8595919fad7bb34440086"
+    }
+  },
+  "archive": {
+    "bytes": 374268105,
+    "lf": 1389394,
+    "terminal_LF": false,
+    "sha256": "bef9fdfbb7e929b058a869c4ae4b6b466e0f8d99e570e1647677fe676c2dfc12"
+  },
+  "archive_chain": [
+    {
+      "archive": "C6",
+      "root": "ORE-N0-PROSPECTIVE-BOUNDARY-C6",
+      "next_member": "provenance/ORE-N0-PROSPECTIVE-BOUNDARY-C5.tar.gz"
+    },
+    {
+      "archive": "C5",
+      "root": "ORE-N0-PROSPECTIVE-BOUNDARY-C5",
+      "next_member": "provenance/ORE-N0-PROSPECTIVE-BOUNDARY-C4.tar.gz"
+    },
+    {
+      "archive": "C4",
+      "root": "ORE-N0-PROSPECTIVE-BOUNDARY-C4",
+      "next_member": "provenance/ORE-N0-PROSPECTIVE-BOUNDARY-C3.tar.gz"
+    },
+    {
+      "archive": "C3",
+      "root": "ORE-N0-PROSPECTIVE-BOUNDARY-C3",
+      "next_member": "provenance/ORE-N0-PROSPECTIVE-BOUNDARY-C2-INCOMPLETE.tar.gz"
+    },
+    {
+      "archive": "C2",
+      "root": "correction",
+      "original_N0_root": "correction/original-candidate"
+    }
+  ],
+  "anchors": [
+    {
+      "label": "claim-dependency-graph.json",
+      "archive": "C6",
+      "member": "claim-dependency-graph.json",
+      "identity": {
+        "bytes": 18422,
+        "lf": 382,
+        "terminal_LF": true,
+        "sha256": "49b5d16e194bbbda4248fd96794148498eb95e016f174d9d20b9dc87e585e685"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "premise-records.json",
+      "archive": "C6",
+      "member": "premise-records.json",
+      "identity": {
+        "bytes": 357927990,
+        "lf": 6478890,
+        "terminal_LF": true,
+        "sha256": "db26c9d842ed9be6db1b59d900724edf4f910bdff1ac69cbf9b9cf7fefd5da22"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "successor-controls.json",
+      "archive": "C6",
+      "member": "successor-controls.json",
+      "identity": {
+        "bytes": 808854,
+        "lf": 12654,
+        "terminal_LF": true,
+        "sha256": "bfa7aa65f06a461f2fada7587e80a733882c6812e4ef345928cb63faa725d7a9"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "CD-APPLICABILITY-SUPPLEMENT.md",
+      "archive": "C6",
+      "member": "CD-APPLICABILITY-SUPPLEMENT.md",
+      "identity": {
+        "bytes": 3793,
+        "lf": 20,
+        "terminal_LF": true,
+        "sha256": "15dd540f8c8bbb8c88170c5b66f46508268d5686976267686f65b3fd250737f3"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "premise-control-crosswalk.json",
+      "archive": "C6",
+      "member": "premise-control-crosswalk.json",
+      "identity": {
+        "bytes": 42436023,
+        "lf": 900716,
+        "terminal_LF": true,
+        "sha256": "c6ee5c7f352be316830fee8107d211d720430d27413e297aed93959225c96bc8"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "required-CD-premises.json",
+      "archive": "C6",
+      "member": "required-CD-premises.json",
+      "identity": {
+        "bytes": 2977415,
+        "lf": 53513,
+        "terminal_LF": true,
+        "sha256": "066fd2c0951613ebbb1648ee527da9edb0f8608d14f86b3ae8f0edc170a47cd5"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "historical-factual-exclusions.json",
+      "archive": "C6",
+      "member": "historical-factual-exclusions.json",
+      "identity": {
+        "bytes": 3526656,
+        "lf": 66633,
+        "terminal_LF": true,
+        "sha256": "8e6f02ad499b733a1a829c9bd2ce12b3d7e668a41a7508c7e1977a0acd6cc814"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "semantic-coverage-audit.json",
+      "archive": "C6",
+      "member": "semantic-coverage-audit.json",
+      "identity": {
+        "bytes": 7508226,
+        "lf": 95885,
+        "terminal_LF": true,
+        "sha256": "98cc6fa2da737f90aaf56d74280c581d2838daf889689319a8f32a3d54a414ba"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "consumer-sets.json",
+      "archive": "C6",
+      "member": "consumer-sets.json",
+      "identity": {
+        "bytes": 12709217,
+        "lf": 322614,
+        "terminal_LF": true,
+        "sha256": "7c31560303aa55dd2fc9da3c68f1e2f10ea98c71fc080ac5589a1d11a408ea76"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "consumer-node-bindings.json",
+      "archive": "C6",
+      "member": "consumer-node-bindings.json",
+      "identity": {
+        "bytes": 15596734,
+        "lf": 246976,
+        "terminal_LF": true,
+        "sha256": "a95dc4b9d929d39dad4274b10c36074617ac4b4cec1ff520abc654174f31e667"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "consumer-reevaluation.json",
+      "archive": "C6",
+      "member": "consumer-reevaluation.json",
+      "identity": {
+        "bytes": 432974,
+        "lf": 7030,
+        "terminal_LF": true,
+        "sha256": "43f0fa1ebb6c4f75dbbaee12ad1b76f977a3476b9b0534f23322f203ddaaca0a"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "C3-inverse-dependencies.json",
+      "archive": "C6",
+      "member": "C3-inverse-dependencies.json",
+      "identity": {
+        "bytes": 22091380,
+        "lf": 504971,
+        "terminal_LF": true,
+        "sha256": "fe324a844d44c11ed074255cf079e1d52a00e63a4e9dfb3c91879660a4894ce0"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "source-identities.json",
+      "archive": "C6",
+      "member": "source-identities.json",
+      "identity": {
+        "bytes": 183450,
+        "lf": 3942,
+        "terminal_LF": true,
+        "sha256": "c9ad4cf8845c3b69473f54ed6ad125414a22386dbc694b84bdf09a3717c26a75"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "artifact-resolution.json",
+      "archive": "C6",
+      "member": "artifact-resolution.json",
+      "identity": {
+        "bytes": 1761,
+        "lf": 18,
+        "terminal_LF": true,
+        "sha256": "7e5b39e2ca7a1a00a834c35b3db816a81fb5842711c476a7667df07dc8720316"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "upstream-ore-obligation.json",
+      "archive": "C6",
+      "member": "upstream-ore-obligation.json",
+      "identity": {
+        "bytes": 2761,
+        "lf": 32,
+        "terminal_LF": true,
+        "sha256": "e965d9d2a40a99725ae9102736715137d407506e0c90d765aab6f505758cce55"
+      },
+      "scope": "Exact independently reviewed proposed N0/control/applicability/dependency scope; no activation or CD authority."
+    },
+    {
+      "label": "authority-authentication.json",
+      "archive": "C2",
+      "member": "original-candidate/authority-authentication.json",
+      "identity": {
+        "bytes": 252890,
+        "lf": 6169,
+        "terminal_LF": true,
+        "sha256": "047b336916daffeb4db421c91b1d5e960fb21a3170c38c0c01766ca3814f3143"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "durable-anchors.json",
+      "archive": "C2",
+      "member": "original-candidate/durable-anchors.json",
+      "identity": {
+        "bytes": 207199,
+        "lf": 3744,
+        "terminal_LF": true,
+        "sha256": "54a34e50176060a08134708baad3e09b7e01f9b3864e94e588022dc075834901"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "architecture-authority.json",
+      "archive": "C2",
+      "member": "original-candidate/architecture-authority.json",
+      "identity": {
+        "bytes": 24150,
+        "lf": 491,
+        "terminal_LF": true,
+        "sha256": "a7a331c6b92074d3a233dfb4a4aa1632acdf83c6462284de0a00b58cfdf15d1c"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "RETENTION.md",
+      "archive": "C2",
+      "member": "original-candidate/RETENTION.md",
+      "identity": {
+        "bytes": 3465,
+        "lf": 13,
+        "terminal_LF": true,
+        "sha256": "a2e487b9f2637bfbec52b13052df8842329e6b32f1aac9d92f273a39188436db"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "BOOTSTRAP.md",
+      "archive": "C2",
+      "member": "original-candidate/BOOTSTRAP.md",
+      "identity": {
+        "bytes": 3657,
+        "lf": 14,
+        "terminal_LF": true,
+        "sha256": "964ba7cdf744415e03ec05fffea3d4f1932bfc3bbe4b001569aaa8f7f86fe308"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "evidence/redesign/candidate.txt",
+      "archive": "C2",
+      "member": "original-candidate/evidence/redesign/candidate.txt",
+      "identity": {
+        "bytes": 22548,
+        "lf": 300,
+        "terminal_LF": false,
+        "sha256": "0c3a713c65416dbf38de5ef6af02307f5d9e2ff67807c3d059ab48df02338656"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "evidence/redesign/review.txt",
+      "archive": "C2",
+      "member": "original-candidate/evidence/redesign/review.txt",
+      "identity": {
+        "bytes": 28738,
+        "lf": 201,
+        "terminal_LF": false,
+        "sha256": "6ec85b72458a6a1b21530b9b5ffd0f59107c5797c40d18b336d8952219672f74"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "evidence/effectiveness-receipt.json",
+      "archive": "C2",
+      "member": "original-candidate/evidence/effectiveness-receipt.json",
+      "identity": {
+        "bytes": 169786,
+        "lf": 516,
+        "terminal_LF": true,
+        "sha256": "418c48ba1ce87291eca70876b65997bd081f6f77cbd8595919fad7bb34440086"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "originals/c1.txt",
+      "archive": "C2",
+      "member": "original-candidate/originals/c1.txt",
+      "identity": {
+        "bytes": 29841,
+        "lf": 317,
+        "terminal_LF": false,
+        "sha256": "2ff6b0a8c13bc2626a8db76c4f85d9786a3a6f5b3cefbcd900949695adcdd887"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "originals/c1-review.txt",
+      "archive": "C2",
+      "member": "original-candidate/originals/c1-review.txt",
+      "identity": {
+        "bytes": 16058,
+        "lf": 130,
+        "terminal_LF": false,
+        "sha256": "7ede0898ce174e1bca069e03ca4d629bb5bf607ef4b7960e684ab5e040b87ffa"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "originals/c2.txt",
+      "archive": "C2",
+      "member": "original-candidate/originals/c2.txt",
+      "identity": {
+        "bytes": 25809,
+        "lf": 267,
+        "terminal_LF": false,
+        "sha256": "90eeb31b72cda585ce94b5e3085fdad2f94a1b29b1bce88f1d02cc3451329a2c"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "originals/c2-review.txt",
+      "archive": "C2",
+      "member": "original-candidate/originals/c2-review.txt",
+      "identity": {
+        "bytes": 21108,
+        "lf": 196,
+        "terminal_LF": false,
+        "sha256": "df2aa4613d2212b0a4b4352c857abad214f82297216b95c18f4913a124019ba9"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "originals/RR-AR-PASS.txt",
+      "archive": "C2",
+      "member": "original-candidate/originals/RR-AR-PASS.txt",
+      "identity": {
+        "bytes": 28221,
+        "lf": 416,
+        "terminal_LF": false,
+        "sha256": "7e45045357f84715192014c33ae102cce1489b61575b05a880c3be582cab47fa"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "historical-ledger.json",
+      "archive": "C2",
+      "member": "original-candidate/historical-ledger.json",
+      "identity": {
+        "bytes": 46518,
+        "lf": 723,
+        "terminal_LF": true,
+        "sha256": "7bcd9a67d19a43eac4b67ae1efb0cf1526082a60cb2e6956bac4bab161b1f39d"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "refs-classification.json",
+      "archive": "C2",
+      "member": "original-candidate/refs-classification.json",
+      "identity": {
+        "bytes": 44696,
+        "lf": 712,
+        "terminal_LF": true,
+        "sha256": "fd9c9d03ab6dab0b2f62d7b24c127e9df8c25662c7111c2f63be274fd833ff96"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    },
+    {
+      "label": "restart-authentication/complete-stop-retention.json",
+      "archive": "C2",
+      "member": "original-candidate/restart-authentication/complete-stop-retention.json",
+      "identity": {
+        "bytes": 711302,
+        "lf": 11689,
+        "terminal_LF": true,
+        "sha256": "7a0e956c0ecac02d676fe25431c60f7f468b6ff5478a7c0459ae3b0ce8df2129"
+      },
+      "scope": "Full exact governing/original authority or historical evidence. Historical banners and routing are preserved, not current instructions."
+    }
+  ],
+  "effective_governance": {
+    "status": "EFFECTIVE-ACCEPTED",
+    "rule": "ORE-PROSPECTIVE-BOUNDARY-C1",
+    "revision": "ore-v3-prospective-continuation-boundary/0.1.0",
+    "effective_at_utc": "2026-09-28T16:30:04.336865+00:00",
+    "adoption_commit": "063d823dc97f1a3690e26f8bb328385acb9d0aef",
+    "parent": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+    "complete_tree": "3be16014d401531dbe3375de0fd1f6b6aee7a801",
+    "authority_ceiling": "Prospective continuation governance layer only. Historical CS01-CS25/2 meanings/results preserved. Separate complete N0 authority package, independent review, acceptance, required publication verification and external activation remain mandatory. Successor controls/applicability and CD dependency clearance remain separate."
+  },
+  "governing_C1_candidate_sha256": "0c3a713c65416dbf38de5ef6af02307f5d9e2ff67807c3d059ab48df02338656",
+  "governing_C1_review_sha256": "6ec85b72458a6a1b21530b9b5ffd0f59107c5797c40d18b336d8952219672f74",
+  "governing_C2_effectiveness_sha256": "401e687e0b0484670f686162266ef2056ad2a9b8e54ccf08765202433ba17c97",
+  "C2_effectiveness_retrieval": "C2 original-candidate/evidence/redesign/anchors.json contains exact C2 effectiveness receipt and fifteen bound external objects; follow its explicit decoding metadata.",
+  "independent_review": {
+    "id": "RR-ORE-N0-PROSPECTIVE-BOUNDARY-C6-PASS",
+    "reviewer": "01a0eaee-fdcb-7d90-a609-d9ececc976b6",
+    "path": "evidence/C6-PASS-VERDICT.md",
+    "identity": {
+      "bytes": 18405,
+      "lf": 130,
+      "terminal_LF": true,
+      "sha256": "3996a05cfe2a24e3d0d88719cf51449a7dad419c55ac308e94abb6a5ce6f332e"
+    },
+    "authority": "PASS — ORE-N0-PROSPECTIVE-BOUNDARY-C6; CD prospectively dependency-eligible only for exact proposed N0/successor/applicability scope."
+  },
+  "historical_ledger": [
+    "evidence/historical-ledger.json",
+    "evidence/historical-ledger-C4-addendum.json",
+    "evidence/historical-ledger-C5-addendum.json",
+    "evidence/historical-ledger-C6-addendum.json"
+  ],
+  "stronger_governance_and_F2": "evidence/governance-authentication.json; complete status/provenance in C2 original-candidate/authority-authentication.json and retained originals; nine stronger bindings plus F2 remain conjunctive.",
+  "acceptance": "All new paths are PROPOSED durable locations. No accepted durable-location or N0 effectiveness claim is made. Independent integration review must retrieve the exact original bytes before accepting them."
+}

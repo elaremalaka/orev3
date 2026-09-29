@@ -1,0 +1,34 @@
+{
+  "C4_review": {
+    "subject": "ORE-N0-PROSPECTIVE-BOUNDARY-C4",
+    "verdict": "FAIL/BLOCK",
+    "CD_dependency_eligibility": "U/BLOCK",
+    "source_session": "/Users/erale/.codex/sessions/2026/09/28/rollout-2026-09-28T15-51-25-01a0ea37-452e-7a62-b629-f038efa8c61e.jsonl",
+    "record_1_based": 245,
+    "timestamp": "2026-09-28T23:05:25.079Z",
+    "message_id": "msg_0966a24392036d03016abaf250bacc87d0aba07e07aecaee83",
+    "review": {
+      "bytes": 14932,
+      "lf": 195,
+      "terminal_LF": false,
+      "sha256": "32e3917bc737ae3797c96bebf05d0cd69fed835cdb7ba11328b86b764747940a"
+    },
+    "original_record": {
+      "bytes": 15512,
+      "lf": 1,
+      "terminal_LF": true,
+      "sha256": "d9797cdd68c7d27416bcb0fbe5fe0b21df238702b705212b6184534cddefda62"
+    },
+    "extraction": "Concatenate ordered content[].text without separators, normalization or added LF, then UTF-8 encode.",
+    "author_session": "01a0ea37-452e-7a62-b629-f038efa8c61e",
+    "reviewer_now_author": true,
+    "fresh_independent_review_must_exclude_this_author": true
+  },
+  "C4_status": "Independent FAIL/BLOCK; CD prospective eligibility U/BLOCK. C5 supersedes active draft only.",
+  "historical_ledger_sha256": "7bcd9a67d19a43eac4b67ae1efb0cf1526082a60cb2e6956bac4bab161b1f39d",
+  "all_179_historical_truth_targets_preserved": true,
+  "all_U_FAIL_withdrawn_findings_unchanged": true,
+  "RR_AR_PASS": "architecture only",
+  "upstream_ORE": "REQUIRED and UNSATISFIED",
+  "no_historical_adjudication": true
+}

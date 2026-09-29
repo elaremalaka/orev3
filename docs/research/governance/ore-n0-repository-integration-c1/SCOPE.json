@@ -1,0 +1,326 @@
+{
+  "package": "ORE-N0-REPOSITORY-INTEGRATION-C1",
+  "revision": "ore-v3-n0-repository-integration/0.1.0",
+  "status": "DRAFT-UNREVIEWED",
+  "author": "01a0eb15-819f-75d1-b221-939a84121556",
+  "planned_at_UTC": "2026-09-29T03:01:01.367974+00:00",
+  "repository": "/Users/erale/Documents/orev3",
+  "package_root": "docs/research/governance/ore-n0-repository-integration-c1",
+  "paths": [
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/ACTIVATION-CONTRACT.md",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/AUTHOR-VALIDATION.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/AUTHORITY-MAP.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/CONTINUATION.md",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/CURRENT-NEXT-GATE.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/INTEGRATION.md",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/MEMBERS.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/RETRIEVAL.md",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/SCOPE.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/UPSTREAM-ORE-OBLIGATION.md",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/documentary/verify.py",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-CANDIDATE.md",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-FREEZE-RECEIPT.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-PASS-VERDICT.md",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-PASS-original-record.jsonl",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-PASS-provenance.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-000",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-001",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-002",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-003",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-004",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-005",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-006",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-007",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-freeze-manifest.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/archive-chunks.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/authentication.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/author-authorization-original-record.jsonl",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/governance-authentication.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/governing-C1-effectiveness-receipt.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/historical-ledger-C4-addendum.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/historical-ledger-C5-addendum.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/historical-ledger-C6-addendum.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/historical-ledger.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/live-remote-observations.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/repository-after.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/repository-before.json",
+      "before": null,
+      "before_status": "ABSENT",
+      "filesystem_mode": "0644",
+      "git_mode": "100644"
+    }
+  ],
+  "canonical_intended_operations_sha256": "9ef23988e0811f721601d3eaa9fda1cffaab9407945a56d57287ae1b88096028",
+  "canonical_encoding": "UTF-8 compact JSON sorted keys of paths array; no LF. Final canonical exact-content delta is separately bound in author freeze.",
+  "consumed_repository_before_sha256": "82457ee316fb7ec690e6a1ed1e5ff98225c064fda29081c456e45fd4b8779af2",
+  "authority_scope": "Only current user authoring gate; no historical task permission renewed. All files are new documentary/evidence additions. No implementation, tests, SQLite, collectors, research data, architecture or accepted evidence edits.",
+  "no_unrelated_paths": true,
+  "excluded_actions": [
+    "stage",
+    "commit",
+    "push",
+    "publish",
+    "N0 establishment",
+    "N0 activation",
+    "prospective preflight",
+    "CD work",
+    "implementation",
+    "qualification",
+    "Execution Readiness closure",
+    "mining readiness"
+  ]
+}

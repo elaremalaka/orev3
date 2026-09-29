@@ -1,0 +1,120 @@
+{
+  "schema": "ore-v3-n0-repository-integration-gate/0.1.0",
+  "package": "ORE-N0-REPOSITORY-INTEGRATION-C1",
+  "revision": "ore-v3-n0-repository-integration/0.1.0",
+  "status": "DRAFT-UNREVIEWED",
+  "current_accepted_repository_authority": {
+    "repository": "/Users/erale/Documents/orev3",
+    "git_directory": "/Users/erale/Documents/orev3/.git",
+    "common_directory": "/Users/erale/Documents/orev3/.git",
+    "branch": "research/post-v1",
+    "upstream": "origin/research/post-v1",
+    "origin_fetch": "https://github.com/elaremalaka/orev3.git",
+    "origin_push": "https://github.com/elaremalaka/orev3.git",
+    "fetch_refspec": "+refs/heads/*:refs/remotes/origin/*",
+    "push_refspec": "No configured remote.origin.push; actual resolved push URL recorded",
+    "head": "063d823dc97f1a3690e26f8bb328385acb9d0aef",
+    "tracking_head": "063d823dc97f1a3690e26f8bb328385acb9d0aef",
+    "queried_live_remote_head": "063d823dc97f1a3690e26f8bb328385acb9d0aef",
+    "ahead": 0,
+    "behind": 0,
+    "parents": [
+      "051a54d9e9ca356b771fe98531cd54384d8250ae"
+    ],
+    "tree": "3be16014d401531dbe3375de0fd1f6b6aee7a801",
+    "raw_index_sha256": "07d944187853f09e383860d24370e5c18052ff962e9bef5133082d739e647fc4",
+    "raw_index_bytes": 86080,
+    "material_files": 755,
+    "tracked_files": 724,
+    "tracked_modifications": 5,
+    "untracked_files": 31,
+    "refs": 39,
+    "staged_delta": "EMPTY",
+    "diff_check": "PASS exit 0",
+    "interpretation": "Current endpoint observations only. Existing dirty implementation is observed, not accepted. All refs remain preservation subjects; no namespace exemption."
+  },
+  "candidate": {
+    "id": "ORE-N0-PROSPECTIVE-BOUNDARY-C6",
+    "identity": {
+      "bytes": 32281,
+      "lf": 202,
+      "terminal_LF": true,
+      "sha256": "a025a8b007410cbd9bc30bb5f4f95246dbeac6c2f8caa34b6ed411803936cafa"
+    },
+    "manifest": {
+      "bytes": 141886,
+      "lf": 4343,
+      "terminal_LF": true,
+      "sha256": "05ea5c04d499b93e94b1c0a4357e0d3f523673d9c8830f207b5a0621217c226f"
+    },
+    "freeze_receipt": {
+      "bytes": 3825,
+      "lf": 101,
+      "terminal_LF": true,
+      "sha256": "ff87e70dd5a643d22f4a88f62d39d26e30cbed2ff0d119ad14e9dccfa701eaa2"
+    },
+    "archive_sha256": "bef9fdfbb7e929b058a869c4ae4b6b466e0f8d99e570e1647677fe676c2dfc12"
+  },
+  "review": {
+    "id": "RR-ORE-N0-PROSPECTIVE-BOUNDARY-C6-PASS",
+    "identity": {
+      "bytes": 18405,
+      "lf": 130,
+      "terminal_LF": true,
+      "sha256": "3996a05cfe2a24e3d0d88719cf51449a7dad419c55ac308e94abb6a5ce6f332e"
+    },
+    "reviewer_lane": "01a0eaee-fdcb-7d90-a609-d9ececc976b6"
+  },
+  "N0_candidate_independently_reviewed_PASS": true,
+  "N0_established": false,
+  "N0_activated": false,
+  "T_N0": null,
+  "prospective_preflight_executed": false,
+  "CD_substantive_status": "BLOCKED pending N0 establishment/activation, effective successor controls/applicability, exact receiving-task authority and prospective preflight PASS",
+  "CD_dependency_status": "CD prospectively dependency-eligible",
+  "CD_binding": {
+    "candidate": "ORE-N0-PROSPECTIVE-BOUNDARY-C6",
+    "review": "RR-ORE-N0-PROSPECTIVE-BOUNDARY-C6-PASS",
+    "scope": "Only exact proposed N0 claims and CS01-CS25/N0-2 plus ore-v3-n0-cd-applicability/0.1.0; any new actual historical truth dependency blocks"
+  },
+  "next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 REPOSITORY INTEGRATION / ADOPTION PACKAGE",
+  "next_gate_count": 1,
+  "review_executed": false,
+  "after_future_integration_review_PASS": {
+    "conditional_next_gate": "SEPARATELY REVIEWED EXACT-PATH N0 ADOPTION / PUBLICATION AUTHORIZATION",
+    "prerequisites": "Explicit acceptance of exact reviewed bytes and durable locations; separately authorized exact Git/publication transition. No automatic stage/commit/push authority from PASS.",
+    "then": [
+      "Exact authorized adoption/publication with independently verified accepted commit/parent/tree and full delta",
+      "Independent publication retrieval, remote equality and preservation verification",
+      "Separately authorized external N0 activation under ACTIVATION-CONTRACT.md",
+      "Separately authorized prospective receiving preflight under effective successor controls and applicability",
+      "FOCUSED CD AUTHOR CORRECTION — LIVE CANARY only after qualified prospective preflight PASS and exact compatible task authorization"
+    ]
+  },
+  "historical_U_ledger": [
+    "evidence/historical-ledger.json",
+    "evidence/historical-ledger-C4-addendum.json",
+    "evidence/historical-ledger-C5-addendum.json",
+    "evidence/historical-ledger-C6-addendum.json"
+  ],
+  "historical_status": "All U/FAIL/withdrawn unchanged; 179 historical C4/C5 D/U targets and 23 inherited D nodes preserved; no retroactive PASS.",
+  "durable_anchor_requirements": "Effective C2 DA1–DA7. Exact raw bytes, provenance and required transition evidence independently retrievable from accepted durable locations before raw-dependent acceptance; no hash + size + unavailable original.",
+  "upstream_ore_obligation": "UPSTREAM ORE COMPATIBILITY / DRIFT CONTROL = REQUIRED and UNSATISFIED",
+  "upstream_details": "UPSTREAM-ORE-OBLIGATION.md and C6 upstream-ore-obligation.json; carry through every checkpoint/new chat/new lane/successor/qualification/readiness transition.",
+  "activation_contract": "ACTIVATION-CONTRACT.md",
+  "authority_map": "AUTHORITY-MAP.json",
+  "prohibited_now": [
+    "stage",
+    "commit",
+    "push",
+    "publish",
+    "N0 establishment",
+    "N0 activation",
+    "prospective preflight",
+    "CD work",
+    "implementation",
+    "qualification",
+    "Execution Readiness closure",
+    "mining readiness"
+  ]
+}

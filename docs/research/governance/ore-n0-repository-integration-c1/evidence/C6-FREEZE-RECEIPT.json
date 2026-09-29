@@ -1,0 +1,101 @@
+{
+  "candidate": "ORE-N0-PROSPECTIVE-BOUNDARY-C6",
+  "status": "FROZEN DRAFT-UNREVIEWED",
+  "frozen_at_UTC": "2026-09-29T02:00:44.972879+00:00",
+  "candidate_path": "/Users/erale/.codex/visualizations/2026/09/29/01a0eab6-3fea-7933-96fb-a536c56aac37/ORE-N0-PROSPECTIVE-BOUNDARY-C6/CANDIDATE.md",
+  "candidate_identity": {
+    "bytes": 32281,
+    "lf": 202,
+    "terminal_LF": true,
+    "sha256": "a025a8b007410cbd9bc30bb5f4f95246dbeac6c2f8caa34b6ed411803936cafa"
+  },
+  "manifest_identity": {
+    "bytes": 141886,
+    "lf": 4343,
+    "terminal_LF": true,
+    "sha256": "05ea5c04d499b93e94b1c0a4357e0d3f523673d9c8830f207b5a0621217c226f"
+  },
+  "archive_path": "/Users/erale/.codex/visualizations/2026/09/29/01a0eab6-3fea-7933-96fb-a536c56aac37/ORE-N0-PROSPECTIVE-BOUNDARY-C6.tar.gz",
+  "archive_identity": {
+    "bytes": 374268105,
+    "lf": 1389394,
+    "terminal_LF": false,
+    "sha256": "bef9fdfbb7e929b058a869c4ae4b6b466e0f8d99e570e1647677fe676c2dfc12"
+  },
+  "files_including_manifest": 543,
+  "archive_all_members_verified": true,
+  "author": "01a0eab6-3fea-7933-96fb-a536c56aac37",
+  "author_excluded_from_independent_review": true,
+  "C5_candidate_identity": {
+    "bytes": 33033,
+    "lf": 198,
+    "terminal_LF": true,
+    "sha256": "859ec1d62508f8df9714399aab9c0f9a00deee11517db25fe2c2155f0459a0a4"
+  },
+  "C5_FAIL_review_identity": {
+    "bytes": 17436,
+    "lf": 219,
+    "terminal_LF": false,
+    "sha256": "72710bd45207d7d115ea505354d70a38a5983fda913cc0b397ccf2fa34d9b6a1"
+  },
+  "C3_graph_identity": {
+    "bytes": 330730184,
+    "lf": 5850960,
+    "terminal_LF": true,
+    "sha256": "3f131ec01db46f93a1ab3805c06e243021e1af1b95a9897cd448ef5c1ded5402"
+  },
+  "validation": {
+    "status": "PASS author documentary validation; NOT independent review",
+    "algorithm": "Independently reconstructed edge tuples, Kahn forward/reverse closure propagation; exhaustive factored consumer record expansion",
+    "active_premises": 53735,
+    "required_including_root": 53506,
+    "required_class_counts": {
+      "A": 53306,
+      "B": 141,
+      "C": 59
+    },
+    "direct_truth_edges": 395866,
+    "direct_reporting_edges": 672,
+    "predecessor_nodes": 53798,
+    "predecessor_direct_edges": 397379,
+    "actual_check_counts": {
+      "consumer_relationships_checked": 4117252,
+      "RETAINED_CURRENT_CONSUMER": 4098878,
+      "current_realizations_checked": 4110194,
+      "successor_reachability_checks": 1848051,
+      "historical_nonconsumption_checks": 19075926,
+      "direct_former_consumer_edges": 442,
+      "strict_indirect_former_consumer_relationships": 4116810,
+      "retired_premises_audited": 442,
+      "RETIRED_CONSUMER_EXPLICIT_NONCONSUMPTION": 8522,
+      "RETIRED_CONSUMER_EXPLICIT_SUCCESSORS": 9852
+    },
+    "truth_cycles": [],
+    "reporting_cycles": [],
+    "mapping_gaps": [],
+    "semantic_coverage_gaps": [],
+    "predecessor_consumer_audit_gaps": [],
+    "historical_truth_targets": 179,
+    "completion_propositions": 42,
+    "CD_trace_obligations": 17,
+    "source_range_checks": 52851,
+    "adversarial_cases": 19,
+    "independent_review": false,
+    "N0_established": false,
+    "prospective_preflight": false,
+    "CD_executed": false
+  },
+  "author_disposition": "CD prospectively dependency-eligible",
+  "sole_next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 PROSPECTIVE BOUNDARY",
+  "historical_findings": "All U/FAIL/withdrawn findings preserved; no historical adjudication",
+  "upstream": "UPSTREAM ORE COMPATIBILITY / DRIFT CONTROL = REQUIRED and UNSATISFIED",
+  "independent_review": false,
+  "repository_modified": false,
+  "N0_established": false,
+  "prospective_preflight_executed": false,
+  "CD_executed": false,
+  "integration_executed": false,
+  "implementation_or_qualification": false,
+  "readiness_closed": false,
+  "mining_readiness_inferred": false
+}

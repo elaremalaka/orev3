@@ -1,0 +1,2783 @@
+{
+  "65_original_records": [
+    {
+      "name": "c1",
+      "identity": {
+        "bytes": 29841,
+        "lf": 317,
+        "terminal_LF": false,
+        "sha256": "2ff6b0a8c13bc2626a8db76c4f85d9786a3a6f5b3cefbcd900949695adcdd887"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/source_records/0/retrieval"
+      }
+    },
+    {
+      "name": "c1-review",
+      "identity": {
+        "bytes": 16058,
+        "lf": 130,
+        "terminal_LF": false,
+        "sha256": "7ede0898ce174e1bca069e03ca4d629bb5bf607ef4b7960e684ab5e040b87ffa"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/source_records/1/retrieval"
+      }
+    },
+    {
+      "name": "c2",
+      "identity": {
+        "bytes": 25809,
+        "lf": 267,
+        "terminal_LF": false,
+        "sha256": "90eeb31b72cda585ce94b5e3085fdad2f94a1b29b1bce88f1d02cc3451329a2c"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/source_records/2/retrieval"
+      }
+    },
+    {
+      "name": "c2-review",
+      "identity": {
+        "bytes": 21108,
+        "lf": 196,
+        "terminal_LF": false,
+        "sha256": "df2aa4613d2212b0a4b4352c857abad214f82297216b95c18f4913a124019ba9"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/source_records/3/retrieval"
+      }
+    },
+    {
+      "name": "CW-U",
+      "identity": {
+        "bytes": 58409,
+        "lf": 756,
+        "terminal_LF": false,
+        "sha256": "c44bc786b5963a902cde1bfb9bf6688f043675ece1da6d85ffe77b83dba56a13"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/0/retrieval"
+      }
+    },
+    {
+      "name": "CD-U",
+      "identity": {
+        "bytes": 62615,
+        "lf": 888,
+        "terminal_LF": false,
+        "sha256": "4b0f04c23dd9142376e60739fc8d12b52020eae6564bc490b6378395e1761216"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/1/retrieval"
+      }
+    },
+    {
+      "name": "AR-U-original",
+      "identity": {
+        "bytes": 63371,
+        "lf": 1027,
+        "terminal_LF": false,
+        "sha256": "b379964dbfe118345b4340216a5532226cd8e911217ae2776fa65f0af081679f"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/2/retrieval"
+      }
+    },
+    {
+      "name": "AE-U",
+      "identity": {
+        "bytes": 68368,
+        "lf": 838,
+        "terminal_LF": false,
+        "sha256": "9f7c2b39e4cb68da884a899ae62eb537b1b07d0dff050a14dbe9b90df893e4c8"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/3/retrieval"
+      }
+    },
+    {
+      "name": "MI-U",
+      "identity": {
+        "bytes": 57126,
+        "lf": 768,
+        "terminal_LF": false,
+        "sha256": "158fae3a2f34289aecd2dba0896cfdfa8acb07dd79a611a6c5773494e59004a0"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/4/retrieval"
+      }
+    },
+    {
+      "name": "OA-U",
+      "identity": {
+        "bytes": 54778,
+        "lf": 826,
+        "terminal_LF": false,
+        "sha256": "46b0b1cbe89bc6a33e12fdeb7248fb571a36a2a8243523b2716609c5b56b8bf9"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/5/retrieval"
+      }
+    },
+    {
+      "name": "WP-U",
+      "identity": {
+        "bytes": 62613,
+        "lf": 824,
+        "terminal_LF": false,
+        "sha256": "c1b28ca039ec6e7eed5577d8f5cbbf03e904c6ffbc4dffa2ce3bdae57b781b64"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/6/retrieval"
+      }
+    },
+    {
+      "name": "CA-U",
+      "identity": {
+        "bytes": 61621,
+        "lf": 864,
+        "terminal_LF": false,
+        "sha256": "273570815bb356efa375a697e2a1b665bd29186b209958cb84ae23e76c30c604"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/7/retrieval"
+      }
+    },
+    {
+      "name": "RA-A-original",
+      "identity": {
+        "bytes": 50150,
+        "lf": 764,
+        "terminal_LF": false,
+        "sha256": "b849e5c497667f68459a8d6e84d75c0a45e32746254d7673cf402d5286d81b55"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/8/retrieval"
+      }
+    },
+    {
+      "name": "RR-RA-FAIL-CFW",
+      "identity": {
+        "bytes": 42063,
+        "lf": 578,
+        "terminal_LF": false,
+        "sha256": "5130b144128377ac25fe783e8e83fc0bfcbbebc46a9d9df25012ff2bfa3a4474"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/9/retrieval"
+      }
+    },
+    {
+      "name": "RA-A-CFW",
+      "identity": {
+        "bytes": 42605,
+        "lf": 707,
+        "terminal_LF": false,
+        "sha256": "c69df14af8617fe031758e5adb46704a6b7e0e56c5b0054ced9e899c7e2777b8"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/10/retrieval"
+      }
+    },
+    {
+      "name": "RR-CFW-PASS",
+      "identity": {
+        "bytes": 50139,
+        "lf": 634,
+        "terminal_LF": false,
+        "sha256": "e9208d839499dc8debde173bfd07bc2f236f560d3057219b152aaf4c58985843"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/11/retrieval"
+      }
+    },
+    {
+      "name": "WP-C",
+      "identity": {
+        "bytes": 45897,
+        "lf": 760,
+        "terminal_LF": false,
+        "sha256": "fc37bc3347703f60eff75c3f9b50e07a5664f261954d6f896503f223d01f5ddf"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/12/retrieval"
+      }
+    },
+    {
+      "name": "RR-WP-PASS",
+      "identity": {
+        "bytes": 34624,
+        "lf": 532,
+        "terminal_LF": false,
+        "sha256": "fe12c7c79b60353144325056f2ed74dc8b0840d745a2c1708a686b4eb9d21b1d"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/13/retrieval"
+      }
+    },
+    {
+      "name": "OA-C",
+      "identity": {
+        "bytes": 53053,
+        "lf": 893,
+        "terminal_LF": false,
+        "sha256": "2553db901d786c1d8bfef148907df4b649661c6b121e77e9c041ad46ec0685bf"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/14/retrieval"
+      }
+    },
+    {
+      "name": "RR-OA-PASS",
+      "identity": {
+        "bytes": 34600,
+        "lf": 599,
+        "terminal_LF": false,
+        "sha256": "7db9468c49a4f876af5353bd970b2f61d9357a0c05133b6bccffce728c188b3d"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/15/retrieval"
+      }
+    },
+    {
+      "name": "MI-C",
+      "identity": {
+        "bytes": 49487,
+        "lf": 828,
+        "terminal_LF": false,
+        "sha256": "e5a5a140426c7559e799d098a4e2aa47e35d5519f9015b2af1dba37339b2f7ac"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/16/retrieval"
+      }
+    },
+    {
+      "name": "RR-MI-PASS",
+      "identity": {
+        "bytes": 35562,
+        "lf": 580,
+        "terminal_LF": false,
+        "sha256": "7e07dbad6cae290ee371a7f0d6bf4f2c923fb2e5fc1ef6d73d8b3ef0d2bf666c"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/17/retrieval"
+      }
+    },
+    {
+      "name": "AE-C",
+      "identity": {
+        "bytes": 49580,
+        "lf": 935,
+        "terminal_LF": false,
+        "sha256": "fcf8a964fcb46134adc2f257f1fdfa8292206ca8b36d3e71c61632394c177507"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/18/retrieval"
+      }
+    },
+    {
+      "name": "RR-AE-PASS",
+      "identity": {
+        "bytes": 36341,
+        "lf": 634,
+        "terminal_LF": false,
+        "sha256": "95b371d7d9b170bde0cebcccbd158e875e20aedb19c4b68050c6c8839c1f6cb4"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/19/retrieval"
+      }
+    },
+    {
+      "name": "AR-U-post-AE",
+      "identity": {
+        "bytes": 36527,
+        "lf": 708,
+        "terminal_LF": false,
+        "sha256": "85ad1d210c085c74c6229c78194c414fbf77e4d7bc5c0acc4d000118b564f4d0"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/20/retrieval"
+      }
+    },
+    {
+      "name": "AR-C",
+      "identity": {
+        "bytes": 53233,
+        "lf": 1013,
+        "terminal_LF": false,
+        "sha256": "ea7296c51a9a8718c131b5604d754ad8c01b09c9d96df3e33f2beaaff825d07e"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/21/retrieval"
+      }
+    },
+    {
+      "name": "RR-AR-PASS",
+      "identity": {
+        "bytes": 28221,
+        "lf": 416,
+        "terminal_LF": false,
+        "sha256": "7e45045357f84715192014c33ae102cce1489b61575b05a880c3be582cab47fa"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/22/retrieval"
+      }
+    },
+    {
+      "name": "amendment",
+      "identity": {
+        "bytes": 13768,
+        "lf": 240,
+        "terminal_LF": false,
+        "sha256": "4b4a01fc009908c213f478bef2fdebe4881d0e6d533d4c928a99f2cd306b9f9d"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/23/retrieval"
+      }
+    },
+    {
+      "name": "infra-review",
+      "identity": {
+        "bytes": 30293,
+        "lf": 445,
+        "terminal_LF": false,
+        "sha256": "80362434146a4dfb70cd619596eb38313dba0e1062148e25f4ad2bab65384c2e"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/24/retrieval"
+      }
+    },
+    {
+      "name": "adoption",
+      "identity": {
+        "bytes": 11538,
+        "lf": 165,
+        "terminal_LF": false,
+        "sha256": "cb0796a4b84f44ae0987d351292ee1b59e42f3e3cf1ae3822e3e57b5cd00b34d"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/25/retrieval"
+      }
+    },
+    {
+      "name": "publication",
+      "identity": {
+        "bytes": 14490,
+        "lf": 188,
+        "terminal_LF": false,
+        "sha256": "fb40fba7476bde1b02e16410ba6a050e309fcb23fcb9174cffdea7a7930d4699"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/26/retrieval"
+      }
+    },
+    {
+      "name": "original-failure",
+      "identity": {
+        "bytes": 9402,
+        "lf": 83,
+        "terminal_LF": false,
+        "sha256": "f7967db51ad414197d305300e74e8e405c41d6e8f52cf00a27ac9c640b5db3fd"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/27/retrieval"
+      }
+    },
+    {
+      "name": "receiving-failure",
+      "identity": {
+        "bytes": 11707,
+        "lf": 77,
+        "terminal_LF": false,
+        "sha256": "6e6c7c2c437b6fabc27c6bfaddb7679f215419d813bfb0761c4231b418f9c603"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/28/retrieval"
+      }
+    },
+    {
+      "name": "withdrawn-pass",
+      "identity": {
+        "bytes": 7797,
+        "lf": 34,
+        "terminal_LF": false,
+        "sha256": "62e21aa759250cfde9605dea535a15f36fcc598bb8679c4f9d833c6860794f15"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/29/retrieval"
+      }
+    },
+    {
+      "name": "spec",
+      "identity": {
+        "bytes": 28603,
+        "lf": 224,
+        "terminal_LF": true,
+        "sha256": "ba9b641a463c5daa1b69d345a89295000059804832db39efafa5caea1b30deb4"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/30/retrieval"
+      }
+    },
+    {
+      "name": "verdict",
+      "identity": {
+        "bytes": 4739,
+        "lf": 23,
+        "terminal_LF": true,
+        "sha256": "b902f80ad29e62337f430a1b39bb5cec80bf39663559942c036da2d6646ce27e"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/31/retrieval"
+      }
+    },
+    {
+      "name": "review",
+      "identity": {
+        "bytes": 12608,
+        "lf": 145,
+        "terminal_LF": false,
+        "sha256": "65c005fe5719cb2331d144b17ebf49eb26fabcd53e0860efaecca5f1d8d8a792"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/32/retrieval"
+      }
+    },
+    {
+      "name": "issuance",
+      "identity": {
+        "bytes": 14652,
+        "lf": 62,
+        "terminal_LF": false,
+        "sha256": "3f9194ff4d3223d339b480a5b986df80a07d2f98498fb8e8eb7c7193ed29abb3"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/33/retrieval"
+      }
+    },
+    {
+      "name": "acceptance-user",
+      "identity": {
+        "bytes": 1640,
+        "lf": 2,
+        "terminal_LF": false,
+        "sha256": "0981d0597b002a97ddc4e9907ce8198caa1b84edf23b8e2ac04f593d52244025"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/34/retrieval"
+      }
+    },
+    {
+      "name": "task9",
+      "identity": {
+        "bytes": 34791,
+        "lf": 1339,
+        "terminal_LF": false,
+        "sha256": "ecd589d0b3693594ce54fcd86c35855df78849f83d15f8d82348184210a1ba12"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/35/retrieval"
+      }
+    },
+    {
+      "name": "task19",
+      "identity": {
+        "bytes": 30569,
+        "lf": 1235,
+        "terminal_LF": false,
+        "sha256": "3e460dd558b435ad11e669df44fbecce5e3a3b0d7cfa1f9f9e13411f1bc49133"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/36/retrieval"
+      }
+    },
+    {
+      "name": "task29",
+      "identity": {
+        "bytes": 27866,
+        "lf": 1072,
+        "terminal_LF": false,
+        "sha256": "aff1ca4686a30dbf3f2b3e709aaf7c97dc0bde6273ca557cc2fef98aa7435085"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/37/retrieval"
+      }
+    },
+    {
+      "name": "task39",
+      "identity": {
+        "bytes": 25655,
+        "lf": 1172,
+        "terminal_LF": false,
+        "sha256": "f3b6bc51f7432e5e025c3c4b90fa312eeec736dab10a9433c0b9b1dd3d25d8c4"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/38/retrieval"
+      }
+    },
+    {
+      "name": "A",
+      "identity": {
+        "bytes": 60225,
+        "lf": 760,
+        "terminal_LF": false,
+        "sha256": "07abf89fcb5106362d8db9cc5bb10c492aa0c6d47aa770332ad86af6cbf13c87"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/39/retrieval"
+      }
+    },
+    {
+      "name": "B",
+      "identity": {
+        "bytes": 63027,
+        "lf": 759,
+        "terminal_LF": false,
+        "sha256": "bb6ba295a67e4a0e7c7bbb58c4893b37f8567363378f4c1728a3feef031867aa"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/40/retrieval"
+      }
+    },
+    {
+      "name": "C",
+      "identity": {
+        "bytes": 59186,
+        "lf": 767,
+        "terminal_LF": false,
+        "sha256": "8c6f14a4a135d7cdc1f0a2a6d232d725c2063dbff4fc525e5a275b9ad7143a22"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/41/retrieval"
+      }
+    },
+    {
+      "name": "D",
+      "identity": {
+        "bytes": 52567,
+        "lf": 747,
+        "terminal_LF": false,
+        "sha256": "a2cab9d52a38a71c554717f931aac30971c567d5eb437050586568fa45d30c56"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/42/retrieval"
+      }
+    },
+    {
+      "name": "E",
+      "identity": {
+        "bytes": 53110,
+        "lf": 742,
+        "terminal_LF": false,
+        "sha256": "3ca59ac7d376c6f006bc2ed8c590ce22644faf1cf531da831d4385687111cbeb"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/43/retrieval"
+      }
+    },
+    {
+      "name": "F",
+      "identity": {
+        "bytes": 43980,
+        "lf": 609,
+        "terminal_LF": false,
+        "sha256": "977c2f4e8518eb7cccc1b22df4a4138ba2ba5c3ca6d854a94f39cbff7b97c12d"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/44/retrieval"
+      }
+    },
+    {
+      "name": "G",
+      "identity": {
+        "bytes": 47995,
+        "lf": 660,
+        "terminal_LF": false,
+        "sha256": "b2a5dd288997242cf7336b46419c0964ba56fba2080c3e509f1920ec643285f6"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/45/retrieval"
+      }
+    },
+    {
+      "name": "H",
+      "identity": {
+        "bytes": 60601,
+        "lf": 789,
+        "terminal_LF": false,
+        "sha256": "9101445405730aea0c1a703e94ba6d61303c24d538619e72f2ac2a4af822b842"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/46/retrieval"
+      }
+    },
+    {
+      "name": "I",
+      "identity": {
+        "bytes": 58409,
+        "lf": 756,
+        "terminal_LF": false,
+        "sha256": "c44bc786b5963a902cde1bfb9bf6688f043675ece1da6d85ffe77b83dba56a13"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/47/retrieval"
+      }
+    },
+    {
+      "name": "ref-recovery-negative",
+      "identity": {
+        "bytes": 6937,
+        "lf": 58,
+        "terminal_LF": false,
+        "sha256": "1c9120c8b0a937ce555b07b3461e12932f38946b29ffffc64d39198dea5a7919"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/48/retrieval"
+      }
+    },
+    {
+      "name": "resumed-recovery-negative",
+      "identity": {
+        "bytes": 3512,
+        "lf": 46,
+        "terminal_LF": false,
+        "sha256": "065e01e97077d1ba47aafc81a33dc2f4c3233e3972f33218ec7e980dfd0a69a7"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/49/retrieval"
+      }
+    },
+    {
+      "name": "further-recovery-negative",
+      "identity": {
+        "bytes": 3255,
+        "lf": 44,
+        "terminal_LF": false,
+        "sha256": "75329c316834fb945b504a8a6432880a12541152b12242763b7b61170cb3046e"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/50/retrieval"
+      }
+    },
+    {
+      "name": "authority-adjudication",
+      "identity": {
+        "bytes": 7766,
+        "lf": 57,
+        "terminal_LF": false,
+        "sha256": "e0361cd4cda8fe30b2093694f115951afe34e13822e9694a1350ff0ea6bbc2fb"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/51/retrieval"
+      }
+    },
+    {
+      "name": "complete-input-recovery",
+      "identity": {
+        "bytes": 10665,
+        "lf": 114,
+        "terminal_LF": false,
+        "sha256": "47d12154b8b61088b6f94f199cebc5b03e7f06e73f1dd13741ead65fe0f8c19c"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/52/retrieval"
+      }
+    },
+    {
+      "name": "c1-review-authorization",
+      "identity": {
+        "bytes": 2068,
+        "lf": 2,
+        "terminal_LF": false,
+        "sha256": "4651e50d9d5658b7f02d34222529785956e541f6f25b32a0878baef4e99cf1bd"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/53/retrieval"
+      }
+    },
+    {
+      "name": "c2-review-authorization",
+      "identity": {
+        "bytes": 3935,
+        "lf": 10,
+        "terminal_LF": false,
+        "sha256": "d7cd8ad0c74efedf04b0dc5d9df6d53b35e0b9eb9125ee6ef53d49d46e8d43a1"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/54/retrieval"
+      }
+    },
+    {
+      "name": "c2-review-entry-preflight",
+      "identity": {
+        "bytes": 2952,
+        "lf": 32,
+        "terminal_LF": false,
+        "sha256": "05da1045574f5032b30e2ae9329694cae98142c1bec77629d049e868caa7a655"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/55/retrieval"
+      }
+    },
+    {
+      "name": "integration-entry-preflight",
+      "identity": {
+        "bytes": 2466,
+        "lf": 30,
+        "terminal_LF": false,
+        "sha256": "fd3ad154be05bb74c629ddf2971a0109a38abf814fc1f71792a8f907495afe16"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/56/retrieval"
+      }
+    },
+    {
+      "name": "integration-authoring-authorization",
+      "identity": {
+        "bytes": 1692,
+        "lf": 22,
+        "terminal_LF": false,
+        "sha256": "21290b03ab30422e50a1c2410aaa8971a4acad2299ca21df2612ac9377b2db2c"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/57/retrieval"
+      }
+    },
+    {
+      "name": "explicit-c2-binding-correction",
+      "identity": {
+        "bytes": 94,
+        "lf": 0,
+        "terminal_LF": false,
+        "sha256": "42413d72d38fa7633e8382919fc66b21d0c3d4e019c106b52da922e88ba4dd4a"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/58/retrieval"
+      }
+    },
+    {
+      "name": "c2-independent-tabletop",
+      "identity": {
+        "bytes": 15209,
+        "lf": 90,
+        "terminal_LF": true,
+        "sha256": "64d70b9aaa1020d9df76da73b175784390a19bc62e53642fa89db6af09b5dcde"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/59/retrieval"
+      }
+    },
+    {
+      "name": "c2-review-temporary-manifest",
+      "identity": {
+        "bytes": 19990,
+        "lf": 589,
+        "terminal_LF": false,
+        "sha256": "b8dff1c45ae80ea632a71ffdadb775f2549be95b7d1c3f98cf4b7ca088ba3cb9"
+      },
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/60/retrieval"
+      }
+    }
+  ],
+  "repository_dependencies": [
+    {
+      "path": "AGENTS.md",
+      "bytes": 1848,
+      "lf": 85,
+      "sha256": "c412fe24ec8bfe6a4eddff23c0cd335c2839012efdf7ce10cbea4ebcc73540be",
+      "git_blob_sha1": "13015e402dff2756a860775e50b4f02a21647681",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:AGENTS.md"
+      ]
+    },
+    {
+      "path": "SECURITY.md",
+      "bytes": 2733,
+      "lf": 97,
+      "sha256": "7007839784dc78e8484eb3b545a6ec83d64e1c98a277e82993ae6ced6af98c38",
+      "git_blob_sha1": "c21bdb11957ef56a45adfe5c3f272a773ca80aa4",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:SECURITY.md"
+      ]
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-b1-case1-historical-coverage-continuation.md",
+      "bytes": 2171,
+      "lf": 27,
+      "sha256": "e6ce0e0435a02d111c9ebff121976c94352ae8d1682e3e1eeed531e6b602e94a",
+      "git_blob_sha1": "7a8a1eaec7e5418e0609a56ff5936e1a3a6ee651",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/project-checkpoints/ore-v3-b1-case1-historical-coverage-continuation.md"
+      ]
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-b1-case1-historical-coverage-current-next-gate.json",
+      "bytes": 3789,
+      "lf": 90,
+      "sha256": "9ece86461f601e1c484af0216353ae469b35622fd5fd34dc6be4b1ce736a763e",
+      "git_blob_sha1": "63bd23cd5760fdefab7080c28520ab79e7d5c8a0",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/project-checkpoints/ore-v3-b1-case1-historical-coverage-current-next-gate.json"
+      ]
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-b1-symbolic-correction-continuation.md",
+      "bytes": 7784,
+      "lf": 36,
+      "sha256": "e0a0506beb091721d9f06d04b3dcdc02b99d7065d78b4e4006e2768fda4ee65d",
+      "git_blob_sha1": "1fcc1574280978b4fdddcd221f1883edc825dcfc",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/project-checkpoints/ore-v3-b1-symbolic-correction-continuation.md"
+      ]
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-b1-symbolic-correction-current-next-gate.json",
+      "bytes": 12617,
+      "lf": 228,
+      "sha256": "38decdf87d743563bebd203432f324bd1fda2cabd911d146fd60c6afc6d50283",
+      "git_blob_sha1": "bfb8e3b64a0daa0f9c910a587e88d1fb33cd83d7",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/project-checkpoints/ore-v3-b1-symbolic-correction-current-next-gate.json"
+      ]
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-c2-adoption-bootstrap-b1-continuation.md",
+      "bytes": 7686,
+      "lf": 34,
+      "sha256": "530247204868814a226ebbf0c5aab3011c17ff620120b447acad07519c8b852c",
+      "git_blob_sha1": "e7378a9804c00b2730ae68950f2cb5fea3231146",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/project-checkpoints/ore-v3-c2-adoption-bootstrap-b1-continuation.md"
+      ]
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-c2-adoption-bootstrap-b1-current-next-gate.json",
+      "bytes": 8210,
+      "lf": 190,
+      "sha256": "f0514c169ba016c56eb41157f7606c9dbf2476499a922f94f893f5b6a5757ad7",
+      "git_blob_sha1": "c117fbc19b1cc37c1ed733787403568f7d1c6063",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/project-checkpoints/ore-v3-c2-adoption-bootstrap-b1-current-next-gate.json"
+      ]
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-cs23-c2-adoption-extension-c2-continuation.md",
+      "bytes": 5459,
+      "lf": 24,
+      "sha256": "4257e6212fc2ecaee265443811a412660e0b05006f8c91bd24317b657250a356",
+      "git_blob_sha1": "6f73b4a228f7afc9fa4d599f26b84fcd374f3e75",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/project-checkpoints/ore-v3-cs23-c2-adoption-extension-c2-continuation.md"
+      ]
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-cs23-c2-adoption-extension-c2-current-next-gate.json",
+      "bytes": 12096,
+      "lf": 229,
+      "sha256": "58692e62c037d64f930c5d1f87c9c2819c7d28304ba4b1ff64f7e18dea71088d",
+      "git_blob_sha1": "023a78f61dc83e786ac776e0026d88fbf00489b2",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/project-checkpoints/ore-v3-cs23-c2-adoption-extension-c2-current-next-gate.json"
+      ]
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-cs23-c2-current-next-gate.json",
+      "bytes": 12660,
+      "lf": 309,
+      "sha256": "510adb99e41c98a02457755a85b08235f308b4063c6e6e529e3eaa57b442d8cf",
+      "git_blob_sha1": "a553b7f4fd99fc5afe14a812a6f940a652a65b40",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/project-checkpoints/ore-v3-cs23-c2-current-next-gate.json"
+      ]
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-cs23-c2-integration-continuation.md",
+      "bytes": 11920,
+      "lf": 64,
+      "sha256": "1adf112541cb658e251209a2f8daca2182fbee14d5dfc9b8c3e5dfc5636f5e6c",
+      "git_blob_sha1": "b51f5c9612303112363aef3cf4561be462fadf50",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/project-checkpoints/ore-v3-cs23-c2-integration-continuation.md"
+      ]
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-execution-protocol-adoption-continuation-supplement.md",
+      "bytes": 9366,
+      "lf": 86,
+      "sha256": "5f5c44a3822d6e0e61aa6730b4d9f9e6e5fa47ebc5e9cbc3465141c08c8d5649",
+      "git_blob_sha1": "5ebaa43e5359330cb3237130059a8228d1e37815",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/project-checkpoints/ore-v3-execution-protocol-adoption-continuation-supplement.md"
+      ]
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-stage3c-current-next-gate.json",
+      "bytes": 32185,
+      "lf": 756,
+      "sha256": "628da1666ed24d02ff9d67ddd84da0271eb95e6bbffab497c25938d85484f202",
+      "git_blob_sha1": "57ffa87b55c66b976e0bb61e532a9e431a3083f9",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/project-checkpoints/ore-v3-stage3c-current-next-gate.json"
+      ]
+    },
+    {
+      "path": "docs/project-checkpoints/ore-v3-stage3c-post-ar-rr-ar-pass-comprehensive-continuation.md",
+      "bytes": 2442815,
+      "lf": 33127,
+      "sha256": "773e1ee6192334d8ebc3832cd576adf9aa027addd207252fce2830920efc5ba5",
+      "git_blob_sha1": "f3e2d4dbe1cba5ab19fc63fa3cae301823448dee",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/project-checkpoints/ore-v3-stage3c-post-ar-rr-ar-pass-comprehensive-continuation.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-case1-historical-coverage/anchors.json",
+      "bytes": 763211,
+      "lf": 8465,
+      "sha256": "daf7ed5a3ae948ec036f13144e3383b9c36caf59b8b8b4e023d00bd2690dcf7f",
+      "git_blob_sha1": "2c7bf4286db2ea057febbc31619cf79e048f36c6",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/b1-case1-historical-coverage/anchors.json"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-case1-historical-coverage/candidate.txt",
+      "bytes": 20247,
+      "lf": 102,
+      "sha256": "3cd37f71b7a261e9ccb08ec8f93bd81bbd79d8a46d21ea915ccfe7b7636085e8",
+      "git_blob_sha1": "7e287ab6e09254c4fc72e07dbdd7cbffaf89899a",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/b1-case1-historical-coverage/candidate.txt"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-case1-historical-coverage/recovery.json",
+      "bytes": 67580,
+      "lf": 276,
+      "sha256": "24785cb4966a8b773cdc9c0a5729a63d44f3cf8324cbb6710130105b61f46292",
+      "git_blob_sha1": "f4a984d7f0c5e6f29de0f4ba95fb1a83f7728508",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/b1-case1-historical-coverage/recovery.json"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-case1-historical-coverage/review.txt",
+      "bytes": 15208,
+      "lf": 77,
+      "sha256": "9a240661b945335044187f54e2b36fe1057ab33b422e87b861b5ef3ad1521351",
+      "git_blob_sha1": "45a41c2c1e7422348125bbe204dcb5cd37c4a2d4",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/b1-case1-historical-coverage/review.txt"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/anchors.json",
+      "bytes": 550824,
+      "lf": 5973,
+      "sha256": "e02d486b8a8608e34091e2ab1dd09084613892fd653007bf9594c2596946fbec",
+      "git_blob_sha1": "4aaf2d2d5910839ff0f549ecd2b60333ffd7bbc7",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/b1-symbolic-relationship-correction/anchors.json"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/candidate.txt",
+      "bytes": 20494,
+      "lf": 97,
+      "sha256": "c254b9b7dc07085646734cc60f3ad30238605eea259c3e5fa582fb4db705f05b",
+      "git_blob_sha1": "4da9d8e2d24b47cfa52c2d523747fcc374418cf4",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/b1-symbolic-relationship-correction/candidate.txt"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/recovery.json",
+      "bytes": 39398,
+      "lf": 196,
+      "sha256": "ccbaaa839e71f8f7e974cf1d198038cb492eed54b07defe797ba7f56b4cc8fe9",
+      "git_blob_sha1": "7a9fcd6420b9ea0667c42529574242b7a2612690",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/b1-symbolic-relationship-correction/recovery.json"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/review.txt",
+      "bytes": 11184,
+      "lf": 97,
+      "sha256": "93fc4447e8b0f4b8e313285fcbd62d479fad74bdd17813f269e462f66e73bafc",
+      "git_blob_sha1": "a6ea02de9c9ff07ef1761968d6507ebc765b4de6",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/b1-symbolic-relationship-correction/review.txt"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/anchors.json",
+      "bytes": 4042560,
+      "lf": 3343,
+      "sha256": "429524ad28b94a8b6cc90dccdd63c82345d9f23fd2c07c33bf01368aac0b8d2f",
+      "git_blob_sha1": "7bcbe15074e4fc9d69ebd189e214574d4b3c19e2",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/c2-adoption-bootstrap-b1/anchors.json"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/b1-review.txt",
+      "bytes": 7094,
+      "lf": 67,
+      "sha256": "11a3218471d668a58265e0cd6c498eeee40249a05018ced853670845ef216bc5",
+      "git_blob_sha1": "f9fd7baf0d8bcf53a88ed388f13cc32026673916",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/c2-adoption-bootstrap-b1/b1-review.txt"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/b1.txt",
+      "bytes": 24827,
+      "lf": 142,
+      "sha256": "780e9e19bbfb0aac2000270c9465d8e972c9fc242836a2c0a220ea1d7c441a88",
+      "git_blob_sha1": "f0a34737ef9f8c39576f739d619e4db80ff0888f",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/c2-adoption-bootstrap-b1/b1.txt"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/observations.json",
+      "bytes": 724997,
+      "lf": 6454,
+      "sha256": "12646174fa4a6320d0583fd1c931f1d8cf43ef8ee3434cf9dea13f58fb992d3d",
+      "git_blob_sha1": "9e8628827495192887ecd84a7fa586c149f0effd",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/c2-adoption-bootstrap-b1/observations.json"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/anchors.json",
+      "bytes": 3842164,
+      "lf": 10581,
+      "sha256": "17f774b7b3707efec34e2132d7d56e5a95b2675002db3f919eb08e1a1c327566",
+      "git_blob_sha1": "30aab4f3ffa84b38305709408f68dae0026b6bac",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/cs23-c2-adoption-extension-c2/anchors.json"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c1-review.txt",
+      "bytes": 14318,
+      "lf": 97,
+      "sha256": "4916037a5efd5d259cf6aea09f48a0dea3971f4a73b85c7e8e97f4042b307ccf",
+      "git_blob_sha1": "d293058a5d9a1113b5283cb0d1701c27c62f4baf",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c1-review.txt"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c1.txt",
+      "bytes": 19077,
+      "lf": 121,
+      "sha256": "982f171af855436aa74d556b95747d64943c0502b9d46dc82d978bceddb280c1",
+      "git_blob_sha1": "680e2df0d54b42a6019483c75faee8978d23ffa8",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c1.txt"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c2-review.txt",
+      "bytes": 18307,
+      "lf": 118,
+      "sha256": "13a9c9d3ef9f206803f422d80f4a3afa5e1b34d325048030a37055245c2b8565",
+      "git_blob_sha1": "2445a03c021cbb9162e3656461a0c47de0c3e7d3",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c2-review.txt"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c2.txt",
+      "bytes": 15765,
+      "lf": 76,
+      "sha256": "c741476c812659713727cbaa22c95ceb77ee1a28f8c8247f436228f38800b899",
+      "git_blob_sha1": "052832dad9d4c48ce3536f122e70b5f77fc571b5",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/cs23-c2-adoption-extension-c2/c2.txt"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+      "bytes": 1082064,
+      "lf": 6603,
+      "sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+      "git_blob_sha1": "b784c8820c2ef74cd021ef56c5644a3382fcadd8",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-ref-continuity-c2/c1-review.txt",
+      "bytes": 16058,
+      "lf": 130,
+      "sha256": "7ede0898ce174e1bca069e03ca4d629bb5bf607ef4b7960e684ab5e040b87ffa",
+      "git_blob_sha1": "f8d06942ccf598e8b5e778411506c3bcb004d970",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/cs23-ref-continuity-c2/c1-review.txt"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-ref-continuity-c2/c1.txt",
+      "bytes": 29841,
+      "lf": 317,
+      "sha256": "2ff6b0a8c13bc2626a8db76c4f85d9786a3a6f5b3cefbcd900949695adcdd887",
+      "git_blob_sha1": "015208a2b3f8f1077fe5286ddd6da867f5c10bca",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/cs23-ref-continuity-c2/c1.txt"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-ref-continuity-c2/c2-review.txt",
+      "bytes": 21108,
+      "lf": 196,
+      "sha256": "df2aa4613d2212b0a4b4352c857abad214f82297216b95c18f4913a124019ba9",
+      "git_blob_sha1": "d3283ece39f88891a00440df6106d26a655e9bd2",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/cs23-ref-continuity-c2/c2-review.txt"
+      ]
+    },
+    {
+      "path": "docs/research/governance/evidence/cs23-ref-continuity-c2/c2.txt",
+      "bytes": 25809,
+      "lf": 267,
+      "sha256": "90eeb31b72cda585ce94b5e3085fdad2f94a1b29b1bce88f1d02cc3451329a2c",
+      "git_blob_sha1": "d54a5c128fb92a4245e2b150862c6eb3f58cc9d5",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/evidence/cs23-ref-continuity-c2/c2.txt"
+      ]
+    },
+    {
+      "path": "docs/research/governance/execution-readiness-v1-clarification-decision.md",
+      "bytes": 83358,
+      "lf": 1567,
+      "sha256": "ce9e7cd57df0d31db5aea0c7674edc3b3b717b96a790d5c7e3075364df151477",
+      "git_blob_sha1": "acfa6a0de9b7f15ffccf031d4f9fff641aa54a9a",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/execution-readiness-v1-clarification-decision.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/execution-readiness-v1.1-detached-evidence-publication.md",
+      "bytes": 40071,
+      "lf": 876,
+      "sha256": "7b91d9f63ebfe0dfc72bdc1dfe2fdb687e6f1f60877537206d649cc8d00bd077",
+      "git_blob_sha1": "b254c459cd039225199254b369fd2b420de887f2",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/execution-readiness-v1.1-detached-evidence-publication.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/execution-readiness-v1.1-prerequisite-authority-identities.md",
+      "bytes": 26324,
+      "lf": 612,
+      "sha256": "50c5bfbfa419ffe723665bbe9e853f98ec301e47a13f6ec55adcf03d9d01f88c",
+      "git_blob_sha1": "1164c9be46caf4633211709fa64d92ebf1fd976d",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/execution-readiness-v1.1-prerequisite-authority-identities.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/execution-readiness-v1.1-readiness-record-v2.md",
+      "bytes": 52434,
+      "lf": 1254,
+      "sha256": "debe9e0f91e3f420ad673ced84890071f0123cfe8ab159d20a08973c09817cb3",
+      "git_blob_sha1": "703130adc52ce519975b05a842b9811d71203667",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/execution-readiness-v1.1-readiness-record-v2.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/execution-readiness-v1.1-readiness-test-policy-versioning.md",
+      "bytes": 14044,
+      "lf": 188,
+      "sha256": "e0d79b517b126633bb2f39448c61a84307dfd3b51628a39c8501eb7653fe20fd",
+      "git_blob_sha1": "da566f8382316478c7249cf4b1c8f5261f2699a8",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/execution-readiness-v1.1-readiness-test-policy-versioning.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/execution-readiness-v1.1-zero-input-phase3b-evidence.md",
+      "bytes": 38083,
+      "lf": 916,
+      "sha256": "1c70699297837ab18f1081075626f2fa4d2d586607f2dd3a25d930ea212538ef",
+      "git_blob_sha1": "7e94017c69d1ef3c751fa1d18f4af57f2e2faeaf",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/execution-readiness-v1.1-zero-input-phase3b-evidence.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/ore-v3-b1-case1-historical-coverage-rule-integration.md",
+      "bytes": 8915,
+      "lf": 48,
+      "sha256": "61392e777d3d3474f86b04508be65aa1bfb4d7582a09ee2fc95b4a38b0092661",
+      "git_blob_sha1": "94d0e862af17d29e28ca31b9faed4e7a446f4d54",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/ore-v3-b1-case1-historical-coverage-rule-integration.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/ore-v3-b1-historical-symbolic-relationship-correction-integration.md",
+      "bytes": 17407,
+      "lf": 89,
+      "sha256": "06786cc775037f09b442906e682dd9e99ae8b43a78da03534e9423f6942ebfec",
+      "git_blob_sha1": "fa0bd6b146b547d8c3cc296ac410a2e157f1c62d",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/ore-v3-b1-historical-symbolic-relationship-correction-integration.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/ore-v3-c2-adoption-bootstrap-b1-integration.md",
+      "bytes": 14256,
+      "lf": 61,
+      "sha256": "986b650cf059bdb4f36838fc498637d88d92c6774c053e034373f50069683ed1",
+      "git_blob_sha1": "1e234bd571efbb2b7fe11f081cedfb153e92196d",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/ore-v3-c2-adoption-bootstrap-b1-integration.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/ore-v3-codex-lane-handoff-author-review-protocol.md",
+      "bytes": 45989,
+      "lf": 238,
+      "sha256": "10df214e0085eeb8e265249f5d2748e0a583af68cc36db1bf4ff87d29b5ff051",
+      "git_blob_sha1": "40f69b8ddf043905de35a7a41ef4e53c60bb4cfe",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/ore-v3-codex-lane-handoff-author-review-protocol.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/ore-v3-cs23-c2-adoption-historical-coverage-extension-c2-integration.md",
+      "bytes": 23791,
+      "lf": 106,
+      "sha256": "58a33e4aa674c9fee89b17b4a96e005c914d42ed70fb9d23eb4c7be53650cd35",
+      "git_blob_sha1": "7bf311723c26dff5be580e6f146a3891d7af65a1",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/ore-v3-cs23-c2-adoption-historical-coverage-extension-c2-integration.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/ore-v3-cs23-ref-continuity-c2-integration.md",
+      "bytes": 42084,
+      "lf": 396,
+      "sha256": "19bb852767b499138076dfe057418e2351be7ebcae00709f8f5a3dbae21d7c77",
+      "git_blob_sha1": "edc7c9b0e5922250bfab51b439f1578950125858",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/ore-v3-cs23-ref-continuity-c2-integration.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/ore-v3-execution-continuation-protocol.md",
+      "bytes": 26214,
+      "lf": 202,
+      "sha256": "5139c876da9d3db8ddab5abb8c89673589413cb8b19406582537425d6558193f",
+      "git_blob_sha1": "4ca7a219b92267d9f6bfcbc7db90cfb85ff94946",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/ore-v3-execution-continuation-protocol.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/rq003-experiment-005-bounded-streaming-source-processing-prerequisite-v1.md",
+      "bytes": 179582,
+      "lf": 2911,
+      "sha256": "ce09153fc98145f3fa318a9c7e8dd563afbf4b64496e64535b27c49c93af90e3",
+      "git_blob_sha1": "3512dd4d9b0f79d18e079b37e7c750e657ff7cf8",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/rq003-experiment-005-bounded-streaming-source-processing-prerequisite-v1.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-acquisition-lifetime-clarification-candidate.md",
+      "bytes": 30330,
+      "lf": 392,
+      "sha256": "1e2c235f11689cd64c65840b3055f377ebef8d9614ea31574e398a15bf29fdcd",
+      "git_blob_sha1": "1d8d4d1abf21f482d9e292c0fa9c612703d5a74f",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/rq003-stage3c-acquisition-lifetime-clarification-candidate.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-admission-serialization-clarification-candidate.md",
+      "bytes": 18602,
+      "lf": 274,
+      "sha256": "56b4e402a9b4e62853e285be3ed7ca7b7c2d1a0d34d71a7c9ee757b8dffdcfed",
+      "git_blob_sha1": "1720ffac468d87f584217f0875a14528089c1c59",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/rq003-stage3c-admission-serialization-clarification-candidate.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-category-attribution-clarification-candidate.md",
+      "bytes": 19936,
+      "lf": 281,
+      "sha256": "2e735f2ffe1b4d537495dd7db62d75e21bb6db822c20863f5dc29781c508c101",
+      "git_blob_sha1": "e3daaaf172033bdc28654e65a2b66dd6269d7dc4",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/rq003-stage3c-category-attribution-clarification-candidate.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-controller-retirement-status-clarification-candidate.md",
+      "bytes": 18484,
+      "lf": 240,
+      "sha256": "d9bf01b2449b1819545ef4c186407eb0c16c929534d6ff4bc2f37b8a4b33a304",
+      "git_blob_sha1": "d88c908cbf4a5b3ea0f292d2704874dfc4857126",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/rq003-stage3c-controller-retirement-status-clarification-candidate.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-recovery-permission-clarification-candidate.md",
+      "bytes": 47955,
+      "lf": 750,
+      "sha256": "7df413610a54adcacb06f5c01dc43b7ce2c04c5244922519871d745c0395f716",
+      "git_blob_sha1": "bb4ed87af352c78e80eca536f307946c1522ef59",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/rq003-stage3c-recovery-permission-clarification-candidate.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-sole-reaper-cancellation-receipt-settlement-clarification-candidate.md",
+      "bytes": 31702,
+      "lf": 438,
+      "sha256": "7a965a5ef53944452fd55f32aa577e8157eab98f206218bc9a52c7deaf4bfb5f",
+      "git_blob_sha1": "e12300c3b8a2f0f848a7379988cdbd0ba9f93114",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/rq003-stage3c-sole-reaper-cancellation-receipt-settlement-clarification-candidate.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-sole-reaper-interruption-admission-clarification-candidate.md",
+      "bytes": 36805,
+      "lf": 523,
+      "sha256": "f14f12ab404e806bc7d0a916a1bc1ca4583720c128c1e89b2397477bdc6dc9b0",
+      "git_blob_sha1": "f113db63fc2d3c277048d4a8d9d03f8e19fa0213",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/rq003-stage3c-sole-reaper-interruption-admission-clarification-candidate.md"
+      ]
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-worker-pinned-input-acquisition-lifetime-clarification-candidate.md",
+      "bytes": 24156,
+      "lf": 342,
+      "sha256": "be25dd7422e10c6dc775bb3fabbfc0688c71606fdaf8196305f1282208628a9c",
+      "git_blob_sha1": "88ee605e648e1f5105faf2066c470435e1d1c249",
+      "filesystem_mode": "0644",
+      "mode": "100644",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "git_retrieval": [
+        "git",
+        "show",
+        "051a54d9e9ca356b771fe98531cd54384d8250ae:docs/research/governance/rq003-stage3c-worker-pinned-input-acquisition-lifetime-clarification-candidate.md"
+      ]
+    }
+  ],
+  "stronger_governance": [
+    {
+      "path": "docs/research/governance/rq003-experiment-005-bounded-streaming-source-processing-prerequisite-v1.md",
+      "sha256": "ce09153fc98145f3fa318a9c7e8dd563afbf4b64496e64535b27c49c93af90e3",
+      "blob": "3512dd4d9b0f79d18e079b37e7c750e657ff7cf8",
+      "commit": "a46173a0420d0bfd4babd17cd1ebbaa911bce241"
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-acquisition-lifetime-clarification-candidate.md",
+      "sha256": "1e2c235f11689cd64c65840b3055f377ebef8d9614ea31574e398a15bf29fdcd",
+      "blob": "1d8d4d1abf21f482d9e292c0fa9c612703d5a74f",
+      "commit": "fcc2f3f42c94c691b65012fab9d0c75bebc4ef94"
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-admission-serialization-clarification-candidate.md",
+      "sha256": "56b4e402a9b4e62853e285be3ed7ca7b7c2d1a0d34d71a7c9ee757b8dffdcfed",
+      "blob": "1720ffac468d87f584217f0875a14528089c1c59",
+      "commit": "a7f0ea131237fd6f073f14a3d2fc8544920e6aba"
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-category-attribution-clarification-candidate.md",
+      "sha256": "2e735f2ffe1b4d537495dd7db62d75e21bb6db822c20863f5dc29781c508c101",
+      "blob": "e3daaaf172033bdc28654e65a2b66dd6269d7dc4",
+      "commit": "95295a8bd074d803e9405a533915b5592a484ae7"
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-controller-retirement-status-clarification-candidate.md",
+      "sha256": "d9bf01b2449b1819545ef4c186407eb0c16c929534d6ff4bc2f37b8a4b33a304",
+      "blob": "d88c908cbf4a5b3ea0f292d2704874dfc4857126",
+      "commit": "d14b516277441a3849525014a92c09529347eadb"
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-recovery-permission-clarification-candidate.md",
+      "sha256": "7df413610a54adcacb06f5c01dc43b7ce2c04c5244922519871d745c0395f716",
+      "blob": "bb4ed87af352c78e80eca536f307946c1522ef59",
+      "commit": "045c041453d232e1288e6031fc528d61f8989caa"
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-worker-pinned-input-acquisition-lifetime-clarification-candidate.md",
+      "sha256": "be25dd7422e10c6dc775bb3fabbfc0688c71606fdaf8196305f1282208628a9c",
+      "blob": "88ee605e648e1f5105faf2066c470435e1d1c249",
+      "commit": "90018eeb54cb1e8590f526f72579ba262dd868d4"
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-sole-reaper-interruption-admission-clarification-candidate.md",
+      "sha256": "f14f12ab404e806bc7d0a916a1bc1ca4583720c128c1e89b2397477bdc6dc9b0",
+      "blob": "f113db63fc2d3c277048d4a8d9d03f8e19fa0213",
+      "commit": "1fef9920e4910996f53c17ae1944b5b79700e5b9"
+    },
+    {
+      "path": "docs/research/governance/rq003-stage3c-sole-reaper-cancellation-receipt-settlement-clarification-candidate.md",
+      "sha256": "7a965a5ef53944452fd55f32aa577e8157eab98f206218bc9a52c7deaf4bfb5f",
+      "blob": "e12300c3b8a2f0f848a7379988cdbd0ba9f93114",
+      "commit": "83b53e5294ad336e5b02fe0f941fb074d2d5756d"
+    }
+  ],
+  "F2": {
+    "bytes": 8829,
+    "sha256": "31549f1484d7e4c41fde993e18ffb6fc5dcfc5979039dc8c5cf5322636d173e6",
+    "retrieval": "AST source segment of _ControllerAcquisitionPolicy in preserved src/orev3/execution/runtime.py; no appended newline"
+  },
+  "evidence/redesign/candidate.txt": {
+    "bytes": 22548,
+    "lf": 300,
+    "terminal_LF": false,
+    "sha256": "0c3a713c65416dbf38de5ef6af02307f5d9e2ff67807c3d059ab48df02338656"
+  },
+  "evidence/redesign/review.txt": {
+    "bytes": 28738,
+    "lf": 201,
+    "terminal_LF": false,
+    "sha256": "6ec85b72458a6a1b21530b9b5ffd0f59107c5797c40d18b336d8952219672f74"
+  },
+  "evidence/effectiveness-receipt.json": {
+    "bytes": 169786,
+    "lf": 516,
+    "terminal_LF": true,
+    "sha256": "418c48ba1ce87291eca70876b65997bd081f6f77cbd8595919fad7bb34440086"
+  },
+  "originals/RR-AR-PASS.txt": {
+    "bytes": 28221,
+    "lf": 416,
+    "terminal_LF": false,
+    "sha256": "7e45045357f84715192014c33ae102cce1489b61575b05a880c3be582cab47fa"
+  },
+  "effective_status": {
+    "status": "EFFECTIVE-ACCEPTED",
+    "rule": "ORE-PROSPECTIVE-BOUNDARY-C1",
+    "revision": "ore-v3-prospective-continuation-boundary/0.1.0",
+    "effective_at_utc": "2026-09-28T16:30:04.336865+00:00",
+    "adoption_commit": "063d823dc97f1a3690e26f8bb328385acb9d0aef",
+    "parent": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+    "complete_tree": "3be16014d401531dbe3375de0fd1f6b6aee7a801",
+    "authority_ceiling": "Prospective continuation governance layer only. Historical CS01-CS25/2 meanings/results preserved. Separate complete N0 authority package, independent review, acceptance, required publication verification and external activation remain mandatory. Successor controls/applicability and CD dependency clearance remain separate."
+  },
+  "current_git_objects_verified": [
+    "aaaeb9b88040b09e7e5afdb9bd87b22693ba3e00",
+    "4952a0e81db05aa44b0532d60b7defafe27374fb",
+    "1086472ab60ce86602c03be5901737a36627e3cb",
+    "42f6a8b12900a3a8c299911447d04109d2df8844",
+    "d33f6272d66136e89fdbbc866bb8541e93bd68ac",
+    "06fdeee6bf8820e12afcda29f2392982f9143d37",
+    "df0055752332c546ec1410009dedbc1953244b26",
+    "435d11bce13599ec3397d99bc6c891803eb3ab9a",
+    "4ff047d40ec6fc34ec1c9298fecc44bdd1971a29",
+    "fbd65db7d8f043edd0d19a97fc7307122254dd52",
+    "eeef8339d601450abdf8519605e1a19058b2e104",
+    "b0fd0e643ad83fc527472605fe35707dd99b879e",
+    "dda3f0a986384017b44707ea2da632fb29edde60",
+    "20f4d93f6c4cd6c876c7ba16897c2e9e1a2f1246",
+    "885564c07bd4c80fb99bfd22910e1eafbf18ef5c",
+    "4ca7a219b92267d9f6bfcbc7db90cfb85ff94946",
+    "5a4e8bcc299e394b6516ea5eda70d6068dc2aebe",
+    "ab058a9229bed5a9f992675e72a2f50b5e360e1f",
+    "80f69b2971a434c6651520cd137c3c0aaf1a1ae8",
+    "4a4f13fb6f9dcd5e92b8b9631265ba1910eaedc2",
+    "f2a0f56044571c8cdfc6514fe1297ac8c6c5441f",
+    "f849bd2e93c6967b036d797aff31b920fa4a8153",
+    "6968ab38b45782d72df8651055b633cffa80a9e2",
+    "2a1e06dfdefb6094f09cf81ceb1d4e801ea3679c",
+    "b81e9471390615dcbce21456ff7364b3505a2b49",
+    "c69683605aef14c918e673d0566bb7193394a6d8",
+    "31b0820878d2ea9601f2d13a977fdde7dbb6b884",
+    "124100cfde528a023fee6c81e88be20545de26cc",
+    "a8a723a87cd5c51ddfba5912a1843f9fde733b87",
+    "680e2df0d54b42a6019483c75faee8978d23ffa8",
+    "794f9442206e2fba4c5b4b71a874b408afd96351",
+    "c9d9d6ff5fee03548685bbd78b168cb3d5fec2b4",
+    "cb08c28eb5f69ac220f04bef83bc53197c0fcd6f",
+    "8aa8645dc2a73803ea99aea1858c854f9bb58b2e",
+    "cb55b60b3b8106c879fb10fb0b1dfa57d5c69034",
+    "d88c908cbf4a5b3ea0f292d2704874dfc4857126",
+    "73824484474b166a26b89fc9a58e5698aff88da6",
+    "dac7c1ef2104a9251124cc68131ea2eedb38945c",
+    "bacde02b06a9d0c4ca73f08402ba64675904faca",
+    "6fcb3eef605986f7dfe801020fa477bc4096d98e",
+    "3128b200bbc87851ea13f1ac5ef019ad05d051cd",
+    "419363ae783095bf904f747691c3955ada65a774",
+    "bc3f8345e0e6438881ef499646b1d0d2930c22b5",
+    "7bd5a0bab2c430f8f396e8ccb4503d35f5f5a7e6",
+    "b5ff1450aa70d1113f9e18310bf37cb651ca0980",
+    "f80420243ff8412b424b38a10fa86dfeee8728e9",
+    "04053033cc95c6ae3a30e7b2fb2f472e70f77695",
+    "cd6ef066fac69563f18716cc9bec6f07af01de8c",
+    "a15e50dea296197c6e9b9f25774f8cd3414979d6",
+    "f032de17ad94e7a229bf53622ebe4206e6c3ac3a",
+    "e01b3b5f6261bb76143a2306d4f408b544fb85d5",
+    "f3371764b2172db04c9744fa593b8a1b0f98cb4b",
+    "d780d9c2664b3d87e39523a5a1c133a3eab34f2d",
+    "457af3880c6a9a00a00fac34f6d4a588eb398f87",
+    "58a612bd91d4302dc828da9d0d38364a077a0fc8",
+    "e134784053fd97ebe8db3879961455775d46abe7",
+    "1a14cb5579b5e42f6d6885b2a8a1a1fec4cb53b2",
+    "7789e16cf92ea5494910e318c71dcd88521987dd",
+    "eeb9a1c9565ef08b967676663d2302688cc7654d",
+    "0939f17c7e8af1f4a428836d9d91310210ac68e8",
+    "1245f453aafca2af97eec86521e7cac056fbec71",
+    "0388e54876f7a0c10e8a77430ca07f68b05e8cf1",
+    "0a95cc895dff9bd26ab388e3fb69f8c0207ec8fa",
+    "8f39359b0541fe0735bf4d97350fcc1238aa7914",
+    "21dadee545ccfac398b1242f58b9ec0cfddce74f",
+    "52574a79530e141a915d436e17d28fb61074c568",
+    "417e711f794012a9cd3865718c122a89aba4109e",
+    "02a4c58e21070f17e2c8dfe0eadeffa33b3ad7b8",
+    "3e60e74639e9d4786736e9432bbbe8826325b85e",
+    "47f24390020f791f52728cc59e3ec71ef2286eb9",
+    "10a3606c0501813bda9366689120217676dc33b5",
+    "8887fcb8d4ec43fe76421ef464fecaba5f4a81ff",
+    "5dc3ff4003cf4bd7410735b29e2514dac6784800",
+    "c9401a3445671c57f95c728639a587c28afad9c2",
+    "6eeb2aac96bb4920266f9dc03e35b4e9ba15f460",
+    "6bc402264e0a49cb39e6ec9d2e9fe739cdac48cb",
+    "c2793d27c56ce29a17e56af8af388e0fd9e7fd3a",
+    "43500fe47e291e93c7c2c9b81cc1d680f76cf88b",
+    "699245fa4fb07ce5df35c77c3245e6b6d492b9a9",
+    "7bbef5e45b1ba2504c6e64351f32ac6de418dd9e",
+    "4da9d8e2d24b47cfa52c2d523747fcc374418cf4",
+    "186b8b3bc4bbc3ba5e719f7a3664b623793156bc",
+    "b7c29f340b4c2c18b58e6cbcb32fc06ce47a24c2",
+    "710313f6fc599c7f795005d2c06880e4ebe0d972",
+    "334b7ecfe273ba838549b843985a56e7a4ecff0a",
+    "2daaf44f65788ae1661fbaaeb0fd16fec3d6a0ee",
+    "1999eea7e787fcf36aa44b17f08347377937669b",
+    "01127750d53a90cee934f9108cacb1e2498b0027",
+    "76c5b224ddc54b304c153ef21ad2466800354576",
+    "d5b8667b59bbda5ef800228476d7f9b83a789376",
+    "3a607f0250e9ba12bef0962d4089140adb953de5",
+    "e4bf90afe52f9b81025b53d43354c00bd30a4a77",
+    "918f5d8f671253d69e3c9260d2027b9cd22b1466",
+    "616a4f505d38ccdd004ccb78460830fe4b7cebe3",
+    "2445a03c021cbb9162e3656461a0c47de0c3e7d3",
+    "b6ceadb77af68681201d55e9dcf756379b0f98b6",
+    "a00cf4d41ab544c8c306f37871d74e6532699f7a",
+    "98dbeb3b27d457677be95be8e5b1f4002faf4028",
+    "5e97fd4f7aced45abd3f907f5ab070ee476e052a",
+    "49c4bf8103b6e658f5d3b0051a49c9de75819b5f",
+    "5ebaa43e5359330cb3237130059a8228d1e37815",
+    "08423c425a45dc569e4f82159b336dda30393aac",
+    "b1bbfec6ece068dd20993d7ba125a87d29ccf907",
+    "6ce1cf03edc6ec236e07aedbad8061a26ea03166",
+    "2e15379c600dbbab83cc642bee5b5c4b8d1334c1",
+    "7287fa2e04b5b3af888342157fa0047c313a543a",
+    "c22e756170a83bf0030ca49e8732ffd6a4d0c06d",
+    "39ec06e31efb5940f88cb996d44fc2e08e2a138d",
+    "4efd7995eadcfffbcb3d116a17651d39b044e3b9",
+    "ae7aa2f773c5caef80bc0b3704950fef45ef49e5",
+    "b8d8c55d7da0babb2dd3c6f17cbff4fb16a6aaa4",
+    "cfca7df9788d3b0ed305e1deaee9fb72d617540e",
+    "5d6853611c369a8c323234b9228e3c22f82aa6fe",
+    "9c995894f52c9d2fbbfe881731f5d45adb5b8df2",
+    "5e240d8b312efc69ad2332a45a00c1e31d005a57",
+    "8c9d26f5c09551b54225ec7a4f411188f3db10e2",
+    "06accabb0f9c2ca5dced35473094a08de9944490",
+    "4781009aa1503cfbc94da048ae5f414254d6c443",
+    "258dd48690f08a6b4e19c4fa7e9331454d0f2c7b",
+    "be95eaf7b8bdc8574fa73c82d95b4ae42b31f230",
+    "5f5eec2e6b471d9a54b9950e6df10f7ffacaaa69",
+    "e8ee5962425646d5f7ecaaa1fdfc359b1b47f9dd",
+    "9cd0f5b3fb83865313c2690e443eb01675e064c0",
+    "d50617a574f31a4cbac48504067e102f780e943a",
+    "cfe2e6e601820a7040680da09a6ea0b6139d5582",
+    "383dad61d02c08bfb4a5047c1e19672676af1e77",
+    "c5cc2758502df008e2a2a10cdb58e41da88d0922",
+    "b69a0bf3a6261285ec2baf89437225869c8ccef3",
+    "f700f4d7167fe166e5af8d145b3c6697f2b063e1",
+    "ac4d4b511cecb1bb0f3d0c0124fc51aac5fc675f",
+    "51742bfd1937f7b87e51b0b81b92d549b00521b9",
+    "b55dff5d212c710dd3b87867a9a9b4211e33a80c",
+    "db7711a369b45c945915e011ca556326995a1164",
+    "7bcbe15074e4fc9d69ebd189e214574d4b3c19e2",
+    "091206eb6d8611bb475f70ae0a3271641b2b6629",
+    "0ccf332cf692a657d9beb5389ac4fb51d5319cdc",
+    "e40eaa00b6de0f485d48eeadf51bf0bc7d892433",
+    "289e99831b4d658d05de9fdf321e3a655564e833",
+    "3c9380df5649d4aa1ae14eeec6d261a9ca6684e7",
+    "1e0bfe5de5c329fbf634bbb6f19cfcf371550be6",
+    "a624ee3e7cb1cb6e42bf07d258a7b6018c761c7d",
+    "89b3522e90fb89c557198e854c2c49392506580d",
+    "c66bd77f58826227ce42e67f9d6d893a61f16b48",
+    "6dcf8a7b1a6bff4592dcdf1e714d6764456ee600",
+    "1ecad99e31cdb75243d476d3b93c83730087fc66",
+    "75edb20bab1c35849b843cacf8ef1057148b5235",
+    "8342df2f41e109c63a8e43eafaad123cd4208f24",
+    "fd2bc0781b1f60e00dc3bde8a1f18fe281da3c57",
+    "d293058a5d9a1113b5283cb0d1701c27c62f4baf",
+    "8dee7b0b8f693fd657f1ef57ede679d58fea1c9e",
+    "76af5f6e94876e0b35ed82b8447423030086407e",
+    "f113db63fc2d3c277048d4a8d9d03f8e19fa0213",
+    "d6fd39a5bbc45fe46f619429d369d66822e72865",
+    "a02f181b597f1b1ffaf42468596c78f3c345910b",
+    "e8f9c8ff8cf25e7136ea2863ad57ef94a30cfc76",
+    "d2bb4a6980a047143dd8ccb17496c8532f71573b",
+    "d8a1340ce47017e63f2ae7dda6fd5101a58f444e",
+    "137698851585fe2799c582da59e1bf10a10d3a30",
+    "2439c60600aaec82392125289cee06f5770f4408",
+    "8cd494bf7a5572363a9f229ceec03d8fa3d5ad63",
+    "9bb3722d3b878f83a9c22eb345e349852af3f7d7",
+    "cbfa924cf88d0d28305c3cc95a05338549f83bd4",
+    "9217ef5eea39eeee81660dc3219dcc0c8f1ec232",
+    "f3e2d4dbe1cba5ab19fc63fa3cae301823448dee",
+    "3f3d48c81d8d4004c46f3fb754563288c94f4f58",
+    "05d6bcaed60361c92a84e973d120746baacc5f25",
+    "5058a9df90a6473391dc8b15de2610fb7e4a796f",
+    "5adacfcfb728acdfadb49598ab95f5be815df01e",
+    "2cbb7b417d43e884e18a4e4ec0ca7e2e4e888cfc",
+    "b8ee0852ce92fccce74ea771e52b14bb13108122",
+    "4a8cb15acc56ecccaa2b27060e2f1f95b3fee972",
+    "2b33a4e1f3247954990df61ea4bfe03a53df4d8e",
+    "394e7836e45c4174cb9bf9683b27c5355fceebf7",
+    "f0a34737ef9f8c39576f739d619e4db80ff0888f",
+    "7e8961c8f6dcc0e2723e151d440d992750266caf",
+    "92ad769afd3c5e670c0845e754a5328e8215398e",
+    "1c92dc7baec07c0707f26b6b0ffdd5fa61db99dc",
+    "f0f309e025b46b5b3ba4e3196419ca15bdf624c6",
+    "4e831fcdf6ecac0a6503733342aff83b4877c873",
+    "f7d5341ebfbe5cfc2296e7dec8427c2208eabdae",
+    "af427e5fa9e93ea92eba0df097d73f63ea318071",
+    "b5e7c792083603b3a829cee36731c76559eb021c",
+    "a021abb78c84ccd4434f317e97bcb412b65f1e17",
+    "3be16014d401531dbe3375de0fd1f6b6aee7a801",
+    "af6f05b19fc3137050a3b624ea02c054557b1368",
+    "97d3464af54dbd1de83bc623d1e578cd11049ee0",
+    "58b5379bb309dfbe126551e779bba46b23cc6106",
+    "9f909b02fa32a8e762ed006b6e96084af39eba73",
+    "c024d197c7bdc0d9cd11f546f7ffd9c292936fe1",
+    "d75ec9ebb3ef1f32babd6b5fe555c8ed96e03f06",
+    "30571aec52e6203da846806d34ad36ade26c4b61",
+    "6bbbe23fd113a895bd8790379863933e8c519795",
+    "c9195cce447865736e5af6a6cd613d2f57164557",
+    "a1553a4e59adb9c7ffb516da9b985dbfc036f2fb",
+    "09c104181f508e1d34a0a8789cc8b138b403b43d",
+    "ad243b6d2c3e1774db35348e1b96835d3e9b5af0",
+    "11e8dcd0b861d5700db6ba862509f471dc1169f1",
+    "35a72fbb1c55a562038a33b206627579f35b65b6",
+    "81c8d21040e1365f677de3fb13b31b95f8c89acc",
+    "8c6f97580049108e4baaed74674c741eb8c67acf",
+    "7ed942effe40c21c6130d7407c54e2891dd90df2",
+    "9157295a69a9df164b0305b5cfd1127c434c7f1a",
+    "4e5e2d15b75c4b440d9e911325227cb4557bf62c",
+    "e372a97babdacbf90e1ca3008a7bcd0b74a55653",
+    "140d54ab67e2b6aa81b5803146e6008f79f07109",
+    "906c8f0d6b89186bcb36b9ede253187519825093",
+    "ec8989fdb16febcdcdabb752c0379f640c6dfe78",
+    "896421e873b25b601acf066d6f40b188226aceb7",
+    "8d85a94a11e7e35e6701d80794bf38aa93d7e09b",
+    "1164c9be46caf4633211709fa64d92ebf1fd976d",
+    "703130adc52ce519975b05a842b9811d71203667",
+    "f31302e626f67df2a1e2df037593f0fb79993e7f",
+    "c10f8ac7ba30dbeb703208584c377a24c5dc4d1b",
+    "f2d73a9ef1c49cdd9cff4e1b5d81b520544439e5",
+    "8710c471a962e5b4fcf2442e9112ab6e899168a9",
+    "160e14e255baaa06361ecdc5438fd2a7ebd0e668",
+    "4751c0d60c2f840d2d51c36ac5d1a42ce98e30ba",
+    "66c402b3961287b175afadc75a35b5971fbd9466",
+    "805b93fd33e49b507e5868624f479fd3f766ccaa",
+    "420968c2c73101a28706bb49915bd0896e676608",
+    "6f086865ff3345e941bf401a45f68bf9c28f38fe",
+    "550ec02f93c870b8223e09cc77b6052600e0f93e",
+    "976be37ecffe89aabd7c5ac15fd4f318b53d76ef",
+    "7192eb19d6c5fd5500d5dab27a1e55419a9d6be6",
+    "d31291ed4e73a3af7eb120ca1438841bade985a7",
+    "db91390b90ac057442a09061c5d5588451440970",
+    "e7378a9804c00b2730ae68950f2cb5fea3231146",
+    "cdd645a9552e07e13b1ebcdffbfa298f6e93d8a1",
+    "dafddb48af44e64a98ea10f62f82fcdcde4fe3e5",
+    "a1c5b0544f3362e1bf1dc8d80b41cfda813f9bb6",
+    "630059470f2682badd430bdfddda07f71e0622f7",
+    "9c0a0b6d1e24a40e0c6ef4a2c9713b7ebfa8485b",
+    "af2bd48e40c7fe50cadc5d1358230acc04852741",
+    "f10a253f621bbf5d03b2015deb0f3681e5a71c37",
+    "72ebb16ddc8027cc11b82e7aa5b8fcd1f3fc13b7",
+    "565dd98cf3f111fb9208a95792788fb69b6c6e1a",
+    "94e3d0d92f541d0bfa0b7d28c9ce5ed5fa39f670",
+    "473f246ac939f2f17710255c477a921d6204d9b1",
+    "12c73e67e4530a0e470feda79b154c8901363b3e",
+    "8d1164c08e849d723e6cb34a309061bb02b17106",
+    "480e35017d7e600faa15345c7e45327b1ef6d5cd",
+    "d56ce1aee60d9b2c658e58831d2f271a892b4f50",
+    "87136bb7292c92f15394456fbc8d41db94df007e",
+    "4cbcb0f674c97c6e8758268e93af3c88f25c0bb8",
+    "db2067002d1167027561998a750b823d11f69523",
+    "2077c039be67116c96e2c060b3b10de0441c8f3f",
+    "5ca0c3083d3837b5d1261dbd932a99828d704225",
+    "d0909d327aaaf8ba264f4c03bc4ff5cf1e4812b3",
+    "38184329e0269727604e8610594717e6728bbaa3",
+    "f412254bc62f4e5a1d1dad9563bf7a6cee6119b5",
+    "a7ce4224eea3ff98ee948727bf741095932d2130",
+    "66a7125cc1d8a1b8e951f479d69e0d46d23cfcfc",
+    "ef67e11d7dad7131fa84e7e6907718e52fd23326",
+    "ab623ee22145d5f5e6884599cf6a903875827fe3",
+    "238cb90528cb343a42dc024646a452ec2a43fb8d",
+    "1e234bd571efbb2b7fe11f081cedfb153e92196d",
+    "0e1b52b48b4038beece48cbcdfcd39c28809c656",
+    "83802e7fe990a9b7d2da361cb8f77234af3ca828",
+    "f0dbcef577ceafeef24a50cbcf51f838e617ba2c",
+    "deb3f3deb0d0f13d3149ca9884f0ba89012ee8aa",
+    "21c006a74d5c155c9db61aa7271aa7d45b944c65",
+    "c117fbc19b1cc37c1ed733787403568f7d1c6063",
+    "f9fd7baf0d8bcf53a88ed388f13cc32026673916",
+    "6faf1ce53f7a33f53fd83bfee6b51de6aad299a2",
+    "7a9fcd6420b9ea0667c42529574242b7a2612690",
+    "3c2ca4387f69f8ec001b43aed6965f3c7d420e8a",
+    "7de5cbc2ea3369ce39d6be1018e7123027ec4189",
+    "fcd54f4eb8164b25e1e070ef32aacab592eb6a51",
+    "100d3c43862d06ed72f1872ee6d51cb480c2b77a",
+    "5d33b1255b84bd40eabed35861b94725081d64ca",
+    "784fbc87c655926406f628e55086789cc64fd010",
+    "0485cd5ca8963cf775027b2fd6d7d180ee6cb03f",
+    "875ec6a49f6ea1c6c8d07300563ff4354ab8c7fb",
+    "c6d60c3622f8d139a0165ff0add83fea8ee0837a",
+    "a4016865cce1cfaa36889681bef441fa60c214c8",
+    "684de3230d534f72998aafc8b98041bdefee2770",
+    "c308bcdf725d68417ec7cddddb7c037da32084e8",
+    "a5e554c0c8acc87737864a08010318058508946c",
+    "2fd311400c3259d0c32645e522fd1ce9d0aa246b",
+    "8e568ee7f0f31b29b90b9ed7faab8f8278355d97",
+    "57227a81825bbd7ca66de5631de905beef799953",
+    "63bd23cd5760fdefab7080c28520ab79e7d5c8a0",
+    "4cd02aedfe9cd4a1bc7ad35fcf542e15ffa999ca",
+    "c4d8485e869fc067d4ebcd9a8b51da9e0b3983ea",
+    "f992c0bdef4ff98c2ab66ab57abb1a940a545c87",
+    "948dffae972580d17f3fa14afb390e5acda90b3a",
+    "e730886265ba46306fab8d843f3b1b9a50b5686e",
+    "d44033aee908522a0fb991628f23f132e7a3221f",
+    "7c0c48dda0be5e1d00b7eada8eac669e81b4fe04",
+    "055e3b2ef076f19e7f3d904220a619a267c01d08",
+    "8355adbb81ea377cb5353f5fe57f090b3923fdc9",
+    "b0a9ab5cdebdc42a6a102f907893ef4d9ce43f21",
+    "081123306168e8d88bfb584bdc1190c19b94d945",
+    "45cc33141f0e634a33d42bc129c842996c09f80b",
+    "9d1dcfdaf1a6857c5f83dc27019c7600e1ffaff8",
+    "783b7d9b5648daf758e45bbc95f81b504abb1fc0",
+    "7194df70110e44461d98a8bec28c9735654674b8",
+    "9c4ec88573056c02bec61b68c4392fe4ad933901",
+    "a554b1b763423783e69e19fcbf263f72fd4adf9f",
+    "f134738207c68286ff4fb929c70abfbd645769b2",
+    "e78f59849cfdee750224dfbf4edfec09b1d2f029",
+    "eb40d81cb25c452bf299b6e331773b2020354bf9",
+    "c6290e6713ea55fcad4fea66ac5d8fc286241421",
+    "ad3a42830af9ee0f2b7b2b804282ec919b0aaff1",
+    "f7ac33eb6dc368201c4bc8c1c0d261ee5fd20e89",
+    "07002d6f0d2cd37ddb9a7c9ab230b379d3346891",
+    "2f68f036e75f4cf53fb4f27faee5b4c1c13be20f",
+    "6af2f5a31ad5883647674ad49de2e8d9786ea386",
+    "e5b66176a06069772f4aa842c6deacb06f157f0b",
+    "e873ff4159839f94351093fe21f5084071971927",
+    "fd91d1c91db90b749d840ba1462645547c45a6fb",
+    "92cab7d6bd92fc9784ab9f5fbe362c02427d308c",
+    "809de303915dc8f746bc9279dbad303c74214689",
+    "ee0079d622e210f5b34c36575d1a6c7de7e46070",
+    "645c66ac118e3f3386ac33b500984e37a6c36fcb",
+    "4ffe97272a10bb8395b3d7279ce13cd624382037",
+    "f947c6b808cb7c582dc3f87d87ded243b072d52e",
+    "d4f5f486ad35af4b0586b67aac53449a96b30ce2",
+    "c80e43931a26666a571e0939152cd9f841ab2e09",
+    "beca9d27ea7018345bc7fd25763a1c6218b6a7c9",
+    "998033ea4e36c2143225408e0c86046ef21de95f",
+    "170e7e79cfc4c6b356c0f36f1a093582cd937c18",
+    "064b72fcea6eb1b02e2778668808bfd2653b8626",
+    "2a37336e6666a33fe5d913c2a57eed076cc00a13",
+    "f7d4464840006a4555b2865e6db88d77902aa7b9",
+    "27a003a22c003e9b68d188991873bae987b4f622",
+    "71b744828b80952c0d45b8b441f5a8afcd9912c0",
+    "35def8716d5a4a796b5c29161245b0098f758fb9",
+    "8ce820935c41f4b2b53aa04d9032a42d40b8a914",
+    "c21bdb11957ef56a45adfe5c3f272a773ca80aa4",
+    "75112cb8e55f617940c7d99243526f28f4716c53",
+    "fecfd5cc00f1c5f4f432ec65c72c8fe2439737c1",
+    "a6e15231878830da2703c4094d6e5955220fedd7",
+    "aa8399f6f78697d2b695242944abf5a5acf3af95",
+    "8b743762164b213973ff0ad652a0fb95f3cfd0bc",
+    "228e56b64afc416c3ff23b7c6246a1500584fca1",
+    "685907840c363856615ec65c8a2a2a6a9137137c",
+    "aae43a0e809d5b8a602e7535cdd38e754bb7c82c",
+    "239a6227ba34991cc1cf40f816b09b57d486aff4",
+    "a9ac79075c7d867084ebfdbe324c2dc82c63026a",
+    "8260ef08e06a14b270a317bc16c02c0c59535511",
+    "372f01821649ed5091b901322eea13fee80acf52",
+    "9b359e1c285162286576ce712591fff556e7a4df",
+    "b2fda34b9179105fee4b32625e9737139e42d1c4",
+    "6ed24b4d1a8b3ccff71c3022454576140694e901",
+    "4455f24d8307a38a06df291aeb95298acb0661fb",
+    "8ec6f54cfd38b6c3c835288bcb7fcf896ef0c77e",
+    "14ded1c32c771d455028341217eb2f5ac4a57d10",
+    "d2003e5ea71205c20dde8969bbb698279409666f",
+    "b3e56c50d7beb3aadbc3d1f78e1caeeecb1781f2",
+    "ff73ffcdeadd5679dfe5a30128a31df98d6547eb",
+    "65be42d5fa3578a6103023d5cdc9dd37ae9e9be4",
+    "57ffa87b55c66b976e0bb61e532a9e431a3083f9",
+    "80483f29d9b86bbf428f5eb724d39fa15739f139",
+    "ba389b4f740b66b82c8cc1fbf896870b2e5de10f",
+    "a972de48a7e0c824ca60b96715830b0e486137fc",
+    "fa6000549254d4b9009b86b49e49c8b5790f7399",
+    "617c9b3d2395cc5cb6a4cf35bb2c610ed0dba154",
+    "08ada20449a107a715c98db33e7ee722a5ee6f8c",
+    "bf2553ad99d8ee89d9c656e881ecdd3e11720c2d",
+    "5346d4c02c3e976ff7c67e5c95f95f485afc3bfb",
+    "e128e8a9d05347410c5f80bd55fadfdf56fb7da0",
+    "01b433fb9ca7ee288fddc06708779871f877a9a0",
+    "1abde3f6d4b64773803fa19438f030db1246df85",
+    "0313c77cfc9c5a1e67fbfcd22746a2f95efed6bf",
+    "eb9a9f4bbeeda222a31341c08c40dd94874d7bad",
+    "1e5440e8b94013c769eda9c27f66234ac866dd8c",
+    "5b19510e726bfe157b378a3fa6069a03c870713c",
+    "349178861608dfc971ecc89f4893ca71654c1a05",
+    "054555c6e0848fc9f1d9167e5bd6fe42bd2816da",
+    "e57c73232ba85bdeb855c8e1e20afe1b2d5c1c72",
+    "3296b7c4f530801d7f3922150878c4646573dc92",
+    "90fc6501b2c69e261decd48866c4eb102fe4f8fa",
+    "eeb5e237aa5fc763adc166f812a3024cc70b3265",
+    "0df54cdddd19c4d23e1df575f822479f6ca3a3dd",
+    "60b905addacc66ea425f9f9276d47ed616391add",
+    "4339518bc886998490aaa0565bae5ea207d6d3ba",
+    "3a89c4f518edbefe8f69d58f4501b12f1b5a65e7",
+    "7fa425539be75e838aee15b5cc06fe089a31c362",
+    "6f8fd0fb8b63164f90a7b819087b5330cf093acd",
+    "9bb220180ed62785d90e56f44cb60bee59fcb459",
+    "df6217f629e5e082572e7898f3487a5de8fbbfab",
+    "3dbbe43500ae588a8b231d16f4607d65ff31c613",
+    "48cef7ff95da9fded6503f556e4dd0c58e7246fe",
+    "1872c566b90d081fe93b0b1c0754408950c5592e",
+    "2443fcc53cdf8d65b0effcf496fda93cfa66e2de",
+    "023a78f61dc83e786ac776e0026d88fbf00489b2",
+    "9bdea523e4f559b9a5560a86aa1fb1f9aeaf2614",
+    "058ea3bd194b6c4c16402d42b1a2472f05d5b4e0",
+    "46bdd05a9ca3a048e761475ebdcfa082dc0d2d5b",
+    "b784c8820c2ef74cd021ef56c5644a3382fcadd8",
+    "6b8622e2b12e77b0746d159ac7f8496a87fbc004",
+    "00189a4284ef71eb4244b0da4fd74428ed12db7d",
+    "247bb4c99376e7317c01033a8ed37262c1c25def",
+    "40f69b8ddf043905de35a7a41ef4e53c60bb4cfe",
+    "4aaf2d2d5910839ff0f549ecd2b60333ffd7bbc7",
+    "c6db8a58cce94de57d6c107583046da408516659",
+    "bf4c46c8cf746a7c8b0b1c2899c43931c7b38b1a",
+    "efb54d645a6446e5a2aa01dbaa07f739d9136d3f",
+    "e8f923f43ab6d13c641803a4efd95430c7ae2955",
+    "ac8f962b653e3d15def399b8496a6a85709986e4",
+    "e77603cda84e7ceabb10f79b4f9d3f546d9a4891",
+    "ea868bbe127fcb6051e6a1690d258d0e062ff1df",
+    "7c5b0243696f44a5b9cb6ac3dae5297e6008a2ef",
+    "9cf59f536f8e894b245d6446d821217df4f17622",
+    "f2a6a0eeabf0f2f8098e34e8eb1543b1914f3b4e",
+    "0fb3555891728705c12e40a08876216144118b90",
+    "10ebf3884d3458abcadf84c9980465e26b4cb5c8",
+    "7f4f9880908b74704f237950af99c20425583e5a",
+    "cb0d47b75d9bd08a33cd04c1007585e67a1b95e8",
+    "e69cc925344f92eaf648f3a5fb144c127c0198a3",
+    "72f61c8c2a6bbb7ba615f0fff6613e9db943e125",
+    "bc397791aa486b62ac403a55a9191d8ac8cb7642",
+    "af2592b78ed9c424399082375e813d350a20a4b0",
+    "2c26ff44feddaaedf4193ffa6600e5768b9e6fbc",
+    "560532d9eeb35304f3ae7ef3ad357ccc918929be",
+    "c3f172a9b3c7beb1261d232daff09937f57edb55",
+    "6f91fbf5cc9072e6b99f6bc3f593f5a7482ef9c6",
+    "04386251c8d9acb1d8111dc7b72200811b4357b4",
+    "adc9f18a3d5c28bb3f390dd2f493530101ff2d0c",
+    "88f3c7a5b8796be53dbdd999f3833181fd77a533",
+    "da78b4e3477d6634ef964357d87232fa7b754546",
+    "83c6db4d0f1511ee526b4926615844ee25b35857",
+    "7c81f92d24d0cc8d16eee3e30829999ad54f8d19",
+    "6ed767d0ca7a114ab111c85ec8b42fcf5fb9c591",
+    "a6855c15398e25249293a9c1fc454defa82912a1",
+    "c2f0ced00f8cc789435cfeb2e0837622892ca572",
+    "bde0d805af0751bde892d0a5493d46a7718b9e07",
+    "26e6b3e57aaae363f0741ba056a25158f93dc8a2",
+    "42b84584c5bc5a520475b9dcddd0b83e36fcd579",
+    "e3daaaf172033bdc28654e65a2b66dd6269d7dc4",
+    "1962e2764a5c49a91a2b7c60c58bf2519d9e7280",
+    "963245d822aaae5b234d0cd8ca20c0a1877bddf0",
+    "95a74603260c5bc65fb30adc6bdfdc5e983561dc",
+    "da75cd3874e7e0a4c7f65d20a9f6c73f84107722",
+    "feb76697eef22bf4fa9cc50c82eeca73a7485d3c",
+    "986c9d7192deadfe8979607441b369b6cfe5ac68",
+    "22dad9de369156d2bcd42311a17722be87f62037",
+    "d495cf04fe5796186269febd30df2dbf2e9b9a43",
+    "8e3f18709e05c355daaa0e8dafa1f2cd11394280",
+    "0c51bd817bd7184939c6b926c2a1c8958d936803",
+    "b4a336fbe4da94d9ebe6da9032740d688b6b63f2",
+    "4ce37998359dbad663364f36dfc2896b46e25d32",
+    "1d14bb4f041ce45c9e4685dd968e6b8ab37ca554",
+    "4b425add41cf9e711f43b48babed649272820a41",
+    "8c48b8b41239976046f755af4423ddd4c35bb889",
+    "70c5c2f2296de8a6a93a6771f6b6080813b65a6b",
+    "543ef044e84b2034fd94d8ac026faebede60fac8",
+    "35f5f404f5813386b86cd3f14ec6936a1bea5e74",
+    "da63aa8040298017c1b12aaff17314bc95420431",
+    "b0a260ecdb6a09f9a56bc7cd2596db51629d7dbf",
+    "8488609ef63ef11cdab87baad4a309d5141b3b03",
+    "96d8ef22d629d438be24f703f8148cbc48a81529",
+    "fecca03d0861d79254289dc90e23d9d8f40b7672",
+    "af34e277d8751e41d53f5f6b704af84c7f3d954c",
+    "0587ee559c6563fdd875cb905b44a5da29180174",
+    "da566f8382316478c7249cf4b1c8f5261f2699a8",
+    "76747354f1a89e6952322cca2a6ce7db312da90e",
+    "98b78be6ecf8bcd64177d147c2ae80b4b0b4a3f6",
+    "15202f3a869aadd6e5463af9200a982c3f9c6b0e",
+    "77b8bfbd0cf41da85ce836aa14d6ef22819a63fd",
+    "113245de2a5e629b1ce86bb7d9e9dde7a95d40fa",
+    "7e94017c69d1ef3c751fa1d18f4af57f2e2faeaf",
+    "a50df2080d21a489984f9371ae74d255db18bd43",
+    "d78a4a62f623a6fb14010af6284662e98bf396d5",
+    "c5977f31cf577721eeb6f3830be5f798f7f82d67",
+    "dc55cf1b37e5f1fce7e666d68cf36f42c6af3e71",
+    "43bd9d042e34a0115154953af45b96dbb27470ab",
+    "474e02880da1733b62b5d623d54df2a8fc10b808",
+    "01038a00698e8452bbf6af3cd307830100c8c111",
+    "d54a5c128fb92a4245e2b150862c6eb3f58cc9d5",
+    "fb6342ff749685002c9405b5e20ae1be55bde5d0",
+    "c3cfb3f00712e5bd6bb705a2d901c6a413fc1666",
+    "05d70a4e721b3abc70a53494679b65335c913f25",
+    "95b87aed3142145922026601cefb6bcacfc84d98",
+    "13015e402dff2756a860775e50b4f02a21647681",
+    "fa9fc50efebfbb116b9c98a2513c88b830182517",
+    "53f8e30bd7d685b6fc789bb92f976e1e1e67e540",
+    "831e3be3d36de089b3c292d40165e2a50bfdb127",
+    "000bc7484ed31fe5b504c22178764f041fa018b8",
+    "d7202cbb97a44986a6b921618d12ef6c22cccc38",
+    "1a5122551cfe12789b57ccc224ce04ccb6b93454",
+    "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "e29a8507a984eb231a28782eabbcb07572aed88a",
+    "a6ea02de9c9ff07ef1761968d6507ebc765b4de6",
+    "2288dc2d0c66fc55b1e2b830fcf60fc1b553047b",
+    "a739874bc94989b4c2ac163e14d11def7cae2f69",
+    "de954a826f5643f88f455fc57a81c629e3e0c809",
+    "9eef9b470c6a4caab6136e7ee64c9fe1f88b107e",
+    "77fbc53dd5c9e91bf473bd891324e458d134c24f",
+    "80348830505b914bc842c061dcbec8d473663a24",
+    "ebe3b1ebf4c3cdb7101e670040095a6e3a891ccd",
+    "42173b7b12d0ce72991e952d4e6331829ddec5f7",
+    "31b09145567ab50fa1f8a09b5aea422f09d5ae5c",
+    "267586258afba5f4e2aa4c57474ec83a7ff69c50",
+    "45a41c2c1e7422348125bbe204dcb5cd37c4a2d4",
+    "4f974fd02f54359e729d8850c38d76467e4a36eb",
+    "de7c96dcc1e974201455039a6b559b378be3c205",
+    "e12300c3b8a2f0f848a7379988cdbd0ba9f93114",
+    "063d823dc97f1a3690e26f8bb328385acb9d0aef",
+    "d564d0bc3dd917926892c55e3706cc116d5b165e",
+    "f85b3a1e04c24c1a700d44cc9f62a3d9c399baea",
+    "8cc3df95fbd9cf92f9949234c27694cd17a525a9",
+    "372121b67e98c2f4653afd6453a17fbfc1f9e16e",
+    "6fdf0243c533ab57af314ac9e4daaf9cf48aebab",
+    "0fbfea243d05f293618e8740822460bdf7eb8857",
+    "37cde37a127401dd3ae78d8a3caf66cd1ac115d2",
+    "8514e56df2fc8000aed4ced0be7afaf6a5492b46",
+    "5d18e8425852c5fe6acf188de76d7dc01b00654b",
+    "a10ea35ddffe1e74d33914c2573aee822adb0b11",
+    "fb120a3b76920bf3a0eec31cce44399cb8d07c0e",
+    "1741293c00266a7d0f70700c6b14af48c2232b00",
+    "6e352068a752c9e01f1dc921d0366af4dec06ce7",
+    "943e8ad02f350342515ebc77b2b489e3c0cfac4b",
+    "b0e67d77f5137430d396a0a101e21bf2dd65fffe",
+    "214fc0fbca8532470d542bf78cb1dfd047d929ae",
+    "6eb139422df7970a73656a839d1bc64e4d68351c",
+    "e97f07dab50ace9b6807075f0e49921a9852188e",
+    "5f4938a78d07e6104b6fe781a5c2552452fcf6af",
+    "9c78aeccb491cfa45f41ad2c7259629645516818",
+    "cf3bca7fbae35d313264b3b729c46e57260b63be",
+    "8edd73ed357b46c335d996257042e516ae82ffac",
+    "e5d7f1c45de817121e4a7f94d4766cffc342c61e",
+    "67c9a0928c4646de687ce56a0b22df84fd1a749c",
+    "dee03c746e0fef0633624f3765812397e64cb5ed",
+    "01b939c553779acd355f5e44587b5bbab189b0fa",
+    "5f0fe6fc02dd0d4f8a0685a248b2c0a5d83d587a",
+    "853408960d1652665953097ebbabc5ebbcad96c0",
+    "8f1aaa5dff10227de884b60d25f609a22644cf86",
+    "d92b568fba6cb193e7230d9cc0e8e7cf1ccb3bc9",
+    "9439f55b5e5262a1ee05010207c0eee73edbc75f",
+    "f62c075d80a7728b3796cb050278a81a4cbd0ee8",
+    "5db8a6af9f5a62e6792015c064597b336e91e70a",
+    "9480194cd2a409f0207cebb6423798b5759c36b7",
+    "4cdc0ea5de1a522910061c6ee7eeed4067e19adf",
+    "a2733e50a5e70134507306b4fa203714f881e091",
+    "44499429c51b1423df30f46d0cb903d575e7d413",
+    "30c3d7183e4347274392d704032ac7d6f3eabb6a",
+    "571916dd9776915048ce73f66edbe6ee5d9d6ade",
+    "f4c15145f21f4d64f98fbb917aa3a0331d5121c6",
+    "becf4668d78e79439341cf362eedfbbde71da5ff",
+    "10fe61ca4a96a55917547abfab4bfd2f293e4ff9",
+    "b51f5c9612303112363aef3cf4561be462fadf50",
+    "8c84ae8f3db3c7922d6055326e84643b8098052d",
+    "f4a984d7f0c5e6f29de0f4ba95fb1a83f7728508",
+    "c5cc9f9c227c231b251297db4ce8c8a2b84bbe6d",
+    "6e411f4610eee17d94287a8ca6d2e4bdb5eab99a",
+    "8c441817c20a78d7a4a33552b14190eb1fe1781c",
+    "de3ea3f1f7b3157994e5e1e298c26e3c83897945",
+    "3512dd4d9b0f79d18e079b37e7c750e657ff7cf8",
+    "3a9a4deb59104b6f53bca9f5cdbd4ee5a9b97069",
+    "f97d10cc8d133bc69c0d267799b6d4ab2ae97dce",
+    "495d8aee5db8a9225e452c40685b1ca40a0a31d4",
+    "34670e48aeadaf3b786f43e828db8adac5130a2d",
+    "2ed1e106e693883332aa2b61aaf23e4f768582ac",
+    "550fef7d122af5732d572a5bd2c60d831817ada3",
+    "e03001975b55d13f952abdf09c2f92f1ac085014",
+    "760972e5069e55ee42d2db2f22ec38f47cf8da8d",
+    "040382b218dca89526bc061658213b37d3de9c71",
+    "4291d191625946eeb7f4b21a0b836cbe51fa8657",
+    "922c12897c70bfe6b5ee32c32f1f78a103eee953",
+    "993304e6faa8e1366e05687be9b6f88a62df2f89",
+    "8b137891791fe96927ad78e64b0aad7bded08bdc",
+    "17e04aecef83f56aba43cf2c46c6a1ae48f8e14a",
+    "d3283ece39f88891a00440df6106d26a655e9bd2",
+    "caef03020a88ef3afa0a67992ee3581bee8d26cd",
+    "9b7f91c97c76506f710d60324c01aebf702fdd8f",
+    "1b3359d9f423325a1a1a229810b5c353fa599be7",
+    "b9b2dfb22f9f7875bc34eda37db8e639eb950bbf",
+    "b9d0508d3a60a2f0f84cff181f514fd7e32ce771",
+    "32c1c20e9bcb8494167750f80e90767fdc90860b",
+    "b254c459cd039225199254b369fd2b420de887f2",
+    "33f679db020b96fa59cc9cf563f54be1d4789a12",
+    "848376ea397f1beeb4d251869faa30448d69b2e8",
+    "286eb66c6857876efe1f4212bd718693910dd72d",
+    "0afb4ea9858b2d71f9dc1b60bee9ba18847cd506",
+    "a190d00884f9d63924ad5ed07109053ba0199814",
+    "ffa1aaefbb39f3ee54816849472ae86c1c1fc644",
+    "0a270ce4ba0b4b099addce8459cf19810cb0f766",
+    "65a653283dc6999354a2c4ff93b137c771d89ef9",
+    "c92b8a8f3d7a9fba23852d9447f66f9e02d0bf29",
+    "78aeda936ecce258ab4628e4510fef651ddf630b",
+    "07173cea7a4049e4a899f541d8ac653c7f0bea02",
+    "28885ea1cc440aed77b0edbed8e7ecbb40423e18",
+    "edb44c705ef74b7693c7a28ad3ad247c9f42a0e4",
+    "c0eaf0af45b51443229899490244f9c85b570c94",
+    "818be152f10cf58b90ae63682f1a8bca6a4e460e",
+    "17a1f0f15591415b6392ba16529bee48dee823c1",
+    "42e0563078e90e85442888cbf90909e0b749e706",
+    "0516707891c86027510e5dafd97fd4e3d7bc4022",
+    "8644b71da9bd41e30754a09633861fa1f20b4e76",
+    "5867f9d38506175de65af7e61d50cf2061bfacad",
+    "df71a44648ad967e5a517dce79322c88a4d326b4",
+    "a5544632387600669967f8ba9d4dbf0d685ab201",
+    "8434de04a887d05d8fdbe6a1c43c07c90a08ca9b",
+    "886f3c6b0a86fea695fba47269fe56883ebb9fda",
+    "f63abb4ae77402335dcdea55bd32c071a5c334f4",
+    "1c32be07a80fed150bb3dc7d85b74cc881661b33",
+    "012703037b702370b5dbcd20b12568e1c10f0313",
+    "1720ffac468d87f584217f0875a14528089c1c59",
+    "1d8d4d1abf21f482d9e292c0fa9c612703d5a74f",
+    "fecdd4ef0a8495d4c7027bb21635531e6d540542",
+    "6063625a94ba09a2e4c6296c60678a042ec2189a",
+    "a8f3b3855ba5afd0cece68818ad529795d27476f",
+    "51a3e18a0169a970ee8b3735b173881b47b7559f",
+    "685dbdcda923abab1f8ca5c03911ecc26ba6deab",
+    "fc6b4271b629aa616e8e32eacc19459dae8f22ef",
+    "7c18a80bef098cd35e22c7120349fa4869e50086",
+    "88ee605e648e1f5105faf2066c470435e1d1c249",
+    "bb4ed87af352c78e80eca536f307946c1522ef59",
+    "1def58ca6d9c855811f99fae167a7380ed00056b",
+    "a16c326a80cee4afc08ee475dad8ee321c31c069",
+    "4183568a69688b757d108b716609c40d7d7861e9",
+    "945ca2420a72d2d31a8af24def7cd87795e99e89",
+    "e2f79029253997b723a9e04bfae9cbaa487e85f2",
+    "897c8472100ea24d9fad6b23eb87882c5378ef08",
+    "0afb4858b5b1fa63f6005f0f4c96d09699e31b2c",
+    "f34edbbda4595dda25e720441d33a670a54f8de6",
+    "c55409cb3513bd80de1bc19af136e6b11641b57f",
+    "1444c56461cd1b8017e7edb1ac18559f671e51a3",
+    "da7f0b4623527e47797b8ab50cda378fbe942211",
+    "edc7c9b0e5922250bfab51b439f1578950125858",
+    "61694c40c2a0c3a5f43801f3af449dd458074134",
+    "fdf0759f6a1a460a4a61bc2053559744200fa21c",
+    "847c080937fa6f4ed5b58b2e5b41a9d03dfc5a7d",
+    "6ced44a582af31735192a2d5743e18e689bea698",
+    "c49217fc5907a246c6953847f3314d4824040b83",
+    "12e12f5bba58fc8a919a5a52f57d828681cb60d4",
+    "d294ce1918b57b0d43d1cc214e61eb2d96147aff",
+    "6ebcaaf5913cb59a0273da84c169af6aee8457a5",
+    "c2b0c208639209c6da4ad31a6930aed1ddd2745d",
+    "bb76d0dcf9a355d7c95df324fd74e405bf7f5dbf",
+    "f01005171212af877dfb6087c61b0f61a737ff8f",
+    "7f89a14334131e80c75ff4b914257a6baf008292",
+    "bfb8e3b64a0daa0f9c910a587e88d1fb33cd83d7",
+    "a2acfc949a12335ffe2c5a7a2f19706eedfef486",
+    "eaa94c6f616551e0b28fcf86b23fde9a09733068",
+    "f28b2ba0d66c9c1efbcd809a9cefb9fd28c29bb0",
+    "7e287ab6e09254c4fc72e07dbdd7cbffaf89899a",
+    "2d96d14e584d14fd06650c69615aa80f0e5f8335",
+    "9d458f0ef86f2f55f0daf42f007d69e93ae2708c",
+    "a35f340955461674c84bcccdde4c1015583922bd",
+    "b0826f821d5401a3cc4e209a65f9f26e5b652a18",
+    "fd858a55b7474d97704699b03e8a1d141b6ab34a",
+    "7a8a1eaec7e5418e0609a56ff5936e1a3a6ee651",
+    "42006e273cf82dc4e012250a1885bd084a552dcc",
+    "7202c498473b902dd85841d6fc61b7f938a0c47b",
+    "94d0e862af17d29e28ca31b9faed4e7a446f4d54",
+    "c6d105ab47bb33e648c1b25b2f0f4daa8198455a",
+    "adeb05d116e5eb953cb897ed3f95a5f1c92b1032",
+    "c205b30e7374e94471da00f1e97bd46b3c8cca63",
+    "31755282ba2ea0810e9fde4e32e8d1100a7390d9",
+    "1fcc1574280978b4fdddcd221f1883edc825dcfc",
+    "d0bd723eb99e310e4ef0c03274b4ae25b49266d2",
+    "acfa6a0de9b7f15ffccf031d4f9fff641aa54a9a",
+    "b67cedccdae5c466d4e76f26a434ee798bd4daaf",
+    "3a2efbd58eb80712d2286e7559e001379b9f567b",
+    "35ea47e13db48a19d2e7e3c2fbd30f3d58936284",
+    "30aab4f3ffa84b38305709408f68dae0026b6bac",
+    "f6447c8484dbf8467c74c6ddaafedff354b7d9b7",
+    "536ac7ab1992134831d3b87c914f137a8a3e2e58",
+    "e474044a84f181db32607c56e8b0e094b27b83f6",
+    "9f20b965ba56d73dc2baa874bb2a7d32f5d89973",
+    "000370290b85b0709c7e7392e32eecf353046fd3",
+    "9a2ffce73d0a86c14ca149f7f8fbedb8282f9417",
+    "14d874d06e0a09ef08bd05ab19fbef7fef87c507",
+    "015208a2b3f8f1077fe5286ddd6da867f5c10bca",
+    "c475b4c21f080f87008b19c97302bcb19629a5a9",
+    "6f73b4a228f7afc9fa4d599f26b84fcd374f3e75",
+    "e3a8e2f375ab38a4306563e89856bdcc1390d74d",
+    "eda0aad69dd09fd004082bcfdf4c1fef162355b2",
+    "af27c3f06b6d38987cbe2cd8cd04a9817c83771d",
+    "c6d3c398e27dec5ca16632897e68c707536d08f3",
+    "b92e9943a6a541cf25c9cd6eec50ae55617dedcb",
+    "1297dd99d5ff29eb2e786f81e35085218ef46081",
+    "04ee527f64f256427a5087f9e7d30230d47af183",
+    "71c743a4ceeb9d67132a77db57b41d1f089fdfa5",
+    "713307b26d2b6a0c1b78d24c1294a6919180c605",
+    "2b7bafbd91c1a9925b5d2dcdcb8c0d63b3fd2bc4",
+    "4015bd35eb9ee9bca187de6b166de94a5a6d5b38",
+    "be3608ab381a655df211e9ce7e15936b2f3739b1",
+    "cc9b3b1b452e59c2e1906d532e3a475dd2a699bb",
+    "20602b507ff2bc416eebcb69dd31f4ec0be77043",
+    "530213fb44fd07efdf076431887c0997786dc014",
+    "0e655254fe8eb497832ba5fca0b00664a6d5c829",
+    "df11eacd9fbc44e1cddfc4b34838e2fac8aefbc9",
+    "7d33e72abc4a8e13834d73e0b046603b036f2037",
+    "b337b65c5e8f241d659dbc750a8a350a7afee8f5",
+    "3c8e0f97a78425e7f9c4df0c5af0bfce04865156",
+    "fa0bd6b146b547d8c3cc296ac410a2e157f1c62d",
+    "727a0c93f968eb1ab6d7918d4fbc318039f8e8d2",
+    "068bdbc685f414e47e6f55123d64f23a6ff26c5f",
+    "116325083f73d37ff18224bb3c1adfb83160b56f",
+    "3b088b8337db81a56e856dc56a999343b3f5e417",
+    "e503a19d2cc2a90c7ee072ca86a3b3a2e2efda29",
+    "5ece1cecdc07f1e89ac6fb8f29327779edf088ca",
+    "0ad8b50c614531203e237e9247fc4ce884cc5f2a",
+    "874e160abcc4d71674c5f86cdb4e0c1361251f9c",
+    "f946f6910bd0bcee42d116c88a95bc399b6fe350",
+    "e2e55c2c81de36704777f28870249fb328b2e6cb",
+    "648f755ebfd0e7b7acaf36889b43ad494bfe9d20",
+    "1b55b3d24d0fbdb08bab79d2635d04fc984fce1a",
+    "529d3f96d26006883c499bd81dc5b686e00467bb",
+    "a553b7f4fd99fc5afe14a812a6f940a652a65b40",
+    "6954f2744ff1fdc45f2718482fc4ec06fd3be719",
+    "aea977630b27bd932cab54ac16590a701c1ae991",
+    "09cda3b17da6119fb84bab86a8ca294381b1581b",
+    "79065a21e2dd230339c10e26917a85608716c815",
+    "95b72fd6070829fc84b60e12b6bdf0821d473bbd",
+    "2f382eccca0129dc7988ac0494c95dc17458d976",
+    "f534b7cc8b6f60a4cd18cb54446fab2526d355e4",
+    "1534a40f4737ef54c78b4ccd98d272c6edc7d65e",
+    "9cfb78f65c327ff6e891d25ad7bf974e192a6de9",
+    "1add2aaa17b59e552de59e020025169e55c398bc",
+    "764b16f94b2b20dd5fda83169af46426c31933bf",
+    "8d775d9a7b81cccc09c902c8a689d147417893c2",
+    "2dfd5fdf3df9c95225908b9908e781c2322a8f32",
+    "e4645b279bdf76bcaf0254946212f926cfff67ab",
+    "77e770a87d94ad39d2c6dccd7217ae86a98f9247",
+    "5c6c33321e09d5e95f7d6054492e737800a15489",
+    "9e8628827495192887ecd84a7fa586c149f0effd",
+    "caf04b3f482b08a2408af06fb4535bc52ed11093",
+    "06056873083e9d6ef86533d2a97c4dad671fd26d",
+    "3d6237fe2c2c91faf40f1ca9a2ef4ad3aae9e2ea",
+    "5cbe0612f8869f90bbcb95b099958f044d6d3b98",
+    "0541b846975f48e207c90d60206438997b39b69f",
+    "32523c6893010bd94bad34a476f1617990ba59da",
+    "7bf311723c26dff5be580e6f146a3891d7af65a1",
+    "f26679e469da78114185a0522df4e5e37c120841",
+    "072fc31d195353e60897f95e7b78d424a8baa65b",
+    "2c7bf4286db2ea057febbc31619cf79e048f36c6",
+    "e6faf4518f9ebd52c369ecd9fcc4a4444b32d249",
+    "d6994745bde0c3b03529cda669f33f71071ac2e9",
+    "ddc249db68e896376a6ea7fda0a399c3db96be9d",
+    "48f1a4c6c32fb4fe52658f26bfc1dd915622813e",
+    "db9a28e0fa088fcf68b1ca1e4653fc006939e6f6",
+    "e09181b18e6aec8f4e762915c7430ee354438774",
+    "81cc81259d4a10b4018298e097c7f338e5639b08",
+    "fb90e15b9111251802602358ca1f762f5d2b4a17",
+    "b9e9ea19ca6142de7e6e96f29689b5f65ac0ed98",
+    "15c142df311a68a1bebb91cc1dd3c528fbaf2987",
+    "cbf361cb7df83ddef46f5ef2b760ca1ce7510148",
+    "440d609626458282731cab943acd7342518363c0",
+    "1801f7f9702cd15eadd67f333bb64e443cde3e45",
+    "9b756e99a3b433160fe77b9581c908722b4169ad",
+    "04b666145586d8c4ee0a21ba5f8199b5c82c638b",
+    "49def2db97bc43c5253469ec58377bd3f0b38c03",
+    "2d0179e661ac6b35d41bab23af537bea9cbf7782",
+    "9cad66c6966297a6f61b166cb9abaed8c3479cdc",
+    "fadb3214cfd21abfe66faf7678136ed40e5b5eb5",
+    "837fe15da750800c1deedf122ff49877bd277f5f",
+    "329b5c5c9f05c8e5f3287ed73d2d7db139d92841",
+    "684eb995abd0cd37a7bdb71daa7beed823995bd5",
+    "f1ba8d373eddc12e14391a22828680bac0a4d2f8",
+    "4393b13d37ff3bdb7aecbd0dd1dae8bd5e544a73",
+    "f9a07f2b18f38033bfec3dfad6c8d33a2460ad91",
+    "89030f41904257cdcc04c24521933c32b041b3fc",
+    "6bd4b8afa338448ff933c8eea2ee1a01e9ca94aa",
+    "2f960eebdc0fb1d23184fb0cdca60f2e85ff4058",
+    "6acb238a658c714ca100d11a045a391fbb836baf",
+    "f8d06942ccf598e8b5e778411506c3bcb004d970",
+    "e38980e99129c5852765584b3aa4f3ae1bd0c92e",
+    "4318bf5efab386e8c67ddb8a1d17ee187e6b0f63",
+    "9babb1664059666cd205afb041ea04e94761a033",
+    "7df979534d3757ba244c058876ad421de006e04c",
+    "9bb7e02f0169fa120b876256d3506177ef289f98",
+    "ef1ae428170cbbc0d3c789d3d7819936fcbac610",
+    "17e3077518d28f44943a96ab2c877545fe810b58",
+    "135585efcb24a7ca5b773dd8a00910b82ea8d259",
+    "f96cbb83cb2fb0bb5e54a361d6105d2bca793de0",
+    "6936bfd3f3bb2a3b0feaf2726d3274e2543708c4",
+    "9dfc645da26462ed55aa020699c6eec66b0549bc",
+    "db8e0d334cf152e254593134ca6a5a09704c0219",
+    "613c4283b7f7d85bc1a23d0e350c385fa343230e",
+    "4b7426fa064ec1b0fc6e5454d46822c956ffa48c",
+    "060137d3f9866c3da3929d7c9960849bd58648ee",
+    "37634eafb1e9715949bce313cf5ceeb0e3979bd8",
+    "cad43639085dd36536964537491ed96eb80ffaf0",
+    "97045c7e4ecdccf766e851d4b415d133e697b3c6",
+    "e16c9368a7fedf01d168693ad7b989bb89d09792",
+    "f14552562f618178f6f981429876332c0e349f91",
+    "d124269bc2a88121b60b15701559264acb7773f6",
+    "df7e4452c09a05ff9ab22a24809933302c51cdf5",
+    "6c26e359bcc26983848f3d62280450e692479825",
+    "da4a3678eff7ace4d7ed9c8dc1728bd0acfca02b",
+    "22bd6a7c4b32a7a8eb3854f9870aa2cc4e51c29d",
+    "2d0f0e42c20712ea66c50524848154c77ae8634a",
+    "9f9e1a0a9630f6711b774b6e8854c92c53bd1f23",
+    "0eb04047f30ac4469be68ad04af4843e5b47d09f",
+    "e31da926f51abcea4a7b2aecabeb7c888f3e6eea",
+    "7c6e5da928731a2b59407023fe561abbc7e38c00",
+    "88ca1758379b9f63a06c9204ae987801ff756d9e",
+    "bb3c5b07e5480bc8fc2d89f7c8f0808199aa65ef",
+    "46222836ebdacd38a3bacf04be71b458220f5db3",
+    "d7ce078ce8d8a2cee9cc4b8d934462101e10a262",
+    "d4eb7aaeed1a094ce73cdb0bc780c40b899297ac",
+    "ab717a0db2e4833bf174953b68298cae361ec916",
+    "ccdb4b411b3ff3865516a05aa2c41ec94a508b14",
+    "cd326e18977426537232757be3082204460b9846",
+    "f27ee4b618b92e784f7d2a4ba51028562205b553",
+    "ca748306f10f750859598336578ab5538cc777ef",
+    "91309a4fcf4521f9c24419fd468dc58b00a185df",
+    "7984d65e9da6df7b559f83c34e48595b0a073498",
+    "e80a10a59dbe47ed5b2712825da884ce2ee09539",
+    "fe65dc81723863f05c1a15c808354906caeef4fd",
+    "526f3dd0aa50d6ad3c934167e043e62717f2cd1b",
+    "1ca98d343a6b3bf88d4c46494db7770f6aa791b7",
+    "4cf0be52d406282b6f6c8a356c5040c551df4197",
+    "a45abb889adc0a60454bbc5e7d7ef38338ddee8f",
+    "1f404eb4087712ffb7d5053d1b5483598afe6450",
+    "6e45dcbc841fa8b50aa46cacb77e9706e8c16acc",
+    "91f204dfdf0c4ac2d916d5799589aa2a26b23ad2",
+    "48fbd2866904e92e8ab33fa9140922bf7e9fe727",
+    "09208d8420ae1ffbd039464c2bd770e522338e4a",
+    "81d587a46b60a41fd0832a44dacc3f6df5ccb434",
+    "b8f30addce7ba0623827d08bdba20e54bafac3de",
+    "052832dad9d4c48ce3536f122e70b5f77fc571b5"
+  ],
+  "refs_matches": 39,
+  "HEAD_symbolic": "refs/heads/research/post-v1",
+  "status": "PASS current identity authentication only; no N0/preflight/qualification"
+}

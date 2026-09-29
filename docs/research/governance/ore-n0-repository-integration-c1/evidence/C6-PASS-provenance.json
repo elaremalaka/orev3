@@ -1,0 +1,18 @@
+{
+  "source": "/Users/erale/.codex/sessions/2026/09/28/rollout-2026-09-28T19-12-06-01a0eaee-fdcb-7d90-a609-d9ececc976b6.jsonl",
+  "record_1_based": 211,
+  "timestamp": "2026-09-29T02:34:59.439Z",
+  "body": {
+    "bytes": 18405,
+    "lf": 130,
+    "terminal_LF": true,
+    "sha256": "3996a05cfe2a24e3d0d88719cf51449a7dad419c55ac308e94abb6a5ce6f332e"
+  },
+  "original": {
+    "bytes": 19304,
+    "lf": 1,
+    "terminal_LF": true,
+    "sha256": "961dc0d4fcdc28118210f5f0fd84c2c2dcbb1813bd65b0eac8a4cdba9302b110"
+  },
+  "extraction": "Concatenate ordered content[].text; exact UTF-8 between BEGIN and END marker lines; LF before END included; no normalization."
+}

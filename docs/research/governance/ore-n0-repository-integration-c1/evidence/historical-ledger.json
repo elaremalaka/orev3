@@ -1,0 +1,723 @@
+{
+  "status": "DRAFT-UNREVIEWED; historical dispositions unchanged",
+  "inherited_complete_ledger": {
+    "schema": "ore-v3-prospective-boundary-historical-ledger/1",
+    "status": "DRAFT-UNREVIEWED",
+    "purpose": "Lossless carry-forward index and explicit ceilings; no adjudication, recovery rerun, harmlessness finding or retroactive PASS. Full bound originals, including all historical negative/withdrawn records, control over these summaries.",
+    "immutable_findings": {
+      "historical_3288_byte_listing": "UNAVAILABLE",
+      "historical_substantive_ref_continuity": "U",
+      "historical_non_consumption": "U",
+      "historical_substantive_alias_exclusion": "U",
+      "historical_direct_versus_symbolic": "U",
+      "exact_historical_symbolic_target": "U",
+      "producer_task_transaction_history": "U",
+      "IR-U1": "U",
+      "historical_CS23": "U",
+      "historical_preflight": "CS-PREFLIGHT-U",
+      "accepted_architecture_frontier": "RR-AR-PASS",
+      "historical_harmlessness_finding": false,
+      "historical_continuity_established": false,
+      "retroactive_PASS": false,
+      "negative_and_withdrawn_records": "PRESERVED without promotion",
+      "no_silent_repair": true,
+      "FAIL_precedence_over_U": true,
+      "residual_U_retained_under_FAIL": true
+    },
+    "missing_listing_interval": {
+      "missing_observation": {
+        "bytes": 3288,
+        "sha256": "fc03122d5d31df7be7d3089517d9086cad1fc25c6f24515629017e0adaea089b",
+        "bytes_available": false,
+        "digest_is_not_content": true,
+        "source_binding": {
+          "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+          "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+          "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+          "json_pointer": "/authority_records/48/retrieval"
+        },
+        "original_digest_command_records": [
+          92,
+          168
+        ],
+        "original_session": "01a0d1af-67b2-7321-b6cc-1d2e69b6dffb"
+      },
+      "later_surviving_observation": {
+        "bytes": 3544,
+        "sha256": "45054d8d40423dcb68a4b2c39602c1a7bf11f6732608c6f666a2d3008eac99a9",
+        "original_command_record": 96,
+        "source_binding": {
+          "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+          "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+          "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+          "json_pointer": "/authority_records/48/retrieval"
+        }
+      },
+      "exact_transaction_start": "U",
+      "exact_transaction_end": "U",
+      "complete_transition_3288_to_3544": "U",
+      "scope": "Known observation/digest locators are retained observations, not reconstructed lifetime or transaction history. Full surviving evidence is retrieved through the bound C2/B1 containers; no missing bytes synthesized."
+    },
+    "related_B1_historical_subject": {
+      "ref": "refs/codex/turn-diffs/captures/1790370539722/e1d68469-8f9e-43aa-b45e-23cc9ba196a5/base",
+      "resolved_observed_oid": "513f2c698ad577e90ead4b23692bd0aa9cd8bde2",
+      "relationship": "U",
+      "target": "U",
+      "producer_task_transaction": "U",
+      "observation_scope": "Distinct later bootstrap historical ref subject; not a reconstruction of the unavailable 3288-byte listing. Original B0 and every retained transition remain intact in inherited containers.",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/b1-case1-historical-coverage/recovery.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "24785cb4966a8b773cdc9c0a5729a63d44f3cf8324cbb6710130105b61f46292",
+        "json_pointer": ""
+      }
+    },
+    "negative_and_withdrawn_records": [
+      {
+        "id": "original-failure",
+        "preserved_disposition": "CS-PREFLIGHT-FAIL; CS21, CS23, CS24 FAIL",
+        "source": {
+          "name": "original-failure",
+          "session": "01a0d16f-9ef1-7e43-88a7-f65f5c871265",
+          "path": "/Users/erale/.codex/sessions/2026/09/23/rollout-2026-09-23T20-22-28-01a0d16f-9ef1-7e43-88a7-f65f5c871265.jsonl",
+          "record": 89,
+          "message": "msg_03994d53af03dfc6016ab4981519b487d0a8b7c1f054d988e0",
+          "timestamp": "2026-09-24T03:26:20.746Z",
+          "bytes": 9402,
+          "lf": 83,
+          "sha256": "f7967db51ad414197d305300e74e8e405c41d6e8f52cf00a27ac9c640b5db3fd",
+          "role": "assistant",
+          "claim_scope": "Preserved historical authority or negative disposition; no new architecture or current-case judgment",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/27/retrieval"
+          }
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "receiving-failure",
+        "preserved_disposition": "CS-PREFLIGHT-FAIL; incomplete mandatory-input closure; premature PASS withdrawn",
+        "source": {
+          "name": "receiving-failure",
+          "session": "01a0d1af-67b2-7321-b6cc-1d2e69b6dffb",
+          "path": "/Users/erale/.codex/sessions/2026/09/23/rollout-2026-09-23T21-32-08-01a0d1af-67b2-7321-b6cc-1d2e69b6dffb.jsonl",
+          "record": 175,
+          "message": "msg_0671b00fa9ab8a87016ab4a9864f4887d0928ea89d6ba90ce9",
+          "timestamp": "2026-09-24T04:41:07.732Z",
+          "bytes": 11707,
+          "lf": 77,
+          "sha256": "6e6c7c2c437b6fabc27c6bfaddb7679f215419d813bfb0761c4231b418f9c603",
+          "role": "assistant",
+          "claim_scope": "Preserved historical authority or negative disposition; no new architecture or current-case judgment",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/28/retrieval"
+          }
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "withdrawn-pass",
+        "preserved_disposition": "WITHDRAWN; original PASS text is retained as negative history and grants no authority",
+        "source": {
+          "name": "withdrawn-pass",
+          "session": "01a0d1af-67b2-7321-b6cc-1d2e69b6dffb",
+          "path": "/Users/erale/.codex/sessions/2026/09/23/rollout-2026-09-23T21-32-08-01a0d1af-67b2-7321-b6cc-1d2e69b6dffb.jsonl",
+          "record": 133,
+          "message": "msg_0671b00fa9ab8a87016ab4a8cb79f487d08099af857dbf905f",
+          "timestamp": "2026-09-24T04:37:30.397Z",
+          "bytes": 7797,
+          "lf": 34,
+          "sha256": "62e21aa759250cfde9605dea535a15f36fcc598bb8679c4f9d833c6860794f15",
+          "role": "assistant",
+          "claim_scope": "Preserved historical authority or negative disposition; no new architecture or current-case judgment",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/29/retrieval"
+          }
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "ref-recovery-negative",
+        "preserved_disposition": "CS23=U; CS-PREFLIGHT-U",
+        "source": {
+          "name": "ref-recovery-negative",
+          "session": "01a0d1ca-6bc4-7e11-819f-6d9dd4d719fc",
+          "path": "/Users/erale/.codex/sessions/2026/09/23/rollout-2026-09-23T22-01-39-01a0d1ca-6bc4-7e11-819f-6d9dd4d719fc.jsonl",
+          "record": 198,
+          "message": "msg_0b864e5e3ac5505f016ab4b04f504487d0b58bd3e6df3aec21",
+          "timestamp": "2026-09-24T05:09:22.835Z",
+          "bytes": 6937,
+          "lf": 58,
+          "sha256": "1c9120c8b0a937ce555b07b3461e12932f38946b29ffffc64d39198dea5a7919",
+          "role": "assistant",
+          "claim_scope": "Original negative/recovery disposition or exact bounded task/preflight authority; no current-case acceptance",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/48/retrieval"
+          }
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "resumed-recovery-negative",
+        "preserved_disposition": "CS23=U; CS-PREFLIGHT-U",
+        "source": {
+          "name": "resumed-recovery-negative",
+          "session": "01a0d1ca-6bc4-7e11-819f-6d9dd4d719fc",
+          "path": "/Users/erale/.codex/sessions/2026/09/23/rollout-2026-09-23T22-01-39-01a0d1ca-6bc4-7e11-819f-6d9dd4d719fc.jsonl",
+          "record": 255,
+          "message": "msg_0b864e5e3ac5505f016ab4b29624c887d083b66f1a55d923a5",
+          "timestamp": "2026-09-24T05:18:40.826Z",
+          "bytes": 3512,
+          "lf": 46,
+          "sha256": "065e01e97077d1ba47aafc81a33dc2f4c3233e3972f33218ec7e980dfd0a69a7",
+          "role": "assistant",
+          "claim_scope": "Original negative/recovery disposition or exact bounded task/preflight authority; no current-case acceptance",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/49/retrieval"
+          }
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "further-recovery-negative",
+        "preserved_disposition": "CS23=U; CS-PREFLIGHT-U",
+        "source": {
+          "name": "further-recovery-negative",
+          "session": "01a0d1ca-6bc4-7e11-819f-6d9dd4d719fc",
+          "path": "/Users/erale/.codex/sessions/2026/09/23/rollout-2026-09-23T22-01-39-01a0d1ca-6bc4-7e11-819f-6d9dd4d719fc.jsonl",
+          "record": 296,
+          "message": "msg_0b864e5e3ac5505f016ab4b3d5f35887d0b549e52a8503791e",
+          "timestamp": "2026-09-24T05:23:59.435Z",
+          "bytes": 3255,
+          "lf": 44,
+          "sha256": "75329c316834fb945b504a8a6432880a12541152b12242763b7b61170cb3046e",
+          "role": "assistant",
+          "claim_scope": "Original negative/recovery disposition or exact bounded task/preflight authority; no current-case acceptance",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/50/retrieval"
+          }
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "authority-adjudication",
+        "preserved_disposition": "CS23=U; no substitute authority established by that adjudication",
+        "source": {
+          "name": "authority-adjudication",
+          "session": "01a0d1ef-2306-7d60-9d2e-6d64523089d4",
+          "path": "/Users/erale/.codex/sessions/2026/09/23/rollout-2026-09-23T22-41-45-01a0d1ef-2306-7d60-9d2e-6d64523089d4.jsonl",
+          "record": 90,
+          "message": "msg_0e8dc4be62857146016ab4b8c872ec87d0aabe60ed8a34be26",
+          "timestamp": "2026-09-24T05:45:34.202Z",
+          "bytes": 7766,
+          "lf": 57,
+          "sha256": "e0361cd4cda8fe30b2093694f115951afe34e13822e9694a1350ff0ea6bbc2fb",
+          "role": "assistant",
+          "claim_scope": "Original negative/recovery disposition or exact bounded task/preflight authority; no current-case acceptance",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/51/retrieval"
+          }
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "complete-input-recovery",
+        "preserved_disposition": "Complete input recovery did not establish ref continuity; CS23=U; CS-PREFLIGHT-U",
+        "source": {
+          "name": "complete-input-recovery",
+          "session": "01a0d1bf-2672-73a0-bc43-98dbf6f12ae1",
+          "path": "/Users/erale/.codex/sessions/2026/09/23/rollout-2026-09-23T21-49-20-01a0d1bf-2672-73a0-bc43-98dbf6f12ae1.jsonl",
+          "record": 207,
+          "message": "msg_0987743db76c8868016ab4adc9b9e887d09fc60a01de58fe9a",
+          "timestamp": "2026-09-24T04:59:21.794Z",
+          "bytes": 10665,
+          "lf": 114,
+          "sha256": "47d12154b8b61088b6f94f199cebc5b03e7f06e73f1dd13741ead65fe0f8c19c",
+          "role": "assistant",
+          "claim_scope": "Original negative/recovery disposition or exact bounded task/preflight authority; no current-case acceptance",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/52/retrieval"
+          }
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "RR-RA-FAIL-CFW",
+        "preserved_disposition": "FAIL for original RA-A CF-W; scoped later CFW acceptance does not rewrite original FAIL",
+        "source": {
+          "name": "RR-RA-FAIL-CFW",
+          "session": "01a0c58f-2823-7271-9f4d-8975cd35b932",
+          "path": "/Users/erale/.codex/sessions/2026/09/21/rollout-2026-09-21T13-01-28-01a0c58f-2823-7271-9f4d-8975cd35b932.jsonl",
+          "record": 187,
+          "message": "msg_0423a470b83e1cfa016ab190e01ff487d084adc5b8f291222d",
+          "timestamp": "2026-09-21T20:22:37.777Z",
+          "bytes": 42063,
+          "lf": 578,
+          "sha256": "5130b144128377ac25fe783e8e83fc0bfcbbebc46a9d9df25012ff2bfa3a4474",
+          "role": "assistant",
+          "claim_scope": "Preserved historical authority or negative disposition; no new architecture or current-case judgment",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/9/retrieval"
+          }
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "RA-A-original",
+        "preserved_disposition": "Historical original candidate remains FAIL at CF-W",
+        "source": {
+          "name": "RA-A-original",
+          "session": "01a0c551-c430-7ca1-a5d8-9e00914fbf43",
+          "path": "/Users/erale/.codex/sessions/2026/09/21/rollout-2026-09-21T11-54-25-01a0c551-c430-7ca1-a5d8-9e00914fbf43.jsonl",
+          "record": 224,
+          "message": "msg_0581353c44e25557016ab181e2fc8087d08889ef6d2edd6f36",
+          "timestamp": "2026-09-21T19:19:21.150Z",
+          "bytes": 50150,
+          "lf": 764,
+          "sha256": "b849e5c497667f68459a8d6e84d75c0a45e32746254d7673cf402d5286d81b55",
+          "role": "assistant",
+          "claim_scope": "Preserved historical authority or negative disposition; no new architecture or current-case judgment",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/8/retrieval"
+          }
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "IR-U1",
+        "preserved_disposition": "U; original complete finding and its scope remain unchanged",
+        "source": {
+          "bytes": 5299,
+          "lf": 66,
+          "sha256": "c4ce74ffa1c29a0636c9a5ad274e9cef37db6f8adc6145b2e00abfcf74ea8cf3",
+          "git_blob_sha1": "31584c7955384979189caadeef1458dbe9aab418",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "429524ad28b94a8b6cc90dccdd63c82345d9f23fd2c07c33bf01368aac0b8d2f",
+            "json_pointer": "/originals/IR-U1"
+          },
+          "session": "01a0da66-64a6-7d13-8ac8-f58be90fa28b",
+          "record": 132
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "correction-negative",
+        "preserved_disposition": "U; original complete finding and its scope remain unchanged",
+        "source": {
+          "bytes": 1366,
+          "lf": 12,
+          "sha256": "c69c3068ec7c11519d96782a4d93905dcaf924532699a6d5838e16d2bc10458c",
+          "git_blob_sha1": "94521bf933d6c6c927bd01f20e7d25964cdcd7f1",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "429524ad28b94a8b6cc90dccdd63c82345d9f23fd2c07c33bf01368aac0b8d2f",
+            "json_pointer": "/originals/correction-negative"
+          },
+          "session": "01a0dafe-0ebf-7fa1-bbbd-5a4cdff22b65",
+          "record": 211
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "producer-negative",
+        "preserved_disposition": "U; original complete finding and its scope remain unchanged",
+        "source": {
+          "bytes": 1095,
+          "lf": 11,
+          "sha256": "610de96bd805b036c638b2316b271d9150c3556b87cbd1219ff171ccba29700a",
+          "git_blob_sha1": "86be19805dba4225598ba47e6a6bb650d6a18e92",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "429524ad28b94a8b6cc90dccdd63c82345d9f23fd2c07c33bf01368aac0b8d2f",
+            "json_pointer": "/originals/producer-negative"
+          },
+          "session": "01a0db27-edbb-7720-8756-13cb7d3ab45d",
+          "record": 217
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "adoption-determination-U",
+        "preserved_disposition": "U; original complete finding and its scope remain unchanged",
+        "source": {
+          "bytes": 3410,
+          "lf": 34,
+          "sha256": "194c125fc7ed706b95657b143b5fefc0d64d45342b6d5df9c2dfece2509baa40",
+          "git_blob_sha1": "9693e477326eab531be80a9f385ea5406bf117f3",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "429524ad28b94a8b6cc90dccdd63c82345d9f23fd2c07c33bf01368aac0b8d2f",
+            "json_pointer": "/originals/adoption-determination-U"
+          },
+          "session": "01a0df2e-9f27-7fa2-ae71-93ec8ce076bb",
+          "record": 130
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "symbolic-bounded_recovery_original",
+        "preserved_disposition": "U; direct-versus-symbolic relationship and exact target remain unproved",
+        "source": {
+          "bytes": 1457,
+          "lf": 20,
+          "sha256": "92e091b9c38aaee61fb06b9b97521095a3a6ee987762a819ba895bbfca5c41c2",
+          "git_blob_sha1": "02098eec0077164f7be52f7e1c4a4f5bccd55459",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/recovery.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "ccbaaa839e71f8f7e974cf1d198038cb492eed54b07defe797ba7f56b4cc8fe9",
+            "json_pointer": "/bounded_recovery_original"
+          }
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "symbolic-boundary_stop_original",
+        "preserved_disposition": "U; direct-versus-symbolic relationship and exact target remain unproved",
+        "source": {
+          "bytes": 5149,
+          "lf": 53,
+          "sha256": "b85d8267bbb8fb9025436e1ff33d84709d3fdc87855962946aadc255b366e695",
+          "git_blob_sha1": "d38135ab970ce11f7ecb5f082549936929f60dd2",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/recovery.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "ccbaaa839e71f8f7e974cf1d198038cb492eed54b07defe797ba7f56b4cc8fe9",
+            "json_pointer": "/boundary_stop_original"
+          }
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "consumer-alias-exhaustion",
+        "preserved_disposition": "U for complete historical non-consumption and substantive-alias exclusion",
+        "source": {
+          "bytes": 7151,
+          "lf": 54,
+          "sha256": "192294715ba96d21002204a9ba9eb58cfc186335d04a104e1d3229ebd8402c93",
+          "git_blob_sha1": "609e825bb4592b42dfd77082390b2456be734232",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/b1-case1-historical-coverage/recovery.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "24785cb4966a8b773cdc9c0a5729a63d44f3cf8324cbb6710130105b61f46292",
+            "json_pointer": "/consumer_alias_exhaustion"
+          }
+        },
+        "no_upgrade": true
+      },
+      {
+        "id": "post-C2-live-canary-STOP",
+        "preserved_disposition": "CS-PREFLIGHT-U; CS23 remains U; no CD reasoning or authority",
+        "source": {
+          "session": "01a0e693-6469-7161-a3d0-deb908eca525",
+          "original_path": "/Users/erale/.codex/sessions/2026/09/27/rollout-2026-09-27T22-53-34-01a0e693-6469-7161-a3d0-deb908eca525.jsonl",
+          "record_1_based": 150,
+          "ordinal": 149,
+          "timestamp": "2026-09-28T06:00:45.279Z",
+          "record_id": "msg_02f4ff466c74b368016aba0277eb4887d09340256f95e999cb",
+          "record_type": "message",
+          "extraction": "ordered payload.content output_text concatenation UTF-8, no separators, normalization or appended newline",
+          "raw_record": {
+            "bytes": 3377,
+            "lf": 0,
+            "sha256": "a2cdacab946a23e0360ee8b12afdf8d85aa1379da55e6b7f85c2c8661cf32ea0",
+            "git_blob_sha1": "84c0d23dda1855b5fde843df385e413ba54a43a9",
+            "encoding": "base64",
+            "data": "eyJ0aW1lc3RhbXAiOiIyMDI2LTA5LTI4VDA2OjAwOjQ1LjI3OVoiLCJvcmRpbmFsIjoxNDksInR5cGUiOiJyZXNwb25zZV9pdGVtIiwicGF5bG9hZCI6eyJ0eXBlIjoibWVzc2FnZSIsImlkIjoibXNnXzAyZjRmZjQ2NmM3NGIzNjgwMTZhYmEwMjc3ZWI0ODg3ZDA5MzQwMjU2Zjk1ZTk5OWNiIiwicm9sZSI6ImFzc2lzdGFudCIsImNvbnRlbnQiOlt7InR5cGUiOiJvdXRwdXRfdGV4dCIsInRleHQiOiIqKkNTLVBSRUZMSUdIVC1VIOKAlCBzdG9wcGVkIGJlZm9yZSBDRCByZWFzb25pbmcuKipcblxuQXV0aGVudGljYXRlZCB0aGUgc3VwcGxpZWQgQzIgZWZmZWN0aXZlbmVzcyByZWNlaXB0LCBjb21taXQgYDA1MWE1NGTigKZgLCBwYXJlbnQgUDEsIHRyZWUgVDEsIGFsbCBlaWdodCBwYWNrYWdlIGZpbGVzLCBzdXBwb3J0aW5nIGdvdmVybmFuY2UsIENELVNQRUMtQzEvcmV2aWV3L2lzc3VhbmNlLCBhbmQgb3JpZ2luYWwgQeKAk0kgaW5wdXRzLiBMb2NhbCwgdHJhY2tpbmcgYW5kIGZyZXNoIGxpdmUtcmVtb3RlIEhFQUQgYWdyZWU7IGFsbCA3NDggcmVwb3NpdG9yeSBwYXRocyBhbmQgdGhlIGluZGV4IG1hdGNoIHRoZSBhdXRoZW50aWNhdGVkIGJvdW5kYXJ5LlxuXG58IENvbnRyb2wgfCBTdGF0dXMgfCBFdmlkZW5jZSB8XG58LS0tfC0tLXwtLS18XG58IENTMDEgfCBQQVNTIHwgUmVwb3NpdG9yeSwgb3JpZ2luIGFuZCBjb21taXQgaWRlbnRpdHkgbWF0Y2guIHxcbnwgQ1MwMiB8IFBBU1MgfCBCcmFuY2ggYW5kIHVwc3RyZWFtIG1hdGNoLiB8XG58IENTMDMgfCBQQVNTIHwgTG9jYWwvdHJhY2tpbmcvbGl2ZS1yZW1vdGUgSEVBRCBhZ3JlZS4gfFxufCBDUzA0IHwgUEFTUyB8IEFoZWFkL2JlaGluZCBgMC8wYC4gfFxufCBDUzA1IHwgUEFTUyB8IEluZGV4IHVuY2hhbmdlZDsgc3RhZ2VkIGRpZmYgZW1wdHkuIHxcbnwgQ1MwNiB8IFBBU1MgfCBFeGFjdCBpbmhlcml0ZWQgZGlydHktcGF0aCBjbGFzc2lmaWNhdGlvbnMgcHJlc2VydmVkLiB8XG58IENTMDcgfCBQQVNTIHwgQWxsIDc0OCBwYXRocywgc2l6ZXMsIGhhc2hlcyBhbmQgbW9kZXMgbWF0Y2guIHxcbnwgQ1MwOCB8IFBBU1MgfCBDb250cm9sbGluZyBjaGVja3BvaW50IGFuZCBhY2NlcHRhbmNlIGF1dGhlbnRpY2F0ZWQuIHxcbnwgQ1MwOSB8IFBBU1MgfCBCYXNlIHByb3RvY29sIHBsdXMgZWZmZWN0aXZlIEMyIGF1dGhlbnRpY2F0ZWQuIHxcbnwgQ1MxMCB8IFBBU1MgfCBNYW5pZmVzdCwgc3BlY2lmaWNhdGlvbiBhbmQgaXNzdWFuY2UgYXV0aGVudGljYXRlZC4gfFxufCBDUzExIHwgUEFTUyB8IFN0cm9uZ2VyIGdvdmVybmFuY2UgYW5kIGZyb3plbiBGMiBhdXRoZW50aWNhdGVkLiB8XG58IENTMTIgfCBQQVNTIHwgQWNjZXB0ZWQgZnJvbnRpZXIgcmVtYWlucyBgUlItQVItUEFTU2AuIHxcbnwgQ1MxMyB8IFBBU1MgfCBSZXF1aXJlZCBvcmlnaW5hbCBpbnB1dHMgYW5kIGlkZW50aXRpZXMgYXV0aGVudGljYXRlZC4gfFxufCBDUzE0IHwgUEFTUyB8IFVwc3RyZWFtIGF1dGhvci9yZXZpZXdlciBzZXBhcmF0aW9uIHZlcmlmaWVkLiB8XG58IENTMTUgfCBQQVNTIHwgSW5kZXBlbmRlbnQgUEFTUy9GQUlML1UgZnJlZWRvbSByZXRhaW5lZC4gfFxufCBDUzE2IHwgUEFTUyB8IE5vIHN1cHBsZW1lbnRhdGlvbiBvciBzaWxlbnQgcmVwYWlyLiB8XG58IENTMTcgfCBQQVNTIHwgRXhhY3QgYXV0aG9yLWxhbmUgY2VpbGluZyByZXRhaW5lZC4gfFxufCBDUzE4IHwgUEFTUyB8IE9uZSBib3VuZGVkIGZhaWx1cmUgcm91dGU7IENEIHJlbWFpbnMgZGlzYWJsZWQuIHxcbnwgQ1MxOSB8IFBBU1MgfCBObyBpbXBsZW1lbnRhdGlvbiBvciBvcGVyYXRpb25hbCBhdXRob3JpdHkgaW5mZXJyZWQuIHxcbnwgQ1MyMCB8IFBBU1MgfCBNaXNzaW5nIHByb29mIHJvdXRlcyB0byBVIGFuZCBTVE9QLiB8XG58IENTMjEgfCBQQVNTIHwgQ29tcGxldGUgb3JpZ2luYWwgYWR2ZXJzYXJpYWwgYnVyZGVucyBhdXRoZW50aWNhdGVkOyBub3QgZXhlY3V0ZWQuIHxcbnwgQ1MyMiB8IFBBU1MgfCBDaGVja3BvaW50IGxpbmVhZ2UgYW5kIGNvbmRpdGlvbmFsIHJvdGF0aW9uIHJlcXVpcmVtZW50IHJldGFpbmVkLiB8XG58ICoqQ1MyMyoqIHwgKipVKiogfCBObyBhY2NlcHRlZCBjYXNlLXNwZWNpZmljIGNvbnRpbnVpdHkgc3Vic3RpdHV0ZSBvciBhcHBsaWNhYmxlIERBNSBib3VuZGFyeSBlc3RhYmxpc2hlZCBmb3IgQ0QuIHxcbnwgQ1MyNCB8IFBBU1MgfCBDdXJyZW50IGF1dGhvcml0eSBhbmQgY29uZGl0aW9uYWwgcm91dGluZyBhcmUgY29uc2lzdGVudC4gfFxufCBDUzI1IHwgUEFTUyB8IEV4YWN0IHJldHJpZXZhbCBhbmQgcmVjZWlwdC1jb25maXJtZWQgZmFsbGJhY2sgYXZhaWxhYmxlLiB8XG5cblRoZSBkZWNpc2l2ZSBibG9ja2VyIGlzICoqQ1MyMyoqOiB0aGUgZWZmZWN0aXZlbmVzcyByZWNlaXB0IHJlY29yZHMgbm8gYWNjZXB0ZWQgaGlzdG9yaWNhbCBjYXNlLiBCMeKAmXMgbGltaXRlZCBib290c3RyYXAgcGVybWlzc2lvbnMgZXhwaXJlIGF0IEMyIGVmZmVjdGl2ZW5lc3MgYW5kIGV4Y2x1ZGUgQ0QuIEN1cnJlbnQgZW5kcG9pbnQgZXF1YWxpdHkgY2Fubm90IGVzdGFibGlzaCBoaXN0b3JpY2FsIGNvbnRpbnVpdHkuXG5cbioqRXhhY3RseSBvbmUgbmV4dCBnYXRlOioqIHNlcGFyYXRlbHkgYXV0aG9yaXplZCBjYXNlLXNwZWNpZmljIGFkanVkaWNhdGlvbiBvZiB0aGUgZXhpc3RpbmcgKiozLDI4OC1ieXRlIENTMjMgaW5jaWRlbnQqKiwgdW5kZXIgZWZmZWN0aXZlIEMxIMKnwqc14oCTNyBhbmQgwqc5IGluY29ycG9yYXRlZCBpbnRvIEMyLiBUaGF0IGdhdGUgd2FzIG5vdCBleGVjdXRlZC5cblxuW0NvbXBsZXRlIHByZWZsaWdodCBhbmQgZXZpZGVuY2UgcmVmZXJlbmNlc10oL1VzZXJzL2VyYWxlLy5jb2RleC92aXN1YWxpemF0aW9ucy8yMDI2LzA5LzI4LzAxYTBlNjkzLTY0NjktNzE2MS1hM2QwLWRlYjkwOGVjYTUyNS9saXZlLWNhbmFyeS1wcmVmbGlnaHQubWQpICBcblNIQS0yNTY6IGA1NWFhZWU1ZWVjOTczNTc0NGEzMjhkZjVjZDdjYjVlOTcxN2Q0ODNiMjZhZGE2MTc0ZmI4YTI1YWEwZDRiYjViYFxuXG5BbGwgaGlzdG9yaWNhbCBVIGZpbmRpbmdzLCBuZWdhdGl2ZS93aXRoZHJhd24gcmVjb3JkcyBhbmQgYFJSLUFSLVBBU1NgIHJlbWFpbiB1bmNoYW5nZWQuIE5vIENEIGNhbmRpZGF0ZSwgcmVwb3NpdG9yeSBtdXRhdGlvbiwgaW1wbGVtZW50YXRpb24sIHF1YWxpZmljYXRpb24gb3IgbWluaW5nIGFjdGl2aXR5IG9jY3VycmVkLiJ9XSwicGhhc2UiOiJmaW5hbF9hbnN3ZXIiLCJpbnRlcm5hbF9jaGF0X21lc3NhZ2VfbWV0YWRhdGFfcGFzc3Rocm91Z2giOnsidHVybl9pZCI6IjAxYTBlNjkzLTY3MzYtNzYyMi05ZGJiLTIyMGZkM2U3YzFmMiIsImNvbnRlbnRfaXRlbV9raW5kcyI6WyJ1bmtub3duIl19fX0="
+          },
+          "bytes": 2954,
+          "lf": 39,
+          "sha256": "0b3eed53b47fa439aec02798f611a7af1f5a0cbda98e4dc90862a5bd04ea1847",
+          "git_blob_sha1": "71a8aab6fa0d82460127292e7311b96760f097cf",
+          "text": "**CS-PREFLIGHT-U \u2014 stopped before CD reasoning.**\n\nAuthenticated the supplied C2 effectiveness receipt, commit `051a54d\u2026`, parent P1, tree T1, all eight package files, supporting governance, CD-SPEC-C1/review/issuance, and original A\u2013I inputs. Local, tracking and fresh live-remote HEAD agree; all 748 repository paths and the index match the authenticated boundary.\n\n| Control | Status | Evidence |\n|---|---|---|\n| CS01 | PASS | Repository, origin and commit identity match. |\n| CS02 | PASS | Branch and upstream match. |\n| CS03 | PASS | Local/tracking/live-remote HEAD agree. |\n| CS04 | PASS | Ahead/behind `0/0`. |\n| CS05 | PASS | Index unchanged; staged diff empty. |\n| CS06 | PASS | Exact inherited dirty-path classifications preserved. |\n| CS07 | PASS | All 748 paths, sizes, hashes and modes match. |\n| CS08 | PASS | Controlling checkpoint and acceptance authenticated. |\n| CS09 | PASS | Base protocol plus effective C2 authenticated. |\n| CS10 | PASS | Manifest, specification and issuance authenticated. |\n| CS11 | PASS | Stronger governance and frozen F2 authenticated. |\n| CS12 | PASS | Accepted frontier remains `RR-AR-PASS`. |\n| CS13 | PASS | Required original inputs and identities authenticated. |\n| CS14 | PASS | Upstream author/reviewer separation verified. |\n| CS15 | PASS | Independent PASS/FAIL/U freedom retained. |\n| CS16 | PASS | No supplementation or silent repair. |\n| CS17 | PASS | Exact author-lane ceiling retained. |\n| CS18 | PASS | One bounded failure route; CD remains disabled. |\n| CS19 | PASS | No implementation or operational authority inferred. |\n| CS20 | PASS | Missing proof routes to U and STOP. |\n| CS21 | PASS | Complete original adversarial burdens authenticated; not executed. |\n| CS22 | PASS | Checkpoint lineage and conditional rotation requirement retained. |\n| **CS23** | **U** | No accepted case-specific continuity substitute or applicable DA5 boundary established for CD. |\n| CS24 | PASS | Current authority and conditional routing are consistent. |\n| CS25 | PASS | Exact retrieval and receipt-confirmed fallback available. |\n\nThe decisive blocker is **CS23**: the effectiveness receipt records no accepted historical case. B1\u2019s limited bootstrap permissions expire at C2 effectiveness and exclude CD. Current endpoint equality cannot establish historical continuity.\n\n**Exactly one next gate:** separately authorized case-specific adjudication of the existing **3,288-byte CS23 incident**, under effective C1 \u00a7\u00a75\u20137 and \u00a79 incorporated into C2. That gate was not executed.\n\n[Complete preflight and evidence references](/Users/erale/.codex/visualizations/2026/09/28/01a0e693-6469-7161-a3d0-deb908eca525/live-canary-preflight.md)  \nSHA-256: `55aaee5eec9735744a328df5cd7cb5e9717d483b26ada6174fb8a25aa0d4bb5b`\n\nAll historical U findings, negative/withdrawn records and `RR-AR-PASS` remain unchanged. No CD candidate, repository mutation, implementation, qualification or mining activity occurred."
+        },
+        "no_upgrade": true
+      }
+    ],
+    "architecture_history": {
+      "accepted_frontier": "RR-AR-PASS",
+      "source_checkpoint": "docs/project-checkpoints/ore-v3-stage3c-post-ar-rr-ar-pass-comprehensive-continuation.md",
+      "retrieval_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+      "checkpoint_sha256": "773e1ee6192334d8ebc3832cd576adf9aa027addd207252fce2830920efc5ba5",
+      "complete_historical_record_locations": [
+        "checkpoint sections 7, 9, 11 and exact embedded PREDECESSOR; inherited predecessor section 13 governance bindings",
+        "C2 anchors authority_records, including full original negative and recovered/accepted author-review texts"
+      ],
+      "original_discovery_records": [
+        {
+          "name": "CW-U",
+          "session": "01a0bc96-c265-7e10-962c-aca29f93b912",
+          "path": "/Users/erale/.codex/sessions/2026/09/19/rollout-2026-09-19T19-13-11-01a0bc96-c265-7e10-962c-aca29f93b912.jsonl",
+          "record": 195,
+          "message": "msg_0084d5d9db4587d4016aaf477805e887d08e64ba65f583b259",
+          "timestamp": "2026-09-20T02:46:10.962Z",
+          "bytes": 58409,
+          "lf": 756,
+          "sha256": "c44bc786b5963a902cde1bfb9bf6688f043675ece1da6d85ffe77b83dba56a13",
+          "role": "assistant",
+          "claim_scope": "Preserved historical authority or negative disposition; no new architecture or current-case judgment",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/0/retrieval"
+          }
+        },
+        {
+          "name": "CD-U",
+          "session": "01a0c0db-b606-77c3-9530-0eae7a5e4cb7",
+          "path": "/Users/erale/.codex/sessions/2026/09/20/rollout-2026-09-20T15-06-59-01a0c0db-b606-77c3-9530-0eae7a5e4cb7.jsonl",
+          "record": 218,
+          "message": "msg_06bf50887e953fc8016ab060195ce487d080f67cd6e18c6604",
+          "timestamp": "2026-09-20T22:43:53.854Z",
+          "bytes": 62615,
+          "lf": 888,
+          "sha256": "4b0f04c23dd9142376e60739fc8d12b52020eae6564bc490b6378395e1761216",
+          "role": "assistant",
+          "claim_scope": "Preserved historical authority or negative disposition; no new architecture or current-case judgment",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/1/retrieval"
+          }
+        },
+        {
+          "name": "AR-U-original",
+          "session": "01a0c13b-15fb-7333-8cd5-ad4c9312687b",
+          "path": "/Users/erale/.codex/sessions/2026/09/20/rollout-2026-09-20T16-51-10-01a0c13b-15fb-7333-8cd5-ad4c9312687b.jsonl",
+          "record": 221,
+          "message": "msg_06ccff939be011a7016ab077cd340487d0b1804197b57765f9",
+          "timestamp": "2026-09-21T00:25:13.265Z",
+          "bytes": 63371,
+          "lf": 1027,
+          "sha256": "b379964dbfe118345b4340216a5532226cd8e911217ae2776fa65f0af081679f",
+          "role": "assistant",
+          "claim_scope": "Preserved historical authority or negative disposition; no new architecture or current-case judgment",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/2/retrieval"
+          }
+        },
+        {
+          "name": "AE-U",
+          "session": "01a0c180-82d0-75b3-ba33-e0d7f66054d6",
+          "path": "/Users/erale/.codex/sessions/2026/09/20/rollout-2026-09-20T18-06-59-01a0c180-82d0-75b3-ba33-e0d7f66054d6.jsonl",
+          "record": 187,
+          "message": "msg_0e9c185676617771016ab085b1f09087d0b9ce19b9f59716e4",
+          "timestamp": "2026-09-21T01:24:52.829Z",
+          "bytes": 68368,
+          "lf": 838,
+          "sha256": "9f7c2b39e4cb68da884a899ae62eb537b1b07d0dff050a14dbe9b90df893e4c8",
+          "role": "assistant",
+          "claim_scope": "Preserved historical authority or negative disposition; no new architecture or current-case judgment",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/3/retrieval"
+          }
+        },
+        {
+          "name": "MI-U",
+          "session": "01a0c1a3-e3ea-7b70-846a-4e91ac4cd0c1",
+          "path": "/Users/erale/.codex/sessions/2026/09/20/rollout-2026-09-20T18-45-38-01a0c1a3-e3ea-7b70-846a-4e91ac4cd0c1.jsonl",
+          "record": 190,
+          "message": "msg_0b505ac05894ef53016ab08ea941a087d088bbcd1bf8fe76a4",
+          "timestamp": "2026-09-21T02:02:14.337Z",
+          "bytes": 57126,
+          "lf": 768,
+          "sha256": "158fae3a2f34289aecd2dba0896cfdfa8acb07dd79a611a6c5773494e59004a0",
+          "role": "assistant",
+          "claim_scope": "Preserved historical authority or negative disposition; no new architecture or current-case judgment",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/4/retrieval"
+          }
+        },
+        {
+          "name": "OA-U",
+          "session": "01a0c24f-0af6-7860-b7f4-314adf77ca8f",
+          "path": "/Users/erale/.codex/sessions/2026/09/20/rollout-2026-09-20T21-52-35-01a0c24f-0af6-7860-b7f4-314adf77ca8f.jsonl",
+          "record": 194,
+          "message": "msg_0c0d80e15b783ebe016ab0baaa2c6487d097fefdc76dde57bd",
+          "timestamp": "2026-09-21T05:09:59.080Z",
+          "bytes": 54778,
+          "lf": 826,
+          "sha256": "46b0b1cbe89bc6a33e12fdeb7248fb571a36a2a8243523b2716609c5b56b8bf9",
+          "role": "assistant",
+          "claim_scope": "Preserved historical authority or negative disposition; no new architecture or current-case judgment",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/5/retrieval"
+          }
+        },
+        {
+          "name": "WP-U",
+          "session": "01a0c260-b894-7132-92bc-1b74bc127dca",
+          "path": "/Users/erale/.codex/sessions/2026/09/20/rollout-2026-09-20T22-11-53-01a0c260-b894-7132-92bc-1b74bc127dca.jsonl",
+          "record": 200,
+          "message": "msg_00994244c5025f1c016ab0ca0a102c87d09ba6fd0eb17544df",
+          "timestamp": "2026-09-21T06:16:16.264Z",
+          "bytes": 62613,
+          "lf": 824,
+          "sha256": "c1b28ca039ec6e7eed5577d8f5cbbf03e904c6ffbc4dffa2ce3bdae57b781b64",
+          "role": "assistant",
+          "claim_scope": "Preserved historical authority or negative disposition; no new architecture or current-case judgment",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/6/retrieval"
+          }
+        },
+        {
+          "name": "CA-U",
+          "session": "01a0c4e8-6b9b-7a01-8dad-c98caea486ea",
+          "path": "/Users/erale/.codex/sessions/2026/09/21/rollout-2026-09-21T09-59-21-01a0c4e8-6b9b-7a01-8dad-c98caea486ea.jsonl",
+          "record": 193,
+          "message": "msg_05119597ab4d4e72016ab16b576ab887d0bcdd46e2a08b5542",
+          "timestamp": "2026-09-21T17:44:38.931Z",
+          "bytes": 61621,
+          "lf": 864,
+          "sha256": "273570815bb356efa375a697e2a1b665bd29186b209958cb84ae23e76c30c604",
+          "role": "assistant",
+          "claim_scope": "Preserved historical authority or negative disposition; no new architecture or current-case judgment",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/7/retrieval"
+          }
+        },
+        {
+          "name": "AR-U-post-AE",
+          "session": "01a0cf3d-d38b-76c3-8eab-a8fb8c36fe64",
+          "path": "/Users/erale/.codex/sessions/2026/09/23/rollout-2026-09-23T10-08-50-01a0cf3d-d38b-76c3-8eab-a8fb8c36fe64.jsonl",
+          "record": 186,
+          "message": "msg_004ac59e5d79e932016ab40f8bdb4887d09abb1569fa3d0203",
+          "timestamp": "2026-09-23T17:46:47.158Z",
+          "bytes": 36527,
+          "lf": 708,
+          "sha256": "85ad1d210c085c74c6229c78194c414fbf77e4d7bc5c0acc4d000118b564f4d0",
+          "role": "assistant",
+          "claim_scope": "Preserved historical authority or negative disposition; no new architecture or current-case judgment",
+          "retrieval": {
+            "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+            "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+            "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+            "json_pointer": "/authority_records/20/retrieval"
+          }
+        }
+      ],
+      "scope": "Preserve original U at original scope/time and later accepted scoped corrections separately. CD-U and downstream source/workload/attachment burdens are not resolved by RR-AR-PASS or this redesign. Case F failed/unresolved restoration, V7 accessible-scope evidence limitation, incomplete U1/U2/global census, and all predecessor negatives survive exactly as bound."
+    },
+    "complete_inherited_ledgers": [
+      {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records"
+      },
+      {
+        "container_path": "docs/research/governance/evidence/c2-adoption-bootstrap-b1/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "429524ad28b94a8b6cc90dccdd63c82345d9f23fd2c07c33bf01368aac0b8d2f",
+        "json_pointer": "/originals"
+      },
+      {
+        "container_path": "docs/research/governance/evidence/b1-symbolic-relationship-correction/recovery.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "ccbaaa839e71f8f7e974cf1d198038cb492eed54b07defe797ba7f56b4cc8fe9",
+        "json_pointer": ""
+      },
+      {
+        "container_path": "docs/research/governance/evidence/b1-case1-historical-coverage/recovery.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "24785cb4966a8b773cdc9c0a5729a63d44f3cf8324cbb6710130105b61f46292",
+        "json_pointer": ""
+      },
+      {
+        "container_path": "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "17f774b7b3707efec34e2132d7d56e5a95b2675002db3f919eb08e1a1c327566",
+        "json_pointer": "/authority_authorization_and_completion_records"
+      },
+      {
+        "container_path": "docs/research/governance/evidence/cs23-c2-adoption-extension-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "17f774b7b3707efec34e2132d7d56e5a95b2675002db3f919eb08e1a1c327566",
+        "json_pointer": "/authority_action_publication_retrieval_effectiveness_receipts"
+      }
+    ],
+    "preservation_rule": "Every complete original at these bindings is incorporated as historical evidence with its own disposition, exclusions and effective temporal scope. No omitted summary row can upgrade any original U, FAIL, withdrawn result or burden. A future required raw terminal not retained or retrievable is U/BLOCK; this is not a certification of every possible future CD dependency.",
+    "later_CD_rule": "Any required unresolved pre-N0 premise keeps CD U/BLOCK. Re-authentication of normative bytes does not prove embedded historical factual assertions.",
+    "historical_gate_rule": "All gates inside original evidence are historical. Sole current routing is fresh independent HIGH-risk review of this exact repository integration/adoption package. No CD route is opened.",
+    "N0_established": false
+  },
+  "additional_records": [
+    {
+      "id": "original-N0-STOP",
+      "status": "historical U/BLOCK",
+      "manifest": "restart-authentication/original-stop-manifest.json",
+      "sha256": "8f2b2f7c5dac7ab667c4cfd4aebfc58b77b7fe7bca8371a7c8405c621d14087d",
+      "whole_original": "restart-authentication/original-STOP.md",
+      "non_export": "No retroactive coherent-boundary finding; SQLite determination supplies new bounded evidence only."
+    },
+    {
+      "id": "RR-ORE-N0-SQLITE-STOP-20260928-C1",
+      "canonical": "restart-authentication/sqlite-determination.json",
+      "sha256": "8cf61fa60b1873255cb205a9d5c28b060fc0b19823afa2470232674d9da2f03d",
+      "whole_review": "restart-authentication/sqlite-review.txt",
+      "status": "Scoped materiality PASS for restart authoring only; no N0 acceptance or universal harmlessness"
+    },
+    {
+      "id": "redesign-integration-all-path-preservation",
+      "status": "historical literal all-inherited-path-preservation FAIL; preserved in original integration and review",
+      "non_export": "Later scoped exclusion does not erase original FAIL or establish writer/transaction history."
+    }
+  ],
+  "current_observations": "observation-comparison.json; known endpoints only",
+  "permanent_non_export": "No historical continuity, harmlessness, non-consumption, alias exclusion, symbolic status/target or producer/task/transaction proof; no recovered 3288-byte listing; IR-U1=U; historical CS23=U; historical CS-PREFLIGHT-U; every FAIL/U/withdrawn original unchanged."
+}

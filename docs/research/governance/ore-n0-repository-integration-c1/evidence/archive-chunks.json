@@ -1,0 +1,79 @@
+{
+  "archive_name": "ORE-N0-PROSPECTIVE-BOUNDARY-C6.tar.gz",
+  "archive_identity": {
+    "bytes": 374268105,
+    "lf": 1389394,
+    "terminal_LF": false,
+    "sha256": "bef9fdfbb7e929b058a869c4ae4b6b466e0f8d99e570e1647677fe676c2dfc12"
+  },
+  "encoding": "Exact concatenation of parts in array order. No transformation or normalization.",
+  "parts": [
+    {
+      "path": "evidence/C6-archive/part-000",
+      "offset": 0,
+      "bytes": 50331648,
+      "lf": 195564,
+      "terminal_LF": false,
+      "sha256": "177df54ee9b83acbd29f42b298a6725741b424ad30c07df2eb9f33cdfc24afc3"
+    },
+    {
+      "path": "evidence/C6-archive/part-001",
+      "offset": 50331648,
+      "bytes": 50331648,
+      "lf": 178305,
+      "terminal_LF": false,
+      "sha256": "40793120eeb375a84b322e8b3e2c84296128a47e12e1c9758755d8b6a983e4e4"
+    },
+    {
+      "path": "evidence/C6-archive/part-002",
+      "offset": 100663296,
+      "bytes": 50331648,
+      "lf": 189623,
+      "terminal_LF": false,
+      "sha256": "b6abb13790c846f746ed5a11331e13072c1f48115383ff07435a963e0a4f9aa3"
+    },
+    {
+      "path": "evidence/C6-archive/part-003",
+      "offset": 150994944,
+      "bytes": 50331648,
+      "lf": 187544,
+      "terminal_LF": false,
+      "sha256": "14f2e510806931e6885c5345b5119973b5c5e2fe9703e3a7b8253de422238792"
+    },
+    {
+      "path": "evidence/C6-archive/part-004",
+      "offset": 201326592,
+      "bytes": 50331648,
+      "lf": 177913,
+      "terminal_LF": false,
+      "sha256": "ba2172a48834ca75f989a0978a6cf174329dfd13c0cea2241695db1611fc04d8"
+    },
+    {
+      "path": "evidence/C6-archive/part-005",
+      "offset": 251658240,
+      "bytes": 50331648,
+      "lf": 189019,
+      "terminal_LF": false,
+      "sha256": "3110b9250c6bdb5f35456ffadcb755a89b5b099c260ccee1e7a8aab468df80df"
+    },
+    {
+      "path": "evidence/C6-archive/part-006",
+      "offset": 301989888,
+      "bytes": 50331648,
+      "lf": 189472,
+      "terminal_LF": false,
+      "sha256": "84b58bf6456424dcc49970166891c7a7eff83809c1614623afc7902898b64bec"
+    },
+    {
+      "path": "evidence/C6-archive/part-007",
+      "offset": 352321536,
+      "bytes": 21946569,
+      "lf": 81954,
+      "terminal_LF": false,
+      "sha256": "553e7d58db40cbf32aed7c2d3b13e49bd800577fbf7a4d7fb5a03f925605ae6f"
+    }
+  ],
+  "proposed_store": "Ordinary repository files at the listed relative paths; no Git LFS or unavailable external object is required.",
+  "acceptance": "Candidate retention only; future independent retrieval, explicit durable-location acceptance and publication remain required.",
+  "retention_scope": "The fixed independently reviewed C6 package and complete incorporated lineage are required review/activation inputs. This is not an ongoing archive-everything policy."
+}

@@ -1,0 +1,43 @@
+{
+  "C5_review": {
+    "source_session": "/Users/erale/.codex/sessions/2026/09/28/rollout-2026-09-28T18-10-07-01a0eab6-3fea-7933-96fb-a536c56aac37.jsonl",
+    "record_1_based": 214,
+    "timestamp": "2026-09-29T01:23:33.285Z",
+    "message_id": "msg_01faa875354ce710016abb129a6ed087d0a2a33418273547d4",
+    "role": "assistant",
+    "text": {
+      "bytes": 17436,
+      "lf": 219,
+      "terminal_LF": false,
+      "sha256": "72710bd45207d7d115ea505354d70a38a5983fda913cc0b397ccf2fa34d9b6a1"
+    },
+    "original_record": {
+      "bytes": 18042,
+      "lf": 1,
+      "terminal_LF": true,
+      "sha256": "ce87d7ec0b1ea02ce2cd8bd9d3c4f0e76f7468c0b7164dbf8ca504a03426d8ef"
+    },
+    "extraction": "Concatenate ordered content[].text without separators, normalization or added LF; UTF-8 encode."
+  },
+  "C5_verdict": "FAIL/BLOCK; CD prospective eligibility U/BLOCK",
+  "sole_demonstrated_defect": "All 442 original_graph_consumers lists falsely empty; corresponding former-consumer check executed zero times.",
+  "preserved_positive_review_findings": [
+    "048 four rules restored",
+    "12 additional corrections retain operative meanings",
+    "179 historical targets remain D/U",
+    "active C5 graph acyclic",
+    "C5 required closure 53506, A/B/C/D 53306/141/59/0",
+    "42 completion propositions and 17 traces",
+    "no additional lost normative meaning established"
+  ],
+  "historical_ledger_identity": {
+    "bytes": 46518,
+    "lf": 723,
+    "terminal_LF": true,
+    "sha256": "7bcd9a67d19a43eac4b67ae1efb0cf1526082a60cb2e6956bac4bab161b1f39d"
+  },
+  "all_U_FAIL_withdrawn_preserved": true,
+  "RR_AR_PASS": "architecture only",
+  "upstream": "UPSTREAM ORE COMPATIBILITY / DRIFT CONTROL = REQUIRED and UNSATISFIED",
+  "no_historical_adjudication": true
+}
