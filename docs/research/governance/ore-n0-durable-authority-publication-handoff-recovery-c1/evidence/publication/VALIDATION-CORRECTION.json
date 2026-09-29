@@ -1,0 +1,5 @@
+{
+  "initial_final_check": "Failed assertion compared worktree listing verbatim to baseline, thereby rejecting the authorized active worktree HEAD advance.",
+  "observed_delta": "Only active worktree HEAD 063d823dc97f1a3690e26f8bb328385acb9d0aef -> d1c9fc56fc183cdcca83d82cc896e4859a00f4dc; detached other worktree unchanged.",
+  "correction": "Final author checker explicitly allows only the authorized exact active HEAD delta in worktree listing. No repository/package change and no ignored negative."
+}

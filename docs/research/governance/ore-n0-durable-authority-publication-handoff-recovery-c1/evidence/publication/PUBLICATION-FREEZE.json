@@ -1,0 +1,336 @@
+{
+  "id": "ORE-N0-C1-PUBLICATION-AUTHOR-FREEZE",
+  "time": "2026-09-29T04:41:18.048713+00:00",
+  "receipt": {
+    "bytes": 27407,
+    "lf": 667,
+    "terminal_LF": true,
+    "sha256": "8436af27bda385083d5295ff6ae8fb33a3486d6d04f07e5f1e8408cd8acaa5d0"
+  },
+  "continuation": {
+    "bytes": 2839,
+    "lf": 37,
+    "terminal_LF": true,
+    "sha256": "062cae0df0065b6f800d0a66f07167a7bf549aa315f09d730744320989628b72"
+  },
+  "files": [
+    {
+      "path": "ACTION-AUTHORITY-original-record.jsonl",
+      "bytes": 10263,
+      "lf": 1,
+      "terminal_LF": true,
+      "sha256": "bf59e9cd63b14fa028b95fb316a6b1553e9549ccb36958b075389c315125e277"
+    },
+    {
+      "path": "ACTION-ENVELOPE.json",
+      "bytes": 2138,
+      "lf": 32,
+      "terminal_LF": true,
+      "sha256": "cf6df730584fe93859842f71a021112ad97fbadacdcdcf512da5249375377e11"
+    },
+    {
+      "path": "ACTION-SESSION-PREFIX.jsonl",
+      "bytes": 1289040,
+      "lf": 241,
+      "terminal_LF": true,
+      "sha256": "6de24b53cc6672fb195f62e32c42f2c3bdc56497cfb7d1a84a5ce91e3cc3e45b"
+    },
+    {
+      "path": "AUTHENTICATED-PACKAGE.json",
+      "bytes": 18317,
+      "lf": 535,
+      "terminal_LF": true,
+      "sha256": "f76086df6ccf0045166baee86320296ae8245d8b1350d61a3a96d39caa0e67e1"
+    },
+    {
+      "path": "C2-EMBEDDED-RETRIEVAL.json",
+      "bytes": 2864,
+      "lf": 92,
+      "terminal_LF": true,
+      "sha256": "6a740ccfe265a3db5edea0f23722880decf1db8e85cc039bc1de0099da975e22"
+    },
+    {
+      "path": "COMMIT-AUTHENTICATION.json",
+      "bytes": 196605,
+      "lf": 538,
+      "terminal_LF": true,
+      "sha256": "412c30d22a39ffc06118f1c040cdc8a04588f12990743b26e1b5743299d78425"
+    },
+    {
+      "path": "COMMIT-MESSAGE.txt",
+      "bytes": 895,
+      "lf": 14,
+      "terminal_LF": true,
+      "sha256": "af1fa7e5bce3429f51b86590dfe41dc3634a0a9a46a91fc74f627f58ce960cf8"
+    },
+    {
+      "path": "FINAL-LIVE-REMOTE.json",
+      "bytes": 367,
+      "lf": 14,
+      "terminal_LF": true,
+      "sha256": "e3e71502f81b43ac248398cf3fda386eef6c1f21627048ce6ae971baf0600c0b"
+    },
+    {
+      "path": "FINAL-REPOSITORY-BOUNDARY.json",
+      "bytes": 3953424,
+      "lf": 85735,
+      "terminal_LF": true,
+      "sha256": "dc06ab05d27d05600044277a150681771090d0657a13995b033bbb5bdc6bbd4e"
+    },
+    {
+      "path": "INHERITED-EXTERNAL-ANCHORS.json",
+      "bytes": 10811,
+      "lf": 184,
+      "terminal_LF": true,
+      "sha256": "d13df6341428117df5826a83b4535ea9f123e98bb846aac04a9859cf79f0c5d8"
+    },
+    {
+      "path": "POST-PUSH-REMOTE.json",
+      "bytes": 359,
+      "lf": 9,
+      "terminal_LF": true,
+      "sha256": "55e760f19742dfb570b2ea9dd4f12db2c22651d52147cf72145841756b34c3ca"
+    },
+    {
+      "path": "PRE-PUBLICATION-BOUNDARY.json",
+      "bytes": 4544774,
+      "lf": 99012,
+      "terminal_LF": true,
+      "sha256": "39defe05b63a08dcd346a69b50b8e8f20d4319fed591f38d1aa1d825ceaec131"
+    },
+    {
+      "path": "PRE-PUBLICATION-REMOTE.json",
+      "bytes": 606,
+      "lf": 12,
+      "terminal_LF": true,
+      "sha256": "50ecf4209a557e85dcb3caf5415f707de935d6b707021b48ada49c43ca16ff21"
+    },
+    {
+      "path": "PUBLICATION-ADOPTION-RECEIPT.json",
+      "bytes": 27407,
+      "lf": 667,
+      "terminal_LF": true,
+      "sha256": "8436af27bda385083d5295ff6ae8fb33a3486d6d04f07e5f1e8408cd8acaa5d0"
+    },
+    {
+      "path": "PUBLICATION-CONTINUATION.md",
+      "bytes": 2839,
+      "lf": 37,
+      "terminal_LF": true,
+      "sha256": "062cae0df0065b6f800d0a66f07167a7bf549aa315f09d730744320989628b72"
+    },
+    {
+      "path": "REVIEW-SUPPORT-AUTHENTICATION.json",
+      "bytes": 1224,
+      "lf": 34,
+      "terminal_LF": true,
+      "sha256": "afb26d1da2add78536b023f205c51d71746dd3366dfe1e454f36eb9de3ac1c94"
+    },
+    {
+      "path": "STAGED-FREEZE.json",
+      "bytes": 106267,
+      "lf": 533,
+      "terminal_LF": true,
+      "sha256": "ccc52d112ea4a0262c538d77297aec5583efc874821fb2d4e426af5d7aac5aca"
+    },
+    {
+      "path": "TRANSITION-COMMANDS.jsonl",
+      "bytes": 344268,
+      "lf": 120,
+      "terminal_LF": true,
+      "sha256": "6157f62c95887186fd23b0d51c7eebf5dd1b93c43ecf3eda6eb2a4c42d49412f"
+    },
+    {
+      "path": "VALIDATION-CORRECTION.json",
+      "bytes": 506,
+      "lf": 5,
+      "terminal_LF": true,
+      "sha256": "7d872180c71c6bdcd939ce7bb05298f74cfda330194d0ca9b6148be40647a9a4"
+    },
+    {
+      "path": "anchor-retrieval.json",
+      "bytes": 6291,
+      "lf": 219,
+      "terminal_LF": true,
+      "sha256": "6f59e4e69012076d2a8f07e9ce378d8376dff6305ba4bdb9a04d5f93beaac16b"
+    },
+    {
+      "path": "documentary-validation.json",
+      "bytes": 1853,
+      "lf": 80,
+      "terminal_LF": true,
+      "sha256": "3ca6a812bc707f45184b1b67d3feb97d1155a514acbdb1c11f86a9c29c6bded1"
+    },
+    {
+      "path": "governance-review.json",
+      "bytes": 32948,
+      "lf": 724,
+      "terminal_LF": true,
+      "sha256": "5e35f27f8d8781f64c0e3245cb8e1b77cf204746bfe1d47311c098085e17709c"
+    },
+    {
+      "path": "ore-publication-auth.py",
+      "bytes": 4609,
+      "lf": 33,
+      "terminal_LF": true,
+      "sha256": "16050fc065fd100d7823b922f72d8a7a647d179a9e2f40dda09c20ab7e0de065"
+    },
+    {
+      "path": "ore-publication-final-initial.py",
+      "bytes": 3697,
+      "lf": 27,
+      "terminal_LF": true,
+      "sha256": "35ba6c715696b4c55ab0b8ac940f38c58cb4688b79875f80c18cd4cddfd85429"
+    },
+    {
+      "path": "ore-publication-final.py",
+      "bytes": 3956,
+      "lf": 31,
+      "terminal_LF": true,
+      "sha256": "e167254e5716a8ad21fce40b3276ddbd972addacd854b6b4be32dd953f1ec396"
+    },
+    {
+      "path": "ore-publication-prepare.py",
+      "bytes": 4642,
+      "lf": 23,
+      "terminal_LF": true,
+      "sha256": "b067c573df91bf994bdc6df68d47442197b764587c351a3a46f75820dcdeeae3"
+    },
+    {
+      "path": "ore-publication-push-retry.py",
+      "bytes": 1983,
+      "lf": 15,
+      "terminal_LF": true,
+      "sha256": "dff3d3e4baf45c7a80e538165360a98c1e58d40cefe761005345c16871b21733"
+    },
+    {
+      "path": "ore-publication-push.py",
+      "bytes": 1921,
+      "lf": 15,
+      "terminal_LF": true,
+      "sha256": "55e34ffcb370d99d3e4b774f974cc742c7ef7c29304b02ef775725ec9051d503"
+    },
+    {
+      "path": "ore-publication-receipt.py",
+      "bytes": 11060,
+      "lf": 13,
+      "terminal_LF": true,
+      "sha256": "999ef10577e98839cc085831afac0deb01acf94a82107d4050ffe95b99bb9a49"
+    },
+    {
+      "path": "ore-publication-transition.py",
+      "bytes": 3645,
+      "lf": 30,
+      "terminal_LF": true,
+      "sha256": "1ae731d0e733f96bc087b2b0f88fa8876e60710c0826428f3fcfa548b962e713"
+    },
+    {
+      "path": "retained/author/C1-AUTHOR-FREEZE.json",
+      "bytes": 44172,
+      "lf": 1243,
+      "terminal_LF": true,
+      "sha256": "a938e15517035f9e1b484833a74c48b7f3e83072247c9820f9d33c7dd776ee6b"
+    },
+    {
+      "path": "retained/author/C1-CANONICAL-DELTA.json",
+      "bytes": 13460,
+      "lf": 0,
+      "terminal_LF": false,
+      "sha256": "2e64bc07720a8e91b387724704d44860ee9a16fb5d5e364b46c11c5f97c12b1b"
+    },
+    {
+      "path": "retained/author/C1-FILE-IDENTITIES.md",
+      "bytes": 5479,
+      "lf": 53,
+      "terminal_LF": true,
+      "sha256": "43c08a7ce1a9048c79c817d69586fe107afa3ce67fdf5d95ff194ce34cdbaa88"
+    },
+    {
+      "path": "retained/author/C1-FINAL-REPOSITORY-BOUNDARY.json",
+      "bytes": 4505502,
+      "lf": 93448,
+      "terminal_LF": true,
+      "sha256": "5757b1764f3541e4dd3ead19d96c0948968fc799d52e622e5d7c92fdb30eca1d"
+    },
+    {
+      "path": "retained/author/C1-PRE-EDIT-SCOPE.json",
+      "bytes": 10881,
+      "lf": 326,
+      "terminal_LF": true,
+      "sha256": "93fbd0573ede5b2e68270393ad23b210218864a04f2ca6d896be2f715437c826"
+    },
+    {
+      "path": "retained/integration-review/REVIEW-FREEZE.json",
+      "bytes": 1073,
+      "lf": 21,
+      "terminal_LF": true,
+      "sha256": "d32a3c45cd599d8e8fcac92442090d8e226ce8d8b8ed0bb95ea1622d203688b5"
+    },
+    {
+      "path": "retained/integration-review/RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS.md",
+      "bytes": 41748,
+      "lf": 272,
+      "terminal_LF": true,
+      "sha256": "060db9a1730a55710095142dcebb35e158571988e707f7ce24cca02f9a2266ad"
+    },
+    {
+      "path": "retained/integration-review/anchor-retrieval.json",
+      "bytes": 6291,
+      "lf": 219,
+      "terminal_LF": true,
+      "sha256": "6f59e4e69012076d2a8f07e9ce378d8376dff6305ba4bdb9a04d5f93beaac16b"
+    },
+    {
+      "path": "retained/integration-review/audit.py",
+      "bytes": 2609,
+      "lf": 28,
+      "terminal_LF": true,
+      "sha256": "6d4d5319d6e4ee2eca42d4d3167652c8b60f0d34de77d90a71a425d42411fc82"
+    },
+    {
+      "path": "retained/integration-review/governance-review.json",
+      "bytes": 32948,
+      "lf": 724,
+      "terminal_LF": true,
+      "sha256": "5e35f27f8d8781f64c0e3245cb8e1b77cf204746bfe1d47311c098085e17709c"
+    },
+    {
+      "path": "retained/integration-review/governance.py",
+      "bytes": 3082,
+      "lf": 30,
+      "terminal_LF": true,
+      "sha256": "95b65b4c67614b97f9bf639ce2561d09528c37d349f2464f77c10fb2d46d2d0f"
+    },
+    {
+      "path": "retained/integration-review/independent-attacks.json",
+      "bytes": 1481,
+      "lf": 62,
+      "terminal_LF": true,
+      "sha256": "8622224fb920b3392aa1fa15d8e43351eb6bac3a493122aa61100cc78a98bca6"
+    },
+    {
+      "path": "retained/integration-review/inherited-anchor-review.json",
+      "bytes": 283292,
+      "lf": 4277,
+      "terminal_LF": true,
+      "sha256": "f6b2c4ef0f81927c6beb7d5df70cab4a8c69658a0ae728c0b53cf70bdbb8652e"
+    },
+    {
+      "path": "retained/integration-review/repository-review.json",
+      "bytes": 4372624,
+      "lf": 93550,
+      "terminal_LF": true,
+      "sha256": "51b61e4cb95f366cd63bff5364a7e66784280b10e97b2921c6a8e48ee2352074"
+    },
+    {
+      "path": "retained/integration-review/retrieve.py",
+      "bytes": 2242,
+      "lf": 26,
+      "terminal_LF": true,
+      "sha256": "afc6af7c103626513df74a554681261d5d4604ac76c32a8ab7462872778e8a44"
+    }
+  ],
+  "N0_activated": false,
+  "next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW \u2014 ORE N0 PUBLICATION / ACTIVATION READINESS",
+  "freeze_semantics": "Binds exact author artifacts; not independent review or durable-location self-acceptance."
+}

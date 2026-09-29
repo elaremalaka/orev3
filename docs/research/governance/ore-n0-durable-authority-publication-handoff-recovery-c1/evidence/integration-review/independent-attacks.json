@@ -1,0 +1,62 @@
+[
+  {
+    "attack": "N0_activated",
+    "result": "REJECTED",
+    "method": "independent in-memory status predicate"
+  },
+  {
+    "attack": "N0_established",
+    "result": "REJECTED",
+    "method": "independent in-memory status predicate"
+  },
+  {
+    "attack": "T_N0",
+    "result": "REJECTED",
+    "method": "independent in-memory status predicate"
+  },
+  {
+    "attack": "prospective_preflight_executed",
+    "result": "REJECTED",
+    "method": "independent in-memory status predicate"
+  },
+  {
+    "attack": "CD_substantive_status",
+    "result": "REJECTED",
+    "method": "independent in-memory status predicate"
+  },
+  {
+    "attack": "upstream_ore_obligation",
+    "result": "REJECTED",
+    "method": "independent in-memory status predicate"
+  },
+  {
+    "attack": "CD_binding",
+    "result": "REJECTED",
+    "method": "independent in-memory status predicate"
+  },
+  {
+    "attack": "next_gate_count",
+    "result": "REJECTED",
+    "method": "independent in-memory status predicate"
+  },
+  {
+    "attack": "status",
+    "result": "REJECTED",
+    "method": "independent in-memory status predicate"
+  },
+  {
+    "attack": "omit one file",
+    "result": "REJECTED",
+    "method": "canonical delta recomputation"
+  },
+  {
+    "attack": "include unrelated file",
+    "result": "REJECTED",
+    "method": "canonical delta recomputation"
+  },
+  {
+    "attack": "omit historical target",
+    "result": "REJECTED",
+    "method": "179 unique target set and frozen byte equality"
+  }
+]

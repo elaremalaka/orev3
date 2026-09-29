@@ -1,0 +1,99 @@
+{
+  "schema": "ore-n0-durable-authority-current-gate/0.1.0",
+  "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1-CURRENT-GATE",
+  "status": "DRAFT-UNREVIEWED",
+  "authority_status": "Candidate documentary supersession; not accepted durable authority. Explicit current recovery-author instruction permits only submission to the next independent review.",
+  "order": 3,
+  "predecessor": {
+    "path": "../ore-n0-repository-integration-c1/CURRENT-NEXT-GATE.json",
+    "sha256": "10471c83b968c8557492aee33f9a835c7786cbbfab7ae0a5dedc5b562f239c04",
+    "order": 0,
+    "status": "Historical prepublication author freeze; never rewrite"
+  },
+  "supersession_chain": [
+    {
+      "order": 1,
+      "path": "evidence/publication/PUBLICATION-ADOPTION-RECEIPT.json",
+      "proposition": "publication completed; historical next gate publication/activation-readiness review"
+    },
+    {
+      "order": 2,
+      "path": "evidence/activation-readiness/REVIEW.md",
+      "proposition": "publication integrity PASS; Activation readiness = U/BLOCK; recovery author gate"
+    },
+    {
+      "order": 3,
+      "path": "CURRENT-NEXT-GATE.json",
+      "proposition": "frozen recovery candidate offered only for independent recovery review"
+    }
+  ],
+  "published_commit": "d1c9fc56fc183cdcca83d82cc896e4859a00f4dc",
+  "published_parent": "063d823dc97f1a3690e26f8bb328385acb9d0aef",
+  "published_tree": "5e9f62e95c3a956e1d2a82d30859a214720652af",
+  "publication_completed": true,
+  "publication_integrity": "PASS",
+  "activation_readiness": "U/BLOCK",
+  "N0_established": false,
+  "N0_activated": false,
+  "T_N0": null,
+  "prospective_preflight_executed": false,
+  "CD_executed": false,
+  "CD_dependency_status": "CD prospectively dependency-eligible",
+  "CD_substantive_status": "BLOCKED",
+  "recovery_gaps": [
+    "complete integration PASS, author freeze, and publication evidence lack authenticated accepted durable retention;",
+    "repository-only recovery lacks an authenticated current-gate supersession;",
+    "required raw-index retention or accepted equivalent representation remains unresolved."
+  ],
+  "candidate_gap_disposition": [
+    "Exact evidence bytes and claim bindings retained; independent acceptance and publication pending.",
+    "Explicit ordered repository-only candidate supersession supplied; independent authentication/adoption pending.",
+    "Path A: exact prepublication, staged and publication index bytes retained; staged reconstruction matches frozen exact identity; independent review pending."
+  ],
+  "accepted_durable_retention": false,
+  "review_executed": false,
+  "recovery_published": false,
+  "next_gate_count": 1,
+  "next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 DURABLE AUTHORITY / PUBLICATION HANDOFF RECOVERY",
+  "next_gate_executed": false,
+  "historical_ledger": [
+    "unavailable 3,288-byte listing",
+    "historical continuity U",
+    "historical non-consumption U",
+    "historical alias-exclusion U",
+    "historical direct-vs-symbolic U",
+    "historical symbolic-target U",
+    "producer/task/transaction history U",
+    "IR-U1=U",
+    "historical CS23=U",
+    "historical CS-PREFLIGHT-U",
+    "original N0 U/BLOCK",
+    "N0 candidate C2 incomplete",
+    "C3 FAIL/BLOCK",
+    "C4 FAIL/BLOCK",
+    "C5 FAIL/BLOCK",
+    "179 historical D/U targets",
+    "23 inherited D nodes",
+    "all other FAIL/U/withdrawn findings unchanged",
+    "RR-AR-PASS remains architecture-only"
+  ],
+  "historical_ledger_status": "UNCHANGED; no retroactive repair",
+  "upstream_ore_obligation": "UPSTREAM ORE COMPATIBILITY / DRIFT CONTROL = REQUIRED and UNSATISFIED",
+  "upstream_full_obligation": "../ore-n0-repository-integration-c1/UPSTREAM-ORE-OBLIGATION.md",
+  "later_sequence": [
+    "durable-authority recovery",
+    "independent recovery-package review",
+    "separately authorized acceptance and publication/adoption of exact recovery package and durable locations",
+    "independent publication/activation-readiness verification, including fresh resulting-state authentication and resolution of intervening deltas",
+    "separately authorized explicit external N0 activation and independently authenticated durable receipt",
+    "ORE N0 — PROSPECTIVE PREFLIGHT under effective definitions/applicability and exact receiving-task authority",
+    "FOCUSED CD AUTHOR CORRECTION — LIVE CANARY only after qualified independent prospective preflight PASS and separate compatible authorization"
+  ],
+  "exclusions": [
+    "implementation",
+    "qualification",
+    "Execution Readiness closure",
+    "mining readiness",
+    "historical incident adjudication"
+  ]
+}

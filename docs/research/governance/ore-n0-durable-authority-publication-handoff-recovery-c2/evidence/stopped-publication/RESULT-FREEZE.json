@@ -1,0 +1,123 @@
+{
+  "frozen_UTC": "2026-09-29T16:54:20.492961+00:00",
+  "result": "STOP / BLOCKED BEFORE STAGING",
+  "files": [
+    {
+      "path": "AUTHENTICATION.json",
+      "identity": {
+        "bytes": 6707,
+        "lf": 252,
+        "terminal_LF": true,
+        "sha256": "6777e1c220d8bdc709aa6d9df5358702d1cef59281ee4b108a75ffceb70c8d33"
+      }
+    },
+    {
+      "path": "BLOCKER.json",
+      "identity": {
+        "bytes": 2481,
+        "lf": 36,
+        "terminal_LF": true,
+        "sha256": "58d3ce06cb05bb45d82a643ff1748adea58fae5def9cbbe4e0dd698e36e05a4f"
+      }
+    },
+    {
+      "path": "CANONICAL-DELTA.json",
+      "identity": {
+        "bytes": 24745,
+        "lf": 0,
+        "terminal_LF": false,
+        "sha256": "aa8ebf3d40a2e59d8c8d968d24452d700603c32f286c319d363b30c447efa4d1"
+      }
+    },
+    {
+      "path": "DOCUMENTARY-VALIDATION.json",
+      "identity": {
+        "bytes": 4279,
+        "lf": 145,
+        "terminal_LF": true,
+        "sha256": "0d331e520f58485363fc63e8b89684c2b64085c935a219b74bf688a6930c296b"
+      }
+    },
+    {
+      "path": "FEATURE-TESTS.txt",
+      "identity": {
+        "bytes": 420,
+        "lf": 6,
+        "terminal_LF": true,
+        "sha256": "4af93ffb749ed5f8b7f0bede03e69644323575f585df24e265e9feaf6e3c1019"
+      }
+    },
+    {
+      "path": "IGNORED-METADATA.json",
+      "identity": {
+        "bytes": 2833386,
+        "lf": 97634,
+        "terminal_LF": true,
+        "sha256": "14baa776a5224ff20478d960de084d7b7123b3593a42fb2983b22432f07394f1"
+      }
+    },
+    {
+      "path": "LINEAGE-VALIDATION.json",
+      "identity": {
+        "bytes": 1853,
+        "lf": 80,
+        "terminal_LF": true,
+        "sha256": "3ca6a812bc707f45184b1b67d3feb97d1155a514acbdb1c11f86a9c29c6bded1"
+      }
+    },
+    {
+      "path": "MATERIAL-INVENTORY.json",
+      "identity": {
+        "bytes": 233111,
+        "lf": 8542,
+        "terminal_LF": true,
+        "sha256": "225f1687a7d3bac3bfa7ed1825b9766cd38bb08451dbca3743855e08b5d4c2b6"
+      }
+    },
+    {
+      "path": "REPOSITORY-STATE.json",
+      "identity": {
+        "bytes": 1107776,
+        "lf": 173,
+        "terminal_LF": true,
+        "sha256": "9d4e4c3c264b3cb1093f7439f07d28e0a147f7a880de13bf92a12c6628d583f0"
+      }
+    },
+    {
+      "path": "RESULT.md",
+      "identity": {
+        "bytes": 4959,
+        "lf": 40,
+        "terminal_LF": true,
+        "sha256": "696bc6b1a6523bcceff8e3b7c924b5199d8831e44707d15f51697f823ebe61b9"
+      }
+    },
+    {
+      "path": "REVIEW-STATE-COMPARISON.json",
+      "identity": {
+        "bytes": 1100287,
+        "lf": 178,
+        "terminal_LF": true,
+        "sha256": "3dd5204d338426013f6edbc5c3024dbf4cacbf3a84da5b430d367fd9f53f8935"
+      }
+    },
+    {
+      "path": "authenticate.py",
+      "identity": {
+        "bytes": 5419,
+        "lf": 52,
+        "terminal_LF": true,
+        "sha256": "7c49b03339a93b088a5435b2753542c1b9d2401882a068e871d864b85307e118"
+      }
+    },
+    {
+      "path": "finish.py",
+      "identity": {
+        "bytes": 9717,
+        "lf": 67,
+        "terminal_LF": true,
+        "sha256": "95367421fd962184e6de77d5256c6ccd4e28dd04587859a646d13b4178767456"
+      }
+    }
+  ]
+}

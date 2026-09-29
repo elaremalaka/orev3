@@ -1,0 +1,237 @@
+{
+  "corrected_author_probe": "Initial generated reconstruction tool had a parenthesization error in its retained-path read; corrected before final freeze. Initial failure was not treated as evidence of success. Final exact reconstruction and documentary checks pass.",
+  "status": "AUTHOR DOCUMENTARY VALIDATION — not independent review",
+  "integration_documentary": {
+    "status": "PASS author documentary checks only; not independent review or prospective preflight",
+    "package_members": 37,
+    "bound_by_members_manifest": 36,
+    "archive_sha256": "bef9fdfbb7e929b058a869c4ae4b6b466e0f8d99e570e1647677fe676c2dfc12",
+    "nested_archives": [
+      {
+        "archive": "C6",
+        "files": 543,
+        "entries": 573,
+        "manifests": [
+          {
+            "path": "ORE-N0-PROSPECTIVE-BOUNDARY-C6/freeze-manifest.json",
+            "listed": 542
+          }
+        ]
+      },
+      {
+        "archive": "C5",
+        "files": 530,
+        "entries": 560,
+        "manifests": [
+          {
+            "path": "ORE-N0-PROSPECTIVE-BOUNDARY-C5/freeze-manifest.json",
+            "listed": 529
+          }
+        ]
+      },
+      {
+        "archive": "C4",
+        "files": 515,
+        "entries": 515,
+        "manifests": [
+          {
+            "path": "ORE-N0-PROSPECTIVE-BOUNDARY-C4/freeze-manifest.json",
+            "listed": 514
+          }
+        ]
+      },
+      {
+        "archive": "C3",
+        "files": 390,
+        "entries": 420,
+        "manifests": [
+          {
+            "path": "ORE-N0-PROSPECTIVE-BOUNDARY-C3/freeze-manifest.json",
+            "listed": 389
+          }
+        ]
+      },
+      {
+        "archive": "C2",
+        "files": 2186,
+        "entries": 2559,
+        "manifests": [
+          {
+            "path": "correction/freeze-manifest.json",
+            "listed": 2185
+          },
+          {
+            "path": "correction/original-candidate/freeze-manifest.json",
+            "listed": 2156
+          }
+        ]
+      }
+    ],
+    "negative_cases_rejected": [
+      "N0_established",
+      "N0_activated",
+      "prospective_preflight_executed",
+      "CD_substantive_status",
+      "upstream_ore_obligation",
+      "next_gate_count",
+      "normalized_or_changed_verdict"
+    ],
+    "N0_established": false,
+    "N0_activated": false,
+    "prospective_preflight_executed": false,
+    "CD_executed": false
+  },
+  "feature_tests": "........................................................................ [ 20%]\n........................................................................ [ 41%]\n........................................................................ [ 61%]\n........................................................................ [ 82%]\n...............................................................          [100%]\n351 passed in 5.76s\n",
+  "recovery_documentary": {
+    "result": "PASS — candidate documentary validation only",
+    "adversarial": [
+      {
+        "case": "integration hash survives but raw verdict absent",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "author freeze hash survives but raw freeze absent",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "receipt only transient locator",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "required raw staged index omitted",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "newline normalization",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "stale prepublication gate selected",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "N0 activation promotion",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "publication PASS becomes activation PASS",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "CD documentary eligibility becomes authority",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "upstream obligation disappears",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "retained review copy becomes new review",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "historical U disappears",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "drift silently ignored",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "readiness U/BLOCK omitted",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "no deterministic precedence",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "two gates without ordering",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "equivalent representation drops flags/extensions/stages",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "exact raw index without boundary provenance",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "fresh lane depends on unavailable session storage",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "durable path without identity binding",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "unrelated transient archived",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "all required exact bytes and inactive ordered state",
+        "observed_routing": "PASS",
+        "expected_routing": "PASS",
+        "defense": "PASS"
+      }
+    ],
+    "repository_only": "PASS with Python audit hook rejecting .codex file reads; all necessary evidence read from repository paths and Git objects",
+    "members_including_manifest": 62,
+    "retained_evidence_objects": 49,
+    "published_members_unchanged": 37,
+    "index": "PASS exact reconstruction and full raw retention; no equivalent",
+    "activation_readiness": "U/BLOCK",
+    "accepted_durable_retention": false,
+    "next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 DURABLE AUTHORITY / PUBLICATION HANDOFF RECOVERY"
+  },
+  "raw_copies": "All 49 retained evidence bodies byte-equal to authenticated source or exact reconstructed expected identity; see RETENTION-MAP.",
+  "historical_and_upstream": "Original 37-member package byte-identical; full ledgers and upstream obligation unchanged.",
+  "no_activation": true,
+  "no_preflight": true,
+  "no_CD": true,
+  "remaining_blockers": "Exact original three U/BLOCK categories remain authority-level pending independent acceptance/publication/readiness verification; complete candidate remedies are supplied.",
+  "next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 DURABLE AUTHORITY / PUBLICATION HANDOFF RECOVERY"
+}

@@ -1,0 +1,201 @@
+{
+  "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C2-RETENTION",
+  "status": "PROPOSED; independent C2 acceptance and later publication pending",
+  "records": [
+    {
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/recovery-review/REVIEW.md",
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0edc7-1267-7970-8d61-d7cc12f00aa5/REVIEW.md",
+      "identity": {
+        "bytes": 47520,
+        "lf": 279,
+        "terminal_LF": true,
+        "sha256": "442b89751ead8f7ebf2bc756ff98cd4ea9abe766c00f49616e4b83a654d5e085"
+      },
+      "source_identity": {
+        "bytes": 47520,
+        "lf": 279,
+        "terminal_LF": true,
+        "sha256": "442b89751ead8f7ebf2bc756ff98cd4ea9abe766c00f49616e4b83a654d5e085"
+      },
+      "originator_lane": "01a0edc7-1267-7970-8d61-d7cc12f00aa5",
+      "proposition": "Original independent recovery C1 verdict; retained copy, never a new review or stronger PASS",
+      "copy_semantics": "Exact original bytes; original authority/scope/negatives only. No new review, no stronger PASS, no activation authority.",
+      "permitted_consumers": [
+        "independent C2 review",
+        "separately authorized exact adoption/publication",
+        "independent recovery publication/activation-readiness verification",
+        "repository-only documentary continuation"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "wrong source or reviewer/author role",
+        "missing exact freeze or dependent C1 body",
+        "unsupported consumer or authority promotion",
+        "incompatible supersession",
+        "unverified migration"
+      ],
+      "retrieval": "Repository-relative repository_path is the retrieval location; source is provenance only. After publication use immutable commit:path/blob and verify identity."
+    },
+    {
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/recovery-review/REVIEW-FREEZE.json",
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0edc7-1267-7970-8d61-d7cc12f00aa5/REVIEW-FREEZE.json",
+      "identity": {
+        "bytes": 6714,
+        "lf": 238,
+        "terminal_LF": true,
+        "sha256": "089ace456d80d7d2ee0d20258c78c59aef78972e654e88e6e11264c0277fc8e9"
+      },
+      "source_identity": {
+        "bytes": 6714,
+        "lf": 238,
+        "terminal_LF": true,
+        "sha256": "089ace456d80d7d2ee0d20258c78c59aef78972e654e88e6e11264c0277fc8e9"
+      },
+      "originator_lane": "01a0edc7-1267-7970-8d61-d7cc12f00aa5",
+      "proposition": "Original independent review identity, verdict relationship and author/delta bindings",
+      "copy_semantics": "Exact original bytes; original authority/scope/negatives only. No new review, no stronger PASS, no activation authority.",
+      "permitted_consumers": [
+        "independent C2 review",
+        "separately authorized exact adoption/publication",
+        "independent recovery publication/activation-readiness verification",
+        "repository-only documentary continuation"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "wrong source or reviewer/author role",
+        "missing exact freeze or dependent C1 body",
+        "unsupported consumer or authority promotion",
+        "incompatible supersession",
+        "unverified migration"
+      ],
+      "retrieval": "Repository-relative repository_path is the retrieval location; source is provenance only. After publication use immutable commit:path/blob and verify identity."
+    },
+    {
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/recovery-author/AUTHOR-FREEZE.json",
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0edc7-1267-7970-8d61-d7cc12f00aa5/REVIEWED-AUTHOR-FREEZE.json",
+      "identity": {
+        "bytes": 42601,
+        "lf": 1155,
+        "terminal_LF": true,
+        "sha256": "40c79bbc7c019c6b52ddbfd3a750fb0d84b3f12eafa32e9ba6a51ea5666424b2"
+      },
+      "source_identity": {
+        "bytes": 42601,
+        "lf": 1155,
+        "terminal_LF": true,
+        "sha256": "40c79bbc7c019c6b52ddbfd3a750fb0d84b3f12eafa32e9ba6a51ea5666424b2"
+      },
+      "originator_lane": "01a0ebc9-fbc7-7c43-82ed-250264b724ff",
+      "proposition": "Original recovery C1 author freeze, authenticated reviewer-retained exact copy; not integration author freeze",
+      "copy_semantics": "Exact original bytes; original authority/scope/negatives only. No new review, no stronger PASS, no activation authority.",
+      "permitted_consumers": [
+        "independent C2 review",
+        "separately authorized exact adoption/publication",
+        "independent recovery publication/activation-readiness verification",
+        "repository-only documentary continuation"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "wrong source or reviewer/author role",
+        "missing exact freeze or dependent C1 body",
+        "unsupported consumer or authority promotion",
+        "incompatible supersession",
+        "unverified migration"
+      ],
+      "retrieval": "Repository-relative repository_path is the retrieval location; source is provenance only. After publication use immutable commit:path/blob and verify identity.",
+      "original_source": "/Users/erale/.codex/visualizations/2026/09/29/01a0ebc9-fbc7-7c43-82ed-250264b724ff/RECOVERY-AUTHOR-FREEZE.json",
+      "original_source_equality": "Exact bytes compared at C2 author authentication"
+    },
+    {
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/stopped-publication/RESULT.md",
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0ee12-9c8b-7d73-a5e5-fa16320bac15/recovery-publication-gate/RESULT.md",
+      "identity": {
+        "bytes": 4959,
+        "lf": 40,
+        "terminal_LF": true,
+        "sha256": "696bc6b1a6523bcceff8e3b7c924b5199d8831e44707d15f51697f823ebe61b9"
+      },
+      "source_identity": {
+        "bytes": 4959,
+        "lf": 40,
+        "terminal_LF": true,
+        "sha256": "696bc6b1a6523bcceff8e3b7c924b5199d8831e44707d15f51697f823ebe61b9"
+      },
+      "originator_lane": "01a0ee12-9c8b-7d73-a5e5-fa16320bac15",
+      "proposition": "Original STOP before staging; narrow successor mandate and bounded findings",
+      "copy_semantics": "Exact original bytes; original authority/scope/negatives only. No new review, no stronger PASS, no activation authority.",
+      "permitted_consumers": [
+        "independent C2 review",
+        "separately authorized exact adoption/publication",
+        "independent recovery publication/activation-readiness verification",
+        "repository-only documentary continuation"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "wrong source or reviewer/author role",
+        "missing exact freeze or dependent C1 body",
+        "unsupported consumer or authority promotion",
+        "incompatible supersession",
+        "unverified migration"
+      ],
+      "retrieval": "Repository-relative repository_path is the retrieval location; source is provenance only. After publication use immutable commit:path/blob and verify identity."
+    },
+    {
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/stopped-publication/RESULT-FREEZE.json",
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0ee12-9c8b-7d73-a5e5-fa16320bac15/recovery-publication-gate/RESULT-FREEZE.json",
+      "identity": {
+        "bytes": 3162,
+        "lf": 123,
+        "terminal_LF": true,
+        "sha256": "1e39317845cb6c7945a8646e26ef5a17ffdd998a4c88e1f930308a6f46ae72ba"
+      },
+      "source_identity": {
+        "bytes": 3162,
+        "lf": 123,
+        "terminal_LF": true,
+        "sha256": "1e39317845cb6c7945a8646e26ef5a17ffdd998a4c88e1f930308a6f46ae72ba"
+      },
+      "originator_lane": "01a0ee12-9c8b-7d73-a5e5-fa16320bac15",
+      "proposition": "Original STOP result identity binding",
+      "copy_semantics": "Exact original bytes; original authority/scope/negatives only. No new review, no stronger PASS, no activation authority.",
+      "permitted_consumers": [
+        "independent C2 review",
+        "separately authorized exact adoption/publication",
+        "independent recovery publication/activation-readiness verification",
+        "repository-only documentary continuation"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "wrong source or reviewer/author role",
+        "missing exact freeze or dependent C1 body",
+        "unsupported consumer or authority promotion",
+        "incompatible supersession",
+        "unverified migration"
+      ],
+      "retrieval": "Repository-relative repository_path is the retrieval location; source is provenance only. After publication use immutable commit:path/blob and verify identity."
+    }
+  ],
+  "relationships": {
+    "review": "evidence/recovery-review/REVIEW.md",
+    "review_freeze": "evidence/recovery-review/REVIEW-FREEZE.json",
+    "review_identity_pointer": "/identity",
+    "author_freeze": "evidence/recovery-author/AUTHOR-FREEZE.json",
+    "author_binding_pointer": "/reviewed_author_freeze_sha256",
+    "C1_delta_pointer": "/canonical_delta",
+    "stopped_result": "evidence/stopped-publication/RESULT.md",
+    "stopped_freeze": "evidence/stopped-publication/RESULT-FREEZE.json"
+  },
+  "existing_C1_evidence": {
+    "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/RETENTION-MAP.json",
+    "identity": {
+      "bytes": 116728,
+      "lf": 2275,
+      "terminal_LF": true,
+      "sha256": "2e2cce7875f507f74ee37c2731cc7676917d0ab2dc2f8bcad2ec84f59839c253"
+    },
+    "count": 49,
+    "semantics": "All bodies, bindings, consumers, invalidation and raw-index path A unchanged; no copying of C1 package"
+  },
+  "support_omissions": "Review/STOP freezes retain original support inventories. Unconsumed helper outputs and duplicate audit summaries are not future retrieval dependencies. Required verdict, freezes and C1 bytes are retained; canonical delta is exactly reconstructible from the raw author freeze. A new actual supporting-claim dependency reopens its raw evidence burden.",
+  "preservation": "Retain while claims/gates depend on these bodies; stronger duties prevail. Verify migration destination before relinquishing source. Missing evidence U/BLOCK, contradiction FAIL/BLOCK with residual U; never erase historical unknowns."
+}

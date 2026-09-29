@@ -1,0 +1,1155 @@
+{
+  "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1-AUTHOR-FREEZE",
+  "package": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1",
+  "status": "DRAFT-UNREVIEWED",
+  "author_lane": "01a0ebc9-fbc7-7c43-82ed-250264b724ff",
+  "frozen_UTC": "2026-09-29T06:28:06.882365+00:00",
+  "repository": "/Users/erale/Documents/orev3",
+  "package_root": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1",
+  "branch": "research/post-v1",
+  "local_tracking_live_HEAD": "d1c9fc56fc183cdcca83d82cc896e4859a00f4dc",
+  "parent": "063d823dc97f1a3690e26f8bb328385acb9d0aef",
+  "tree": "5e9f62e95c3a956e1d2a82d30859a214720652af",
+  "ahead_behind": [
+    0,
+    0
+  ],
+  "pre_edit_scope_identity": {
+    "bytes": 59292,
+    "lf": 1101,
+    "terminal_LF": true,
+    "sha256": "5119bc57ca04af2842a3470b050263077e8cb5a09199476db08cc16ccfc5d5c0"
+  },
+  "pre_edit_state": {
+    "bytes": 3263614,
+    "lf": 95240,
+    "terminal_LF": true,
+    "sha256": "52223b08e1535d3e713ff1be5866e5edbba7c714941445d7dfd10475ab61ebe9"
+  },
+  "post_edit_state": {
+    "bytes": 333060,
+    "lf": 391,
+    "terminal_LF": true,
+    "sha256": "63d1d4083a7683f3e57dab7da999e1f39d673b0992b4a27d69b3e3091962e45e"
+  },
+  "file_count": 62,
+  "additions": 62,
+  "edits": 0,
+  "retained_evidence_count": 49,
+  "canonical_delta": [
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ORE-N0-CURRENT-GATE.json",
+      "before": null,
+      "after": {
+        "bytes": 1333,
+        "lf": 24,
+        "terminal_LF": true,
+        "sha256": "ea952d1932326aaf6d85d3d4e9399fa9c68983442c79beb9951cd0a594526192",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "59a28ecf7898fa4541cde810bfee549a1ce8fc4a"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/AUTHENTICATION.json",
+      "before": null,
+      "after": {
+        "bytes": 19750,
+        "lf": 577,
+        "terminal_LF": true,
+        "sha256": "8afba1e22222db402d08b3094db748298c7d84383e74bef41581d25dbfe56f3b",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "807b9df027ba85c750f14404c5ef4ab7ca96c26e"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/AUTHOR-VALIDATION.json",
+      "before": null,
+      "after": {
+        "bytes": 8075,
+        "lf": 237,
+        "terminal_LF": true,
+        "sha256": "4b9a183af0aba4071bd6df1396bb9ed2ea9a1055f6d6b7cae25e776847dbde89",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "d80ddeed8890731c28edee5b4c9de2bc8e8d5870"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/CURRENT-NEXT-GATE.json",
+      "before": null,
+      "after": {
+        "bytes": 4621,
+        "lf": 99,
+        "terminal_LF": true,
+        "sha256": "0cfbbfb0dcb799e6b58eb213014b25f877aebbfbf27016c22fd266136bbdb8dd",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "1834c528530e319ac73c87334b70c695e6ea4240"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/MANIFEST.json",
+      "before": null,
+      "after": {
+        "bytes": 119104,
+        "lf": 2230,
+        "terminal_LF": true,
+        "sha256": "dbcf1fedd86d06af9641a52ddb00ef8fb90f5254f363a10509aead97dca2f422",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "865f9c4ffa70a35fad34345b070b5a26a954b406"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/POST-EDIT-STATE.json",
+      "before": null,
+      "after": {
+        "bytes": 333060,
+        "lf": 391,
+        "terminal_LF": true,
+        "sha256": "63d1d4083a7683f3e57dab7da999e1f39d673b0992b4a27d69b3e3091962e45e",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "cc5ca39d66251faa3d49fb9739c77c24cd6f199c"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/PRE-EDIT-STATE.json",
+      "before": null,
+      "after": {
+        "bytes": 3263614,
+        "lf": 95240,
+        "terminal_LF": true,
+        "sha256": "52223b08e1535d3e713ff1be5866e5edbba7c714941445d7dfd10475ab61ebe9",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "83deedda6bfe4bc6571f32f11c7553bc85ede142"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/RAW-INDEX-RETENTION.md",
+      "before": null,
+      "after": {
+        "bytes": 5910,
+        "lf": 29,
+        "terminal_LF": true,
+        "sha256": "f392a2cf6cb784e265e7cc11d6951fbfb0b53e434dd0ea4924358a5f3e044ffb",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "df774b9dfb6019db9f0cfe1b5fc4ba9f62e7958e"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/RECOVERY.md",
+      "before": null,
+      "after": {
+        "bytes": 10509,
+        "lf": 57,
+        "terminal_LF": true,
+        "sha256": "3f9dcc46eac1e3290aa107354b37516f452dbe11f6d57e9d04bcd38d265d0fc8",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "e5062bbc9df3ab8abd0a35790907a73994ecb8c0"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/RETENTION-MAP.json",
+      "before": null,
+      "after": {
+        "bytes": 116728,
+        "lf": 2275,
+        "terminal_LF": true,
+        "sha256": "2e2cce7875f507f74ee37c2731cc7676917d0ab2dc2f8bcad2ec84f59839c253",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "57d273c3dc3ddbfd7b61215482b6a2a7a903c937"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/SCOPE.json",
+      "before": null,
+      "after": {
+        "bytes": 59292,
+        "lf": 1101,
+        "terminal_LF": true,
+        "sha256": "5119bc57ca04af2842a3470b050263077e8cb5a09199476db08cc16ccfc5d5c0",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "5c0fbba8c75b5f06eef123671160eb54014b9f4d"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/documentary/reconstruct_index.py",
+      "before": null,
+      "after": {
+        "bytes": 1969,
+        "lf": 22,
+        "terminal_LF": true,
+        "sha256": "594625af90fc5ccc1fe16eda40c1ce63baac5bf9cac9934c720056cac7d78705",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "976d6d31a4dd847113d1d8d396f4320d13655182"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/documentary/verify.py",
+      "before": null,
+      "after": {
+        "bytes": 11968,
+        "lf": 172,
+        "terminal_LF": true,
+        "sha256": "73d79b77b38e7c68ecd3eacc4a87992e10fc2bf4a95eb4ef2cc3ccb2cf620f49",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "f14250eb3134abe6a2344fa55f172936b4f814a7"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/RECOVERY-AUTHORITY-original-record.jsonl",
+      "before": null,
+      "after": {
+        "bytes": 15469,
+        "lf": 1,
+        "terminal_LF": true,
+        "sha256": "2e6df8ed69293f13be7a74ed7f80814ffe5112b63e9377117242926243777744",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "a229fbbdf9640eec569444e7f0b16da4899b9eb2"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/FINAL-BOUNDARY.json",
+      "before": null,
+      "after": {
+        "bytes": 182165,
+        "lf": 197,
+        "terminal_LF": true,
+        "sha256": "924e9712bc16fc402610ee8c4471c45904cc899700d5dfd64ab75d9f1909ac23",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "7fb9f696a1df21f5a3dbd1febc7d71c0966c6e17"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/PUBLICATION-SUPPORT-CHECK.json",
+      "before": null,
+      "after": {
+        "bytes": 19615,
+        "lf": 542,
+        "terminal_LF": true,
+        "sha256": "4a6cd606146ce4af7a47f7876bfa4764ae9a73b1946df8f256b9a9dfe9d515f7",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "f0cef85db7a470e1527badcac9c3044a7b17b748"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/RECEIPT-CLAIMS.json",
+      "before": null,
+      "after": {
+        "bytes": 45373,
+        "lf": 952,
+        "terminal_LF": true,
+        "sha256": "0278f6ab4b010f94ec2c144b99e62a54729a4b81ca911cae4b36a773d05f6ad6",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "81982be280de07a141273543f90a84a22ea7ae91"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REMOTE-FULL-TREE.json",
+      "before": null,
+      "after": {
+        "bytes": 191966,
+        "lf": 5329,
+        "terminal_LF": true,
+        "sha256": "b6436bd03385ce16e1bfdcf2c2dd15a26ef20d432fecccacee68bf8b078d659b",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "48a1f377fcecb42e094de03535f9bdfc876c1cbc"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REMOTE-PACKAGE-RETRIEVAL.json",
+      "before": null,
+      "after": {
+        "bytes": 8386,
+        "lf": 191,
+        "terminal_LF": true,
+        "sha256": "5b92fe759f710f9a17bb3c4215d7b2ce9b3aaac0d105b2b09fb57aeba95d1ecd",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "72424a1f0e707fd0e1fb8e98046276b2f59297eb"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REPOSITORY-AUDIT.json",
+      "before": null,
+      "after": {
+        "bytes": 3156665,
+        "lf": 95754,
+        "terminal_LF": true,
+        "sha256": "cb599633321e436fd63e3ee88ac9e9c7fcc2ad50bef6a0c5419a2ba5c639e935",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "cad0378f0a2f1e9b9123671a744146d620400173"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REVIEW-FREEZE.json",
+      "before": null,
+      "after": {
+        "bytes": 5785,
+        "lf": 204,
+        "terminal_LF": true,
+        "sha256": "c299263d6fb846730e30dfd7acb50e82b623cb51a2efcd3932bda6768e34645b",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "26d882893924fdc9cd4f9bb216d2cc286a0e9954"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REVIEW.md",
+      "before": null,
+      "after": {
+        "bytes": 54150,
+        "lf": 318,
+        "terminal_LF": true,
+        "sha256": "7b371223292bef71aafc26896ee73f325171bf199d1f0a2e67f1fec964fc3e2f",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "7e7f1ce54b6f5f6a1b1f9868e787b02e0663ac42"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/index/prepublication-index.bin",
+      "before": null,
+      "after": {
+        "bytes": 86080,
+        "lf": 263,
+        "terminal_LF": false,
+        "sha256": "07d944187853f09e383860d24370e5c18052ff962e9bef5133082d739e647fc4",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "88bf82997193a657c647d0c6412b7f6df094707d"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/index/publication-index.bin",
+      "before": null,
+      "after": {
+        "bytes": 91883,
+        "lf": 272,
+        "terminal_LF": false,
+        "sha256": "ff65baf0e554bdcdaa1024c15fd6c0d8253f307db237f8f6e743f292a6c99699",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "e82878482b5a24b9ab2825a697fed05feffc1f7d"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/index/staged-index.bin",
+      "before": null,
+      "after": {
+        "bytes": 91637,
+        "lf": 266,
+        "terminal_LF": false,
+        "sha256": "cd15512f695b4a83efb17cc04399daff604c3dcda9fa92328dce043e8b8b7faa",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "0936eff868c7cf6785a28613da3697c3cb5e85f0"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-AUTHOR-FREEZE.json",
+      "before": null,
+      "after": {
+        "bytes": 44172,
+        "lf": 1243,
+        "terminal_LF": true,
+        "sha256": "a938e15517035f9e1b484833a74c48b7f3e83072247c9820f9d33c7dd776ee6b",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "f6e72a457543cf576537b83aaa56f092e5396a91"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-CANONICAL-DELTA.json",
+      "before": null,
+      "after": {
+        "bytes": 13460,
+        "lf": 0,
+        "terminal_LF": false,
+        "sha256": "2e64bc07720a8e91b387724704d44860ee9a16fb5d5e364b46c11c5f97c12b1b",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "801a76c37c38c396ccda73331aa2aa182d3724ac"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-FILE-IDENTITIES.md",
+      "before": null,
+      "after": {
+        "bytes": 5479,
+        "lf": 53,
+        "terminal_LF": true,
+        "sha256": "43c08a7ce1a9048c79c817d69586fe107afa3ce67fdf5d95ff194ce34cdbaa88",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "ef1f019e49cb47492a7f9fb99b44d068b11fc69f"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-FINAL-REPOSITORY-BOUNDARY.json",
+      "before": null,
+      "after": {
+        "bytes": 4505502,
+        "lf": 93448,
+        "terminal_LF": true,
+        "sha256": "5757b1764f3541e4dd3ead19d96c0948968fc799d52e622e5d7c92fdb30eca1d",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "4161dbbe24863e28b13e6cafbe39c5d91a0b2f65"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-PRE-EDIT-SCOPE.json",
+      "before": null,
+      "after": {
+        "bytes": 10881,
+        "lf": 326,
+        "terminal_LF": true,
+        "sha256": "93fbd0573ede5b2e68270393ad23b210218864a04f2ca6d896be2f715437c826",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "5f813d67772e9e1d9fdd28254630263996edcbbd"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/REVIEW-FREEZE.json",
+      "before": null,
+      "after": {
+        "bytes": 1073,
+        "lf": 21,
+        "terminal_LF": true,
+        "sha256": "d32a3c45cd599d8e8fcac92442090d8e226ce8d8b8ed0bb95ea1622d203688b5",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "dbce55a1ae8dfa0f6d5c2d2fe14588638b1d6b55"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS.md",
+      "before": null,
+      "after": {
+        "bytes": 41748,
+        "lf": 272,
+        "terminal_LF": true,
+        "sha256": "060db9a1730a55710095142dcebb35e158571988e707f7ce24cca02f9a2266ad",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "95abe591c8893818f0b40832f5d4f351a755a767"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/anchor-retrieval.json",
+      "before": null,
+      "after": {
+        "bytes": 6291,
+        "lf": 219,
+        "terminal_LF": true,
+        "sha256": "6f59e4e69012076d2a8f07e9ce378d8376dff6305ba4bdb9a04d5f93beaac16b",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "bfa825a98eae96b8d05a7d92132e3609b81368f8"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/governance-review.json",
+      "before": null,
+      "after": {
+        "bytes": 32948,
+        "lf": 724,
+        "terminal_LF": true,
+        "sha256": "5e35f27f8d8781f64c0e3245cb8e1b77cf204746bfe1d47311c098085e17709c",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "963987aced4ee21e08e05ebbf208629995da7618"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/independent-attacks.json",
+      "before": null,
+      "after": {
+        "bytes": 1481,
+        "lf": 62,
+        "terminal_LF": true,
+        "sha256": "8622224fb920b3392aa1fa15d8e43351eb6bac3a493122aa61100cc78a98bca6",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "b201f7307b6298227583545fb4aac0eedbbbc2f3"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/inherited-anchor-review.json",
+      "before": null,
+      "after": {
+        "bytes": 283292,
+        "lf": 4277,
+        "terminal_LF": true,
+        "sha256": "f6b2c4ef0f81927c6beb7d5df70cab4a8c69658a0ae728c0b53cf70bdbb8652e",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "078f4411ed65ae4ed693c3074c1d09f3ce3d282e"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/repository-review.json",
+      "before": null,
+      "after": {
+        "bytes": 4372624,
+        "lf": 93550,
+        "terminal_LF": true,
+        "sha256": "51b61e4cb95f366cd63bff5364a7e66784280b10e97b2921c6a8e48ee2352074",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "26bbbdeaccd4b7cd6ae436f32ba1a3e4d5cf76ea"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ACTION-AUTHORITY-original-record.jsonl",
+      "before": null,
+      "after": {
+        "bytes": 10263,
+        "lf": 1,
+        "terminal_LF": true,
+        "sha256": "bf59e9cd63b14fa028b95fb316a6b1553e9549ccb36958b075389c315125e277",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "08319b29b1ba866f3a67f4f85c34554473f4e59f"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ACTION-ENVELOPE.json",
+      "before": null,
+      "after": {
+        "bytes": 2138,
+        "lf": 32,
+        "terminal_LF": true,
+        "sha256": "cf6df730584fe93859842f71a021112ad97fbadacdcdcf512da5249375377e11",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "d3fca8ff39d8f828c477fd5eab2888e461a89edb"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ACTION-SESSION-PREFIX.jsonl",
+      "before": null,
+      "after": {
+        "bytes": 1289040,
+        "lf": 241,
+        "terminal_LF": true,
+        "sha256": "6de24b53cc6672fb195f62e32c42f2c3bdc56497cfb7d1a84a5ce91e3cc3e45b",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "c46225d83b9c7abe320594cf138a50c4b19ff102"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/AUTHENTICATED-PACKAGE.json",
+      "before": null,
+      "after": {
+        "bytes": 18317,
+        "lf": 535,
+        "terminal_LF": true,
+        "sha256": "f76086df6ccf0045166baee86320296ae8245d8b1350d61a3a96d39caa0e67e1",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "fd116991578876add4bd837e3a195937a15c4002"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/COMMIT-AUTHENTICATION.json",
+      "before": null,
+      "after": {
+        "bytes": 196605,
+        "lf": 538,
+        "terminal_LF": true,
+        "sha256": "412c30d22a39ffc06118f1c040cdc8a04588f12990743b26e1b5743299d78425",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "a127308f8a22204df9b213a86705e6bc112b6681"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/COMMIT-MESSAGE.txt",
+      "before": null,
+      "after": {
+        "bytes": 895,
+        "lf": 14,
+        "terminal_LF": true,
+        "sha256": "af1fa7e5bce3429f51b86590dfe41dc3634a0a9a46a91fc74f627f58ce960cf8",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "5c38b032e467ef965052c35848c238db0edaf139"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/FINAL-LIVE-REMOTE.json",
+      "before": null,
+      "after": {
+        "bytes": 367,
+        "lf": 14,
+        "terminal_LF": true,
+        "sha256": "e3e71502f81b43ac248398cf3fda386eef6c1f21627048ce6ae971baf0600c0b",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "a8ca9be23470ebf6061149aac586256056409604"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/FINAL-REPOSITORY-BOUNDARY.json",
+      "before": null,
+      "after": {
+        "bytes": 3953424,
+        "lf": 85735,
+        "terminal_LF": true,
+        "sha256": "dc06ab05d27d05600044277a150681771090d0657a13995b033bbb5bdc6bbd4e",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "48d3a5708effdc333cc3866666d51e94f65df45a"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/POST-PUSH-REMOTE.json",
+      "before": null,
+      "after": {
+        "bytes": 359,
+        "lf": 9,
+        "terminal_LF": true,
+        "sha256": "55e760f19742dfb570b2ea9dd4f12db2c22651d52147cf72145841756b34c3ca",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "6ee493ad35ad646b835d21aeb47d796380b1304a"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PRE-PUBLICATION-BOUNDARY.json",
+      "before": null,
+      "after": {
+        "bytes": 4544774,
+        "lf": 99012,
+        "terminal_LF": true,
+        "sha256": "39defe05b63a08dcd346a69b50b8e8f20d4319fed591f38d1aa1d825ceaec131",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "69ccd050adddd7c36dc32edf7b9a4045ac1f03e0"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PRE-PUBLICATION-REMOTE.json",
+      "before": null,
+      "after": {
+        "bytes": 606,
+        "lf": 12,
+        "terminal_LF": true,
+        "sha256": "50ecf4209a557e85dcb3caf5415f707de935d6b707021b48ada49c43ca16ff21",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "0a7c14082600c6ea05d373e9a7e4299e574d207d"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PUBLICATION-ADOPTION-RECEIPT.json",
+      "before": null,
+      "after": {
+        "bytes": 27407,
+        "lf": 667,
+        "terminal_LF": true,
+        "sha256": "8436af27bda385083d5295ff6ae8fb33a3486d6d04f07e5f1e8408cd8acaa5d0",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "4ef22932dafdc214e6173f991466f0e0910bb662"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PUBLICATION-CONTINUATION.md",
+      "before": null,
+      "after": {
+        "bytes": 2839,
+        "lf": 37,
+        "terminal_LF": true,
+        "sha256": "062cae0df0065b6f800d0a66f07167a7bf549aa315f09d730744320989628b72",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "81daf0c2f3bd3f3642e4c18a67ed0cba9849d1ab"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PUBLICATION-FREEZE.json",
+      "before": null,
+      "after": {
+        "bytes": 10221,
+        "lf": 336,
+        "terminal_LF": true,
+        "sha256": "7cc962d673c5a0ebd33df44133f84e20688a7fe7c74351cf53eb3fac52e255d3",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "5e5ca055a307bed2e70e1c29144de0a1cf36a94b"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/STAGED-FREEZE.json",
+      "before": null,
+      "after": {
+        "bytes": 106267,
+        "lf": 533,
+        "terminal_LF": true,
+        "sha256": "ccc52d112ea4a0262c538d77297aec5583efc874821fb2d4e426af5d7aac5aca",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "b8c77ed14dc5cdbd4eb03f0d3250b58f98508b5d"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/TRANSITION-COMMANDS.jsonl",
+      "before": null,
+      "after": {
+        "bytes": 344268,
+        "lf": 120,
+        "terminal_LF": true,
+        "sha256": "6157f62c95887186fd23b0d51c7eebf5dd1b93c43ecf3eda6eb2a4c42d49412f",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "f6ff479cc47f8b4bb75f61d2f9bb4217b69c95ea"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/VALIDATION-CORRECTION.json",
+      "before": null,
+      "after": {
+        "bytes": 506,
+        "lf": 5,
+        "terminal_LF": true,
+        "sha256": "7d872180c71c6bdcd939ce7bb05298f74cfda330194d0ca9b6148be40647a9a4",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "219dbe0501e99cc210013f7ef4647cd87f24a131"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-auth.py",
+      "before": null,
+      "after": {
+        "bytes": 4609,
+        "lf": 33,
+        "terminal_LF": true,
+        "sha256": "16050fc065fd100d7823b922f72d8a7a647d179a9e2f40dda09c20ab7e0de065",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "a3e76aa272199fda2c7270df45f535248fc88793"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-final-initial.py",
+      "before": null,
+      "after": {
+        "bytes": 3697,
+        "lf": 27,
+        "terminal_LF": true,
+        "sha256": "35ba6c715696b4c55ab0b8ac940f38c58cb4688b79875f80c18cd4cddfd85429",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "56e584206f7340f0618a9548ad7e66e3f11c7fc7"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-final.py",
+      "before": null,
+      "after": {
+        "bytes": 3956,
+        "lf": 31,
+        "terminal_LF": true,
+        "sha256": "e167254e5716a8ad21fce40b3276ddbd972addacd854b6b4be32dd953f1ec396",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "0884953111c5343523b0e2006ce597408f6532d2"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-prepare.py",
+      "before": null,
+      "after": {
+        "bytes": 4642,
+        "lf": 23,
+        "terminal_LF": true,
+        "sha256": "b067c573df91bf994bdc6df68d47442197b764587c351a3a46f75820dcdeeae3",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "ca029158644fdede4bddcd983a055f2f5fe37b5c"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-push-retry.py",
+      "before": null,
+      "after": {
+        "bytes": 1983,
+        "lf": 15,
+        "terminal_LF": true,
+        "sha256": "dff3d3e4baf45c7a80e538165360a98c1e58d40cefe761005345c16871b21733",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "fb540893f6e4f17aec1a2064a94ffbf9c3e3a69d"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-push.py",
+      "before": null,
+      "after": {
+        "bytes": 1921,
+        "lf": 15,
+        "terminal_LF": true,
+        "sha256": "55e34ffcb370d99d3e4b774f974cc742c7ef7c29304b02ef775725ec9051d503",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "fcbe6a47d1c7d95e630e18bb8b28cfe9584b3182"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-receipt.py",
+      "before": null,
+      "after": {
+        "bytes": 11060,
+        "lf": 13,
+        "terminal_LF": true,
+        "sha256": "999ef10577e98839cc085831afac0deb01acf94a82107d4050ffe95b99bb9a49",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "44ba5d21521ab9bb02b46113f0475150b928112d"
+      }
+    },
+    {
+      "operation": "add",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-transition.py",
+      "before": null,
+      "after": {
+        "bytes": 3645,
+        "lf": 30,
+        "terminal_LF": true,
+        "sha256": "1ae731d0e733f96bc087b2b0f88fa8876e60710c0826428f3fcfa548b962e713",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "56130ad0ebcd503742e0aec1372d337b6638cea0"
+      }
+    }
+  ],
+  "canonical_delta_identity": {
+    "bytes": 24745,
+    "lf": 0,
+    "terminal_LF": false,
+    "sha256": "aa8ebf3d40a2e59d8c8d968d24452d700603c32f286c319d363b30c447efa4d1"
+  },
+  "canonical_delta_encoding": "Path-sorted operation array, UTF-8 compact sorted-key JSON, no terminal LF; includes all candidate files and additive gate entrypoint, excludes outer author artifacts.",
+  "manifest_identity": {
+    "bytes": 119104,
+    "lf": 2230,
+    "terminal_LF": true,
+    "sha256": "dbcf1fedd86d06af9641a52ddb00ef8fb90f5254f363a10509aead97dca2f422"
+  },
+  "manifest_metadata": {
+    "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1-MANIFEST",
+    "propositions": [
+      "Exact identity and retrieval/provenance model of all other candidate members"
+    ],
+    "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/MANIFEST.json",
+    "source_provenance": "This recovery author lane; derived from final exact candidate bytes",
+    "originating_external_identity": null,
+    "authority_status": "DRAFT-UNREVIEWED; no self-acceptance",
+    "permitted_consumers": [
+      "independent recovery review",
+      "compatible subsequent acceptance/publication verification"
+    ],
+    "invalidation_conditions": [
+      "missing/mutated bytes",
+      "missing independently bound freeze",
+      "unsupported authority promotion"
+    ],
+    "retrieval": "Read MANIFEST.json from exact repository path; verify against this externally authenticated freeze, later independently bound by complete review."
+  },
+  "outer_support": [
+    {
+      "path": "PRE-EDIT-SCOPE.json",
+      "identity": {
+        "bytes": 59292,
+        "lf": 1101,
+        "terminal_LF": true,
+        "sha256": "5119bc57ca04af2842a3470b050263077e8cb5a09199476db08cc16ccfc5d5c0"
+      }
+    },
+    {
+      "path": "CANONICAL-DELTA.json",
+      "identity": {
+        "bytes": 24745,
+        "lf": 0,
+        "terminal_LF": false,
+        "sha256": "aa8ebf3d40a2e59d8c8d968d24452d700603c32f286c319d363b30c447efa4d1"
+      }
+    },
+    {
+      "path": "FILE-IDENTITIES.md",
+      "identity": {
+        "bytes": 13898,
+        "lf": 68,
+        "terminal_LF": true,
+        "sha256": "5c461b7c0c705ed43361065b7c9b5d5a259d0026867535eca251f428602d0ff1"
+      }
+    },
+    {
+      "path": "FINAL-DOCUMENTARY-VALIDATION.json",
+      "identity": {
+        "bytes": 4279,
+        "lf": 145,
+        "terminal_LF": true,
+        "sha256": "0d331e520f58485363fc63e8b89684c2b64085c935a219b74bf688a6930c296b"
+      }
+    }
+  ],
+  "validation": {
+    "result": "PASS — candidate documentary validation only",
+    "adversarial": [
+      {
+        "case": "integration hash survives but raw verdict absent",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "author freeze hash survives but raw freeze absent",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "receipt only transient locator",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "required raw staged index omitted",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "newline normalization",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "stale prepublication gate selected",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "N0 activation promotion",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "publication PASS becomes activation PASS",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "CD documentary eligibility becomes authority",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "upstream obligation disappears",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "retained review copy becomes new review",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "historical U disappears",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "drift silently ignored",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "readiness U/BLOCK omitted",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "no deterministic precedence",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "two gates without ordering",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "equivalent representation drops flags/extensions/stages",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "exact raw index without boundary provenance",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "fresh lane depends on unavailable session storage",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "durable path without identity binding",
+        "observed_routing": "U/BLOCK",
+        "expected_routing": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "unrelated transient archived",
+        "observed_routing": "FAIL/BLOCK",
+        "expected_routing": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "all required exact bytes and inactive ordered state",
+        "observed_routing": "PASS",
+        "expected_routing": "PASS",
+        "defense": "PASS"
+      }
+    ],
+    "repository_only": "PASS with Python audit hook rejecting .codex file reads; all necessary evidence read from repository paths and Git objects",
+    "members_including_manifest": 62,
+    "retained_evidence_objects": 49,
+    "published_members_unchanged": 37,
+    "index": "PASS exact reconstruction and full raw retention; no equivalent",
+    "activation_readiness": "U/BLOCK",
+    "accepted_durable_retention": false,
+    "next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 DURABLE AUTHORITY / PUBLICATION HANDOFF RECOVERY"
+  },
+  "final_inventory": "Exactly 792 inherited material paths plus 62 candidate additions; all inherited content/modes unchanged. Operational ignored metadata may change and is claim-scoped, not a coherent snapshot.",
+  "raw_index": {
+    "bytes": 91883,
+    "lf": 272,
+    "terminal_LF": false,
+    "sha256": "ff65baf0e554bdcdaa1024c15fd6c0d8253f307db237f8f6e743f292a6c99699"
+  },
+  "raw_index_decision": "Path A: exact bytes retained; staged snapshot reconstructed with expected original SHA-256. No equivalent representation.",
+  "publication_integrity": "PASS — preserved independently established result",
+  "activation_readiness": "U/BLOCK",
+  "remaining_activation_blockers": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1 supplies candidate remedies only; exact original three categories remain pending independent acceptance/adoption/publication and readiness verification.",
+  "N0_established": false,
+  "N0_activated": false,
+  "T_N0": null,
+  "prospective_preflight_executed": false,
+  "CD_executed": false,
+  "CD_substantive_status": "BLOCKED",
+  "historical_ledger": "unchanged; no retroactive repair",
+  "upstream": "UPSTREAM ORE COMPATIBILITY / DRIFT CONTROL = REQUIRED and UNSATISFIED",
+  "staged": false,
+  "committed": false,
+  "pushed": false,
+  "published": false,
+  "implementation_or_qualification": false,
+  "Execution_Readiness_closed": false,
+  "mining_readiness_inferred": false,
+  "next_gate_count": 1,
+  "next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 DURABLE AUTHORITY / PUBLICATION HANDOFF RECOVERY",
+  "next_gate_executed": false,
+  "freeze_semantics": "External author binding only, not accepted durable storage. Complete candidate byte closure is repository-resident and survives loss of visualization storage; independent review must bind this exact freeze identity and later authorized adoption must retain exact review/freeze/action bindings before authority reliance. No self-hash or self-acceptance. Existing C2 acceptance procedure governs."
+}

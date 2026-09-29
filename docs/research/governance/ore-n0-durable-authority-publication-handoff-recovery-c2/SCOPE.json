@@ -1,0 +1,100 @@
+{
+  "package": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C2",
+  "revision": 2,
+  "frozen_UTC": "2026-09-29T17:46:09.228197+00:00",
+  "classification": {
+    "additions": 14,
+    "edits": 0
+  },
+  "paths": [
+    {
+      "path": "docs/research/governance/ORE-N0-RECOVERY-CURRENT-GATE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/AUTHOR-VALIDATION.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/CURRENT-NEXT-GATE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/HANDOFF.md",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/MANIFEST.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/PRE-EDIT-STATE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/RETENTION-MAP.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/SCOPE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/documentary/verify.py",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/recovery-author/AUTHOR-FREEZE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/recovery-review/REVIEW-FREEZE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/recovery-review/REVIEW.md",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/stopped-publication/RESULT-FREEZE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/stopped-publication/RESULT.md",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT"
+    }
+  ],
+  "dependency": {
+    "C1_author_freeze_sha256": "40c79bbc7c019c6b52ddbfd3a750fb0d84b3f12eafa32e9ba6a51ea5666424b2",
+    "C1_canonical_delta_sha256": "aa8ebf3d40a2e59d8c8d968d24452d700603c32f286c319d363b30c447efa4d1"
+  },
+  "scope_ceiling": "Post-review retention and routing only; no C1 edits; no Git mutation; no activation, preflight or substantive CD authority"
+}

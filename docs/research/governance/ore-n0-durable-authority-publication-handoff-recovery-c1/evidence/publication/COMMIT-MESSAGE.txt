@@ -1,0 +1,14 @@
+docs: adopt and publish reviewed ORE N0 repository integration C1
+
+Adopt exactly the 37 reviewed additions of ORE-N0-REPOSITORY-INTEGRATION-C1.
+Canonical delta SHA-256: 2e64bc07720a8e91b387724704d44860ee9a16fb5d5e364b46c11c5f97c12b1b.
+Independent integration review: RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS.
+
+This commit records repository adoption/publication only. It does not
+establish or activate N0. Independent publication verification and separate
+external activation authority remain required; T_N0 remains UNSET.
+CD prospectively dependency-eligible remains a documentary statement only.
+CD substantive work and prospective preflight remain blocked pending their
+separate prerequisites. Historical U/FAIL/withdrawn findings are unchanged.
+UPSTREAM ORE COMPATIBILITY / DRIFT CONTROL = REQUIRED and UNSATISFIED.
+No implementation, qualification, Execution Readiness or mining authority.

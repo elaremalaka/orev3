@@ -1,0 +1,21 @@
+{
+  "verdict": "RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS",
+  "reviewer_lane": "01a0eb5b-7133-7f92-be4c-c11e13d66ae8",
+  "frozen_at_UTC": "2026-09-29T04:21:17.708848+00:00",
+  "file": "RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS.md",
+  "identity": {
+    "bytes": 41748,
+    "lf": 272,
+    "terminal_LF": true,
+    "sha256": "060db9a1730a55710095142dcebb35e158571988e707f7ce24cca02f9a2266ad"
+  },
+  "reviewed_author_freeze_sha256": "a938e15517035f9e1b484833a74c48b7f3e83072247c9820f9d33c7dd776ee6b",
+  "canonical_delta_sha256": "2e64bc07720a8e91b387724704d44860ee9a16fb5d5e364b46c11c5f97c12b1b",
+  "sole_next_gate": "ORE N0 \u2014 INTEGRATION ADOPTION / PUBLICATION AUTHOR",
+  "N0_established": false,
+  "N0_activated": false,
+  "prospective_preflight_executed": false,
+  "CD_executed": false,
+  "upstream": "REQUIRED and UNSATISFIED",
+  "retention": "External independent review artifact; later acceptance must retain exact verdict and required supporting evidence in accepted durable storage before raw-dependent reliance. This receipt is not N0 activation or publication."
+}

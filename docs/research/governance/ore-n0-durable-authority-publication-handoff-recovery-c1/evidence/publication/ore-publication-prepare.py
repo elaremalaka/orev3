@@ -1,0 +1,23 @@
+exec(open('/tmp/ore-publication-auth.py').read().split('f=A/')[0])
+import shutil,base64,zlib
+for src,sub,names in [(A,'author',['C1-AUTHOR-FREEZE.json','C1-CANONICAL-DELTA.json','C1-FILE-IDENTITIES.md','C1-FINAL-REPOSITORY-BOUNDARY.json','C1-PRE-EDIT-SCOPE.json']),(R,'integration-review',[p.name for p in R.iterdir() if p.is_file()])]:
+ dest=O/'retained'/sub;dest.mkdir(parents=True,exist_ok=True)
+ for n in names:shutil.copyfile(src/n,dest/n);assert (src/n).read_bytes()==(dest/n).read_bytes()
+for n in ['anchor-retrieval.json','governance-review.json']:shutil.copyfile(pathlib.Path('/tmp/ore-publication-anchors')/n,O/n)
+shutil.copyfile('/tmp/ore-publication-documentary.json',O/'documentary-validation.json')
+a=json.load(open('/tmp/ore-publication-anchors/C2/original-candidate/evidence/redesign/anchors.json'));decoded=[]
+for r in a['accepted_baseline']['verified_external_evidence']:
+ v=r['retained_bytes'];assert v['encoding']=='zlib+base64';b=zlib.decompress(base64.b64decode(v['data']));assert all(identity(b)[k]==v['decoded_identity'][k] for k in ['bytes','lf','sha256']);decoded.append(v['decoded_identity'])
+save('C2-EMBEDDED-RETRIEVAL.json',decoded)
+session=pathlib.Path('/Users/erale/.codex/sessions/2026/09/28/rollout-2026-09-28T21-31-14-01a0eb6e-5f96-7000-b217-ab265e6f2e5e.jsonl');found=[]
+for line in session.read_bytes().splitlines(keepends=True):
+ r=json.loads(line);p=r.get('payload',{});
+ if p.get('role')=='user' and 'Author the exact adoption/publication transition' in str(p):found.append(line)
+assert len(found)==1;(O/'ACTION-AUTHORITY-original-record.jsonl').write_bytes(found[0])
+# No alias between observed mutable operational files and the consumed material/package.
+b=json.load(open(O/'PRE-PUBLICATION-BOUNDARY.json'));mat=[P/r['path'] for r in b['material']]+list(Q.rglob('*'));inos={(p.stat().st_dev,p.stat().st_ino) for p in mat if p.is_file()};aliases=[]
+for r in b['ignored_changes']:
+ p=P/r['path'];assert not p.is_symlink();assert (p.stat().st_dev,p.stat().st_ino) not in inos
+save('ACTION-ENVELOPE.json',dict(lane='01a0eb6e-5f96-7000-b217-ab265e6f2e5e',created_UTC=datetime.datetime.now(datetime.timezone.utc).isoformat(),authority=identity(found[0]),review='RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS',baseline='063d823dc97f1a3690e26f8bb328385acb9d0aef',delta_sha256='2e64bc07720a8e91b387724704d44860ee9a16fb5d5e364b46c11c5f97c12b1b',exact_scope='37 reviewed additions only, no existing-file edits',adoption='Repository publication of exact reviewed package, CS01-CS25/N0-2 definitions and ore-v3-n0-cd-applicability/0.1.0 definitions; effectiveness/activation not issued.',permitted_sequence=['exact-path stage','authenticate index delta and inherited boundary','one commit with exact parent and delta','authenticate commit','ordinary non-force push exact commit to refs/heads/research/post-v1','fresh live remote equality and 0/0','freeze external author publication receipt'],permitted_divergence='After commit before push: local ahead 1, tracking/live at baseline. After successful push: all equal.',excluded='No amendment, merge, rebase, reset, cleanup, persistent config change, unrelated path, activation, preflight, CD or implementation authority.',storage='Existing origin repository at resulting immutable commit/path/blob for exact package; external retention copies remain available in this lane. Independent storage acceptance/publication verification remains required before N0 reliance; copies do not self-accept.',operational_materiality='Five observed operational DB/WAL/observer/transition/event files supply no byte or logical dependency to this fixed documentary adoption. No alias with material/package files observed. Metadata is not a coherent DB snapshot; no operational or interval continuity claim. SHM byte state not inferred.',next_gate='FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 PUBLICATION / ACTIVATION READINESS',N0_established=False,N0_activated=False,T_N0=None))
+save('PRE-PUBLICATION-REMOTE.json',dict(initial_attempt=dict(command='git ls-remote --symref origin HEAD refs/heads/research/post-v1',exit=128,stderr="fatal: unable to access 'https://github.com/elaremalaka/orev3.git/': Could not resolve host: github.com"),bounded_retry=dict(exit=0,stdout='ref: refs/heads/main\tHEAD\n3d7a6db71c4b061d85839d9f81727ee5dc6c9cc6\tHEAD\n063d823dc97f1a3690e26f8bb328385acb9d0aef\trefs/heads/research/post-v1\n'),feature_tests='351 passed in 6.53s; PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src .venv/bin/python -B -m pytest -q -p no:cacheprovider tests/features'))
+print('Action envelope and exact input originals retained; 15 embedded C2 evidence bodies verified:',len(decoded))

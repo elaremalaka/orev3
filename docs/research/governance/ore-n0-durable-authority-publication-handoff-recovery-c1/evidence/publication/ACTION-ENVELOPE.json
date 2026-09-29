@@ -1,0 +1,32 @@
+{
+  "lane": "01a0eb6e-5f96-7000-b217-ab265e6f2e5e",
+  "created_UTC": "2026-09-29T04:34:34.323404+00:00",
+  "authority": {
+    "bytes": 10263,
+    "lf": 1,
+    "terminal_LF": true,
+    "sha256": "bf59e9cd63b14fa028b95fb316a6b1553e9549ccb36958b075389c315125e277"
+  },
+  "review": "RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS",
+  "baseline": "063d823dc97f1a3690e26f8bb328385acb9d0aef",
+  "delta_sha256": "2e64bc07720a8e91b387724704d44860ee9a16fb5d5e364b46c11c5f97c12b1b",
+  "exact_scope": "37 reviewed additions only, no existing-file edits",
+  "adoption": "Repository publication of exact reviewed package, CS01-CS25/N0-2 definitions and ore-v3-n0-cd-applicability/0.1.0 definitions; effectiveness/activation not issued.",
+  "permitted_sequence": [
+    "exact-path stage",
+    "authenticate index delta and inherited boundary",
+    "one commit with exact parent and delta",
+    "authenticate commit",
+    "ordinary non-force push exact commit to refs/heads/research/post-v1",
+    "fresh live remote equality and 0/0",
+    "freeze external author publication receipt"
+  ],
+  "permitted_divergence": "After commit before push: local ahead 1, tracking/live at baseline. After successful push: all equal.",
+  "excluded": "No amendment, merge, rebase, reset, cleanup, persistent config change, unrelated path, activation, preflight, CD or implementation authority.",
+  "storage": "Existing origin repository at resulting immutable commit/path/blob for exact package; external retention copies remain available in this lane. Independent storage acceptance/publication verification remains required before N0 reliance; copies do not self-accept.",
+  "operational_materiality": "Five observed operational DB/WAL/observer/transition/event files supply no byte or logical dependency to this fixed documentary adoption. No alias with material/package files observed. Metadata is not a coherent DB snapshot; no operational or interval continuity claim. SHM byte state not inferred.",
+  "next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW \u2014 ORE N0 PUBLICATION / ACTIVATION READINESS",
+  "N0_established": false,
+  "N0_activated": false,
+  "T_N0": null
+}

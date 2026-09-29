@@ -1,0 +1,219 @@
+[
+  {
+    "label": "C6",
+    "path": "C3-inverse-dependencies.json",
+    "sha256": "fe324a844d44c11ed074255cf079e1d52a00e63a4e9dfb3c91879660a4894ce0",
+    "bytes": 22091380,
+    "verified": true
+  },
+  {
+    "label": "C6",
+    "path": "CD-APPLICABILITY-SUPPLEMENT.md",
+    "sha256": "15dd540f8c8bbb8c88170c5b66f46508268d5686976267686f65b3fd250737f3",
+    "bytes": 3793,
+    "verified": true
+  },
+  {
+    "label": "C6",
+    "path": "artifact-resolution.json",
+    "sha256": "7e5b39e2ca7a1a00a834c35b3db816a81fb5842711c476a7667df07dc8720316",
+    "bytes": 1761,
+    "verified": true
+  },
+  {
+    "label": "C6",
+    "path": "claim-dependency-graph.json",
+    "sha256": "49b5d16e194bbbda4248fd96794148498eb95e016f174d9d20b9dc87e585e685",
+    "bytes": 18422,
+    "verified": true
+  },
+  {
+    "label": "C6",
+    "path": "consumer-node-bindings.json",
+    "sha256": "a95dc4b9d929d39dad4274b10c36074617ac4b4cec1ff520abc654174f31e667",
+    "bytes": 15596734,
+    "verified": true
+  },
+  {
+    "label": "C6",
+    "path": "consumer-reevaluation.json",
+    "sha256": "43f0fa1ebb6c4f75dbbaee12ad1b76f977a3476b9b0534f23322f203ddaaca0a",
+    "bytes": 432974,
+    "verified": true
+  },
+  {
+    "label": "C6",
+    "path": "consumer-sets.json",
+    "sha256": "7c31560303aa55dd2fc9da3c68f1e2f10ea98c71fc080ac5589a1d11a408ea76",
+    "bytes": 12709217,
+    "verified": true
+  },
+  {
+    "label": "C6",
+    "path": "historical-factual-exclusions.json",
+    "sha256": "8e6f02ad499b733a1a829c9bd2ce12b3d7e668a41a7508c7e1977a0acd6cc814",
+    "bytes": 3526656,
+    "verified": true
+  },
+  {
+    "label": "C6",
+    "path": "premise-control-crosswalk.json",
+    "sha256": "c6ee5c7f352be316830fee8107d211d720430d27413e297aed93959225c96bc8",
+    "bytes": 42436023,
+    "verified": true
+  },
+  {
+    "label": "C6",
+    "path": "premise-records.json",
+    "sha256": "db26c9d842ed9be6db1b59d900724edf4f910bdff1ac69cbf9b9cf7fefd5da22",
+    "bytes": 357927990,
+    "verified": true
+  },
+  {
+    "label": "C6",
+    "path": "required-CD-premises.json",
+    "sha256": "066fd2c0951613ebbb1648ee527da9edb0f8608d14f86b3ae8f0edc170a47cd5",
+    "bytes": 2977415,
+    "verified": true
+  },
+  {
+    "label": "C6",
+    "path": "semantic-coverage-audit.json",
+    "sha256": "98cc6fa2da737f90aaf56d74280c581d2838daf889689319a8f32a3d54a414ba",
+    "bytes": 7508226,
+    "verified": true
+  },
+  {
+    "label": "C6",
+    "path": "source-identities.json",
+    "sha256": "c9ad4cf8845c3b69473f54ed6ad125414a22386dbc694b84bdf09a3717c26a75",
+    "bytes": 183450,
+    "verified": true
+  },
+  {
+    "label": "C6",
+    "path": "successor-controls.json",
+    "sha256": "bfa7aa65f06a461f2fada7587e80a733882c6812e4ef345928cb63faa725d7a9",
+    "bytes": 808854,
+    "verified": true
+  },
+  {
+    "label": "C6",
+    "path": "upstream-ore-obligation.json",
+    "sha256": "e965d9d2a40a99725ae9102736715137d407506e0c90d765aab6f505758cce55",
+    "bytes": 2761,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/BOOTSTRAP.md",
+    "sha256": "964ba7cdf744415e03ec05fffea3d4f1932bfc3bbe4b001569aaa8f7f86fe308",
+    "bytes": 3657,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/RETENTION.md",
+    "sha256": "a2e487b9f2637bfbec52b13052df8842329e6b32f1aac9d92f273a39188436db",
+    "bytes": 3465,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/architecture-authority.json",
+    "sha256": "a7a331c6b92074d3a233dfb4a4aa1632acdf83c6462284de0a00b58cfdf15d1c",
+    "bytes": 24150,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/authority-authentication.json",
+    "sha256": "047b336916daffeb4db421c91b1d5e960fb21a3170c38c0c01766ca3814f3143",
+    "bytes": 252890,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/durable-anchors.json",
+    "sha256": "54a34e50176060a08134708baad3e09b7e01f9b3864e94e588022dc075834901",
+    "bytes": 207199,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/evidence/effectiveness-receipt.json",
+    "sha256": "418c48ba1ce87291eca70876b65997bd081f6f77cbd8595919fad7bb34440086",
+    "bytes": 169786,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/evidence/redesign/candidate.txt",
+    "sha256": "0c3a713c65416dbf38de5ef6af02307f5d9e2ff67807c3d059ab48df02338656",
+    "bytes": 22548,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/evidence/redesign/review.txt",
+    "sha256": "6ec85b72458a6a1b21530b9b5ffd0f59107c5797c40d18b336d8952219672f74",
+    "bytes": 28738,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/historical-ledger.json",
+    "sha256": "7bcd9a67d19a43eac4b67ae1efb0cf1526082a60cb2e6956bac4bab161b1f39d",
+    "bytes": 46518,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/originals/RR-AR-PASS.txt",
+    "sha256": "7e45045357f84715192014c33ae102cce1489b61575b05a880c3be582cab47fa",
+    "bytes": 28221,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/originals/c1-review.txt",
+    "sha256": "7ede0898ce174e1bca069e03ca4d629bb5bf607ef4b7960e684ab5e040b87ffa",
+    "bytes": 16058,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/originals/c1.txt",
+    "sha256": "2ff6b0a8c13bc2626a8db76c4f85d9786a3a6f5b3cefbcd900949695adcdd887",
+    "bytes": 29841,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/originals/c2-review.txt",
+    "sha256": "df2aa4613d2212b0a4b4352c857abad214f82297216b95c18f4913a124019ba9",
+    "bytes": 21108,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/originals/c2.txt",
+    "sha256": "90eeb31b72cda585ce94b5e3085fdad2f94a1b29b1bce88f1d02cc3451329a2c",
+    "bytes": 25809,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/refs-classification.json",
+    "sha256": "fd9c9d03ab6dab0b2f62d7b24c127e9df8c25662c7111c2f63be274fd833ff96",
+    "bytes": 44696,
+    "verified": true
+  },
+  {
+    "label": "C2",
+    "path": "original-candidate/restart-authentication/complete-stop-retention.json",
+    "sha256": "7a0e956c0ecac02d676fe25431c60f7f468b6ff5478a7c0459ae3b0ce8df2129",
+    "bytes": 711302,
+    "verified": true
+  }
+]

@@ -1,0 +1,204 @@
+{
+  "verdict": "RR-ORE-N0-PUBLICATION-ACTIVATION-READINESS-U-BLOCK",
+  "reviewer_lane": "01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6",
+  "frozen_UTC": "2026-09-29T05:41:06.738785+00:00",
+  "verdict_file": "REVIEW.md",
+  "identity": {
+    "bytes": 54150,
+    "lf": 318,
+    "terminal_LF": true,
+    "sha256": "7b371223292bef71aafc26896ee73f325171bf199d1f0a2e67f1fec964fc3e2f"
+  },
+  "publication_object_verification": "PASS",
+  "complete_publication_activation_prerequisites": "U/BLOCK",
+  "activation_readiness": "U/BLOCK",
+  "N0_established": false,
+  "N0_activated": false,
+  "T_N0": null,
+  "next_gate": "ORE N0 \u2014 DURABLE AUTHORITY / PUBLICATION HANDOFF RECOVERY AUTHOR",
+  "next_gate_count": 1,
+  "scope": "Prepare bounded recovery/evidence handoff for compatible independent review/authorization; no unconditional Git/publication permission, activation, preflight or CD authority.",
+  "retention": "External review output only, not self-accepted durable storage or activation receipt. Later authority reliance requires exact independently accepted retention.",
+  "supporting_files": [
+    {
+      "path": "ADVERSARIAL-REVIEW.json",
+      "identity": {
+        "bytes": 7993,
+        "lf": 152,
+        "terminal_LF": true,
+        "sha256": "414c49e0c13a89e0ee256bd8d2cf34f1ed56e870b6bc2f93f5e5765294c51af2"
+      }
+    },
+    {
+      "path": "ANCHOR-INVENTORY.json",
+      "identity": {
+        "bytes": 537921,
+        "lf": 9022,
+        "terminal_LF": true,
+        "sha256": "2f5de9de31c51da861264d41c327f6fb64ee59f60f8d3b80324597155fd9dc6c"
+      }
+    },
+    {
+      "path": "C2-EMBEDDED-CHECK.json",
+      "identity": {
+        "bytes": 8972,
+        "lf": 242,
+        "terminal_LF": true,
+        "sha256": "76232d3e70bea11d2d5cb2bc1232310145282127b90c2a4d8fc4472da2523d79"
+      }
+    },
+    {
+      "path": "FINAL-BOUNDARY.json",
+      "identity": {
+        "bytes": 182165,
+        "lf": 197,
+        "terminal_LF": true,
+        "sha256": "924e9712bc16fc402610ee8c4471c45904cc899700d5dfd64ab75d9f1909ac23"
+      }
+    },
+    {
+      "path": "GOVERNANCE-CHECK.json",
+      "identity": {
+        "bytes": 78277,
+        "lf": 1958,
+        "terminal_LF": true,
+        "sha256": "ac9bb31b6f9a5e85e91fdd1b7229c562826d41077f1a2c72ef5a6261c7d929a7"
+      }
+    },
+    {
+      "path": "HISTORICAL-NODE-CHECK.json",
+      "identity": {
+        "bytes": 2215200,
+        "lf": 36585,
+        "terminal_LF": true,
+        "sha256": "fada81b5fd3d710c675549f2f7346325c7f80e42afbc6214527196296fa229fc"
+      }
+    },
+    {
+      "path": "LINEAGE-RETRIEVAL.json",
+      "identity": {
+        "bytes": 211573,
+        "lf": 2601,
+        "terminal_LF": true,
+        "sha256": "8ea1f2e3d4af163c20ed0384f8bcaaadf30631d2abcd7b4573a80838aa7e64d7"
+      }
+    },
+    {
+      "path": "PUBLICATION-SUPPORT-CHECK.json",
+      "identity": {
+        "bytes": 19615,
+        "lf": 542,
+        "terminal_LF": true,
+        "sha256": "4a6cd606146ce4af7a47f7876bfa4764ae9a73b1946df8f256b9a9dfe9d515f7"
+      }
+    },
+    {
+      "path": "RECEIPT-CLAIMS.json",
+      "identity": {
+        "bytes": 45373,
+        "lf": 952,
+        "terminal_LF": true,
+        "sha256": "0278f6ab4b010f94ec2c144b99e62a54729a4b81ca911cae4b36a773d05f6ad6"
+      }
+    },
+    {
+      "path": "REMOTE-FULL-TREE.json",
+      "identity": {
+        "bytes": 191966,
+        "lf": 5329,
+        "terminal_LF": true,
+        "sha256": "b6436bd03385ce16e1bfdcf2c2dd15a26ef20d432fecccacee68bf8b078d659b"
+      }
+    },
+    {
+      "path": "REMOTE-PACKAGE-RETRIEVAL.json",
+      "identity": {
+        "bytes": 8386,
+        "lf": 191,
+        "terminal_LF": true,
+        "sha256": "5b92fe759f710f9a17bb3c4215d7b2ce9b3aaac0d105b2b09fb57aeba95d1ecd"
+      }
+    },
+    {
+      "path": "REPOSITORY-AUDIT.json",
+      "identity": {
+        "bytes": 3156665,
+        "lf": 95754,
+        "terminal_LF": true,
+        "sha256": "cb599633321e436fd63e3ee88ac9e9c7fcc2ad50bef6a0c5419a2ba5c639e935"
+      }
+    },
+    {
+      "path": "audit.py",
+      "identity": {
+        "bytes": 6242,
+        "lf": 47,
+        "terminal_LF": true,
+        "sha256": "9970af8c6c3edcecab58f3ee6082b1148de654b37a9e55b1661d555a1714d244"
+      }
+    },
+    {
+      "path": "extract-extra.py",
+      "identity": {
+        "bytes": 1565,
+        "lf": 24,
+        "terminal_LF": true,
+        "sha256": "504b4a44432bf23435f0d526738de6bce793f91219083ad6e7c050cc826c309b"
+      }
+    },
+    {
+      "path": "extract.py",
+      "identity": {
+        "bytes": 1566,
+        "lf": 24,
+        "terminal_LF": true,
+        "sha256": "62cc7a72b4e2f150e17a0e0200d467da2f2817d2151712c9011d63a62fe462a2"
+      }
+    },
+    {
+      "path": "final-check.py",
+      "identity": {
+        "bytes": 2040,
+        "lf": 16,
+        "terminal_LF": true,
+        "sha256": "21032832b94aae9aa7e8513e5bcaa19c7d5b69a35a8cd8af5c6733fffbd959cc"
+      }
+    },
+    {
+      "path": "governance-check.py",
+      "identity": {
+        "bytes": 3244,
+        "lf": 32,
+        "terminal_LF": true,
+        "sha256": "ee945f6b22e96d4b66e0526107ccb6f4c9df328478c11bf4aa28c0e7566c5cff"
+      }
+    },
+    {
+      "path": "ledger-check.py",
+      "identity": {
+        "bytes": 1682,
+        "lf": 23,
+        "terminal_LF": true,
+        "sha256": "88465eab706856c1ff1921ad6fc86219e6d2ff9a8fc22c6cb693057138d79cc7"
+      }
+    },
+    {
+      "path": "remote.py",
+      "identity": {
+        "bytes": 1032,
+        "lf": 9,
+        "terminal_LF": true,
+        "sha256": "e689854201110774c333e90273003491bf92357358f826aa9ac32c079c246f49"
+      }
+    },
+    {
+      "path": "report.py",
+      "identity": {
+        "bytes": 46089,
+        "lf": 241,
+        "terminal_LF": true,
+        "sha256": "99553ed9f7b241d3f53230ace864fb483bca7895b146af01c0892a51d4488385"
+      }
+    }
+  ]
+}

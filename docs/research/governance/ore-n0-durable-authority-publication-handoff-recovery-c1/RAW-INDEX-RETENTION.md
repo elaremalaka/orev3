@@ -1,0 +1,29 @@
+# Exact raw-index retention — path A
+
+**DRAFT-UNREVIEWED. No equivalent representation is proposed. No activation authority.**
+
+The activation contract prerequisite 4 and required receipt fields consume exact boundary index bytes, entries/stages and authorized transition evidence. An empty staged diff or path/blob listing alone cannot discharge those claims. Three objects suffice for this publication transition; no unrelated intermediate index is declared necessary merely because a command ran.
+
+| Claim / temporal scope | Exact raw object | Boundary binding |
+|---|---|---|
+| IX-B: integration author/review and publication-entry index identity | `evidence/index/prepublication-index.bin`: 86,080 bytes; SHA-256 `07d944187853f09e383860d24370e5c18052ff962e9bef5133082d739e647fc4` | Already retained in the published C6→C5→C4→C3→C2 archive at `correction/original-candidate/completion/git/index`; matches integration PASS and publication pre-boundary. |
+| IX-S: exact staged index snapshot, before recorded write-tree | `evidence/index/staged-index.bin`: 91,637 bytes; SHA-256 `cd15512f695b4a83efb17cc04399daff604c3dcda9fa92328dce043e8b8b7faa` | Reconstructed in this recovery, authenticated against original STAGED-FREEZE.json and independent readiness review. Original capture time `2026-09-29T04:35:43.672635+00:00`; not falsely described as a preserved original file. |
+| IX-P: publication/readiness/recovery-entry raw index identity | `evidence/index/publication-index.bin`: 91,883 bytes; SHA-256 `ff65baf0e554bdcdaa1024c15fd6c0d8253f307db237f8f6e743f292a6c99699` | Direct binary read of current `.git/index`; exact equality with publication receipt, final boundary and independent readiness boundary. No continuous-interval inference. |
+
+## Reproducible exact-byte recovery
+
+[reconstruct_index.py](documentary/reconstruct_index.py) is newly authored, read-only documentary tooling. It checks both input SHA-256 identities, DIRC version 2, header count, entry boundaries, flags, padding, extension size and trailing SHA-1 integrity. It consumes the full existing postpublication header and entry byte region (offset 87,772), without synthesizing entry metadata. It consumes the full prepublication TREE extension and invalidates only the four ancestors affected by the reviewed additions: root, `docs`, `docs/research`, `docs/research/governance`. For each, count becomes -1 and its now-invalid object ID is omitted; subtree order and all other bytes remain. The staged TREE body is 3,837 bytes, its framed extension 3,845 bytes. Recompute the index's standard trailing SHA-1 over the complete preceding bytes.
+
+The resulting 91,637-byte body independently reproduces **the exact pre-existing SHA-256**, 266 LF, nonterminal LF, and checksum. This is cryptographic exact-byte recovery, not proof by semantic-list equivalence. The original publication transition script evaluates `index=identity(...)` before `tree=run(['write-tree'])`; that ordering explains why STAGED-FREEZE binds the invalidated-cache snapshot while the recorded resulting tree is the refreshed tree. The relevant original script is retained inert in `evidence/publication/ore-publication-transition.py`; complete ordered command records and session prefix supply action provenance.
+
+Reproduction does not claim to have found the original intermediate file, to establish unobserved producer behavior, or to rewrite historical availability. The independent readiness review correctly left original staged-body retrieval unestablished at its time. The new candidate now supplies matching exact bytes and a transparent derivation for independent acceptance. Any disagreement with the frozen original digest stops recovery; no candidate computed digest substitutes for the expected one.
+
+## Full detail and consumers
+
+All header, stat metadata, device/inode fields, mode, uid/gid, size, blob identity, flags, stage bits, pathname bytes, entry padding, TREE bytes and trailing checksum are retained. There are no shared-index or other extensions in these authenticated version-2 bodies; the verifier rejects unsupported versions/flags/extensions rather than dropping them. No original index detail is intentionally omitted. The semantic stage listing is used only as a second cross-check against the retained full bytes and exact committed tree.
+
+Permitted consumers: independent recovery review; separately authorized recovery adoption/publication verification; activation-contract prerequisite and receipt authentication for these exact dated publication boundaries. Future activation must separately capture its own then-current exact raw index and authorized intervening changes; these old snapshots are not a substitute for that requirement. They are inert evidence: never install them as the live `.git/index`, run Git mutation using them, or infer implementation/readiness authority from them.
+
+Retrieval: read these three ordinary repository files in binary mode, compare byte counts/SHA-256 and provenance in RETENTION-MAP, rerun the reconstruction against retained inputs, and compare every recovered byte with staged-index.bin. Read the staged freeze, exact action authority, full commands and final boundaries, then verify all 37 staged additions/entries and resulting tree against the immutable published Git objects. No Codex/session storage is required. The original nested prepublication source remains retrievable using the integration package's archive instructions.
+
+Invalidation: missing raw object or boundary/provenance => U/BLOCK for IX-B/IX-S/IX-P and dependent activation verification. Established byte mismatch, unsupported silent detail loss, fabricated direct-capture provenance or broader consumer claim => FAIL/BLOCK, retaining residual U. Storage is proposed until independent acceptance/adoption; exact bytes alone do not self-accept. No equivalent fallback or hash-only terminal is authorized.

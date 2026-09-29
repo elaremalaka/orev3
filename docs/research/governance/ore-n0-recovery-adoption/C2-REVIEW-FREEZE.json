@@ -1,0 +1,121 @@
+{
+  "schema": "ore-n0-recovery-c2-independent-review-freeze/1",
+  "verdict_id": "RR-ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C2-PASS",
+  "reviewer_lane": "01a0ee59-c440-7ab2-9070-c9b370944ccd",
+  "UTC": "2026-09-29T18:15:12.921027+00:00",
+  "verdict_file": "REVIEW.md",
+  "identity": {
+    "bytes": 35703,
+    "lf": 155,
+    "terminal_LF": true,
+    "sha256": "f0b6852ecc5bbd0e62c328438d880f38bc59c82f7aef688e51b6c82ff4d95a39"
+  },
+  "reviewed_author_freeze_sha256": "2c38fb8a4b393e74b96bc22b177092a50f3404fd21e94622f87e7b2b5a7eae7d",
+  "reviewed_canonical_delta_sha256": "8c4d680a02f926204f2469716c324e25dd46940452aec2def24437bf0fd87919",
+  "C1_author_freeze_sha256": "40c79bbc7c019c6b52ddbfd3a750fb0d84b3f12eafa32e9ba6a51ea5666424b2",
+  "C1_canonical_delta_sha256": "aa8ebf3d40a2e59d8c8d968d24452d700603c32f286c319d363b30c447efa4d1",
+  "result": "PASS — exact frozen C2 correction and unchanged C1 dependency; activation readiness U/BLOCK",
+  "next_gate": "ORE N0 — DURABLE RECOVERY ADOPTION / PUBLICATION AUTHOR",
+  "conditional_after_exact_publication": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 RECOVERY PUBLICATION / ACTIVATION READINESS",
+  "acceptance": "Exact 14 C2 + unchanged 62 C1; proposed durable locations and bounded annex explicitly accepted as fully stated in complete verdict",
+  "activation_readiness": "U/BLOCK",
+  "N0_activated": false,
+  "T_N0": null,
+  "prospective_preflight_executed": false,
+  "CD_substantive_status": "BLOCKED",
+  "upstream": "REQUIRED and UNSATISFIED",
+  "historical_ledger": "UNCHANGED",
+  "support_inventory": [
+    {
+      "path": "AUTHENTICATION.json",
+      "identity": {
+        "bytes": 256608,
+        "lf": 1377,
+        "terminal_LF": true,
+        "sha256": "c5bdb82078e156d7b44139efb9b24c4ca7604d08f8de4b00f3f8c5314ba929c3"
+      }
+    },
+    {
+      "path": "DOCUMENTARY.json",
+      "identity": {
+        "bytes": 12310,
+        "lf": 428,
+        "terminal_LF": true,
+        "sha256": "c4a00740d3ee56505bf90e4db962586237f1a16edf6dc1ac7624e124aa212a50"
+      }
+    },
+    {
+      "path": "FEATURE-TESTS.txt",
+      "identity": {
+        "bytes": 420,
+        "lf": 6,
+        "terminal_LF": true,
+        "sha256": "eb0a42358db7d94761424956a51952deffb6b422ba01c99c836f15f298d88aa6"
+      }
+    },
+    {
+      "path": "FINAL-BOUNDARY.json",
+      "identity": {
+        "bytes": 833,
+        "lf": 22,
+        "terminal_LF": true,
+        "sha256": "9af7402bf24a96a9b923ae49e6f3c1df2bec4573119ab561e6d82530864bfb3d"
+      }
+    },
+    {
+      "path": "IGNORED-METADATA.json",
+      "identity": {
+        "bytes": 2479964,
+        "lf": 85430,
+        "terminal_LF": true,
+        "sha256": "e74fba26c9b35b7330e7aecf07a0569a270129674058569683e4981e2f60fb74"
+      }
+    },
+    {
+      "path": "INDEPENDENT-ATTACKS.json",
+      "identity": {
+        "bytes": 20129,
+        "lf": 450,
+        "terminal_LF": true,
+        "sha256": "1ae072a98ee3a706f57ddf3bbfc9aee92537891504592168d582f3b0b88ddbb6"
+      }
+    },
+    {
+      "path": "REVIEWED-C2-AUTHOR-FREEZE.json",
+      "identity": {
+        "bytes": 20980,
+        "lf": 500,
+        "terminal_LF": true,
+        "sha256": "2c38fb8a4b393e74b96bc22b177092a50f3404fd21e94622f87e7b2b5a7eae7d"
+      }
+    },
+    {
+      "path": "attacks.py",
+      "identity": {
+        "bytes": 7855,
+        "lf": 49,
+        "terminal_LF": true,
+        "sha256": "7f73b240305a034e0b3d11eda500baf6de3b072c184e83c2ce3e2124a192a86a"
+      }
+    },
+    {
+      "path": "authenticate.py",
+      "identity": {
+        "bytes": 5186,
+        "lf": 50,
+        "terminal_LF": true,
+        "sha256": "bf8d82864c3c15defe80738d8f73bc2889677c4cf15ace8fa80ec64f9b832999"
+      }
+    },
+    {
+      "path": "finalize.py",
+      "identity": {
+        "bytes": 25998,
+        "lf": 126,
+        "terminal_LF": true,
+        "sha256": "746ddece5f75dbc649b3fa70559f71434b94b50172e7d08c69b39c38443c7916"
+      }
+    }
+  ],
+  "support_semantics": "Corroborating audit outputs, not additional independently accepted authority or mandatory execution inputs; complete verdict carries findings and acceptance. Later action must retain complete verdict/freeze and exact author freeze plus required actual action evidence."
+}

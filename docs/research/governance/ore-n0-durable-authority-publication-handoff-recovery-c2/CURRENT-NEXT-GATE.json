@@ -1,0 +1,183 @@
+{
+  "schema": "ore-n0-durable-authority-current-gate/0.2.0",
+  "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C2-CURRENT-GATE",
+  "revision": 2,
+  "package_status": "DRAFT-UNREVIEWED C2 correction",
+  "supersedes": [
+    {
+      "path": "docs/research/governance/ORE-N0-CURRENT-GATE.json",
+      "identity": {
+        "bytes": 1333,
+        "lf": 24,
+        "terminal_LF": true,
+        "sha256": "ea952d1932326aaf6d85d3d4e9399fa9c68983442c79beb9951cd0a594526192"
+      },
+      "relationship": "superseded for present N0 routing only; exact historical record preserved"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/CURRENT-NEXT-GATE.json",
+      "identity": {
+        "bytes": 4621,
+        "lf": 99,
+        "terminal_LF": true,
+        "sha256": "0cfbbfb0dcb799e6b58eb213014b25f877aebbfbf27016c22fd266136bbdb8dd"
+      },
+      "relationship": "superseded for present N0 routing only; exact historical record preserved"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/CURRENT-NEXT-GATE.json",
+      "identity": {
+        "bytes": 5654,
+        "lf": 120,
+        "terminal_LF": true,
+        "sha256": "10471c83b968c8557492aee33f9a835c7786cbbfab7ae0a5dedc5b562f239c04"
+      },
+      "relationship": "superseded for present N0 routing only; exact historical record preserved"
+    }
+  ],
+  "precedence": {
+    "kind": "explicit authenticated supersession DAG",
+    "order": 4,
+    "predecessor_order": 3,
+    "tie": "FAIL/BLOCK; residual U preserved",
+    "missing_dependency": "U/BLOCK",
+    "filename_or_mtime_order_permitted": false
+  },
+  "controlling_state": "recovery reviewed PASS, recovery publication pending",
+  "publication_status": "RECOVERY PUBLICATION PENDING",
+  "recovery_review_status": "C1 INDEPENDENT PASS",
+  "recovery_review_meaning": "PASS — exact frozen recovery package. Activation readiness remains U/BLOCK.",
+  "published_integration_commit": "d1c9fc56fc183cdcca83d82cc896e4859a00f4dc",
+  "publication_integrity": "PASS",
+  "recovery_publication_complete": false,
+  "activation_readiness": "U/BLOCK",
+  "N0_established": false,
+  "N0_activated": false,
+  "T_N0": null,
+  "prospective_preflight_executed": false,
+  "CD_substantive_status": "BLOCKED",
+  "CD_dependency_status": "CD prospectively dependency-eligible; documentary only",
+  "upstream_ore_obligation": "UPSTREAM ORE COMPATIBILITY / DRIFT CONTROL = REQUIRED and UNSATISFIED",
+  "upstream_full_obligation": "docs/research/governance/ore-n0-repository-integration-c1/UPSTREAM-ORE-OBLIGATION.md",
+  "historical_ledger": [
+    "unavailable 3,288-byte listing",
+    "historical continuity U",
+    "historical non-consumption U",
+    "historical alias-exclusion U",
+    "historical direct-vs-symbolic U",
+    "historical symbolic-target U",
+    "producer/task/transaction history U",
+    "IR-U1=U",
+    "historical CS23=U",
+    "historical CS-PREFLIGHT-U",
+    "original N0 U/BLOCK",
+    "N0 candidate C2 incomplete",
+    "C3 FAIL/BLOCK",
+    "C4 FAIL/BLOCK",
+    "C5 FAIL/BLOCK",
+    "179 historical D/U targets",
+    "23 inherited D nodes",
+    "all other FAIL/U/withdrawn findings unchanged",
+    "RR-AR-PASS remains architecture-only"
+  ],
+  "historical_ledger_status": "UNCHANGED; no retroactive repair",
+  "next_gate": "ORE N0 — DURABLE RECOVERY ADOPTION / PUBLICATION AUTHOR",
+  "next_gate_count": 1,
+  "future_post_publication_next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 RECOVERY PUBLICATION / ACTIVATION READINESS",
+  "author_lane_next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 DURABLE AUTHORITY / PUBLICATION HANDOFF RECOVERY C2",
+  "author_lane_next_gate_count": 1,
+  "adoption_execution_condition": "C2 independent PASS, explicit retention acceptance and separate compatible publication authorization required; inherited adoption gate is blocked from execution until these complete.",
+  "authority_ceiling": "Post-review routing and exact retention only. C2 is unreviewed; no publication, activation, preflight, substantive CD or readiness PASS.",
+  "durable_evidence_references": [
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/recovery-review/REVIEW.md",
+      "identity": {
+        "bytes": 47520,
+        "lf": 279,
+        "terminal_LF": true,
+        "sha256": "442b89751ead8f7ebf2bc756ff98cd4ea9abe766c00f49616e4b83a654d5e085"
+      },
+      "role": "Original independent recovery C1 verdict; retained copy, never a new review or stronger PASS"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/recovery-review/REVIEW-FREEZE.json",
+      "identity": {
+        "bytes": 6714,
+        "lf": 238,
+        "terminal_LF": true,
+        "sha256": "089ace456d80d7d2ee0d20258c78c59aef78972e654e88e6e11264c0277fc8e9"
+      },
+      "role": "Original independent review identity, verdict relationship and author/delta bindings"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/recovery-author/AUTHOR-FREEZE.json",
+      "identity": {
+        "bytes": 42601,
+        "lf": 1155,
+        "terminal_LF": true,
+        "sha256": "40c79bbc7c019c6b52ddbfd3a750fb0d84b3f12eafa32e9ba6a51ea5666424b2"
+      },
+      "role": "Original recovery C1 author freeze, authenticated reviewer-retained exact copy; not integration author freeze"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/stopped-publication/RESULT.md",
+      "identity": {
+        "bytes": 4959,
+        "lf": 40,
+        "terminal_LF": true,
+        "sha256": "696bc6b1a6523bcceff8e3b7c924b5199d8831e44707d15f51697f823ebe61b9"
+      },
+      "role": "Original STOP before staging; narrow successor mandate and bounded findings"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/stopped-publication/RESULT-FREEZE.json",
+      "identity": {
+        "bytes": 3162,
+        "lf": 123,
+        "terminal_LF": true,
+        "sha256": "1e39317845cb6c7945a8646e26ef5a17ffdd998a4c88e1f930308a6f46ae72ba"
+      },
+      "role": "Original STOP result identity binding"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/RETENTION-MAP.json",
+      "identity": {
+        "bytes": 116728,
+        "lf": 2275,
+        "terminal_LF": true,
+        "sha256": "2e2cce7875f507f74ee37c2731cc7676917d0ab2dc2f8bcad2ec84f59839c253"
+      },
+      "role": "All 49 C1 retained bodies; raw-index path A; unchanged historical and original authority closure"
+    }
+  ],
+  "post_publication_transition": {
+    "schema": "ore-n0-recovery-publication-transition/1",
+    "initial_state": "recovery reviewed PASS, recovery publication pending",
+    "resulting_state": "recovery publication complete, independent activation-readiness re-review pending",
+    "next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 RECOVERY PUBLICATION / ACTIVATION READINESS",
+    "automatic_activation": false,
+    "required_conjuncts": [
+      "independent C2 PASS explicitly accepts exact frozen 14-file correction and unchanged 62-file C1 dependency",
+      "separate compatible action authorization including the bounded later evidence annex",
+      "exact C1 and C2 member bytes, modes and canonical deltas independently retrieved from publication commit",
+      "exact C2 author freeze and complete independent C2 review/freeze retained in repository evidence annex",
+      "durable publication receipt binds publication commit/parent/tree, action authority, pre/staged/post boundaries, remote observation, and exact retained review identities",
+      "receipt independently retrieved from a published descendant commit with all intervening deltas resolved; no self-containing commit requirement",
+      "fresh live research-branch identity and repository-only continuation independently authenticated"
+    ],
+    "later_evidence_annex": {
+      "root": "docs/research/governance/ore-n0-recovery-adoption",
+      "fixed_roles": [
+        "C2-AUTHOR-FREEZE.json",
+        "C2-REVIEW.md",
+        "C2-REVIEW-FREEZE.json",
+        "PUBLICATION-RECEIPT.json"
+      ],
+      "additional_action_evidence": "Only raw action/transition objects actually required by existing publication/activation contract; exact absent paths and identities must be frozen in the later separately authorized action envelope before staging. No unrelated edits.",
+      "status": "Future bounded retention procedure, no present files/actions or self-acceptance. Independent C2 review must explicitly accept this procedure; otherwise STOP before staging."
+    },
+    "incomplete": "U/BLOCK; remain publication pending; no future gate current",
+    "contradiction": "FAIL/BLOCK with residual U; no gate promotion",
+    "activation_ceiling": "Only subsequent independent publication/activation-readiness review may potentially authorize ORE N0 — ACTIVATION AUTHOR under unchanged activation contract. This correction never authorizes it."
+  }
+}

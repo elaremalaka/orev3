@@ -1,0 +1,724 @@
+{
+  "originals": [
+    {
+      "name": "c1",
+      "sha256": "2ff6b0a8c13bc2626a8db76c4f85d9786a3a6f5b3cefbcd900949695adcdd887",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/source_records/0/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "c1-review",
+      "sha256": "7ede0898ce174e1bca069e03ca4d629bb5bf607ef4b7960e684ab5e040b87ffa",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/source_records/1/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "c2",
+      "sha256": "90eeb31b72cda585ce94b5e3085fdad2f94a1b29b1bce88f1d02cc3451329a2c",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/source_records/2/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "c2-review",
+      "sha256": "df2aa4613d2212b0a4b4352c857abad214f82297216b95c18f4913a124019ba9",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/source_records/3/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "CW-U",
+      "sha256": "c44bc786b5963a902cde1bfb9bf6688f043675ece1da6d85ffe77b83dba56a13",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/0/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "CD-U",
+      "sha256": "4b0f04c23dd9142376e60739fc8d12b52020eae6564bc490b6378395e1761216",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/1/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "AR-U-original",
+      "sha256": "b379964dbfe118345b4340216a5532226cd8e911217ae2776fa65f0af081679f",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/2/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "AE-U",
+      "sha256": "9f7c2b39e4cb68da884a899ae62eb537b1b07d0dff050a14dbe9b90df893e4c8",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/3/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "MI-U",
+      "sha256": "158fae3a2f34289aecd2dba0896cfdfa8acb07dd79a611a6c5773494e59004a0",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/4/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "OA-U",
+      "sha256": "46b0b1cbe89bc6a33e12fdeb7248fb571a36a2a8243523b2716609c5b56b8bf9",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/5/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "WP-U",
+      "sha256": "c1b28ca039ec6e7eed5577d8f5cbbf03e904c6ffbc4dffa2ce3bdae57b781b64",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/6/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "CA-U",
+      "sha256": "273570815bb356efa375a697e2a1b665bd29186b209958cb84ae23e76c30c604",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/7/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "RA-A-original",
+      "sha256": "b849e5c497667f68459a8d6e84d75c0a45e32746254d7673cf402d5286d81b55",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/8/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "RR-RA-FAIL-CFW",
+      "sha256": "5130b144128377ac25fe783e8e83fc0bfcbbebc46a9d9df25012ff2bfa3a4474",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/9/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "RA-A-CFW",
+      "sha256": "c69df14af8617fe031758e5adb46704a6b7e0e56c5b0054ced9e899c7e2777b8",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/10/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "RR-CFW-PASS",
+      "sha256": "e9208d839499dc8debde173bfd07bc2f236f560d3057219b152aaf4c58985843",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/11/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "WP-C",
+      "sha256": "fc37bc3347703f60eff75c3f9b50e07a5664f261954d6f896503f223d01f5ddf",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/12/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "RR-WP-PASS",
+      "sha256": "fe12c7c79b60353144325056f2ed74dc8b0840d745a2c1708a686b4eb9d21b1d",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/13/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "OA-C",
+      "sha256": "2553db901d786c1d8bfef148907df4b649661c6b121e77e9c041ad46ec0685bf",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/14/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "RR-OA-PASS",
+      "sha256": "7db9468c49a4f876af5353bd970b2f61d9357a0c05133b6bccffce728c188b3d",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/15/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "MI-C",
+      "sha256": "e5a5a140426c7559e799d098a4e2aa47e35d5519f9015b2af1dba37339b2f7ac",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/16/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "RR-MI-PASS",
+      "sha256": "7e07dbad6cae290ee371a7f0d6bf4f2c923fb2e5fc1ef6d73d8b3ef0d2bf666c",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/17/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "AE-C",
+      "sha256": "fcf8a964fcb46134adc2f257f1fdfa8292206ca8b36d3e71c61632394c177507",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/18/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "RR-AE-PASS",
+      "sha256": "95b371d7d9b170bde0cebcccbd158e875e20aedb19c4b68050c6c8839c1f6cb4",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/19/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "AR-U-post-AE",
+      "sha256": "85ad1d210c085c74c6229c78194c414fbf77e4d7bc5c0acc4d000118b564f4d0",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/20/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "AR-C",
+      "sha256": "ea7296c51a9a8718c131b5604d754ad8c01b09c9d96df3e33f2beaaff825d07e",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/21/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "RR-AR-PASS",
+      "sha256": "7e45045357f84715192014c33ae102cce1489b61575b05a880c3be582cab47fa",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/22/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "amendment",
+      "sha256": "4b4a01fc009908c213f478bef2fdebe4881d0e6d533d4c928a99f2cd306b9f9d",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/23/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "infra-review",
+      "sha256": "80362434146a4dfb70cd619596eb38313dba0e1062148e25f4ad2bab65384c2e",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/24/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "adoption",
+      "sha256": "cb0796a4b84f44ae0987d351292ee1b59e42f3e3cf1ae3822e3e57b5cd00b34d",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/25/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "publication",
+      "sha256": "fb40fba7476bde1b02e16410ba6a050e309fcb23fcb9174cffdea7a7930d4699",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/26/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "original-failure",
+      "sha256": "f7967db51ad414197d305300e74e8e405c41d6e8f52cf00a27ac9c640b5db3fd",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/27/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "receiving-failure",
+      "sha256": "6e6c7c2c437b6fabc27c6bfaddb7679f215419d813bfb0761c4231b418f9c603",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/28/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "withdrawn-pass",
+      "sha256": "62e21aa759250cfde9605dea535a15f36fcc598bb8679c4f9d833c6860794f15",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/29/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "spec",
+      "sha256": "ba9b641a463c5daa1b69d345a89295000059804832db39efafa5caea1b30deb4",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/30/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "verdict",
+      "sha256": "b902f80ad29e62337f430a1b39bb5cec80bf39663559942c036da2d6646ce27e",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/31/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "review",
+      "sha256": "65c005fe5719cb2331d144b17ebf49eb26fabcd53e0860efaecca5f1d8d8a792",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/32/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "issuance",
+      "sha256": "3f9194ff4d3223d339b480a5b986df80a07d2f98498fb8e8eb7c7193ed29abb3",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/33/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "acceptance-user",
+      "sha256": "0981d0597b002a97ddc4e9907ce8198caa1b84edf23b8e2ac04f593d52244025",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/34/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "task9",
+      "sha256": "ecd589d0b3693594ce54fcd86c35855df78849f83d15f8d82348184210a1ba12",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/35/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "task19",
+      "sha256": "3e460dd558b435ad11e669df44fbecce5e3a3b0d7cfa1f9f9e13411f1bc49133",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/36/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "task29",
+      "sha256": "aff1ca4686a30dbf3f2b3e709aaf7c97dc0bde6273ca557cc2fef98aa7435085",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/37/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "task39",
+      "sha256": "f3b6bc51f7432e5e025c3c4b90fa312eeec736dab10a9433c0b9b1dd3d25d8c4",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/38/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "A",
+      "sha256": "07abf89fcb5106362d8db9cc5bb10c492aa0c6d47aa770332ad86af6cbf13c87",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/39/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "B",
+      "sha256": "bb6ba295a67e4a0e7c7bbb58c4893b37f8567363378f4c1728a3feef031867aa",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/40/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "C",
+      "sha256": "8c6f14a4a135d7cdc1f0a2a6d232d725c2063dbff4fc525e5a275b9ad7143a22",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/41/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "D",
+      "sha256": "a2cab9d52a38a71c554717f931aac30971c567d5eb437050586568fa45d30c56",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/42/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "E",
+      "sha256": "3ca59ac7d376c6f006bc2ed8c590ce22644faf1cf531da831d4385687111cbeb",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/43/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "F",
+      "sha256": "977c2f4e8518eb7cccc1b22df4a4138ba2ba5c3ca6d854a94f39cbff7b97c12d",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/44/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "G",
+      "sha256": "b2a5dd288997242cf7336b46419c0964ba56fba2080c3e509f1920ec643285f6",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/45/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "H",
+      "sha256": "9101445405730aea0c1a703e94ba6d61303c24d538619e72f2ac2a4af822b842",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/46/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "I",
+      "sha256": "c44bc786b5963a902cde1bfb9bf6688f043675ece1da6d85ffe77b83dba56a13",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/47/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "ref-recovery-negative",
+      "sha256": "1c9120c8b0a937ce555b07b3461e12932f38946b29ffffc64d39198dea5a7919",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/48/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "resumed-recovery-negative",
+      "sha256": "065e01e97077d1ba47aafc81a33dc2f4c3233e3972f33218ec7e980dfd0a69a7",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/49/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "further-recovery-negative",
+      "sha256": "75329c316834fb945b504a8a6432880a12541152b12242763b7b61170cb3046e",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/50/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "authority-adjudication",
+      "sha256": "e0361cd4cda8fe30b2093694f115951afe34e13822e9694a1350ff0ea6bbc2fb",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/51/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "complete-input-recovery",
+      "sha256": "47d12154b8b61088b6f94f199cebc5b03e7f06e73f1dd13741ead65fe0f8c19c",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/52/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "c1-review-authorization",
+      "sha256": "4651e50d9d5658b7f02d34222529785956e541f6f25b32a0878baef4e99cf1bd",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/53/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "c2-review-authorization",
+      "sha256": "d7cd8ad0c74efedf04b0dc5d9df6d53b35e0b9eb9125ee6ef53d49d46e8d43a1",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/54/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "c2-review-entry-preflight",
+      "sha256": "05da1045574f5032b30e2ae9329694cae98142c1bec77629d049e868caa7a655",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/55/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "integration-entry-preflight",
+      "sha256": "fd3ad154be05bb74c629ddf2971a0109a38abf814fc1f71792a8f907495afe16",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/56/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "integration-authoring-authorization",
+      "sha256": "21290b03ab30422e50a1c2410aaa8971a4acad2299ca21df2612ac9377b2db2c",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/57/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "explicit-c2-binding-correction",
+      "sha256": "42413d72d38fa7633e8382919fc66b21d0c3d4e019c106b52da922e88ba4dd4a",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/58/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "c2-independent-tabletop",
+      "sha256": "64d70b9aaa1020d9df76da73b175784390a19bc62e53642fa89db6af09b5dcde",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/59/retrieval"
+      },
+      "verified": true
+    },
+    {
+      "name": "c2-review-temporary-manifest",
+      "sha256": "b8dff1c45ae80ea632a71ffdadb775f2549be95b7d1c3f98cf4b7ca088ba3cb9",
+      "retrieval": {
+        "container_path": "docs/research/governance/evidence/cs23-ref-continuity-c2/anchors.json",
+        "container_commit": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+        "container_sha256": "b1a410cdc43bcf9a285bd992b259816e316f101ef2331ffa9cea15630364eb57",
+        "json_pointer": "/authority_records/60/retrieval"
+      },
+      "verified": true
+    }
+  ],
+  "repository_dependencies_verified": 59,
+  "stronger_bindings_verified": 9,
+  "F2_verified": true,
+  "C1_identities_verified": true,
+  "C2_receipt_sha256": "401e687e0b0484670f686162266ef2056ad2a9b8e54ccf08765202433ba17c97"
+}

@@ -1,0 +1,952 @@
+[
+  {
+    "field": "schema",
+    "claim": "ore-v3-n0-publication-adoption-author-receipt/0.1.0",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "id",
+    "claim": "ORE-N0-REPOSITORY-INTEGRATION-C1-PUBLICATION-ADOPTION",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "issuer_lane",
+    "claim": "01a0eb6e-5f96-7000-b217-ab265e6f2e5e",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md. Issuance/action/absence claims are limited to examined authenticated records, not universal external history."
+  },
+  {
+    "field": "issued_UTC",
+    "claim": "2026-09-29T04:41:18.020544+00:00",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md. Issuance/action/absence claims are limited to examined authenticated records, not universal external history."
+  },
+  {
+    "field": "authority_record",
+    "claim": {
+      "path": "ACTION-AUTHORITY-original-record.jsonl",
+      "identity": {
+        "bytes": 10263,
+        "lf": 1,
+        "terminal_LF": true,
+        "sha256": "bf59e9cd63b14fa028b95fb316a6b1553e9549ccb36958b075389c315125e277"
+      }
+    },
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md. Issuance/action/absence claims are limited to examined authenticated records, not universal external history."
+  },
+  {
+    "field": "authority_scope",
+    "claim": "Current explicit user authorization to stage, commit and push exactly reviewed 37 additions after authentication; independent integration PASS opens this author lane, not an unconditional Git/activation grant.",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Exact user action text matches retained original and session prefix; grants publication only."
+  },
+  {
+    "field": "repository",
+    "claim": "/Users/erale/Documents/orev3",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "branch",
+    "claim": "research/post-v1",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "upstream",
+    "claim": "origin/research/post-v1",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "origin",
+    "claim": "https://github.com/elaremalaka/orev3.git",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "pre_publication_baseline",
+    "claim": "063d823dc97f1a3690e26f8bb328385acb9d0aef",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "baseline_parent",
+    "claim": "051a54d9e9ca356b771fe98531cd54384d8250ae",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "baseline_tree",
+    "claim": "3be16014d401531dbe3375de0fd1f6b6aee7a801",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "reviewed_canonical_delta_sha256",
+    "claim": "2e64bc07720a8e91b387724704d44860ee9a16fb5d5e364b46c11c5f97c12b1b",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "author_freeze",
+    "claim": {
+      "bytes": 44172,
+      "lf": 1243,
+      "terminal_LF": true,
+      "sha256": "a938e15517035f9e1b484833a74c48b7f3e83072247c9820f9d33c7dd776ee6b"
+    },
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "integration_PASS",
+    "claim": {
+      "id": "RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS",
+      "identity": {
+        "bytes": 41748,
+        "lf": 272,
+        "terminal_LF": true,
+        "sha256": "060db9a1730a55710095142dcebb35e158571988e707f7ce24cca02f9a2266ad"
+      },
+      "retained": "retained/integration-review/RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS.md"
+    },
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "C6_binding",
+    "claim": {
+      "candidate": "ORE-N0-PROSPECTIVE-BOUNDARY-C6",
+      "candidate_sha256": "a025a8b007410cbd9bc30bb5f4f95246dbeac6c2f8caa34b6ed411803936cafa",
+      "verdict": "RR-ORE-N0-PROSPECTIVE-BOUNDARY-C6-PASS",
+      "verdict_sha256": "3996a05cfe2a24e3d0d88719cf51449a7dad419c55ac308e94abb6a5ce6f332e",
+      "ceiling": "CD prospectively dependency-eligible"
+    },
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "governing_C1_effectiveness_sha256",
+    "claim": "418c48ba1ce87291eca70876b65997bd081f6f77cbd8595919fad7bb34440086",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "C2_effectiveness_sha256",
+    "claim": "401e687e0b0484670f686162266ef2056ad2a9b8e54ccf08765202433ba17c97",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "activation_contract_sha256",
+    "claim": "82b544e91987aeb2ec7a5a52724fb06857996cbd05ab170747397fe62d68729b",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "commit",
+    "claim": "d1c9fc56fc183cdcca83d82cc896e4859a00f4dc",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "parents",
+    "claim": [
+      "063d823dc97f1a3690e26f8bb328385acb9d0aef"
+    ],
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "tree",
+    "claim": "5e9f62e95c3a956e1d2a82d30859a214720652af",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "commit_message",
+    "claim": "docs: adopt and publish reviewed ORE N0 repository integration C1\n\nAdopt exactly the 37 reviewed additions of ORE-N0-REPOSITORY-INTEGRATION-C1.\nCanonical delta SHA-256: 2e64bc07720a8e91b387724704d44860ee9a16fb5d5e364b46c11c5f97c12b1b.\nIndependent integration review: RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS.\n\nThis commit records repository adoption/publication only. It does not\nestablish or activate N0. Independent publication verification and separate\nexternal activation authority remain required; T_N0 remains UNSET.\nCD prospectively dependency-eligible remains a documentary statement only.\nCD substantive work and prospective preflight remain blocked pending their\nseparate prerequisites. Historical U/FAIL/withdrawn findings are unchanged.\nUPSTREAM ORE COMPATIBILITY / DRIFT CONTROL = REQUIRED and UNSATISFIED.\nNo implementation, qualification, Execution Readiness or mining authority.\n\n",
+    "result": "QUALIFIED: not exact raw message bytes",
+    "verification_and_limit": "Exactly git show --format=%B rendering; one additional LF. Raw commit message equals author message file."
+  },
+  {
+    "field": "published_paths_blobs",
+    "claim": [
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/ACTIVATION-CONTRACT.md",
+        "before": null,
+        "after": {
+          "bytes": 9156,
+          "lf": 46,
+          "terminal_LF": true,
+          "sha256": "82b544e91987aeb2ec7a5a52724fb06857996cbd05ab170747397fe62d68729b",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "ff61db089c8e3ab064af6bff0fe1b521158576ae"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/AUTHOR-VALIDATION.json",
+        "before": null,
+        "after": {
+          "bytes": 11850,
+          "lf": 358,
+          "terminal_LF": true,
+          "sha256": "7887e20783ecaaf633017ecc92a88382ecfc08282cdc31aa7186d959499f81ae",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "917ae17f933ec40d3b01d1619542157299012fbe"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/AUTHORITY-MAP.json",
+        "before": null,
+        "after": {
+          "bytes": 20414,
+          "lf": 508,
+          "terminal_LF": true,
+          "sha256": "84c1da27666dafce93052e4f543a9e250354b02b46ff3e7a49b4a6314298007f",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "d8ed5221a2ca23978b69df5cd559996633d04f57"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/CONTINUATION.md",
+        "before": null,
+        "after": {
+          "bytes": 16987,
+          "lf": 83,
+          "terminal_LF": true,
+          "sha256": "bfd888776b1c9fe504261264bd936abcccf0e8a488607722e8b2edbbe253089b",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "c7498d87697951fb82b5d32f758969852f484a64"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/CURRENT-NEXT-GATE.json",
+        "before": null,
+        "after": {
+          "bytes": 5654,
+          "lf": 120,
+          "terminal_LF": true,
+          "sha256": "10471c83b968c8557492aee33f9a835c7786cbbfab7ae0a5dedc5b562f239c04",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "2ea3243213762308c4988d2c7d504ff3e3b143c9"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/INTEGRATION.md",
+        "before": null,
+        "after": {
+          "bytes": 11806,
+          "lf": 59,
+          "terminal_LF": true,
+          "sha256": "f6f421304fbc4aa8ccd65cf8d707cb7163e8c5a085d7a1ba44383f4408559810",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "e06a6bf92af82061b555bafed0c025d59cdc9685"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/MEMBERS.json",
+        "before": null,
+        "after": {
+          "bytes": 12420,
+          "lf": 368,
+          "terminal_LF": true,
+          "sha256": "23ee1bcfe1c591b1f5852fffdb01a24b2bb8eefc98d0c263891ddd420790c54c",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "26dfa0d9508302cccca3cb675f2cd3d59eb52f5e"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/RETRIEVAL.md",
+        "before": null,
+        "after": {
+          "bytes": 8116,
+          "lf": 47,
+          "terminal_LF": true,
+          "sha256": "1023e5bb9a8ce73daff17fe08a7a2e42546c92a456983e323b2ec6bab3a5a19b",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "3228164445dc1c9424b7a8c6a758cb4fc603126a"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/SCOPE.json",
+        "before": null,
+        "after": {
+          "bytes": 10881,
+          "lf": 326,
+          "terminal_LF": true,
+          "sha256": "93fbd0573ede5b2e68270393ad23b210218864a04f2ca6d896be2f715437c826",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "5f813d67772e9e1d9fdd28254630263996edcbbd"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/UPSTREAM-ORE-OBLIGATION.md",
+        "before": null,
+        "after": {
+          "bytes": 2491,
+          "lf": 35,
+          "terminal_LF": true,
+          "sha256": "8e1bdb4589f27110209c0c542a9b99351ce5c90d64624b3c068b7854586f3f08",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "c3d950869434b7430791b4f762dcaa83d1c88511"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/documentary/verify.py",
+        "before": null,
+        "after": {
+          "bytes": 9712,
+          "lf": 186,
+          "terminal_LF": true,
+          "sha256": "719926a65ab96039dc64f9b2f846695dc929e0b96f1e4a8b2107f2d78efb2888",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "a51470d277e17199b0aa303f016de68ace123085"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-CANDIDATE.md",
+        "before": null,
+        "after": {
+          "bytes": 32281,
+          "lf": 202,
+          "terminal_LF": true,
+          "sha256": "a025a8b007410cbd9bc30bb5f4f95246dbeac6c2f8caa34b6ed411803936cafa",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "92f2cd7cbe5f4251bf611cd1f3a6361dc7af78e0"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-FREEZE-RECEIPT.json",
+        "before": null,
+        "after": {
+          "bytes": 3825,
+          "lf": 101,
+          "terminal_LF": true,
+          "sha256": "ff87e70dd5a643d22f4a88f62d39d26e30cbed2ff0d119ad14e9dccfa701eaa2",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "c214142fea05efaff6d4b870fb8bfba7c3e9dd5c"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-PASS-VERDICT.md",
+        "before": null,
+        "after": {
+          "bytes": 18405,
+          "lf": 130,
+          "terminal_LF": true,
+          "sha256": "3996a05cfe2a24e3d0d88719cf51449a7dad419c55ac308e94abb6a5ce6f332e",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "8b5b23441894eb1fea6e905a9b62c3d1aed8cb1b"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-PASS-original-record.jsonl",
+        "before": null,
+        "after": {
+          "bytes": 19304,
+          "lf": 1,
+          "terminal_LF": true,
+          "sha256": "961dc0d4fcdc28118210f5f0fd84c2c2dcbb1813bd65b0eac8a4cdba9302b110",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "b11eb40384274d74d2b1853120d9b6f384421124"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-PASS-provenance.json",
+        "before": null,
+        "after": {
+          "bytes": 660,
+          "lf": 18,
+          "terminal_LF": true,
+          "sha256": "d5a38a071fb56cd9ba938910642d7fe80253d73748f2a586c53cdb18aa0f06c0",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "ae0ea12616362c40ff9dfb9492ada9d5d42cd544"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-000",
+        "before": null,
+        "after": {
+          "bytes": 50331648,
+          "lf": 195564,
+          "terminal_LF": false,
+          "sha256": "177df54ee9b83acbd29f42b298a6725741b424ad30c07df2eb9f33cdfc24afc3",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "73a9163f9c1ebd7bdc609739d402cc7c123e7c28"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-001",
+        "before": null,
+        "after": {
+          "bytes": 50331648,
+          "lf": 178305,
+          "terminal_LF": false,
+          "sha256": "40793120eeb375a84b322e8b3e2c84296128a47e12e1c9758755d8b6a983e4e4",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "2ab303ee5b3372f48d35357bb1a3da6fe1ea24a0"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-002",
+        "before": null,
+        "after": {
+          "bytes": 50331648,
+          "lf": 189623,
+          "terminal_LF": false,
+          "sha256": "b6abb13790c846f746ed5a11331e13072c1f48115383ff07435a963e0a4f9aa3",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "23d3a9bf341f975500f12e7ed576eab883124e2c"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-003",
+        "before": null,
+        "after": {
+          "bytes": 50331648,
+          "lf": 187544,
+          "terminal_LF": false,
+          "sha256": "14f2e510806931e6885c5345b5119973b5c5e2fe9703e3a7b8253de422238792",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "bb26229a6976966ed0bae1eac3d046d0b7594029"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-004",
+        "before": null,
+        "after": {
+          "bytes": 50331648,
+          "lf": 177913,
+          "terminal_LF": false,
+          "sha256": "ba2172a48834ca75f989a0978a6cf174329dfd13c0cea2241695db1611fc04d8",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "01c125c17959fba97e057a0695aa75caf5a8a0d2"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-005",
+        "before": null,
+        "after": {
+          "bytes": 50331648,
+          "lf": 189019,
+          "terminal_LF": false,
+          "sha256": "3110b9250c6bdb5f35456ffadcb755a89b5b099c260ccee1e7a8aab468df80df",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "d5d97d26d95fe7cc3364880a69035e150ee4a443"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-006",
+        "before": null,
+        "after": {
+          "bytes": 50331648,
+          "lf": 189472,
+          "terminal_LF": false,
+          "sha256": "84b58bf6456424dcc49970166891c7a7eff83809c1614623afc7902898b64bec",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "0c34ce7a7a5ec43988ebbb4be79909709ecb3df4"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-archive/part-007",
+        "before": null,
+        "after": {
+          "bytes": 21946569,
+          "lf": 81954,
+          "terminal_LF": false,
+          "sha256": "553e7d58db40cbf32aed7c2d3b13e49bd800577fbf7a4d7fb5a03f925605ae6f",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "9a300d37b0c8f6fe3b61557531e61284e3ecd76f"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/C6-freeze-manifest.json",
+        "before": null,
+        "after": {
+          "bytes": 141886,
+          "lf": 4343,
+          "terminal_LF": true,
+          "sha256": "05ea5c04d499b93e94b1c0a4357e0d3f523673d9c8830f207b5a0621217c226f",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "aa967ecb17505d83d7b6e3cdba64a5f7c0ec2b32"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/archive-chunks.json",
+        "before": null,
+        "after": {
+          "bytes": 2752,
+          "lf": 79,
+          "terminal_LF": true,
+          "sha256": "182a525314d40833bae2b1319df33e66c4cdf067bb2ba4d9325852596220d3b1",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "bc95fd532c3b04ea69e2e96a3e6eccb44edb4e4f"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/authentication.json",
+        "before": null,
+        "after": {
+          "bytes": 1313826,
+          "lf": 33449,
+          "terminal_LF": true,
+          "sha256": "7e925a63ebd68ddb2f938ccfe3c80475b44b41b18fe0c519289dc73dc863553a",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "1c00a34234c54092263f3ecd6c2100eff8e30ac4"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/author-authorization-original-record.jsonl",
+        "before": null,
+        "after": {
+          "bytes": 14513,
+          "lf": 1,
+          "terminal_LF": true,
+          "sha256": "7deccdb2c724927955904566a17a56994dd8a50cc181a23587bf704486cffcc6",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "523495c783dafc54c84137fd6f54c7174190a343"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/governance-authentication.json",
+        "before": null,
+        "after": {
+          "bytes": 118404,
+          "lf": 2783,
+          "terminal_LF": true,
+          "sha256": "7c8783081548982bf78a2565eb6031f997f6040d69b29db7b6fa1bb4f494edc8",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "34c96e309f2b7b529f56f1a054f5bef663456fb9"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/governing-C1-effectiveness-receipt.json",
+        "before": null,
+        "after": {
+          "bytes": 169786,
+          "lf": 516,
+          "terminal_LF": true,
+          "sha256": "418c48ba1ce87291eca70876b65997bd081f6f77cbd8595919fad7bb34440086",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "f745a15a6aaba7de042c493c2246280fb9f2c0e8"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/historical-ledger-C4-addendum.json",
+        "before": null,
+        "after": {
+          "bytes": 6071,
+          "lf": 217,
+          "terminal_LF": true,
+          "sha256": "b8f8965b81511e1a56b48730e7b32e1a53536391e8b4dd70acf1d09f23224bfd",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "67bc0c0b824741eee86b59031e2db4c8d676cc6b"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/historical-ledger-C5-addendum.json",
+        "before": null,
+        "after": {
+          "bytes": 1497,
+          "lf": 34,
+          "terminal_LF": true,
+          "sha256": "b62262309ab2c704f085a1287a620d8bcab52d085d0028079fd4f41500d6e0d5",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "7911c4f9e13eb6e9ae6c1c777c9fbb4dd341968e"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/historical-ledger-C6-addendum.json",
+        "before": null,
+        "after": {
+          "bytes": 1763,
+          "lf": 43,
+          "terminal_LF": true,
+          "sha256": "231140ab829b3bc7f06e6f74d6a48db80ba728ca4a61f601e9a4a45dd0a86f95",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "794c82bf71d2693e4f24d99b7c7195389f077894"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/historical-ledger.json",
+        "before": null,
+        "after": {
+          "bytes": 46518,
+          "lf": 723,
+          "terminal_LF": true,
+          "sha256": "7bcd9a67d19a43eac4b67ae1efb0cf1526082a60cb2e6956bac4bab161b1f39d",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "59d20c7448c9909db60e6e5238803c454a3b60ed"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/live-remote-observations.json",
+        "before": null,
+        "after": {
+          "bytes": 27301,
+          "lf": 60,
+          "terminal_LF": true,
+          "sha256": "7bfa584122224295247021591a3fff476a4d0db699402308dd2788d66546cd40",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "6810d1086fdf8293ec7cbf7251a9a22736247797"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/repository-after.json",
+        "before": null,
+        "after": {
+          "bytes": 4496834,
+          "lf": 93212,
+          "terminal_LF": true,
+          "sha256": "ef76b95aaf6de547ca050635688f6e86f4656444eee650fd2a6cf2a7531cee10",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "be9fa196c15d1b33e36d49631d0723aa311156d3"
+        }
+      },
+      {
+        "operation": "add",
+        "path": "docs/research/governance/ore-n0-repository-integration-c1/evidence/repository-before.json",
+        "before": null,
+        "after": {
+          "bytes": 4486527,
+          "lf": 93077,
+          "terminal_LF": true,
+          "sha256": "82457ee316fb7ec690e6a1ed1e5ff98225c064fda29081c456e45fd4b8779af2",
+          "filesystem_mode": "0644",
+          "git_mode": "100644",
+          "git_blob_sha1": "2d23fea8668763f96375aa97f502bbd5575b5d35"
+        }
+      }
+    ],
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "published_file_count",
+    "claim": 37,
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "existing_file_edits",
+    "claim": 0,
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "post_push",
+    "claim": {
+      "time": "2026-09-29T04:39:28.093408+00:00",
+      "commit": "d1c9fc56fc183cdcca83d82cc896e4859a00f4dc",
+      "remote": "ref: refs/heads/main\tHEAD\n3d7a6db71c4b061d85839d9f81727ee5dc6c9cc6\tHEAD\nd1c9fc56fc183cdcca83d82cc896e4859a00f4dc\trefs/heads/research/post-v1\n",
+      "equality": true,
+      "ahead": 0,
+      "behind": 0,
+      "independent_activation_review": false
+    },
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Retained point record corroborates then-state; independent fresh network query corroborates now-state only."
+  },
+  {
+    "field": "index",
+    "claim": {
+      "bytes": 91883,
+      "lf": 272,
+      "terminal_LF": false,
+      "sha256": "ff65baf0e554bdcdaa1024c15fd6c0d8253f307db237f8f6e743f292a6c99699"
+    },
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "staged_files",
+    "claim": 0,
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "tracked_modifications",
+    "claim": 5,
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "unrelated_untracked",
+    "claim": 31,
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "working_tree",
+    "claim": "Inherited dirty state preserved exactly; no unrelated path staged or committed.",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "All inherited bytes/modes and binary diff match at observed endpoints; not interval nonmutation proof."
+  },
+  {
+    "field": "substantive_refs",
+    "claim": "39 preserved refs; only research/post-v1 and origin/research/post-v1 advanced to the exact adoption commit; direct/symbolic relationships unchanged.",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "All 39 current refs match recorded final; only authorized two values changed from baseline; not historical continuity proof."
+  },
+  {
+    "field": "config",
+    "claim": "Persistent Git configuration unchanged.",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "publication_status",
+    "claim": "repository adoption/publication complete",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md. Issuance/action/absence claims are limited to examined authenticated records, not universal external history."
+  },
+  {
+    "field": "activation_status",
+    "claim": "N0 activation NOT complete",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md. Issuance/action/absence claims are limited to examined authenticated records, not universal external history."
+  },
+  {
+    "field": "N0_established",
+    "claim": false,
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md. Issuance/action/absence claims are limited to examined authenticated records, not universal external history."
+  },
+  {
+    "field": "N0_activated",
+    "claim": false,
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md. Issuance/action/absence claims are limited to examined authenticated records, not universal external history."
+  },
+  {
+    "field": "T_N0",
+    "claim": null,
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "CD_dependency_status",
+    "claim": "CD prospectively dependency-eligible",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "CD_substantive_status",
+    "claim": "BLOCKED; no CD substantive PASS or author correction executed",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "prospective_preflight_executed",
+    "claim": false,
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md. Issuance/action/absence claims are limited to examined authenticated records, not universal external history."
+  },
+  {
+    "field": "historical_ledger",
+    "claim": [
+      "unavailable 3,288-byte listing",
+      "historical continuity U",
+      "historical non-consumption U",
+      "historical alias-exclusion U",
+      "historical direct-vs-symbolic U",
+      "historical symbolic-target U",
+      "producer/task/transaction history U",
+      "IR-U1=U",
+      "historical CS23=U",
+      "historical CS-PREFLIGHT-U",
+      "original N0 U/BLOCK",
+      "N0 candidate C2 incomplete",
+      "C3 FAIL/BLOCK",
+      "C4 FAIL/BLOCK",
+      "C5 FAIL/BLOCK",
+      "179 historical D/U targets",
+      "23 inherited D nodes",
+      "all other FAIL/U/withdrawn findings unchanged",
+      "RR-AR-PASS remains architecture-only"
+    ],
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "upstream_obligation",
+    "claim": "UPSTREAM ORE COMPATIBILITY / DRIFT CONTROL = REQUIRED and UNSATISFIED",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "upstream_ceiling",
+    "claim": "No compatibility satisfaction; consequential drift requires dependent requalification, final live recheck and fail-closed behavior outside the accepted envelope. Unknown consequentiality blocks dependent readiness.",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "durable_anchors",
+    "claim": {
+      "package": "Exact 37 members published at immutable commit/path/mode/blob; complete C6 archive and C6 verdict retained within package.",
+      "retrieval": "Author retrieved and authenticated all nested manifested C6/C5/C4/C3/C2 archive members, 31 mapped anchors, 59 repository contracts, 65 original representations, nine stronger bindings, 13 redesign transition records and 15 embedded C2 evidence bodies. This is author authentication, not the independent publication gate.",
+      "new_external_bindings": "Exact author freeze, complete integration review, supporting records and this transition retained outside the repository in this receipt directory. No extra file was added to the 37-file commit. Independently accepted durable storage/retention of these new bindings remains to be verified by the next gate before raw-dependent activation reliance; this receipt does not accept itself.",
+      "unavailable_historical_anchor": "3,288-byte listing remains unavailable and excluded; no fabricated retrieval."
+    },
+    "result": "QUALIFIED / activation U-BLOCK",
+    "verification_and_limit": "Existing C6/lineage bytes retrieved independently. New external acceptance is correctly left unresolved; U/BLOCK for activation."
+  },
+  {
+    "field": "continuation_semantics",
+    "claim": "Package CONTINUATION.md and CURRENT-NEXT-GATE.json remain exact immutable dated author artifacts. Their old DRAFT/review gate and baseline are historical freeze facts. Read them together with exact integration PASS and this author publication receipt/continuation; current routing is the single gate below. Neither old banners nor this routing change activates N0 or makes proposed successor controls/applicability effective.",
+    "result": "QUALIFIED / activation U-BLOCK",
+    "verification_and_limit": "Valid dated-freeze interpretation with exact local overlay; accepted durable overlay missing, so fresh repository-only current routing U/BLOCK."
+  },
+  {
+    "field": "next_gate_count",
+    "claim": 1,
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "next_gate",
+    "claim": "FRESH INDEPENDENT HIGH-RISK REVIEW \u2014 ORE N0 PUBLICATION / ACTIVATION READINESS",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "next_gate_obligations",
+    "claim": [
+      "Independently retrieve published exact commit, parent, full tree, 37 members/blobs and nested/raw authority closure from accepted storage.",
+      "Independently verify complete action authority, transition evidence, failed transport and bounded retry, final remote research equality, index/working/ref/config state and all claim-material drift.",
+      "Independently verify/accept required durable storage of author freeze, full integration PASS and publication/acceptance evidence before raw-dependent reliance.",
+      "Determine whether activation-contract prerequisites 1\u20137 are satisfied and whether a separately authorized external activation receipt may proceed; no automatic activation from PASS."
+    ],
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "These are pending review requirements; partial successes do not satisfy accepted durability."
+  },
+  {
+    "field": "next_gate_executed",
+    "claim": false,
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md. Issuance/action/absence claims are limited to examined authenticated records, not universal external history."
+  },
+  {
+    "field": "later_sequence",
+    "claim": [
+      "independent publication verification",
+      "separately authorized external N0 activation and independently authenticated receipt",
+      "separately authorized prospective receiving preflight",
+      "FOCUSED CD AUTHOR CORRECTION \u2014 LIVE CANARY only after qualified prospective preflight PASS and exact compatible authority"
+    ],
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "excluded_authority",
+    "claim": [
+      "N0 establishment or activation",
+      "CD substantive work",
+      "implementation",
+      "qualification",
+      "Execution Readiness closure",
+      "real-SOL/mining readiness"
+    ],
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Authenticated against exact freeze, local/remote objects, retained authority/transition records and/or preserved contract ceilings; see REVIEW.md."
+  },
+  {
+    "field": "transport",
+    "claim": "First push failed curl 55 broken pipe; fresh query confirmed remote baseline. One bounded retry used command-local HTTP/1.1 and postBuffer=524288000, no persistent config or semantic change. Full commands/results retained.",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Explicit bounded-retry authority and ordered failure/recheck/retry records checked; not omniscient transport history."
+  },
+  {
+    "field": "tests",
+    "claim": {
+      "documentary": "PASS --lineage; cache/bytecode disabled",
+      "features": "351 passed in 6.53s; cache/bytecode disabled",
+      "diff_check": "ordinary and cached exit 0"
+    },
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Retained author result; independent 351-pass regression and documentary lineage verification corroborate outcome, not historical timing."
+  },
+  {
+    "field": "observation_limit",
+    "claim": "Recorded point observations and authorized Git actions only; no undocumented interval continuity, coherent operational DB state, writer identity or historical harmlessness inferred.",
+    "result": "PASS within authenticated record / current object scope",
+    "verification_and_limit": "Required limitation retained and applied."
+  }
+]

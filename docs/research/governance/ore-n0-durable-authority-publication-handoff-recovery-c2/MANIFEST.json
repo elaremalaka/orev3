@@ -1,0 +1,268 @@
+{
+  "package": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C2",
+  "status": "DRAFT-UNREVIEWED",
+  "members": [
+    {
+      "path": "docs/research/governance/ORE-N0-RECOVERY-CURRENT-GATE.json",
+      "identity": {
+        "bytes": 2663,
+        "lf": 50,
+        "terminal_LF": true,
+        "sha256": "8410fd1c7d661637d7992deb4586965831f5b49b41545e700470b73b5c49b53e",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "8d5aaf99953fedd5e1bf61abc563be3a81289e1d"
+      },
+      "operation": "add",
+      "before": null,
+      "provenance": "C2 author lane 01a0ee43-b043-7450-9e53-c57464d95990",
+      "consumers": [
+        "independent C2 review",
+        "compatible subsequent publication/continuation"
+      ],
+      "invalidation": "Missing/changed bytes or unsupported authority promotion blocks reliance"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/AUTHOR-VALIDATION.json",
+      "identity": {
+        "bytes": 28390,
+        "lf": 850,
+        "terminal_LF": true,
+        "sha256": "871177d60316fa30300a84bb1df1edcb53bce4101c0331e38398191f6d49b990",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "cd1d1d37f6fc5fa13fe63599f9dfef7d11948881"
+      },
+      "operation": "add",
+      "before": null,
+      "provenance": "C2 author lane 01a0ee43-b043-7450-9e53-c57464d95990",
+      "consumers": [
+        "independent C2 review",
+        "compatible subsequent publication/continuation"
+      ],
+      "invalidation": "Missing/changed bytes or unsupported authority promotion blocks reliance"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/CURRENT-NEXT-GATE.json",
+      "identity": {
+        "bytes": 9185,
+        "lf": 183,
+        "terminal_LF": true,
+        "sha256": "7162a02531d2db2607cca8891a5d352097efbd97aad411aa992f88e049583603",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "0cdc393503a7a6a0fc1d2a361b715d247e322865"
+      },
+      "operation": "add",
+      "before": null,
+      "provenance": "C2 author lane 01a0ee43-b043-7450-9e53-c57464d95990",
+      "consumers": [
+        "independent C2 review",
+        "compatible subsequent publication/continuation"
+      ],
+      "invalidation": "Missing/changed bytes or unsupported authority promotion blocks reliance"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/HANDOFF.md",
+      "identity": {
+        "bytes": 13274,
+        "lf": 76,
+        "terminal_LF": true,
+        "sha256": "9ce3171c7d93b11714cb107064370a9d09474a060c298d0f58808f00d63479f9",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "03b6470c700a98a20beec67c626f79d2ce04b80f"
+      },
+      "operation": "add",
+      "before": null,
+      "provenance": "C2 author lane 01a0ee43-b043-7450-9e53-c57464d95990",
+      "consumers": [
+        "independent C2 review",
+        "compatible subsequent publication/continuation"
+      ],
+      "invalidation": "Missing/changed bytes or unsupported authority promotion blocks reliance"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/PRE-EDIT-STATE.json",
+      "identity": {
+        "bytes": 3728171,
+        "lf": 118413,
+        "terminal_LF": true,
+        "sha256": "c13369dd7dedd0d571285cc1d5d996a709ef9f0d6636bcd3db9b21d734848a8d",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "2ea514bb1f26373917ac5c7cffd4428de5489f7b"
+      },
+      "operation": "add",
+      "before": null,
+      "provenance": "C2 author lane 01a0ee43-b043-7450-9e53-c57464d95990",
+      "consumers": [
+        "independent C2 review",
+        "compatible subsequent publication/continuation"
+      ],
+      "invalidation": "Missing/changed bytes or unsupported authority promotion blocks reliance"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/RETENTION-MAP.json",
+      "identity": {
+        "bytes": 10696,
+        "lf": 201,
+        "terminal_LF": true,
+        "sha256": "b93882435f63c8f02a055de8b2b27167b7463271ec1de35eca1e71964a5a5164",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "e83fa2ea874bac0bf402f2c5b76211d98b51eba7"
+      },
+      "operation": "add",
+      "before": null,
+      "provenance": "C2 author lane 01a0ee43-b043-7450-9e53-c57464d95990",
+      "consumers": [
+        "independent C2 review",
+        "compatible subsequent publication/continuation"
+      ],
+      "invalidation": "Missing/changed bytes or unsupported authority promotion blocks reliance"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/SCOPE.json",
+      "identity": {
+        "bytes": 3610,
+        "lf": 100,
+        "terminal_LF": true,
+        "sha256": "f93e64da8347a0b838777011429e1d2af93d7c7e6657cda3c87556aae6e50994",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "27d981032ade9134230d3af3c2772406039e3172"
+      },
+      "operation": "add",
+      "before": null,
+      "provenance": "C2 author lane 01a0ee43-b043-7450-9e53-c57464d95990",
+      "consumers": [
+        "independent C2 review",
+        "compatible subsequent publication/continuation"
+      ],
+      "invalidation": "Missing/changed bytes or unsupported authority promotion blocks reliance"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/documentary/verify.py",
+      "identity": {
+        "bytes": 18495,
+        "lf": 255,
+        "terminal_LF": true,
+        "sha256": "c4cd7e715012b14040ca5d2b3350f6d0696672b37084baf4d03742e28f71d7cc",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "b88365c0b1032cb25de850dcc08c1964a4bd1c9c"
+      },
+      "operation": "add",
+      "before": null,
+      "provenance": "C2 author lane 01a0ee43-b043-7450-9e53-c57464d95990",
+      "consumers": [
+        "independent C2 review",
+        "compatible subsequent publication/continuation"
+      ],
+      "invalidation": "Missing/changed bytes or unsupported authority promotion blocks reliance"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/recovery-author/AUTHOR-FREEZE.json",
+      "identity": {
+        "bytes": 42601,
+        "lf": 1155,
+        "terminal_LF": true,
+        "sha256": "40c79bbc7c019c6b52ddbfd3a750fb0d84b3f12eafa32e9ba6a51ea5666424b2",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "8a1a080c8f83d329f384bf775c1ed0dae3d3ec51"
+      },
+      "operation": "add",
+      "before": null,
+      "provenance": "Exact retained original",
+      "consumers": [
+        "independent C2 review",
+        "compatible subsequent publication/continuation"
+      ],
+      "invalidation": "Missing/changed bytes or unsupported authority promotion blocks reliance"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/recovery-review/REVIEW-FREEZE.json",
+      "identity": {
+        "bytes": 6714,
+        "lf": 238,
+        "terminal_LF": true,
+        "sha256": "089ace456d80d7d2ee0d20258c78c59aef78972e654e88e6e11264c0277fc8e9",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "3d0d1e7b30a7094702ab93a398da55fa50234f06"
+      },
+      "operation": "add",
+      "before": null,
+      "provenance": "Exact retained original",
+      "consumers": [
+        "independent C2 review",
+        "compatible subsequent publication/continuation"
+      ],
+      "invalidation": "Missing/changed bytes or unsupported authority promotion blocks reliance"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/recovery-review/REVIEW.md",
+      "identity": {
+        "bytes": 47520,
+        "lf": 279,
+        "terminal_LF": true,
+        "sha256": "442b89751ead8f7ebf2bc756ff98cd4ea9abe766c00f49616e4b83a654d5e085",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "24596d006b9fe5fa7e49ef458d01fe4c330dd396"
+      },
+      "operation": "add",
+      "before": null,
+      "provenance": "Exact retained original",
+      "consumers": [
+        "independent C2 review",
+        "compatible subsequent publication/continuation"
+      ],
+      "invalidation": "Missing/changed bytes or unsupported authority promotion blocks reliance"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/stopped-publication/RESULT-FREEZE.json",
+      "identity": {
+        "bytes": 3162,
+        "lf": 123,
+        "terminal_LF": true,
+        "sha256": "1e39317845cb6c7945a8646e26ef5a17ffdd998a4c88e1f930308a6f46ae72ba",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "b5bc467ef7c11ad9a74efdef4445cf91098bf0ef"
+      },
+      "operation": "add",
+      "before": null,
+      "provenance": "Exact retained original",
+      "consumers": [
+        "independent C2 review",
+        "compatible subsequent publication/continuation"
+      ],
+      "invalidation": "Missing/changed bytes or unsupported authority promotion blocks reliance"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/evidence/stopped-publication/RESULT.md",
+      "identity": {
+        "bytes": 4959,
+        "lf": 40,
+        "terminal_LF": true,
+        "sha256": "696bc6b1a6523bcceff8e3b7c924b5199d8831e44707d15f51697f823ebe61b9",
+        "filesystem_mode": "0644",
+        "git_mode": "100644",
+        "git_blob_sha1": "4e79cd43b0a79604589ad909638487015cbc3bb8"
+      },
+      "operation": "add",
+      "before": null,
+      "provenance": "Exact retained original",
+      "consumers": [
+        "independent C2 review",
+        "compatible subsequent publication/continuation"
+      ],
+      "invalidation": "Missing/changed bytes or unsupported authority promotion blocks reliance"
+    }
+  ],
+  "manifest_binding": "This manifest is bound by the external exact C2 author freeze and later independent review; no self-hash. The later authorized annex must durably retain those exact outer bytes before publication reliance.",
+  "canonical_delta_encoding": "Path-sorted operation array with operation/path/before-null/after full identity; UTF-8 compact sorted-key JSON, no terminal LF; outer freeze includes all 14 files including this manifest."
+}

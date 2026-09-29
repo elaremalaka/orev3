@@ -1,0 +1,850 @@
+{
+  "package": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C2",
+  "status": "Author documentary checks only; no independent C2 review or authority promotion",
+  "documentary": {
+    "result": "PASS — C2 author documentary validation only",
+    "mode": "author-core pre-manifest",
+    "adversarial": [
+      {
+        "case": "PASS hash present but body missing",
+        "expected": "U/BLOCK",
+        "observed": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "review body present but freeze absent",
+        "expected": "U/BLOCK",
+        "observed": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "recovery author freeze absent",
+        "expected": "U/BLOCK",
+        "observed": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "raw-index anchor omitted",
+        "expected": "U/BLOCK",
+        "observed": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "one retained C1 body unreachable",
+        "expected": "U/BLOCK",
+        "observed": "U/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "hash-only PASS",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "freeze points to wrong review",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "author freeze confused with review freeze",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "stale C1 gate controls",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "jump to activation",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "future gate current before publication",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "publication complete before commit",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "activation readiness promoted",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "N0 active",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "T_N0 set",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "preflight executed",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "historical U promoted",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "CD eligibility becomes substantive authority",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "upstream removed",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "copied PASS becomes new review",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "external visualization retrieval needed",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "FAIL precedence with missing PASS",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "filename and enumeration order reversed",
+        "expected": "PASS",
+        "observed": "PASS",
+        "defense": "PASS"
+      },
+      {
+        "case": "ambiguous precedence",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "cycle",
+        "expected": "FAIL/BLOCK",
+        "observed": "FAIL/BLOCK",
+        "defense": "PASS"
+      },
+      {
+        "case": "future routing model: all seven independently verified conditions",
+        "expected": [
+          "PASS",
+          "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 RECOVERY PUBLICATION / ACTIVATION READINESS"
+        ],
+        "observed": [
+          "PASS",
+          "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 RECOVERY PUBLICATION / ACTIVATION READINESS"
+        ],
+        "defense": "PASS; synthetic routing model, not actual publication evidence"
+      },
+      {
+        "case": "future routing model: no publication proof",
+        "expected": [
+          "U/BLOCK",
+          "ORE N0 — DURABLE RECOVERY ADOPTION / PUBLICATION AUTHOR"
+        ],
+        "observed": [
+          "U/BLOCK",
+          "ORE N0 — DURABLE RECOVERY ADOPTION / PUBLICATION AUTHOR"
+        ],
+        "defense": "PASS; synthetic routing model, not actual publication evidence"
+      },
+      {
+        "case": "future routing model: contradictory publication proof with residual U",
+        "expected": [
+          "FAIL/BLOCK",
+          null
+        ],
+        "observed": [
+          "FAIL/BLOCK",
+          null
+        ],
+        "defense": "PASS; synthetic routing model, not actual publication evidence"
+      }
+    ],
+    "C1_validation": {
+      "result": "PASS — candidate documentary validation only",
+      "adversarial": [
+        {
+          "case": "integration hash survives but raw verdict absent",
+          "observed_routing": "U/BLOCK",
+          "expected_routing": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "author freeze hash survives but raw freeze absent",
+          "observed_routing": "U/BLOCK",
+          "expected_routing": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "receipt only transient locator",
+          "observed_routing": "U/BLOCK",
+          "expected_routing": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "required raw staged index omitted",
+          "observed_routing": "U/BLOCK",
+          "expected_routing": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "newline normalization",
+          "observed_routing": "FAIL/BLOCK",
+          "expected_routing": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "stale prepublication gate selected",
+          "observed_routing": "FAIL/BLOCK",
+          "expected_routing": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "N0 activation promotion",
+          "observed_routing": "FAIL/BLOCK",
+          "expected_routing": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "publication PASS becomes activation PASS",
+          "observed_routing": "FAIL/BLOCK",
+          "expected_routing": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "CD documentary eligibility becomes authority",
+          "observed_routing": "FAIL/BLOCK",
+          "expected_routing": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "upstream obligation disappears",
+          "observed_routing": "FAIL/BLOCK",
+          "expected_routing": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "retained review copy becomes new review",
+          "observed_routing": "FAIL/BLOCK",
+          "expected_routing": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "historical U disappears",
+          "observed_routing": "FAIL/BLOCK",
+          "expected_routing": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "drift silently ignored",
+          "observed_routing": "FAIL/BLOCK",
+          "expected_routing": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "readiness U/BLOCK omitted",
+          "observed_routing": "U/BLOCK",
+          "expected_routing": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "no deterministic precedence",
+          "observed_routing": "U/BLOCK",
+          "expected_routing": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "two gates without ordering",
+          "observed_routing": "U/BLOCK",
+          "expected_routing": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "equivalent representation drops flags/extensions/stages",
+          "observed_routing": "U/BLOCK",
+          "expected_routing": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "exact raw index without boundary provenance",
+          "observed_routing": "U/BLOCK",
+          "expected_routing": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "fresh lane depends on unavailable session storage",
+          "observed_routing": "U/BLOCK",
+          "expected_routing": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "durable path without identity binding",
+          "observed_routing": "U/BLOCK",
+          "expected_routing": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "unrelated transient archived",
+          "observed_routing": "FAIL/BLOCK",
+          "expected_routing": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "all required exact bytes and inactive ordered state",
+          "observed_routing": "PASS",
+          "expected_routing": "PASS",
+          "defense": "PASS"
+        }
+      ],
+      "repository_only": "PASS with Python audit hook rejecting .codex file reads; all necessary evidence read from repository paths and Git objects",
+      "members_including_manifest": 62,
+      "retained_evidence_objects": 49,
+      "published_members_unchanged": 37,
+      "index": "PASS exact reconstruction and full raw retention; no equivalent",
+      "activation_readiness": "U/BLOCK",
+      "accepted_durable_retention": false,
+      "next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 DURABLE AUTHORITY / PUBLICATION HANDOFF RECOVERY"
+    },
+    "lineage": "Not rerun; --lineage verifies full nested closure",
+    "repository_only": "PASS: repository paths and immutable Git objects only; Python audit hook rejects .codex reads. Inspected child scripts use repository/Git/temporary reconstruction only; no OS-wide isolation claimed.",
+    "retained_new_bodies": 5,
+    "retained_C1_bodies": 49,
+    "raw_index": "UNCHANGED path A; exact C1 reconstruction passed",
+    "controlling_next_gate": "ORE N0 — DURABLE RECOVERY ADOPTION / PUBLICATION AUTHOR",
+    "author_lane_next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 DURABLE AUTHORITY / PUBLICATION HANDOFF RECOVERY C2",
+    "future_post_publication_next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 RECOVERY PUBLICATION / ACTIVATION READINESS",
+    "activation_readiness": "U/BLOCK",
+    "N0_activated": false,
+    "T_N0": null,
+    "CD_substantive_status": "BLOCKED"
+  },
+  "full_lineage": {
+    "status": "PASS author documentary checks only; not independent review or prospective preflight",
+    "package_members": 37,
+    "bound_by_members_manifest": 36,
+    "archive_sha256": "bef9fdfbb7e929b058a869c4ae4b6b466e0f8d99e570e1647677fe676c2dfc12",
+    "nested_archives": [
+      {
+        "archive": "C6",
+        "files": 543,
+        "entries": 573,
+        "manifests": [
+          {
+            "path": "ORE-N0-PROSPECTIVE-BOUNDARY-C6/freeze-manifest.json",
+            "listed": 542
+          }
+        ]
+      },
+      {
+        "archive": "C5",
+        "files": 530,
+        "entries": 560,
+        "manifests": [
+          {
+            "path": "ORE-N0-PROSPECTIVE-BOUNDARY-C5/freeze-manifest.json",
+            "listed": 529
+          }
+        ]
+      },
+      {
+        "archive": "C4",
+        "files": 515,
+        "entries": 515,
+        "manifests": [
+          {
+            "path": "ORE-N0-PROSPECTIVE-BOUNDARY-C4/freeze-manifest.json",
+            "listed": 514
+          }
+        ]
+      },
+      {
+        "archive": "C3",
+        "files": 390,
+        "entries": 420,
+        "manifests": [
+          {
+            "path": "ORE-N0-PROSPECTIVE-BOUNDARY-C3/freeze-manifest.json",
+            "listed": 389
+          }
+        ]
+      },
+      {
+        "archive": "C2",
+        "files": 2186,
+        "entries": 2559,
+        "manifests": [
+          {
+            "path": "correction/freeze-manifest.json",
+            "listed": 2185
+          },
+          {
+            "path": "correction/original-candidate/freeze-manifest.json",
+            "listed": 2156
+          }
+        ]
+      }
+    ],
+    "negative_cases_rejected": [
+      "N0_established",
+      "N0_activated",
+      "prospective_preflight_executed",
+      "CD_substantive_status",
+      "upstream_ore_obligation",
+      "next_gate_count",
+      "normalized_or_changed_verdict"
+    ],
+    "N0_established": false,
+    "N0_activated": false,
+    "prospective_preflight_executed": false,
+    "CD_executed": false
+  },
+  "repository_only_simulation": {
+    "result": "PASS",
+    "temporary_repository": "/private/tmp/ore-c2-repository-only-vcsd1azh",
+    "command": [
+      "python3",
+      "-B",
+      "/private/tmp/ore-c2-repository-only-vcsd1azh/docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c2/documentary/verify.py",
+      "--author-core",
+      "--lineage"
+    ],
+    "stdout": {
+      "result": "PASS — C2 author documentary validation only",
+      "mode": "author-core pre-manifest",
+      "adversarial": [
+        {
+          "case": "PASS hash present but body missing",
+          "expected": "U/BLOCK",
+          "observed": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "review body present but freeze absent",
+          "expected": "U/BLOCK",
+          "observed": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "recovery author freeze absent",
+          "expected": "U/BLOCK",
+          "observed": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "raw-index anchor omitted",
+          "expected": "U/BLOCK",
+          "observed": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "one retained C1 body unreachable",
+          "expected": "U/BLOCK",
+          "observed": "U/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "hash-only PASS",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "freeze points to wrong review",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "author freeze confused with review freeze",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "stale C1 gate controls",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "jump to activation",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "future gate current before publication",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "publication complete before commit",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "activation readiness promoted",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "N0 active",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "T_N0 set",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "preflight executed",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "historical U promoted",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "CD eligibility becomes substantive authority",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "upstream removed",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "copied PASS becomes new review",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "external visualization retrieval needed",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "FAIL precedence with missing PASS",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "filename and enumeration order reversed",
+          "expected": "PASS",
+          "observed": "PASS",
+          "defense": "PASS"
+        },
+        {
+          "case": "ambiguous precedence",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        },
+        {
+          "case": "cycle",
+          "expected": "FAIL/BLOCK",
+          "observed": "FAIL/BLOCK",
+          "defense": "PASS"
+        }
+      ],
+      "C1_validation": {
+        "result": "PASS — candidate documentary validation only",
+        "adversarial": [
+          {
+            "case": "integration hash survives but raw verdict absent",
+            "observed_routing": "U/BLOCK",
+            "expected_routing": "U/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "author freeze hash survives but raw freeze absent",
+            "observed_routing": "U/BLOCK",
+            "expected_routing": "U/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "receipt only transient locator",
+            "observed_routing": "U/BLOCK",
+            "expected_routing": "U/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "required raw staged index omitted",
+            "observed_routing": "U/BLOCK",
+            "expected_routing": "U/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "newline normalization",
+            "observed_routing": "FAIL/BLOCK",
+            "expected_routing": "FAIL/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "stale prepublication gate selected",
+            "observed_routing": "FAIL/BLOCK",
+            "expected_routing": "FAIL/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "N0 activation promotion",
+            "observed_routing": "FAIL/BLOCK",
+            "expected_routing": "FAIL/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "publication PASS becomes activation PASS",
+            "observed_routing": "FAIL/BLOCK",
+            "expected_routing": "FAIL/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "CD documentary eligibility becomes authority",
+            "observed_routing": "FAIL/BLOCK",
+            "expected_routing": "FAIL/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "upstream obligation disappears",
+            "observed_routing": "FAIL/BLOCK",
+            "expected_routing": "FAIL/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "retained review copy becomes new review",
+            "observed_routing": "FAIL/BLOCK",
+            "expected_routing": "FAIL/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "historical U disappears",
+            "observed_routing": "FAIL/BLOCK",
+            "expected_routing": "FAIL/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "drift silently ignored",
+            "observed_routing": "FAIL/BLOCK",
+            "expected_routing": "FAIL/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "readiness U/BLOCK omitted",
+            "observed_routing": "U/BLOCK",
+            "expected_routing": "U/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "no deterministic precedence",
+            "observed_routing": "U/BLOCK",
+            "expected_routing": "U/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "two gates without ordering",
+            "observed_routing": "U/BLOCK",
+            "expected_routing": "U/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "equivalent representation drops flags/extensions/stages",
+            "observed_routing": "U/BLOCK",
+            "expected_routing": "U/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "exact raw index without boundary provenance",
+            "observed_routing": "U/BLOCK",
+            "expected_routing": "U/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "fresh lane depends on unavailable session storage",
+            "observed_routing": "U/BLOCK",
+            "expected_routing": "U/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "durable path without identity binding",
+            "observed_routing": "U/BLOCK",
+            "expected_routing": "U/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "unrelated transient archived",
+            "observed_routing": "FAIL/BLOCK",
+            "expected_routing": "FAIL/BLOCK",
+            "defense": "PASS"
+          },
+          {
+            "case": "all required exact bytes and inactive ordered state",
+            "observed_routing": "PASS",
+            "expected_routing": "PASS",
+            "defense": "PASS"
+          }
+        ],
+        "repository_only": "PASS with Python audit hook rejecting .codex file reads; all necessary evidence read from repository paths and Git objects",
+        "members_including_manifest": 62,
+        "retained_evidence_objects": 49,
+        "published_members_unchanged": 37,
+        "index": "PASS exact reconstruction and full raw retention; no equivalent",
+        "activation_readiness": "U/BLOCK",
+        "accepted_durable_retention": false,
+        "next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 DURABLE AUTHORITY / PUBLICATION HANDOFF RECOVERY"
+      },
+      "lineage": {
+        "status": "PASS author documentary checks only; not independent review or prospective preflight",
+        "package_members": 37,
+        "bound_by_members_manifest": 36,
+        "archive_sha256": "bef9fdfbb7e929b058a869c4ae4b6b466e0f8d99e570e1647677fe676c2dfc12",
+        "nested_archives": [
+          {
+            "archive": "C6",
+            "files": 543,
+            "entries": 573,
+            "manifests": [
+              {
+                "path": "ORE-N0-PROSPECTIVE-BOUNDARY-C6/freeze-manifest.json",
+                "listed": 542
+              }
+            ]
+          },
+          {
+            "archive": "C5",
+            "files": 530,
+            "entries": 560,
+            "manifests": [
+              {
+                "path": "ORE-N0-PROSPECTIVE-BOUNDARY-C5/freeze-manifest.json",
+                "listed": 529
+              }
+            ]
+          },
+          {
+            "archive": "C4",
+            "files": 515,
+            "entries": 515,
+            "manifests": [
+              {
+                "path": "ORE-N0-PROSPECTIVE-BOUNDARY-C4/freeze-manifest.json",
+                "listed": 514
+              }
+            ]
+          },
+          {
+            "archive": "C3",
+            "files": 390,
+            "entries": 420,
+            "manifests": [
+              {
+                "path": "ORE-N0-PROSPECTIVE-BOUNDARY-C3/freeze-manifest.json",
+                "listed": 389
+              }
+            ]
+          },
+          {
+            "archive": "C2",
+            "files": 2186,
+            "entries": 2559,
+            "manifests": [
+              {
+                "path": "correction/freeze-manifest.json",
+                "listed": 2185
+              },
+              {
+                "path": "correction/original-candidate/freeze-manifest.json",
+                "listed": 2156
+              }
+            ]
+          }
+        ],
+        "negative_cases_rejected": [
+          "N0_established",
+          "N0_activated",
+          "prospective_preflight_executed",
+          "CD_substantive_status",
+          "upstream_ore_obligation",
+          "next_gate_count",
+          "normalized_or_changed_verdict"
+        ],
+        "N0_established": false,
+        "N0_activated": false,
+        "prospective_preflight_executed": false,
+        "CD_executed": false
+      },
+      "repository_only": "PASS: repository paths and immutable Git objects only; Python audit hook rejects .codex reads. Inspected child scripts use repository/Git/temporary reconstruction only; no OS-wide isolation claimed.",
+      "retained_new_bodies": 5,
+      "retained_C1_bodies": 49,
+      "raw_index": "UNCHANGED path A; exact C1 reconstruction passed",
+      "controlling_next_gate": "ORE N0 — DURABLE RECOVERY ADOPTION / PUBLICATION AUTHOR",
+      "author_lane_next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 DURABLE AUTHORITY / PUBLICATION HANDOFF RECOVERY C2",
+      "future_post_publication_next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 RECOVERY PUBLICATION / ACTIVATION READINESS",
+      "activation_readiness": "U/BLOCK",
+      "N0_activated": false,
+      "T_N0": null,
+      "CD_substantive_status": "BLOCKED"
+    },
+    "stderr": "",
+    "method": "Copied repository evidence and proposed successor only; immutable local repository Git objects read via GIT_DIR. Python audit hook denies .codex reads; inspected subprocesses use no external-session storage. Original visualization/session files neither copied nor opened during simulation. No OS-wide sandbox claimed.",
+    "limitations": "Documentary byte/routing recovery only; no C2 independent acceptance, publication or readiness PASS."
+  },
+  "feature_tests": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src .venv/bin/python -B -m pytest -q -p no:cacheprovider tests/features",
+    "stdout": "........................................................................ [ 20%]\n........................................................................ [ 41%]\n........................................................................ [ 61%]\n........................................................................ [ 82%]\n...............................................................          [100%]\n351 passed in 5.56s\n",
+    "result": "351 passed"
+  },
+  "limitations": "Simulation used pre-manifest bytes and 25 mutation cases; current core adds three synthetic future routing cases (28 total). Final manifest/freeze and final repository-only revalidation are externally bound after this record, avoiding self-reference. Source locations are provenance only; this tests no session dependency, not OS-wide isolation. No actual publication/activation verification was executed.",
+  "C1_preservation": "62 exact additions, 49 exact evidence bodies; no edits. Integration 37 members unchanged; original raw-index path A unchanged.",
+  "entry_state": "854 material bodies/modes and raw index identical to stopped gate; substantive refs and staged entries compared exactly. Five inherited tracked modifications and 31 inherited untracked paths preserved.",
+  "historical_ledger": "UNCHANGED",
+  "upstream": "REQUIRED and UNSATISFIED",
+  "activation_readiness": "U/BLOCK"
+}

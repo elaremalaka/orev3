@@ -1,0 +1,14 @@
+{
+  "time": "2026-09-29T04:41:09.247669+00:00",
+  "args": [
+    "git",
+    "ls-remote",
+    "--symref",
+    "origin",
+    "HEAD",
+    "refs/heads/research/post-v1"
+  ],
+  "exit_code": 0,
+  "stdout": "ref: refs/heads/main\tHEAD\n3d7a6db71c4b061d85839d9f81727ee5dc6c9cc6\tHEAD\nd1c9fc56fc183cdcca83d82cc896e4859a00f4dc\trefs/heads/research/post-v1\n",
+  "stderr": ""
+}

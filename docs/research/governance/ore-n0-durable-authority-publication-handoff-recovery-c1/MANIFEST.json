@@ -1,0 +1,2230 @@
+{
+  "schema": "ore-n0-recovery-manifest/0.1.0",
+  "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1-MANIFEST",
+  "status": "DRAFT-UNREVIEWED",
+  "self_binding": "Excluded from own members; exact identity and all 62 additions bound by separate final author freeze, which independent reviewer must bind. No accepted durability self-claim.",
+  "members": [
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:docs/research/governance/ORE-N0-CURRENT-GATE.json",
+      "kind": "machine-readable current state",
+      "propositions": [
+        "Discoverable additive entrypoint; exact predecessor and candidate routing, no edit to historical gate."
+      ],
+      "repository_path": "docs/research/governance/ORE-N0-CURRENT-GATE.json",
+      "source_provenance": "Recovery author lane 01a0ebc9-fbc7-7c43-82ed-250264b724ff; exact original authority record retained; no external originating artifact.",
+      "originating_external_identity": null,
+      "authority_status": "DRAFT-UNREVIEWED; author proposal/check only, no accepted authority upgrade",
+      "permitted_consumers": [
+        "independent recovery review",
+        "later explicitly accepted adoption/publication/activation-prerequisite verification within exact scope"
+      ],
+      "invalidation_conditions": [
+        "changed or missing bytes",
+        "unaccepted or incompatible authority",
+        "new dependency/consumer",
+        "unsupported promotion"
+      ],
+      "retrieval": "Read this exact repository_path; authenticate through manifest and independently bound outer freeze. No session dependency for file body.",
+      "identity": {
+        "bytes": 1333,
+        "lf": 24,
+        "terminal_LF": true,
+        "sha256": "ea952d1932326aaf6d85d3d4e9399fa9c68983442c79beb9951cd0a594526192"
+      },
+      "git_mode": "100644",
+      "git_blob_sha1": "59a28ecf7898fa4541cde810bfee549a1ce8fc4a"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/AUTHENTICATION.json",
+      "kind": "historical record / author verification tooling",
+      "propositions": [
+        "Authenticated governing identities and selected evidence closure."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/AUTHENTICATION.json",
+      "source_provenance": "Recovery author lane 01a0ebc9-fbc7-7c43-82ed-250264b724ff; exact original authority record retained; no external originating artifact.",
+      "originating_external_identity": null,
+      "authority_status": "DRAFT-UNREVIEWED; author proposal/check only, no accepted authority upgrade",
+      "permitted_consumers": [
+        "independent recovery review",
+        "later explicitly accepted adoption/publication/activation-prerequisite verification within exact scope"
+      ],
+      "invalidation_conditions": [
+        "changed or missing bytes",
+        "unaccepted or incompatible authority",
+        "new dependency/consumer",
+        "unsupported promotion"
+      ],
+      "retrieval": "Read this exact repository_path; authenticate through manifest and independently bound outer freeze. No session dependency for file body.",
+      "identity": {
+        "bytes": 19750,
+        "lf": 577,
+        "terminal_LF": true,
+        "sha256": "8afba1e22222db402d08b3094db748298c7d84383e74bef41581d25dbfe56f3b"
+      },
+      "git_mode": "100644",
+      "git_blob_sha1": "807b9df027ba85c750f14404c5ef4ab7ca96c26e"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/AUTHOR-VALIDATION.json",
+      "kind": "historical record / author verification tooling",
+      "propositions": [
+        "Documentary checks, adversarial results and repository-only retrieval evidence."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/AUTHOR-VALIDATION.json",
+      "source_provenance": "Recovery author lane 01a0ebc9-fbc7-7c43-82ed-250264b724ff; exact original authority record retained; no external originating artifact.",
+      "originating_external_identity": null,
+      "authority_status": "DRAFT-UNREVIEWED; author proposal/check only, no accepted authority upgrade",
+      "permitted_consumers": [
+        "independent recovery review",
+        "later explicitly accepted adoption/publication/activation-prerequisite verification within exact scope"
+      ],
+      "invalidation_conditions": [
+        "changed or missing bytes",
+        "unaccepted or incompatible authority",
+        "new dependency/consumer",
+        "unsupported promotion"
+      ],
+      "retrieval": "Read this exact repository_path; authenticate through manifest and independently bound outer freeze. No session dependency for file body.",
+      "identity": {
+        "bytes": 8075,
+        "lf": 237,
+        "terminal_LF": true,
+        "sha256": "4b9a183af0aba4071bd6df1396bb9ed2ea9a1055f6d6b7cae25e776847dbde89"
+      },
+      "git_mode": "100644",
+      "git_blob_sha1": "d80ddeed8890731c28edee5b4c9de2bc8e8d5870"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/CURRENT-NEXT-GATE.json",
+      "kind": "machine-readable current state",
+      "propositions": [
+        "Explicit ordered candidate supersession and one next review gate."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/CURRENT-NEXT-GATE.json",
+      "source_provenance": "Recovery author lane 01a0ebc9-fbc7-7c43-82ed-250264b724ff; exact original authority record retained; no external originating artifact.",
+      "originating_external_identity": null,
+      "authority_status": "DRAFT-UNREVIEWED; author proposal/check only, no accepted authority upgrade",
+      "permitted_consumers": [
+        "independent recovery review",
+        "later explicitly accepted adoption/publication/activation-prerequisite verification within exact scope"
+      ],
+      "invalidation_conditions": [
+        "changed or missing bytes",
+        "unaccepted or incompatible authority",
+        "new dependency/consumer",
+        "unsupported promotion"
+      ],
+      "retrieval": "Read this exact repository_path; authenticate through manifest and independently bound outer freeze. No session dependency for file body.",
+      "identity": {
+        "bytes": 4621,
+        "lf": 99,
+        "terminal_LF": true,
+        "sha256": "0cfbbfb0dcb799e6b58eb213014b25f877aebbfbf27016c22fd266136bbdb8dd"
+      },
+      "git_mode": "100644",
+      "git_blob_sha1": "1834c528530e319ac73c87334b70c695e6ea4240"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/POST-EDIT-STATE.json",
+      "kind": "historical record / author verification tooling",
+      "propositions": [
+        "Bounded after-state assessment; no action authority escalation."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/POST-EDIT-STATE.json",
+      "source_provenance": "Recovery author lane 01a0ebc9-fbc7-7c43-82ed-250264b724ff; exact original authority record retained; no external originating artifact.",
+      "originating_external_identity": null,
+      "authority_status": "DRAFT-UNREVIEWED; author proposal/check only, no accepted authority upgrade",
+      "permitted_consumers": [
+        "independent recovery review",
+        "later explicitly accepted adoption/publication/activation-prerequisite verification within exact scope"
+      ],
+      "invalidation_conditions": [
+        "changed or missing bytes",
+        "unaccepted or incompatible authority",
+        "new dependency/consumer",
+        "unsupported promotion"
+      ],
+      "retrieval": "Read this exact repository_path; authenticate through manifest and independently bound outer freeze. No session dependency for file body.",
+      "identity": {
+        "bytes": 333060,
+        "lf": 391,
+        "terminal_LF": true,
+        "sha256": "63d1d4083a7683f3e57dab7da999e1f39d673b0992b4a27d69b3e3091962e45e"
+      },
+      "git_mode": "100644",
+      "git_blob_sha1": "cc5ca39d66251faa3d49fb9739c77c24cd6f199c"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/PRE-EDIT-STATE.json",
+      "kind": "historical record / author verification tooling",
+      "propositions": [
+        "Fresh baseline and drift check before candidate authoring."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/PRE-EDIT-STATE.json",
+      "source_provenance": "Recovery author lane 01a0ebc9-fbc7-7c43-82ed-250264b724ff; exact original authority record retained; no external originating artifact.",
+      "originating_external_identity": null,
+      "authority_status": "DRAFT-UNREVIEWED; author proposal/check only, no accepted authority upgrade",
+      "permitted_consumers": [
+        "independent recovery review",
+        "later explicitly accepted adoption/publication/activation-prerequisite verification within exact scope"
+      ],
+      "invalidation_conditions": [
+        "changed or missing bytes",
+        "unaccepted or incompatible authority",
+        "new dependency/consumer",
+        "unsupported promotion"
+      ],
+      "retrieval": "Read this exact repository_path; authenticate through manifest and independently bound outer freeze. No session dependency for file body.",
+      "identity": {
+        "bytes": 3263614,
+        "lf": 95240,
+        "terminal_LF": true,
+        "sha256": "52223b08e1535d3e713ff1be5866e5edbba7c714941445d7dfd10475ab61ebe9"
+      },
+      "git_mode": "100644",
+      "git_blob_sha1": "83deedda6bfe4bc6571f32f11c7553bc85ede142"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/RAW-INDEX-RETENTION.md",
+      "kind": "proposed normative governance / retention procedure",
+      "propositions": [
+        "Claim-scoped exact-raw recovery proof, provenance, consumers and invalidation."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/RAW-INDEX-RETENTION.md",
+      "source_provenance": "Recovery author lane 01a0ebc9-fbc7-7c43-82ed-250264b724ff; exact original authority record retained; no external originating artifact.",
+      "originating_external_identity": null,
+      "authority_status": "DRAFT-UNREVIEWED; author proposal/check only, no accepted authority upgrade",
+      "permitted_consumers": [
+        "independent recovery review",
+        "later explicitly accepted adoption/publication/activation-prerequisite verification within exact scope"
+      ],
+      "invalidation_conditions": [
+        "changed or missing bytes",
+        "unaccepted or incompatible authority",
+        "new dependency/consumer",
+        "unsupported promotion"
+      ],
+      "retrieval": "Read this exact repository_path; authenticate through manifest and independently bound outer freeze. No session dependency for file body.",
+      "identity": {
+        "bytes": 5910,
+        "lf": 29,
+        "terminal_LF": true,
+        "sha256": "f392a2cf6cb784e265e7cc11d6951fbfb0b53e434dd0ea4924358a5f3e044ffb"
+      },
+      "git_mode": "100644",
+      "git_blob_sha1": "df774b9dfb6019db9f0cfe1b5fc4ba9f62e7958e"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/RECOVERY.md",
+      "kind": "proposed normative governance / retention procedure",
+      "propositions": [
+        "Bounded retention design and acceptance procedure; all three recovery gaps."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/RECOVERY.md",
+      "source_provenance": "Recovery author lane 01a0ebc9-fbc7-7c43-82ed-250264b724ff; exact original authority record retained; no external originating artifact.",
+      "originating_external_identity": null,
+      "authority_status": "DRAFT-UNREVIEWED; author proposal/check only, no accepted authority upgrade",
+      "permitted_consumers": [
+        "independent recovery review",
+        "later explicitly accepted adoption/publication/activation-prerequisite verification within exact scope"
+      ],
+      "invalidation_conditions": [
+        "changed or missing bytes",
+        "unaccepted or incompatible authority",
+        "new dependency/consumer",
+        "unsupported promotion"
+      ],
+      "retrieval": "Read this exact repository_path; authenticate through manifest and independently bound outer freeze. No session dependency for file body.",
+      "identity": {
+        "bytes": 10509,
+        "lf": 57,
+        "terminal_LF": true,
+        "sha256": "3f9dcc46eac1e3290aa107354b37516f452dbe11f6d57e9d04bcd38d265d0fc8"
+      },
+      "git_mode": "100644",
+      "git_blob_sha1": "e5062bbc9df3ab8abd0a35790907a73994ecb8c0"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/RETENTION-MAP.json",
+      "kind": "proposed normative governance / retention procedure",
+      "propositions": [
+        "Per-artifact claim, provenance, retention status, retrieval and invalidation."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/RETENTION-MAP.json",
+      "source_provenance": "Recovery author lane 01a0ebc9-fbc7-7c43-82ed-250264b724ff; exact original authority record retained; no external originating artifact.",
+      "originating_external_identity": null,
+      "authority_status": "DRAFT-UNREVIEWED; author proposal/check only, no accepted authority upgrade",
+      "permitted_consumers": [
+        "independent recovery review",
+        "later explicitly accepted adoption/publication/activation-prerequisite verification within exact scope"
+      ],
+      "invalidation_conditions": [
+        "changed or missing bytes",
+        "unaccepted or incompatible authority",
+        "new dependency/consumer",
+        "unsupported promotion"
+      ],
+      "retrieval": "Read this exact repository_path; authenticate through manifest and independently bound outer freeze. No session dependency for file body.",
+      "identity": {
+        "bytes": 116728,
+        "lf": 2275,
+        "terminal_LF": true,
+        "sha256": "2e2cce7875f507f74ee37c2731cc7676917d0ab2dc2f8bcad2ec84f59839c253"
+      },
+      "git_mode": "100644",
+      "git_blob_sha1": "57d273c3dc3ddbfd7b61215482b6a2a7a903c937"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/SCOPE.json",
+      "kind": "historical record / author verification tooling",
+      "propositions": [
+        "Frozen additions-only action scope and absent pre-edit identities."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/SCOPE.json",
+      "source_provenance": "Recovery author lane 01a0ebc9-fbc7-7c43-82ed-250264b724ff; exact original authority record retained; no external originating artifact.",
+      "originating_external_identity": null,
+      "authority_status": "DRAFT-UNREVIEWED; author proposal/check only, no accepted authority upgrade",
+      "permitted_consumers": [
+        "independent recovery review",
+        "later explicitly accepted adoption/publication/activation-prerequisite verification within exact scope"
+      ],
+      "invalidation_conditions": [
+        "changed or missing bytes",
+        "unaccepted or incompatible authority",
+        "new dependency/consumer",
+        "unsupported promotion"
+      ],
+      "retrieval": "Read this exact repository_path; authenticate through manifest and independently bound outer freeze. No session dependency for file body.",
+      "identity": {
+        "bytes": 59292,
+        "lf": 1101,
+        "terminal_LF": true,
+        "sha256": "5119bc57ca04af2842a3470b050263077e8cb5a09199476db08cc16ccfc5d5c0"
+      },
+      "git_mode": "100644",
+      "git_blob_sha1": "5c0fbba8c75b5f06eef123671160eb54014b9f4d"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/documentary/reconstruct_index.py",
+      "kind": "historical record / author verification tooling",
+      "propositions": [
+        "Deterministic exact-byte staged index reconstruction without Git writes."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/documentary/reconstruct_index.py",
+      "source_provenance": "Recovery author lane 01a0ebc9-fbc7-7c43-82ed-250264b724ff; exact original authority record retained; no external originating artifact.",
+      "originating_external_identity": null,
+      "authority_status": "DRAFT-UNREVIEWED; author proposal/check only, no accepted authority upgrade",
+      "permitted_consumers": [
+        "independent recovery review",
+        "later explicitly accepted adoption/publication/activation-prerequisite verification within exact scope"
+      ],
+      "invalidation_conditions": [
+        "changed or missing bytes",
+        "unaccepted or incompatible authority",
+        "new dependency/consumer",
+        "unsupported promotion"
+      ],
+      "retrieval": "Read this exact repository_path; authenticate through manifest and independently bound outer freeze. No session dependency for file body.",
+      "identity": {
+        "bytes": 1969,
+        "lf": 22,
+        "terminal_LF": true,
+        "sha256": "594625af90fc5ccc1fe16eda40c1ce63baac5bf9cac9934c720056cac7d78705"
+      },
+      "git_mode": "100644",
+      "git_blob_sha1": "976d6d31a4dd847113d1d8d396f4320d13655182"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/documentary/verify.py",
+      "kind": "historical record / author verification tooling",
+      "propositions": [
+        "Read-only deterministic documentary and adversarial checks."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/documentary/verify.py",
+      "source_provenance": "Recovery author lane 01a0ebc9-fbc7-7c43-82ed-250264b724ff; exact original authority record retained; no external originating artifact.",
+      "originating_external_identity": null,
+      "authority_status": "DRAFT-UNREVIEWED; author proposal/check only, no accepted authority upgrade",
+      "permitted_consumers": [
+        "independent recovery review",
+        "later explicitly accepted adoption/publication/activation-prerequisite verification within exact scope"
+      ],
+      "invalidation_conditions": [
+        "changed or missing bytes",
+        "unaccepted or incompatible authority",
+        "new dependency/consumer",
+        "unsupported promotion"
+      ],
+      "retrieval": "Read this exact repository_path; authenticate through manifest and independently bound outer freeze. No session dependency for file body.",
+      "identity": {
+        "bytes": 11968,
+        "lf": 172,
+        "terminal_LF": true,
+        "sha256": "73d79b77b38e7c68ecd3eacc4a87992e10fc2bf4a95eb4ef2cc3ccb2cf620f49"
+      },
+      "git_mode": "100644",
+      "git_blob_sha1": "f14250eb3134abe6a2344fa55f172936b4f814a7"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/RECOVERY-AUTHORITY-original-record.jsonl",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact current recovery-author permission and prohibitions; original session /Users/erale/.codex/sessions/2026/09/28/rollout-2026-09-28T23-11-18-01a0ebc9-fbc7-7c43-82ed-250264b724ff.jsonl line 9"
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/RECOVERY-AUTHORITY-original-record.jsonl",
+      "identity": {
+        "bytes": 15469,
+        "lf": 1,
+        "terminal_LF": true,
+        "sha256": "2e6df8ed69293f13be7a74ed7f80814ffe5112b63e9377117242926243777744"
+      },
+      "source_provenance": "/private/tmp/ore-durable-recovery/RECOVERY-AUTHORITY-original-record.jsonl",
+      "originating_external_identity": {
+        "bytes": 15469,
+        "lf": 1,
+        "terminal_LF": true,
+        "sha256": "2e6df8ed69293f13be7a74ed7f80814ffe5112b63e9377117242926243777744"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 2,
+      "git_mode": "100644",
+      "git_blob_sha1": "a229fbbdf9640eec569444e7f0b16da4899b9eb2"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/activation-readiness/FINAL-BOUNDARY.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/FINAL-BOUNDARY.json",
+      "identity": {
+        "bytes": 182165,
+        "lf": 197,
+        "terminal_LF": true,
+        "sha256": "924e9712bc16fc402610ee8c4471c45904cc899700d5dfd64ab75d9f1909ac23"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/FINAL-BOUNDARY.json",
+      "originating_external_identity": {
+        "bytes": 182165,
+        "lf": 197,
+        "terminal_LF": true,
+        "sha256": "924e9712bc16fc402610ee8c4471c45904cc899700d5dfd64ab75d9f1909ac23"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 2,
+      "git_mode": "100644",
+      "git_blob_sha1": "7fb9f696a1df21f5a3dbd1febc7d71c0966c6e17"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/activation-readiness/PUBLICATION-SUPPORT-CHECK.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/PUBLICATION-SUPPORT-CHECK.json",
+      "identity": {
+        "bytes": 19615,
+        "lf": 542,
+        "terminal_LF": true,
+        "sha256": "4a6cd606146ce4af7a47f7876bfa4764ae9a73b1946df8f256b9a9dfe9d515f7"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/PUBLICATION-SUPPORT-CHECK.json",
+      "originating_external_identity": {
+        "bytes": 19615,
+        "lf": 542,
+        "terminal_LF": true,
+        "sha256": "4a6cd606146ce4af7a47f7876bfa4764ae9a73b1946df8f256b9a9dfe9d515f7"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 2,
+      "git_mode": "100644",
+      "git_blob_sha1": "f0cef85db7a470e1527badcac9c3044a7b17b748"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/activation-readiness/RECEIPT-CLAIMS.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/RECEIPT-CLAIMS.json",
+      "identity": {
+        "bytes": 45373,
+        "lf": 952,
+        "terminal_LF": true,
+        "sha256": "0278f6ab4b010f94ec2c144b99e62a54729a4b81ca911cae4b36a773d05f6ad6"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/RECEIPT-CLAIMS.json",
+      "originating_external_identity": {
+        "bytes": 45373,
+        "lf": 952,
+        "terminal_LF": true,
+        "sha256": "0278f6ab4b010f94ec2c144b99e62a54729a4b81ca911cae4b36a773d05f6ad6"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 2,
+      "git_mode": "100644",
+      "git_blob_sha1": "81982be280de07a141273543f90a84a22ea7ae91"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/activation-readiness/REMOTE-FULL-TREE.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REMOTE-FULL-TREE.json",
+      "identity": {
+        "bytes": 191966,
+        "lf": 5329,
+        "terminal_LF": true,
+        "sha256": "b6436bd03385ce16e1bfdcf2c2dd15a26ef20d432fecccacee68bf8b078d659b"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/REMOTE-FULL-TREE.json",
+      "originating_external_identity": {
+        "bytes": 191966,
+        "lf": 5329,
+        "terminal_LF": true,
+        "sha256": "b6436bd03385ce16e1bfdcf2c2dd15a26ef20d432fecccacee68bf8b078d659b"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 2,
+      "git_mode": "100644",
+      "git_blob_sha1": "48a1f377fcecb42e094de03535f9bdfc876c1cbc"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/activation-readiness/REMOTE-PACKAGE-RETRIEVAL.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REMOTE-PACKAGE-RETRIEVAL.json",
+      "identity": {
+        "bytes": 8386,
+        "lf": 191,
+        "terminal_LF": true,
+        "sha256": "5b92fe759f710f9a17bb3c4215d7b2ce9b3aaac0d105b2b09fb57aeba95d1ecd"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/REMOTE-PACKAGE-RETRIEVAL.json",
+      "originating_external_identity": {
+        "bytes": 8386,
+        "lf": 191,
+        "terminal_LF": true,
+        "sha256": "5b92fe759f710f9a17bb3c4215d7b2ce9b3aaac0d105b2b09fb57aeba95d1ecd"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 2,
+      "git_mode": "100644",
+      "git_blob_sha1": "72424a1f0e707fd0e1fb8e98046276b2f59297eb"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/activation-readiness/REPOSITORY-AUDIT.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REPOSITORY-AUDIT.json",
+      "identity": {
+        "bytes": 3156665,
+        "lf": 95754,
+        "terminal_LF": true,
+        "sha256": "cb599633321e436fd63e3ee88ac9e9c7fcc2ad50bef6a0c5419a2ba5c639e935"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/REPOSITORY-AUDIT.json",
+      "originating_external_identity": {
+        "bytes": 3156665,
+        "lf": 95754,
+        "terminal_LF": true,
+        "sha256": "cb599633321e436fd63e3ee88ac9e9c7fcc2ad50bef6a0c5419a2ba5c639e935"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 2,
+      "git_mode": "100644",
+      "git_blob_sha1": "cad0378f0a2f1e9b9123671a744146d620400173"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/activation-readiness/REVIEW-FREEZE.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REVIEW-FREEZE.json",
+      "identity": {
+        "bytes": 5785,
+        "lf": 204,
+        "terminal_LF": true,
+        "sha256": "c299263d6fb846730e30dfd7acb50e82b623cb51a2efcd3932bda6768e34645b"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/REVIEW-FREEZE.json",
+      "originating_external_identity": {
+        "bytes": 5785,
+        "lf": 204,
+        "terminal_LF": true,
+        "sha256": "c299263d6fb846730e30dfd7acb50e82b623cb51a2efcd3932bda6768e34645b"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 2,
+      "git_mode": "100644",
+      "git_blob_sha1": "26d882893924fdc9cd4f9bb216d2cc286a0e9954"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/activation-readiness/REVIEW.md",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REVIEW.md",
+      "identity": {
+        "bytes": 54150,
+        "lf": 318,
+        "terminal_LF": true,
+        "sha256": "7b371223292bef71aafc26896ee73f325171bf199d1f0a2e67f1fec964fc3e2f"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/REVIEW.md",
+      "originating_external_identity": {
+        "bytes": 54150,
+        "lf": 318,
+        "terminal_LF": true,
+        "sha256": "7b371223292bef71aafc26896ee73f325171bf199d1f0a2e67f1fec964fc3e2f"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 2,
+      "git_mode": "100644",
+      "git_blob_sha1": "7e7f1ce54b6f5f6a1b1f9868e787b02e0663ac42"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/index/prepublication-index.bin",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact prepublication index already authenticated in published nested C2 archive; direct retrieval removes temporary-path dependency."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/index/prepublication-index.bin",
+      "identity": {
+        "bytes": 86080,
+        "lf": 263,
+        "terminal_LF": false,
+        "sha256": "07d944187853f09e383860d24370e5c18052ff962e9bef5133082d739e647fc4"
+      },
+      "source_provenance": "Authenticated published nested C2 member correction/original-candidate/completion/git/index, through C6→C5→C4→C3→C2 archive chain. Matches integration PASS and PRE-PUBLICATION-BOUNDARY. Scratch extraction is not the retrieval authority.",
+      "originating_external_identity": {
+        "bytes": 86080,
+        "lf": 263,
+        "terminal_LF": false,
+        "sha256": "07d944187853f09e383860d24370e5c18052ff962e9bef5133082d739e647fc4"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 3,
+      "git_mode": "100644",
+      "git_blob_sha1": "88bf82997193a657c647d0c6412b7f6df094707d"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/index/publication-index.bin",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication/readiness/recovery-entry raw index, including entry metadata, flags, extensions and checksum."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/index/publication-index.bin",
+      "identity": {
+        "bytes": 91883,
+        "lf": 272,
+        "terminal_LF": false,
+        "sha256": "ff65baf0e554bdcdaa1024c15fd6c0d8253f307db237f8f6e743f292a6c99699"
+      },
+      "source_provenance": "Direct read of /Users/erale/Documents/orev3/.git/index in this recovery entry boundary; exact match to publication receipt index and independent readiness FINAL-BOUNDARY/REPOSITORY-AUDIT. Point observation only.",
+      "originating_external_identity": {
+        "bytes": 91883,
+        "lf": 272,
+        "terminal_LF": false,
+        "sha256": "ff65baf0e554bdcdaa1024c15fd6c0d8253f307db237f8f6e743f292a6c99699"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 3,
+      "git_mode": "100644",
+      "git_blob_sha1": "e82878482b5a24b9ab2825a697fed05feffc1f7d"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/index/staged-index.bin",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact staged snapshot reconstructed and checked against independently frozen original SHA-256; no equivalent representation."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/index/staged-index.bin",
+      "identity": {
+        "bytes": 91637,
+        "lf": 266,
+        "terminal_LF": false,
+        "sha256": "cd15512f695b4a83efb17cc04399daff604c3dcda9fa92328dce043e8b8b7faa"
+      },
+      "source_provenance": "Reconstructed from retained exact prepublication and publication index bytes; documentary/reconstruct_index.py. Original file not found. Exact original identity bound by retained STAGED-FREEZE.json at 2026-09-29T04:35:43.672635+00:00 and independent readiness REVIEW.md. Source /private/tmp was author scratch only.",
+      "originating_external_identity": {
+        "bytes": 91637,
+        "lf": 266,
+        "terminal_LF": false,
+        "sha256": "cd15512f695b4a83efb17cc04399daff604c3dcda9fa92328dce043e8b8b7faa"
+      },
+      "authority_status": "Exact-byte recovered historical snapshot candidate; no original-file discovery or new review claimed. Independent acceptance pending.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 3,
+      "git_mode": "100644",
+      "git_blob_sha1": "0936eff868c7cf6785a28613da3697c3cb5e85f0"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/integration-author/C1-AUTHOR-FREEZE.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-AUTHOR-FREEZE.json",
+      "identity": {
+        "bytes": 44172,
+        "lf": 1243,
+        "terminal_LF": true,
+        "sha256": "a938e15517035f9e1b484833a74c48b7f3e83072247c9820f9d33c7dd776ee6b"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb15-819f-75d1-b221-939a84121556/C1-AUTHOR-FREEZE.json",
+      "originating_external_identity": {
+        "bytes": 44172,
+        "lf": 1243,
+        "terminal_LF": true,
+        "sha256": "a938e15517035f9e1b484833a74c48b7f3e83072247c9820f9d33c7dd776ee6b"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "f6e72a457543cf576537b83aaa56f092e5396a91"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/integration-author/C1-CANONICAL-DELTA.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-CANONICAL-DELTA.json",
+      "identity": {
+        "bytes": 13460,
+        "lf": 0,
+        "terminal_LF": false,
+        "sha256": "2e64bc07720a8e91b387724704d44860ee9a16fb5d5e364b46c11c5f97c12b1b"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb15-819f-75d1-b221-939a84121556/C1-CANONICAL-DELTA.json",
+      "originating_external_identity": {
+        "bytes": 13460,
+        "lf": 0,
+        "terminal_LF": false,
+        "sha256": "2e64bc07720a8e91b387724704d44860ee9a16fb5d5e364b46c11c5f97c12b1b"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "801a76c37c38c396ccda73331aa2aa182d3724ac"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/integration-author/C1-FILE-IDENTITIES.md",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-FILE-IDENTITIES.md",
+      "identity": {
+        "bytes": 5479,
+        "lf": 53,
+        "terminal_LF": true,
+        "sha256": "43c08a7ce1a9048c79c817d69586fe107afa3ce67fdf5d95ff194ce34cdbaa88"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb15-819f-75d1-b221-939a84121556/C1-FILE-IDENTITIES.md",
+      "originating_external_identity": {
+        "bytes": 5479,
+        "lf": 53,
+        "terminal_LF": true,
+        "sha256": "43c08a7ce1a9048c79c817d69586fe107afa3ce67fdf5d95ff194ce34cdbaa88"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "ef1f019e49cb47492a7f9fb99b44d068b11fc69f"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/integration-author/C1-FINAL-REPOSITORY-BOUNDARY.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-FINAL-REPOSITORY-BOUNDARY.json",
+      "identity": {
+        "bytes": 4505502,
+        "lf": 93448,
+        "terminal_LF": true,
+        "sha256": "5757b1764f3541e4dd3ead19d96c0948968fc799d52e622e5d7c92fdb30eca1d"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb15-819f-75d1-b221-939a84121556/C1-FINAL-REPOSITORY-BOUNDARY.json",
+      "originating_external_identity": {
+        "bytes": 4505502,
+        "lf": 93448,
+        "terminal_LF": true,
+        "sha256": "5757b1764f3541e4dd3ead19d96c0948968fc799d52e622e5d7c92fdb30eca1d"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "4161dbbe24863e28b13e6cafbe39c5d91a0b2f65"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/integration-author/C1-PRE-EDIT-SCOPE.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-PRE-EDIT-SCOPE.json",
+      "identity": {
+        "bytes": 10881,
+        "lf": 326,
+        "terminal_LF": true,
+        "sha256": "93fbd0573ede5b2e68270393ad23b210218864a04f2ca6d896be2f715437c826"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb15-819f-75d1-b221-939a84121556/C1-PRE-EDIT-SCOPE.json",
+      "originating_external_identity": {
+        "bytes": 10881,
+        "lf": 326,
+        "terminal_LF": true,
+        "sha256": "93fbd0573ede5b2e68270393ad23b210218864a04f2ca6d896be2f715437c826"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "5f813d67772e9e1d9fdd28254630263996edcbbd"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/integration-review/REVIEW-FREEZE.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/REVIEW-FREEZE.json",
+      "identity": {
+        "bytes": 1073,
+        "lf": 21,
+        "terminal_LF": true,
+        "sha256": "d32a3c45cd599d8e8fcac92442090d8e226ce8d8b8ed0bb95ea1622d203688b5"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb5b-7133-7f92-be4c-c11e13d66ae8/REVIEW-FREEZE.json",
+      "originating_external_identity": {
+        "bytes": 1073,
+        "lf": 21,
+        "terminal_LF": true,
+        "sha256": "d32a3c45cd599d8e8fcac92442090d8e226ce8d8b8ed0bb95ea1622d203688b5"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "dbce55a1ae8dfa0f6d5c2d2fe14588638b1d6b55"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/integration-review/RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS.md",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS.md",
+      "identity": {
+        "bytes": 41748,
+        "lf": 272,
+        "terminal_LF": true,
+        "sha256": "060db9a1730a55710095142dcebb35e158571988e707f7ce24cca02f9a2266ad"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb5b-7133-7f92-be4c-c11e13d66ae8/RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS.md",
+      "originating_external_identity": {
+        "bytes": 41748,
+        "lf": 272,
+        "terminal_LF": true,
+        "sha256": "060db9a1730a55710095142dcebb35e158571988e707f7ce24cca02f9a2266ad"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "95abe591c8893818f0b40832f5d4f351a755a767"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/integration-review/anchor-retrieval.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/anchor-retrieval.json",
+      "identity": {
+        "bytes": 6291,
+        "lf": 219,
+        "terminal_LF": true,
+        "sha256": "6f59e4e69012076d2a8f07e9ce378d8376dff6305ba4bdb9a04d5f93beaac16b"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb5b-7133-7f92-be4c-c11e13d66ae8/anchor-retrieval.json",
+      "originating_external_identity": {
+        "bytes": 6291,
+        "lf": 219,
+        "terminal_LF": true,
+        "sha256": "6f59e4e69012076d2a8f07e9ce378d8376dff6305ba4bdb9a04d5f93beaac16b"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "bfa825a98eae96b8d05a7d92132e3609b81368f8"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/integration-review/governance-review.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/governance-review.json",
+      "identity": {
+        "bytes": 32948,
+        "lf": 724,
+        "terminal_LF": true,
+        "sha256": "5e35f27f8d8781f64c0e3245cb8e1b77cf204746bfe1d47311c098085e17709c"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb5b-7133-7f92-be4c-c11e13d66ae8/governance-review.json",
+      "originating_external_identity": {
+        "bytes": 32948,
+        "lf": 724,
+        "terminal_LF": true,
+        "sha256": "5e35f27f8d8781f64c0e3245cb8e1b77cf204746bfe1d47311c098085e17709c"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "963987aced4ee21e08e05ebbf208629995da7618"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/integration-review/independent-attacks.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/independent-attacks.json",
+      "identity": {
+        "bytes": 1481,
+        "lf": 62,
+        "terminal_LF": true,
+        "sha256": "8622224fb920b3392aa1fa15d8e43351eb6bac3a493122aa61100cc78a98bca6"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb5b-7133-7f92-be4c-c11e13d66ae8/independent-attacks.json",
+      "originating_external_identity": {
+        "bytes": 1481,
+        "lf": 62,
+        "terminal_LF": true,
+        "sha256": "8622224fb920b3392aa1fa15d8e43351eb6bac3a493122aa61100cc78a98bca6"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "b201f7307b6298227583545fb4aac0eedbbbc2f3"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/integration-review/inherited-anchor-review.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/inherited-anchor-review.json",
+      "identity": {
+        "bytes": 283292,
+        "lf": 4277,
+        "terminal_LF": true,
+        "sha256": "f6b2c4ef0f81927c6beb7d5df70cab4a8c69658a0ae728c0b53cf70bdbb8652e"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb5b-7133-7f92-be4c-c11e13d66ae8/inherited-anchor-review.json",
+      "originating_external_identity": {
+        "bytes": 283292,
+        "lf": 4277,
+        "terminal_LF": true,
+        "sha256": "f6b2c4ef0f81927c6beb7d5df70cab4a8c69658a0ae728c0b53cf70bdbb8652e"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "078f4411ed65ae4ed693c3074c1d09f3ce3d282e"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/integration-review/repository-review.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/repository-review.json",
+      "identity": {
+        "bytes": 4372624,
+        "lf": 93550,
+        "terminal_LF": true,
+        "sha256": "51b61e4cb95f366cd63bff5364a7e66784280b10e97b2921c6a8e48ee2352074"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb5b-7133-7f92-be4c-c11e13d66ae8/repository-review.json",
+      "originating_external_identity": {
+        "bytes": 4372624,
+        "lf": 93550,
+        "terminal_LF": true,
+        "sha256": "51b61e4cb95f366cd63bff5364a7e66784280b10e97b2921c6a8e48ee2352074"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "26bbbdeaccd4b7cd6ae436f32ba1a3e4d5cf76ea"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/ACTION-AUTHORITY-original-record.jsonl",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ACTION-AUTHORITY-original-record.jsonl",
+      "identity": {
+        "bytes": 10263,
+        "lf": 1,
+        "terminal_LF": true,
+        "sha256": "bf59e9cd63b14fa028b95fb316a6b1553e9549ccb36958b075389c315125e277"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ACTION-AUTHORITY-original-record.jsonl",
+      "originating_external_identity": {
+        "bytes": 10263,
+        "lf": 1,
+        "terminal_LF": true,
+        "sha256": "bf59e9cd63b14fa028b95fb316a6b1553e9549ccb36958b075389c315125e277"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "08319b29b1ba866f3a67f4f85c34554473f4e59f"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/ACTION-ENVELOPE.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ACTION-ENVELOPE.json",
+      "identity": {
+        "bytes": 2138,
+        "lf": 32,
+        "terminal_LF": true,
+        "sha256": "cf6df730584fe93859842f71a021112ad97fbadacdcdcf512da5249375377e11"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ACTION-ENVELOPE.json",
+      "originating_external_identity": {
+        "bytes": 2138,
+        "lf": 32,
+        "terminal_LF": true,
+        "sha256": "cf6df730584fe93859842f71a021112ad97fbadacdcdcf512da5249375377e11"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "d3fca8ff39d8f828c477fd5eab2888e461a89edb"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/ACTION-SESSION-PREFIX.jsonl",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ACTION-SESSION-PREFIX.jsonl",
+      "identity": {
+        "bytes": 1289040,
+        "lf": 241,
+        "terminal_LF": true,
+        "sha256": "6de24b53cc6672fb195f62e32c42f2c3bdc56497cfb7d1a84a5ce91e3cc3e45b"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ACTION-SESSION-PREFIX.jsonl",
+      "originating_external_identity": {
+        "bytes": 1289040,
+        "lf": 241,
+        "terminal_LF": true,
+        "sha256": "6de24b53cc6672fb195f62e32c42f2c3bdc56497cfb7d1a84a5ce91e3cc3e45b"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "c46225d83b9c7abe320594cf138a50c4b19ff102"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/AUTHENTICATED-PACKAGE.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/AUTHENTICATED-PACKAGE.json",
+      "identity": {
+        "bytes": 18317,
+        "lf": 535,
+        "terminal_LF": true,
+        "sha256": "f76086df6ccf0045166baee86320296ae8245d8b1350d61a3a96d39caa0e67e1"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/AUTHENTICATED-PACKAGE.json",
+      "originating_external_identity": {
+        "bytes": 18317,
+        "lf": 535,
+        "terminal_LF": true,
+        "sha256": "f76086df6ccf0045166baee86320296ae8245d8b1350d61a3a96d39caa0e67e1"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "fd116991578876add4bd837e3a195937a15c4002"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/COMMIT-AUTHENTICATION.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/COMMIT-AUTHENTICATION.json",
+      "identity": {
+        "bytes": 196605,
+        "lf": 538,
+        "terminal_LF": true,
+        "sha256": "412c30d22a39ffc06118f1c040cdc8a04588f12990743b26e1b5743299d78425"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/COMMIT-AUTHENTICATION.json",
+      "originating_external_identity": {
+        "bytes": 196605,
+        "lf": 538,
+        "terminal_LF": true,
+        "sha256": "412c30d22a39ffc06118f1c040cdc8a04588f12990743b26e1b5743299d78425"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "a127308f8a22204df9b213a86705e6bc112b6681"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/COMMIT-MESSAGE.txt",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/COMMIT-MESSAGE.txt",
+      "identity": {
+        "bytes": 895,
+        "lf": 14,
+        "terminal_LF": true,
+        "sha256": "af1fa7e5bce3429f51b86590dfe41dc3634a0a9a46a91fc74f627f58ce960cf8"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/COMMIT-MESSAGE.txt",
+      "originating_external_identity": {
+        "bytes": 895,
+        "lf": 14,
+        "terminal_LF": true,
+        "sha256": "af1fa7e5bce3429f51b86590dfe41dc3634a0a9a46a91fc74f627f58ce960cf8"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "5c38b032e467ef965052c35848c238db0edaf139"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/FINAL-LIVE-REMOTE.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/FINAL-LIVE-REMOTE.json",
+      "identity": {
+        "bytes": 367,
+        "lf": 14,
+        "terminal_LF": true,
+        "sha256": "e3e71502f81b43ac248398cf3fda386eef6c1f21627048ce6ae971baf0600c0b"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/FINAL-LIVE-REMOTE.json",
+      "originating_external_identity": {
+        "bytes": 367,
+        "lf": 14,
+        "terminal_LF": true,
+        "sha256": "e3e71502f81b43ac248398cf3fda386eef6c1f21627048ce6ae971baf0600c0b"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "a8ca9be23470ebf6061149aac586256056409604"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/FINAL-REPOSITORY-BOUNDARY.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/FINAL-REPOSITORY-BOUNDARY.json",
+      "identity": {
+        "bytes": 3953424,
+        "lf": 85735,
+        "terminal_LF": true,
+        "sha256": "dc06ab05d27d05600044277a150681771090d0657a13995b033bbb5bdc6bbd4e"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/FINAL-REPOSITORY-BOUNDARY.json",
+      "originating_external_identity": {
+        "bytes": 3953424,
+        "lf": 85735,
+        "terminal_LF": true,
+        "sha256": "dc06ab05d27d05600044277a150681771090d0657a13995b033bbb5bdc6bbd4e"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "48d3a5708effdc333cc3866666d51e94f65df45a"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/POST-PUSH-REMOTE.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/POST-PUSH-REMOTE.json",
+      "identity": {
+        "bytes": 359,
+        "lf": 9,
+        "terminal_LF": true,
+        "sha256": "55e760f19742dfb570b2ea9dd4f12db2c22651d52147cf72145841756b34c3ca"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/POST-PUSH-REMOTE.json",
+      "originating_external_identity": {
+        "bytes": 359,
+        "lf": 9,
+        "terminal_LF": true,
+        "sha256": "55e760f19742dfb570b2ea9dd4f12db2c22651d52147cf72145841756b34c3ca"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "6ee493ad35ad646b835d21aeb47d796380b1304a"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/PRE-PUBLICATION-BOUNDARY.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PRE-PUBLICATION-BOUNDARY.json",
+      "identity": {
+        "bytes": 4544774,
+        "lf": 99012,
+        "terminal_LF": true,
+        "sha256": "39defe05b63a08dcd346a69b50b8e8f20d4319fed591f38d1aa1d825ceaec131"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/PRE-PUBLICATION-BOUNDARY.json",
+      "originating_external_identity": {
+        "bytes": 4544774,
+        "lf": 99012,
+        "terminal_LF": true,
+        "sha256": "39defe05b63a08dcd346a69b50b8e8f20d4319fed591f38d1aa1d825ceaec131"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "69ccd050adddd7c36dc32edf7b9a4045ac1f03e0"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/PRE-PUBLICATION-REMOTE.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PRE-PUBLICATION-REMOTE.json",
+      "identity": {
+        "bytes": 606,
+        "lf": 12,
+        "terminal_LF": true,
+        "sha256": "50ecf4209a557e85dcb3caf5415f707de935d6b707021b48ada49c43ca16ff21"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/PRE-PUBLICATION-REMOTE.json",
+      "originating_external_identity": {
+        "bytes": 606,
+        "lf": 12,
+        "terminal_LF": true,
+        "sha256": "50ecf4209a557e85dcb3caf5415f707de935d6b707021b48ada49c43ca16ff21"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "0a7c14082600c6ea05d373e9a7e4299e574d207d"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/PUBLICATION-ADOPTION-RECEIPT.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PUBLICATION-ADOPTION-RECEIPT.json",
+      "identity": {
+        "bytes": 27407,
+        "lf": 667,
+        "terminal_LF": true,
+        "sha256": "8436af27bda385083d5295ff6ae8fb33a3486d6d04f07e5f1e8408cd8acaa5d0"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/PUBLICATION-ADOPTION-RECEIPT.json",
+      "originating_external_identity": {
+        "bytes": 27407,
+        "lf": 667,
+        "terminal_LF": true,
+        "sha256": "8436af27bda385083d5295ff6ae8fb33a3486d6d04f07e5f1e8408cd8acaa5d0"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "4ef22932dafdc214e6173f991466f0e0910bb662"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/PUBLICATION-CONTINUATION.md",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PUBLICATION-CONTINUATION.md",
+      "identity": {
+        "bytes": 2839,
+        "lf": 37,
+        "terminal_LF": true,
+        "sha256": "062cae0df0065b6f800d0a66f07167a7bf549aa315f09d730744320989628b72"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/PUBLICATION-CONTINUATION.md",
+      "originating_external_identity": {
+        "bytes": 2839,
+        "lf": 37,
+        "terminal_LF": true,
+        "sha256": "062cae0df0065b6f800d0a66f07167a7bf549aa315f09d730744320989628b72"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "81daf0c2f3bd3f3642e4c18a67ed0cba9849d1ab"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/PUBLICATION-FREEZE.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PUBLICATION-FREEZE.json",
+      "identity": {
+        "bytes": 10221,
+        "lf": 336,
+        "terminal_LF": true,
+        "sha256": "7cc962d673c5a0ebd33df44133f84e20688a7fe7c74351cf53eb3fac52e255d3"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/PUBLICATION-FREEZE.json",
+      "originating_external_identity": {
+        "bytes": 10221,
+        "lf": 336,
+        "terminal_LF": true,
+        "sha256": "7cc962d673c5a0ebd33df44133f84e20688a7fe7c74351cf53eb3fac52e255d3"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "5e5ca055a307bed2e70e1c29144de0a1cf36a94b"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/STAGED-FREEZE.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/STAGED-FREEZE.json",
+      "identity": {
+        "bytes": 106267,
+        "lf": 533,
+        "terminal_LF": true,
+        "sha256": "ccc52d112ea4a0262c538d77297aec5583efc874821fb2d4e426af5d7aac5aca"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/STAGED-FREEZE.json",
+      "originating_external_identity": {
+        "bytes": 106267,
+        "lf": 533,
+        "terminal_LF": true,
+        "sha256": "ccc52d112ea4a0262c538d77297aec5583efc874821fb2d4e426af5d7aac5aca"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "b8c77ed14dc5cdbd4eb03f0d3250b58f98508b5d"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/TRANSITION-COMMANDS.jsonl",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/TRANSITION-COMMANDS.jsonl",
+      "identity": {
+        "bytes": 344268,
+        "lf": 120,
+        "terminal_LF": true,
+        "sha256": "6157f62c95887186fd23b0d51c7eebf5dd1b93c43ecf3eda6eb2a4c42d49412f"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/TRANSITION-COMMANDS.jsonl",
+      "originating_external_identity": {
+        "bytes": 344268,
+        "lf": 120,
+        "terminal_LF": true,
+        "sha256": "6157f62c95887186fd23b0d51c7eebf5dd1b93c43ecf3eda6eb2a4c42d49412f"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "f6ff479cc47f8b4bb75f61d2f9bb4217b69c95ea"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/VALIDATION-CORRECTION.json",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/VALIDATION-CORRECTION.json",
+      "identity": {
+        "bytes": 506,
+        "lf": 5,
+        "terminal_LF": true,
+        "sha256": "7d872180c71c6bdcd939ce7bb05298f74cfda330194d0ca9b6148be40647a9a4"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/VALIDATION-CORRECTION.json",
+      "originating_external_identity": {
+        "bytes": 506,
+        "lf": 5,
+        "terminal_LF": true,
+        "sha256": "7d872180c71c6bdcd939ce7bb05298f74cfda330194d0ca9b6148be40647a9a4"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "219dbe0501e99cc210013f7ef4647cd87f24a131"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/ore-publication-auth.py",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-auth.py",
+      "identity": {
+        "bytes": 4609,
+        "lf": 33,
+        "terminal_LF": true,
+        "sha256": "16050fc065fd100d7823b922f72d8a7a647d179a9e2f40dda09c20ab7e0de065"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-auth.py",
+      "originating_external_identity": {
+        "bytes": 4609,
+        "lf": 33,
+        "terminal_LF": true,
+        "sha256": "16050fc065fd100d7823b922f72d8a7a647d179a9e2f40dda09c20ab7e0de065"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "a3e76aa272199fda2c7270df45f535248fc88793"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/ore-publication-final-initial.py",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-final-initial.py",
+      "identity": {
+        "bytes": 3697,
+        "lf": 27,
+        "terminal_LF": true,
+        "sha256": "35ba6c715696b4c55ab0b8ac940f38c58cb4688b79875f80c18cd4cddfd85429"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-final-initial.py",
+      "originating_external_identity": {
+        "bytes": 3697,
+        "lf": 27,
+        "terminal_LF": true,
+        "sha256": "35ba6c715696b4c55ab0b8ac940f38c58cb4688b79875f80c18cd4cddfd85429"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "56e584206f7340f0618a9548ad7e66e3f11c7fc7"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/ore-publication-final.py",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-final.py",
+      "identity": {
+        "bytes": 3956,
+        "lf": 31,
+        "terminal_LF": true,
+        "sha256": "e167254e5716a8ad21fce40b3276ddbd972addacd854b6b4be32dd953f1ec396"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-final.py",
+      "originating_external_identity": {
+        "bytes": 3956,
+        "lf": 31,
+        "terminal_LF": true,
+        "sha256": "e167254e5716a8ad21fce40b3276ddbd972addacd854b6b4be32dd953f1ec396"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "0884953111c5343523b0e2006ce597408f6532d2"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/ore-publication-prepare.py",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-prepare.py",
+      "identity": {
+        "bytes": 4642,
+        "lf": 23,
+        "terminal_LF": true,
+        "sha256": "b067c573df91bf994bdc6df68d47442197b764587c351a3a46f75820dcdeeae3"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-prepare.py",
+      "originating_external_identity": {
+        "bytes": 4642,
+        "lf": 23,
+        "terminal_LF": true,
+        "sha256": "b067c573df91bf994bdc6df68d47442197b764587c351a3a46f75820dcdeeae3"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "ca029158644fdede4bddcd983a055f2f5fe37b5c"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/ore-publication-push-retry.py",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-push-retry.py",
+      "identity": {
+        "bytes": 1983,
+        "lf": 15,
+        "terminal_LF": true,
+        "sha256": "dff3d3e4baf45c7a80e538165360a98c1e58d40cefe761005345c16871b21733"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-push-retry.py",
+      "originating_external_identity": {
+        "bytes": 1983,
+        "lf": 15,
+        "terminal_LF": true,
+        "sha256": "dff3d3e4baf45c7a80e538165360a98c1e58d40cefe761005345c16871b21733"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "fb540893f6e4f17aec1a2064a94ffbf9c3e3a69d"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/ore-publication-push.py",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-push.py",
+      "identity": {
+        "bytes": 1921,
+        "lf": 15,
+        "terminal_LF": true,
+        "sha256": "55e34ffcb370d99d3e4b774f974cc742c7ef7c29304b02ef775725ec9051d503"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-push.py",
+      "originating_external_identity": {
+        "bytes": 1921,
+        "lf": 15,
+        "terminal_LF": true,
+        "sha256": "55e34ffcb370d99d3e4b774f974cc742c7ef7c29304b02ef775725ec9051d503"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "fcbe6a47d1c7d95e630e18bb8b28cfe9584b3182"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/ore-publication-receipt.py",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-receipt.py",
+      "identity": {
+        "bytes": 11060,
+        "lf": 13,
+        "terminal_LF": true,
+        "sha256": "999ef10577e98839cc085831afac0deb01acf94a82107d4050ffe95b99bb9a49"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-receipt.py",
+      "originating_external_identity": {
+        "bytes": 11060,
+        "lf": 13,
+        "terminal_LF": true,
+        "sha256": "999ef10577e98839cc085831afac0deb01acf94a82107d4050ffe95b99bb9a49"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "44ba5d21521ab9bb02b46113f0475150b928112d"
+    },
+    {
+      "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1:evidence/publication/ore-publication-transition.py",
+      "kind": "retained evidence bytes",
+      "propositions": [
+        "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+      ],
+      "repository_path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-transition.py",
+      "identity": {
+        "bytes": 3645,
+        "lf": 30,
+        "terminal_LF": true,
+        "sha256": "1ae731d0e733f96bc087b2b0f88fa8876e60710c0826428f3fcfa548b962e713"
+      },
+      "source_provenance": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-transition.py",
+      "originating_external_identity": {
+        "bytes": 3645,
+        "lf": 30,
+        "terminal_LF": true,
+        "sha256": "1ae731d0e733f96bc087b2b0f88fa8876e60710c0826428f3fcfa548b962e713"
+      },
+      "authority_status": "Exact copy of originally scoped evidence; proposed durable location DRAFT-UNREVIEWED, no new review/effectiveness.",
+      "permitted_consumers": [
+        "independent recovery-package review",
+        "separately authorized recovery adoption/publication verification",
+        "later activation-prerequisite verification after acceptance, within original claim scope"
+      ],
+      "invalidation_conditions": [
+        "missing or changed bytes",
+        "missing source/boundary binding",
+        "unsupported consumer or interval claim",
+        "incompatible supersession",
+        "unaccepted durable location"
+      ],
+      "retrieval": "Read repository_path as binary from this repository or later exact accepted immutable commit/path; compare identity and source bindings before reliance.",
+      "blocker": 1,
+      "git_mode": "100644",
+      "git_blob_sha1": "56130ad0ebcd503742e0aec1372d337b6638cea0"
+    }
+  ]
+}

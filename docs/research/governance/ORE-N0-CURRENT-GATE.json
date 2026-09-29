@@ -1,0 +1,24 @@
+{
+  "schema": "ore-n0-current-gate-entrypoint/0.1.0",
+  "status": "DRAFT-UNREVIEWED",
+  "candidate_path": "ore-n0-durable-authority-publication-handoff-recovery-c1/CURRENT-NEXT-GATE.json",
+  "candidate_identity": {
+    "bytes": 4621,
+    "lf": 99,
+    "terminal_LF": true,
+    "sha256": "0cfbbfb0dcb799e6b58eb213014b25f877aebbfbf27016c22fd266136bbdb8dd"
+  },
+  "predecessor_path": "ore-n0-repository-integration-c1/CURRENT-NEXT-GATE.json",
+  "predecessor_identity": {
+    "bytes": 5654,
+    "lf": 120,
+    "terminal_LF": true,
+    "sha256": "10471c83b968c8557492aee33f9a835c7786cbbfab7ae0a5dedc5b562f239c04"
+  },
+  "selection_rule": "Authenticate candidate identity and complete freeze, then follow explicit order 0→1→2→3. Order 3 selects only the pending independent recovery review, never accepted activation authority. No timestamp, filename sorting, latest HEAD or stale order-0 review_executed=false may override this explicit chain. Unknown/missing acceptance cannot promote any candidate; unavailable chain => U/BLOCK; contradictory or competing unauthenticated override => FAIL/BLOCK with residual U.",
+  "activation_readiness": "U/BLOCK",
+  "N0_activated": false,
+  "T_N0": null,
+  "next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 DURABLE AUTHORITY / PUBLICATION HANDOFF RECOVERY",
+  "next_gate_count": 1
+}

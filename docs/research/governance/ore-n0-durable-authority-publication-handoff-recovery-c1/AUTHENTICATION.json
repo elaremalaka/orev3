@@ -1,0 +1,577 @@
+{
+  "status": "AUTHOR AUTHENTICATION ONLY",
+  "observed_UTC": "2026-09-29T06:22:13.325607+00:00",
+  "governing_authority": [
+    {
+      "locator": "C2:correction/original-candidate/evidence/redesign/candidate.txt",
+      "identity": {
+        "bytes": 22548,
+        "lf": 300,
+        "terminal_LF": false,
+        "sha256": "0c3a713c65416dbf38de5ef6af02307f5d9e2ff67807c3d059ab48df02338656"
+      },
+      "retrieval": "Published C6 archive chain; integration RETRIEVAL.md; no external session dependency."
+    },
+    {
+      "locator": "C2:correction/original-candidate/evidence/redesign/review.txt",
+      "identity": {
+        "bytes": 28738,
+        "lf": 201,
+        "terminal_LF": false,
+        "sha256": "6ec85b72458a6a1b21530b9b5ffd0f59107c5797c40d18b336d8952219672f74"
+      },
+      "retrieval": "Published C6 archive chain; integration RETRIEVAL.md; no external session dependency."
+    },
+    {
+      "locator": "C2:correction/original-candidate/originals/c2.txt",
+      "identity": {
+        "bytes": 25809,
+        "lf": 267,
+        "terminal_LF": false,
+        "sha256": "90eeb31b72cda585ce94b5e3085fdad2f94a1b29b1bce88f1d02cc3451329a2c"
+      },
+      "retrieval": "Published C6 archive chain; integration RETRIEVAL.md; no external session dependency."
+    },
+    {
+      "locator": "C2:correction/original-candidate/originals/c2-review.txt",
+      "identity": {
+        "bytes": 21108,
+        "lf": 196,
+        "terminal_LF": false,
+        "sha256": "df2aa4613d2212b0a4b4352c857abad214f82297216b95c18f4913a124019ba9"
+      },
+      "retrieval": "Published C6 archive chain; integration RETRIEVAL.md; no external session dependency."
+    },
+    {
+      "locator": "C2:correction/original-candidate/evidence/redesign/anchors.json#/accepted_baseline/effectiveness_receipt",
+      "identity": {
+        "bytes": 37682,
+        "lf": 360,
+        "terminal_LF": true,
+        "sha256": "401e687e0b0484670f686162266ef2056ad2a9b8e54ccf08765202433ba17c97"
+      },
+      "encoding": "base64"
+    },
+    {
+      "locator": "C-binding.json",
+      "identity": {
+        "bytes": 2953,
+        "lf": 24,
+        "terminal_LF": true,
+        "sha256": "b92aea88604757be5f094cebf6ac034dc44196f4777e898793ef50adab9b282b"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "action-session-prefix.jsonl",
+      "identity": {
+        "bytes": 5159261,
+        "lf": 211,
+        "terminal_LF": true,
+        "sha256": "e125ba3ff55af19268640a9da6bb9ae3c97148203665e7224a60e0cb6c6b40c3"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "authentication.py",
+      "identity": {
+        "bytes": 9259,
+        "lf": 138,
+        "terminal_LF": true,
+        "sha256": "db0f7c657db155d27466eaa34e558b45cab2913ad7ccbb8befaabff7a4bde4f8"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "canonical-eight-addition-delta.json",
+      "identity": {
+        "bytes": 2709,
+        "lf": 0,
+        "terminal_LF": false,
+        "sha256": "e77b69d7c60952dd3f70eba39268a175615d21a898a14be260ec4d53d31a9369"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "committed-receipt.json",
+      "identity": {
+        "bytes": 1102746,
+        "lf": 9240,
+        "terminal_LF": true,
+        "sha256": "9dfa1fc69a80f7c3bb4c1e2765fdac0ce9a2b22de62332b249b47108bc249031"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "effectiveness.py",
+      "identity": {
+        "bytes": 7563,
+        "lf": 38,
+        "terminal_LF": true,
+        "sha256": "5998e6d3140f83daa980e8971387788ab986821294d0b132c2a353c1884a572e"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "final-receipt.json",
+      "identity": {
+        "bytes": 1103442,
+        "lf": 9251,
+        "terminal_LF": true,
+        "sha256": "66dec0f80a547c547d857b035e2ed24d6a228bb26cdb20f3beba887f37ef60bd"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "independent-integration-review.txt",
+      "identity": {
+        "bytes": 13158,
+        "lf": 120,
+        "terminal_LF": false,
+        "sha256": "c9e5597e9c0d053e5f31f8b959e491fd39a641b554d0fa63822e24c459e94ac1"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "p1-t1-transition.json",
+      "identity": {
+        "bytes": 26372263,
+        "lf": 12666,
+        "terminal_LF": true,
+        "sha256": "4fe4df5b14c2f2d7b9babfd4caa83f50e110d3232ce65725fae50541701a582e"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "prepublication-live.json",
+      "identity": {
+        "bytes": 586,
+        "lf": 16,
+        "terminal_LF": true,
+        "sha256": "fe23c58f20cbc730ec385901ce85487c084de1ff2e840d5eb817c41c1bd48ff7"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "prestage-receipt.json",
+      "identity": {
+        "bytes": 1001380,
+        "lf": 9208,
+        "terminal_LF": true,
+        "sha256": "cb24fea4a949f364337c9d57d9ecf1d730c707d287661550e1c2c86be3e3e9f6"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "published-receipt.json",
+      "identity": {
+        "bytes": 1103446,
+        "lf": 9251,
+        "terminal_LF": true,
+        "sha256": "054093b0ed392f303c2599ab5f391e93eb99a6f0c387476316eccc6044ec4f10"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "published-retrieval.json",
+      "identity": {
+        "bytes": 1761609,
+        "lf": 221,
+        "terminal_LF": true,
+        "sha256": "891eb4f81d2d7441c07185a512ee08a3c87254d5c962a556be5a62954caa6959"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "retrieval.py",
+      "identity": {
+        "bytes": 4123,
+        "lf": 36,
+        "terminal_LF": true,
+        "sha256": "dd713f19938dca991ef8080c49dd9b7fc923b8f673ddfee5753e37b9573bb1c0"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "staged-receipt.json",
+      "identity": {
+        "bytes": 1003839,
+        "lf": 9208,
+        "terminal_LF": true,
+        "sha256": "58405d1743bf42fe6c7cbe0cf8b10bf7babd14acf99d0169feba640d5f6c1807"
+      },
+      "retrieval": "Same embedded anchors JSON verified_external_evidence exact retained_bytes; zlib+base64."
+    },
+    {
+      "locator": "../ore-n0-repository-integration-c1/ACTIVATION-CONTRACT.md",
+      "identity": {
+        "bytes": 9156,
+        "lf": 46,
+        "terminal_LF": true,
+        "sha256": "82b544e91987aeb2ec7a5a52724fb06857996cbd05ab170747397fe62d68729b"
+      }
+    },
+    {
+      "locator": "../ore-n0-repository-integration-c1/INTEGRATION.md",
+      "identity": {
+        "bytes": 11806,
+        "lf": 59,
+        "terminal_LF": true,
+        "sha256": "f6f421304fbc4aa8ccd65cf8d707cb7163e8c5a085d7a1ba44383f4408559810"
+      }
+    },
+    {
+      "locator": "../ore-n0-repository-integration-c1/evidence/governing-C1-effectiveness-receipt.json",
+      "identity": {
+        "bytes": 169786,
+        "lf": 516,
+        "terminal_LF": true,
+        "sha256": "418c48ba1ce87291eca70876b65997bd081f6f77cbd8595919fad7bb34440086"
+      }
+    },
+    {
+      "locator": "../ore-n0-repository-integration-c1/evidence/C6-CANDIDATE.md",
+      "identity": {
+        "bytes": 32281,
+        "lf": 202,
+        "terminal_LF": true,
+        "sha256": "a025a8b007410cbd9bc30bb5f4f95246dbeac6c2f8caa34b6ed411803936cafa"
+      }
+    },
+    {
+      "locator": "../ore-n0-repository-integration-c1/evidence/C6-PASS-VERDICT.md",
+      "identity": {
+        "bytes": 18405,
+        "lf": 130,
+        "terminal_LF": true,
+        "sha256": "3996a05cfe2a24e3d0d88719cf51449a7dad419c55ac308e94abb6a5ce6f332e"
+      }
+    },
+    {
+      "locator": "../ore-n0-repository-integration-c1/evidence/C6-freeze-manifest.json",
+      "identity": {
+        "bytes": 141886,
+        "lf": 4343,
+        "terminal_LF": true,
+        "sha256": "05ea5c04d499b93e94b1c0a4357e0d3f523673d9c8830f207b5a0621217c226f"
+      }
+    },
+    {
+      "locator": "../ore-n0-repository-integration-c1/evidence/C6-FREEZE-RECEIPT.json",
+      "identity": {
+        "bytes": 3825,
+        "lf": 101,
+        "terminal_LF": true,
+        "sha256": "ff87e70dd5a643d22f4a88f62d39d26e30cbed2ff0d119ad14e9dccfa701eaa2"
+      }
+    },
+    {
+      "locator": "../ore-n0-repository-integration-c1/UPSTREAM-ORE-OBLIGATION.md",
+      "identity": {
+        "bytes": 2491,
+        "lf": 35,
+        "terminal_LF": true,
+        "sha256": "8e1bdb4589f27110209c0c542a9b99351ce5c90d64624b3c068b7854586f3f08"
+      }
+    },
+    {
+      "locator": "../ore-n0-repository-integration-c1/evidence/historical-ledger.json",
+      "identity": {
+        "bytes": 46518,
+        "lf": 723,
+        "terminal_LF": true,
+        "sha256": "7bcd9a67d19a43eac4b67ae1efb0cf1526082a60cb2e6956bac4bab161b1f39d"
+      }
+    },
+    {
+      "locator": "../ore-n0-repository-integration-c1/evidence/historical-ledger-C4-addendum.json",
+      "identity": {
+        "bytes": 6071,
+        "lf": 217,
+        "terminal_LF": true,
+        "sha256": "b8f8965b81511e1a56b48730e7b32e1a53536391e8b4dd70acf1d09f23224bfd"
+      }
+    },
+    {
+      "locator": "../ore-n0-repository-integration-c1/evidence/historical-ledger-C5-addendum.json",
+      "identity": {
+        "bytes": 1497,
+        "lf": 34,
+        "terminal_LF": true,
+        "sha256": "b62262309ab2c704f085a1287a620d8bcab52d085d0028079fd4f41500d6e0d5"
+      }
+    },
+    {
+      "locator": "../ore-n0-repository-integration-c1/evidence/historical-ledger-C6-addendum.json",
+      "identity": {
+        "bytes": 1763,
+        "lf": 43,
+        "terminal_LF": true,
+        "sha256": "231140ab829b3bc7f06e6f74d6a48db80ba728ca4a61f601e9a4a45dd0a86f95"
+      }
+    }
+  ],
+  "complete_activation_readiness_review": [
+    {
+      "path": "REVIEW.md",
+      "identity": {
+        "bytes": 54150,
+        "lf": 318,
+        "terminal_LF": true,
+        "sha256": "7b371223292bef71aafc26896ee73f325171bf199d1f0a2e67f1fec964fc3e2f"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "ADVERSARIAL-REVIEW.json",
+      "identity": {
+        "bytes": 7993,
+        "lf": 152,
+        "terminal_LF": true,
+        "sha256": "414c49e0c13a89e0ee256bd8d2cf34f1ed56e870b6bc2f93f5e5765294c51af2"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "ANCHOR-INVENTORY.json",
+      "identity": {
+        "bytes": 537921,
+        "lf": 9022,
+        "terminal_LF": true,
+        "sha256": "2f5de9de31c51da861264d41c327f6fb64ee59f60f8d3b80324597155fd9dc6c"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "C2-EMBEDDED-CHECK.json",
+      "identity": {
+        "bytes": 8972,
+        "lf": 242,
+        "terminal_LF": true,
+        "sha256": "76232d3e70bea11d2d5cb2bc1232310145282127b90c2a4d8fc4472da2523d79"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "FINAL-BOUNDARY.json",
+      "identity": {
+        "bytes": 182165,
+        "lf": 197,
+        "terminal_LF": true,
+        "sha256": "924e9712bc16fc402610ee8c4471c45904cc899700d5dfd64ab75d9f1909ac23"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "GOVERNANCE-CHECK.json",
+      "identity": {
+        "bytes": 78277,
+        "lf": 1958,
+        "terminal_LF": true,
+        "sha256": "ac9bb31b6f9a5e85e91fdd1b7229c562826d41077f1a2c72ef5a6261c7d929a7"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "HISTORICAL-NODE-CHECK.json",
+      "identity": {
+        "bytes": 2215200,
+        "lf": 36585,
+        "terminal_LF": true,
+        "sha256": "fada81b5fd3d710c675549f2f7346325c7f80e42afbc6214527196296fa229fc"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "LINEAGE-RETRIEVAL.json",
+      "identity": {
+        "bytes": 211573,
+        "lf": 2601,
+        "terminal_LF": true,
+        "sha256": "8ea1f2e3d4af163c20ed0384f8bcaaadf30631d2abcd7b4573a80838aa7e64d7"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "PUBLICATION-SUPPORT-CHECK.json",
+      "identity": {
+        "bytes": 19615,
+        "lf": 542,
+        "terminal_LF": true,
+        "sha256": "4a6cd606146ce4af7a47f7876bfa4764ae9a73b1946df8f256b9a9dfe9d515f7"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "RECEIPT-CLAIMS.json",
+      "identity": {
+        "bytes": 45373,
+        "lf": 952,
+        "terminal_LF": true,
+        "sha256": "0278f6ab4b010f94ec2c144b99e62a54729a4b81ca911cae4b36a773d05f6ad6"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "REMOTE-FULL-TREE.json",
+      "identity": {
+        "bytes": 191966,
+        "lf": 5329,
+        "terminal_LF": true,
+        "sha256": "b6436bd03385ce16e1bfdcf2c2dd15a26ef20d432fecccacee68bf8b078d659b"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "REMOTE-PACKAGE-RETRIEVAL.json",
+      "identity": {
+        "bytes": 8386,
+        "lf": 191,
+        "terminal_LF": true,
+        "sha256": "5b92fe759f710f9a17bb3c4215d7b2ce9b3aaac0d105b2b09fb57aeba95d1ecd"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "REPOSITORY-AUDIT.json",
+      "identity": {
+        "bytes": 3156665,
+        "lf": 95754,
+        "terminal_LF": true,
+        "sha256": "cb599633321e436fd63e3ee88ac9e9c7fcc2ad50bef6a0c5419a2ba5c639e935"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "audit.py",
+      "identity": {
+        "bytes": 6242,
+        "lf": 47,
+        "terminal_LF": true,
+        "sha256": "9970af8c6c3edcecab58f3ee6082b1148de654b37a9e55b1661d555a1714d244"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "extract-extra.py",
+      "identity": {
+        "bytes": 1565,
+        "lf": 24,
+        "terminal_LF": true,
+        "sha256": "504b4a44432bf23435f0d526738de6bce793f91219083ad6e7c050cc826c309b"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "extract.py",
+      "identity": {
+        "bytes": 1566,
+        "lf": 24,
+        "terminal_LF": true,
+        "sha256": "62cc7a72b4e2f150e17a0e0200d467da2f2817d2151712c9011d63a62fe462a2"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "final-check.py",
+      "identity": {
+        "bytes": 2040,
+        "lf": 16,
+        "terminal_LF": true,
+        "sha256": "21032832b94aae9aa7e8513e5bcaa19c7d5b69a35a8cd8af5c6733fffbd959cc"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "governance-check.py",
+      "identity": {
+        "bytes": 3244,
+        "lf": 32,
+        "terminal_LF": true,
+        "sha256": "ee945f6b22e96d4b66e0526107ccb6f4c9df328478c11bf4aa28c0e7566c5cff"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "ledger-check.py",
+      "identity": {
+        "bytes": 1682,
+        "lf": 23,
+        "terminal_LF": true,
+        "sha256": "88465eab706856c1ff1921ad6fc86219e6d2ff9a8fc22c6cb693057138d79cc7"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "remote.py",
+      "identity": {
+        "bytes": 1032,
+        "lf": 9,
+        "terminal_LF": true,
+        "sha256": "e689854201110774c333e90273003491bf92357358f826aa9ac32c079c246f49"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    },
+    {
+      "path": "report.py",
+      "identity": {
+        "bytes": 46089,
+        "lf": 241,
+        "terminal_LF": true,
+        "sha256": "99553ed9f7b241d3f53230ace864fb483bca7895b146af01c0892a51d4488385"
+      },
+      "result": "PASS exact complete review freeze authentication; support selected by actual claim dependency"
+    }
+  ],
+  "lineage": [
+    {
+      "level": "C6",
+      "authenticated_members": 543,
+      "saved": []
+    },
+    {
+      "level": "C5",
+      "authenticated_members": 530,
+      "saved": []
+    },
+    {
+      "level": "C4",
+      "authenticated_members": 515,
+      "saved": []
+    },
+    {
+      "level": "C3",
+      "authenticated_members": 390,
+      "saved": []
+    },
+    {
+      "level": "C2",
+      "authenticated_members": 2186,
+      "saved": [
+        "original-candidate/completion/git/index",
+        "original-candidate/evidence/redesign/anchors.json",
+        "original-candidate/evidence/redesign/candidate.txt",
+        "original-candidate/evidence/redesign/review.txt",
+        "original-candidate/originals/c2-review.txt",
+        "original-candidate/originals/c2.txt"
+      ]
+    }
+  ],
+  "published_package": {
+    "count": 37,
+    "commit": "d1c9fc56fc183cdcca83d82cc896e4859a00f4dc",
+    "parent": "063d823dc97f1a3690e26f8bb328385acb9d0aef",
+    "tree": "5e9f62e95c3a956e1d2a82d30859a214720652af",
+    "canonical_delta_sha256": "2e64bc07720a8e91b387724704d44860ee9a16fb5d5e364b46c11c5f97c12b1b",
+    "all_working_and_committed_members_match": true
+  },
+  "index_recovery": {
+    "path": "A — exact raw bytes",
+    "original_staged_file_found": false,
+    "exact_bytes_reconstructed": true,
+    "expected_sha256": "cd15512f695b4a83efb17cc04399daff604c3dcda9fa92328dce043e8b8b7faa",
+    "provenance": "RAW-INDEX-RETENTION.md"
+  },
+  "historical_dispositions": "unchanged",
+  "authority": "C1 EFFECTIVE-ACCEPTED governance only; C2 DA1–DA7 effective; C6/integration PASS scope unchanged; publication integrity PASS; activation readiness U/BLOCK"
+}

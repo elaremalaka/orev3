@@ -1,0 +1,50 @@
+{
+  "schema": "ore-n0-current-gate-entrypoint/0.2.0",
+  "artifact_id": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C2-ENTRYPOINT",
+  "revision": 2,
+  "status": "PROPOSED C2 supersession; independent C2 review pending",
+  "candidate_path": "ore-n0-durable-authority-publication-handoff-recovery-c2/CURRENT-NEXT-GATE.json",
+  "candidate_identity": {
+    "bytes": 9185,
+    "lf": 183,
+    "terminal_LF": true,
+    "sha256": "7162a02531d2db2607cca8891a5d352097efbd97aad411aa992f88e049583603"
+  },
+  "supersedes": [
+    {
+      "path": "docs/research/governance/ORE-N0-CURRENT-GATE.json",
+      "identity": {
+        "bytes": 1333,
+        "lf": 24,
+        "terminal_LF": true,
+        "sha256": "ea952d1932326aaf6d85d3d4e9399fa9c68983442c79beb9951cd0a594526192"
+      },
+      "relationship": "superseded for present N0 routing only; exact historical record preserved"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/CURRENT-NEXT-GATE.json",
+      "identity": {
+        "bytes": 4621,
+        "lf": 99,
+        "terminal_LF": true,
+        "sha256": "0cfbbfb0dcb799e6b58eb213014b25f877aebbfbf27016c22fd266136bbdb8dd"
+      },
+      "relationship": "superseded for present N0 routing only; exact historical record preserved"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-repository-integration-c1/CURRENT-NEXT-GATE.json",
+      "identity": {
+        "bytes": 5654,
+        "lf": 120,
+        "terminal_LF": true,
+        "sha256": "10471c83b968c8557492aee33f9a835c7786cbbfab7ae0a5dedc5b562f239c04"
+      },
+      "relationship": "superseded for present N0 routing only; exact historical record preserved"
+    }
+  ],
+  "selection_rule": "Build the explicit authenticated supersession graph across top-level ORE N0 entrypoints. Select the unique terminal successor, never lexical order or mtime. This entrypoint supersedes the exact earlier entrypoint and order-3/order-0 gates only for present routing. Missing dependency U/BLOCK; conflicting/cyclic/multiple terminal authorities FAIL/BLOCK with residual U. A failed new entrypoint must not fall back to the completed C1 review.",
+  "next_gate": "ORE N0 — DURABLE RECOVERY ADOPTION / PUBLICATION AUTHOR",
+  "author_lane_next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 DURABLE AUTHORITY / PUBLICATION HANDOFF RECOVERY C2",
+  "future_post_publication_next_gate": "FRESH INDEPENDENT HIGH-RISK REVIEW — ORE N0 RECOVERY PUBLICATION / ACTIVATION READINESS",
+  "authority_ceiling": "Post-review routing and exact retention only. C2 is unreviewed; no publication, activation, preflight, substantive CD or readiness PASS."
+}

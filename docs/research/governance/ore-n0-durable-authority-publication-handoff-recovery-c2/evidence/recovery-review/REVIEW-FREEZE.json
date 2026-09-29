@@ -1,0 +1,238 @@
+{
+  "verdict": "RR-ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1-PASS",
+  "reviewer_lane": "01a0edc7-1267-7970-8d61-d7cc12f00aa5",
+  "frozen_UTC": "2026-09-29T15:37:52.508533+00:00",
+  "verdict_file": "REVIEW.md",
+  "identity": {
+    "bytes": 47520,
+    "lf": 279,
+    "terminal_LF": true,
+    "sha256": "442b89751ead8f7ebf2bc756ff98cd4ea9abe766c00f49616e4b83a654d5e085"
+  },
+  "reviewed_author_freeze_sha256": "40c79bbc7c019c6b52ddbfd3a750fb0d84b3f12eafa32e9ba6a51ea5666424b2",
+  "reviewed_canonical_delta_sha256": "aa8ebf3d40a2e59d8c8d968d24452d700603c32f286c319d363b30c447efa4d1",
+  "member_count": 62,
+  "retained_evidence_count": 49,
+  "publication_integrity": "PASS",
+  "activation_readiness": "U/BLOCK",
+  "N0_established": false,
+  "N0_activated": false,
+  "T_N0": null,
+  "prospective_preflight_executed": false,
+  "CD_substantive_status": "BLOCKED",
+  "upstream_ore_obligation": "REQUIRED and UNSATISFIED",
+  "historical_ledger": "unchanged",
+  "next_gate": "ORE N0 — DURABLE RECOVERY ADOPTION / PUBLICATION AUTHOR",
+  "next_gate_count": 1,
+  "next_gate_executed": false,
+  "retention": "External review artifact; requires compatible separately authorized exact durable retention/binding before later authority reliance; not self-published or activation evidence",
+  "supporting_files": [
+    {
+      "path": "AUTHENTICATION-RESULT.json",
+      "identity": {
+        "bytes": 1405,
+        "lf": 56,
+        "terminal_LF": true,
+        "sha256": "e015fda83885e0e03aef9ab822cbebaf1d0d8455e205b9f6dff25fdd096b4d28"
+      }
+    },
+    {
+      "path": "MEMBER-AUDIT.json",
+      "identity": {
+        "bytes": 40743,
+        "lf": 1056,
+        "terminal_LF": true,
+        "sha256": "51115ebd14ed1db1c733c0f01f670178221434c59182f8f47e4e11532e020f6c"
+      }
+    },
+    {
+      "path": "CANONICAL-DELTA.json",
+      "identity": {
+        "bytes": 24745,
+        "lf": 0,
+        "terminal_LF": false,
+        "sha256": "aa8ebf3d40a2e59d8c8d968d24452d700603c32f286c319d363b30c447efa4d1"
+      }
+    },
+    {
+      "path": "INHERITED-AUDIT.json",
+      "identity": {
+        "bytes": 66,
+        "lf": 6,
+        "terminal_LF": true,
+        "sha256": "f12e3a8e836de03d9c998add884de0ebaaa9e08a1fd3442b4c5bbda66740e4cb"
+      }
+    },
+    {
+      "path": "REPOSITORY-STATE.json",
+      "identity": {
+        "bytes": 1100401,
+        "lf": 171,
+        "terminal_LF": true,
+        "sha256": "05f900aaa7dc7db6db060b599d97aac3053f2f4bdb5ee8f29555ae6551d78a7b"
+      }
+    },
+    {
+      "path": "RETAINED-EVIDENCE-AUDIT.json",
+      "identity": {
+        "bytes": 95499,
+        "lf": 1864,
+        "terminal_LF": true,
+        "sha256": "6eae45d5310b652705e55578f90bd7ab8967be660612d8d9422ad22162cf0a5e"
+      }
+    },
+    {
+      "path": "lineage-validation.json",
+      "identity": {
+        "bytes": 1853,
+        "lf": 80,
+        "terminal_LF": true,
+        "sha256": "3ca6a812bc707f45184b1b67d3feb97d1155a514acbdb1c11f86a9c29c6bded1"
+      }
+    },
+    {
+      "path": "candidate-validation.json",
+      "identity": {
+        "bytes": 4279,
+        "lf": 145,
+        "terminal_LF": true,
+        "sha256": "0d331e520f58485363fc63e8b89684c2b64085c935a219b74bf688a6930c296b"
+      }
+    },
+    {
+      "path": "feature-tests.txt",
+      "identity": {
+        "bytes": 420,
+        "lf": 6,
+        "terminal_LF": true,
+        "sha256": "4ac75f4e87ae0de00dfa3e9f28f83558bf989c1f7df42d7dc3a6e0c6080c1f13"
+      }
+    },
+    {
+      "path": "ARCHIVE-RETRIEVAL.json",
+      "identity": {
+        "bytes": 1542,
+        "lf": 38,
+        "terminal_LF": true,
+        "sha256": "33a2d5447c74d4afe3ca097eae6756626284de7f995b4def2d48f0e7cd201838"
+      }
+    },
+    {
+      "path": "INDEX-INDEPENDENT.json",
+      "identity": {
+        "bytes": 1196,
+        "lf": 33,
+        "terminal_LF": true,
+        "sha256": "cb4bd83ae5edbf2cb8a4a0a8c691c6a38ea24fa5cc03b6d7f4f6c386cd975317"
+      }
+    },
+    {
+      "path": "EMBEDDED-AUTHORITY.json",
+      "identity": {
+        "bytes": 12357,
+        "lf": 420,
+        "terminal_LF": true,
+        "sha256": "03523c5800e6fa74f1dc22f62597faf0a8940919ccc12cb0d4a788a8e51f0f83"
+      }
+    },
+    {
+      "path": "INDEPENDENT-ATTACKS.json",
+      "identity": {
+        "bytes": 27073,
+        "lf": 774,
+        "terminal_LF": true,
+        "sha256": "a378253c63268efb7aea17be531e934e5841525b9e25b1d1e51198223000e808"
+      }
+    },
+    {
+      "path": "FINAL-STATE-COMPARISON.json",
+      "identity": {
+        "bytes": 297096,
+        "lf": 295,
+        "terminal_LF": true,
+        "sha256": "6c64705acc94ef434db788bd919dcaed39744e8b33ba33aab30d5ce8e6ca4736"
+      }
+    },
+    {
+      "path": "GATE-INVENTORY.json",
+      "identity": {
+        "bytes": 2722,
+        "lf": 52,
+        "terminal_LF": true,
+        "sha256": "f44684181809d3b58a8af619fc0ef3458d178bf0ee649f64e56ccae874374de9"
+      }
+    },
+    {
+      "path": "SOURCE-ALIAS-CHECK.json",
+      "identity": {
+        "bytes": 242,
+        "lf": 6,
+        "terminal_LF": true,
+        "sha256": "0b97b3f2036466a786002b8508898be1fad90454f6db02f28cb8a710147b425d"
+      }
+    },
+    {
+      "path": "audit.py",
+      "identity": {
+        "bytes": 4671,
+        "lf": 32,
+        "terminal_LF": true,
+        "sha256": "8df6f607bb0a7d44a1e3853d786903a72dc1344f2d9fceb54f0ae6572e46179d"
+      }
+    },
+    {
+      "path": "extract.py",
+      "identity": {
+        "bytes": 1641,
+        "lf": 19,
+        "terminal_LF": true,
+        "sha256": "f226967b51afc247853197a33e939b6d1750d8b35c6f08cff3c1a1f5f32e4c49"
+      }
+    },
+    {
+      "path": "index_governance.py",
+      "identity": {
+        "bytes": 3308,
+        "lf": 31,
+        "terminal_LF": true,
+        "sha256": "6116087f976127cd017ed45d5e7585490704e29c08220f80d7f98fe505b53c33"
+      }
+    },
+    {
+      "path": "attacks.py",
+      "identity": {
+        "bytes": 5560,
+        "lf": 35,
+        "terminal_LF": true,
+        "sha256": "b51a1e2421398910d381c30597a1c84d35f5aa506385bfb9a147bb0adfe094f9"
+      }
+    },
+    {
+      "path": "final_state.py",
+      "identity": {
+        "bytes": 2325,
+        "lf": 18,
+        "terminal_LF": true,
+        "sha256": "2e5b3e18b6b4f9453ca089219c0b4e7cc74fdeccbef66e60562849c0ac611de2"
+      }
+    },
+    {
+      "path": "LIVE-REMOTE.json",
+      "identity": {
+        "bytes": 619,
+        "lf": 15,
+        "terminal_LF": true,
+        "sha256": "feab93e9cbf0e85f375ca95960388644f6a7aca5dbf9886d6320719dfaa02ed2"
+      }
+    },
+    {
+      "path": "REVIEWED-AUTHOR-FREEZE.json",
+      "identity": {
+        "bytes": 42601,
+        "lf": 1155,
+        "terminal_LF": true,
+        "sha256": "40c79bbc7c019c6b52ddbfd3a750fb0d84b3f12eafa32e9ba6a51ea5666424b2"
+      }
+    }
+  ]
+}

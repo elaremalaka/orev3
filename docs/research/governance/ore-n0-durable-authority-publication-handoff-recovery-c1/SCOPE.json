@@ -1,0 +1,1101 @@
+{
+  "package": "ORE-N0-DURABLE-AUTHORITY-PUBLICATION-HANDOFF-RECOVERY-C1",
+  "status": "DRAFT-UNREVIEWED",
+  "frozen_UTC": "2026-09-29T06:17:52.779802+00:00",
+  "baseline": "d1c9fc56fc183cdcca83d82cc896e4859a00f4dc",
+  "paths": [
+    {
+      "path": "docs/research/governance/ORE-N0-CURRENT-GATE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 2,
+      "justification": "Discoverable additive entrypoint; exact predecessor and candidate routing, no edit to historical gate."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/AUTHENTICATION.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Authenticated governing identities and selected evidence closure."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/AUTHOR-VALIDATION.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Documentary checks, adversarial results and repository-only retrieval evidence."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/CURRENT-NEXT-GATE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 2,
+      "justification": "Explicit ordered candidate supersession and one next review gate."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/MANIFEST.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact candidate member identities; outer freeze binds this manifest."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/POST-EDIT-STATE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 2,
+      "justification": "Bounded after-state assessment; no action authority escalation."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/PRE-EDIT-STATE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 2,
+      "justification": "Fresh baseline and drift check before candidate authoring."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/RAW-INDEX-RETENTION.md",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 3,
+      "justification": "Claim-scoped exact-raw recovery proof, provenance, consumers and invalidation."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/RECOVERY.md",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Bounded retention design and acceptance procedure; all three recovery gaps."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/RETENTION-MAP.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Per-artifact claim, provenance, retention status, retrieval and invalidation."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/SCOPE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 2,
+      "justification": "Frozen additions-only action scope and absent pre-edit identities."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/documentary/reconstruct_index.py",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 3,
+      "justification": "Deterministic exact-byte staged index reconstruction without Git writes."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/documentary/verify.py",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Read-only deterministic documentary and adversarial checks."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/RECOVERY-AUTHORITY-original-record.jsonl",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 2,
+      "justification": "Exact current recovery-author permission and prohibitions; original session /Users/erale/.codex/sessions/2026/09/28/rollout-2026-09-28T23-11-18-01a0ebc9-fbc7-7c43-82ed-250264b724ff.jsonl line 9"
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/FINAL-BOUNDARY.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 2,
+      "justification": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/PUBLICATION-SUPPORT-CHECK.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 2,
+      "justification": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/RECEIPT-CLAIMS.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 2,
+      "justification": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REMOTE-FULL-TREE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 2,
+      "justification": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REMOTE-PACKAGE-RETRIEVAL.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 2,
+      "justification": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REPOSITORY-AUDIT.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 2,
+      "justification": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REVIEW-FREEZE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 2,
+      "justification": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REVIEW.md",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 2,
+      "justification": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/index/prepublication-index.bin",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 3,
+      "justification": "Exact prepublication index already authenticated in published nested C2 archive; direct retrieval removes temporary-path dependency."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/index/publication-index.bin",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 3,
+      "justification": "Exact publication/readiness/recovery-entry raw index, including entry metadata, flags, extensions and checksum."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/index/staged-index.bin",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 3,
+      "justification": "Exact staged snapshot reconstructed and checked against independently frozen original SHA-256; no equivalent representation."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-AUTHOR-FREEZE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-CANONICAL-DELTA.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-FILE-IDENTITIES.md",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-FINAL-REPOSITORY-BOUNDARY.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-PRE-EDIT-SCOPE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/REVIEW-FREEZE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS.md",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/anchor-retrieval.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/governance-review.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/independent-attacks.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/inherited-anchor-review.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/repository-review.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ACTION-AUTHORITY-original-record.jsonl",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ACTION-ENVELOPE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ACTION-SESSION-PREFIX.jsonl",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/AUTHENTICATED-PACKAGE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/COMMIT-AUTHENTICATION.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/COMMIT-MESSAGE.txt",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/FINAL-LIVE-REMOTE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/FINAL-REPOSITORY-BOUNDARY.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/POST-PUSH-REMOTE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PRE-PUBLICATION-BOUNDARY.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PRE-PUBLICATION-REMOTE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PUBLICATION-ADOPTION-RECEIPT.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PUBLICATION-CONTINUATION.md",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PUBLICATION-FREEZE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/STAGED-FREEZE.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/TRANSITION-COMMANDS.jsonl",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/VALIDATION-CORRECTION.json",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-auth.py",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-final-initial.py",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-final.py",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-prepare.py",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-push-retry.py",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-push.py",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-receipt.py",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    },
+    {
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-transition.py",
+      "operation": "add",
+      "before": null,
+      "before_status": "ABSENT",
+      "blocker": 1,
+      "justification": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention."
+    }
+  ],
+  "canonical_intended_delta_identity": {
+    "bytes": 22173,
+    "lf": 0,
+    "terminal_LF": false,
+    "sha256": "fbfdf334d186b827aeaf949822e5c2fb87b41427a2b35c678e6cf7458f59d667"
+  },
+  "canonical_encoding": "ordered path-sorted operation records, compact sorted-key UTF-8 JSON, no terminal LF",
+  "copies": [
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/PUBLICATION-FREEZE.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PUBLICATION-FREEZE.json",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 10221,
+        "lf": 336,
+        "terminal_LF": true,
+        "sha256": "7cc962d673c5a0ebd33df44133f84e20688a7fe7c74351cf53eb3fac52e255d3"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ACTION-AUTHORITY-original-record.jsonl",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ACTION-AUTHORITY-original-record.jsonl",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 10263,
+        "lf": 1,
+        "terminal_LF": true,
+        "sha256": "bf59e9cd63b14fa028b95fb316a6b1553e9549ccb36958b075389c315125e277"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ACTION-ENVELOPE.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ACTION-ENVELOPE.json",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 2138,
+        "lf": 32,
+        "terminal_LF": true,
+        "sha256": "cf6df730584fe93859842f71a021112ad97fbadacdcdcf512da5249375377e11"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ACTION-SESSION-PREFIX.jsonl",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ACTION-SESSION-PREFIX.jsonl",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 1289040,
+        "lf": 241,
+        "terminal_LF": true,
+        "sha256": "6de24b53cc6672fb195f62e32c42f2c3bdc56497cfb7d1a84a5ce91e3cc3e45b"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/AUTHENTICATED-PACKAGE.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/AUTHENTICATED-PACKAGE.json",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 18317,
+        "lf": 535,
+        "terminal_LF": true,
+        "sha256": "f76086df6ccf0045166baee86320296ae8245d8b1350d61a3a96d39caa0e67e1"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/COMMIT-AUTHENTICATION.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/COMMIT-AUTHENTICATION.json",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 196605,
+        "lf": 538,
+        "terminal_LF": true,
+        "sha256": "412c30d22a39ffc06118f1c040cdc8a04588f12990743b26e1b5743299d78425"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/COMMIT-MESSAGE.txt",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/COMMIT-MESSAGE.txt",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 895,
+        "lf": 14,
+        "terminal_LF": true,
+        "sha256": "af1fa7e5bce3429f51b86590dfe41dc3634a0a9a46a91fc74f627f58ce960cf8"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/FINAL-LIVE-REMOTE.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/FINAL-LIVE-REMOTE.json",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 367,
+        "lf": 14,
+        "terminal_LF": true,
+        "sha256": "e3e71502f81b43ac248398cf3fda386eef6c1f21627048ce6ae971baf0600c0b"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/FINAL-REPOSITORY-BOUNDARY.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/FINAL-REPOSITORY-BOUNDARY.json",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 3953424,
+        "lf": 85735,
+        "terminal_LF": true,
+        "sha256": "dc06ab05d27d05600044277a150681771090d0657a13995b033bbb5bdc6bbd4e"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/POST-PUSH-REMOTE.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/POST-PUSH-REMOTE.json",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 359,
+        "lf": 9,
+        "terminal_LF": true,
+        "sha256": "55e760f19742dfb570b2ea9dd4f12db2c22651d52147cf72145841756b34c3ca"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/PRE-PUBLICATION-BOUNDARY.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PRE-PUBLICATION-BOUNDARY.json",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 4544774,
+        "lf": 99012,
+        "terminal_LF": true,
+        "sha256": "39defe05b63a08dcd346a69b50b8e8f20d4319fed591f38d1aa1d825ceaec131"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/PRE-PUBLICATION-REMOTE.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PRE-PUBLICATION-REMOTE.json",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 606,
+        "lf": 12,
+        "terminal_LF": true,
+        "sha256": "50ecf4209a557e85dcb3caf5415f707de935d6b707021b48ada49c43ca16ff21"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/PUBLICATION-ADOPTION-RECEIPT.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PUBLICATION-ADOPTION-RECEIPT.json",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 27407,
+        "lf": 667,
+        "terminal_LF": true,
+        "sha256": "8436af27bda385083d5295ff6ae8fb33a3486d6d04f07e5f1e8408cd8acaa5d0"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/PUBLICATION-CONTINUATION.md",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/PUBLICATION-CONTINUATION.md",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 2839,
+        "lf": 37,
+        "terminal_LF": true,
+        "sha256": "062cae0df0065b6f800d0a66f07167a7bf549aa315f09d730744320989628b72"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/STAGED-FREEZE.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/STAGED-FREEZE.json",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 106267,
+        "lf": 533,
+        "terminal_LF": true,
+        "sha256": "ccc52d112ea4a0262c538d77297aec5583efc874821fb2d4e426af5d7aac5aca"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/TRANSITION-COMMANDS.jsonl",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/TRANSITION-COMMANDS.jsonl",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 344268,
+        "lf": 120,
+        "terminal_LF": true,
+        "sha256": "6157f62c95887186fd23b0d51c7eebf5dd1b93c43ecf3eda6eb2a4c42d49412f"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/VALIDATION-CORRECTION.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/VALIDATION-CORRECTION.json",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 506,
+        "lf": 5,
+        "terminal_LF": true,
+        "sha256": "7d872180c71c6bdcd939ce7bb05298f74cfda330194d0ca9b6148be40647a9a4"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-auth.py",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-auth.py",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 4609,
+        "lf": 33,
+        "terminal_LF": true,
+        "sha256": "16050fc065fd100d7823b922f72d8a7a647d179a9e2f40dda09c20ab7e0de065"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-final-initial.py",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-final-initial.py",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 3697,
+        "lf": 27,
+        "terminal_LF": true,
+        "sha256": "35ba6c715696b4c55ab0b8ac940f38c58cb4688b79875f80c18cd4cddfd85429"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-final.py",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-final.py",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 3956,
+        "lf": 31,
+        "terminal_LF": true,
+        "sha256": "e167254e5716a8ad21fce40b3276ddbd972addacd854b6b4be32dd953f1ec396"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-prepare.py",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-prepare.py",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 4642,
+        "lf": 23,
+        "terminal_LF": true,
+        "sha256": "b067c573df91bf994bdc6df68d47442197b764587c351a3a46f75820dcdeeae3"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-push-retry.py",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-push-retry.py",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 1983,
+        "lf": 15,
+        "terminal_LF": true,
+        "sha256": "dff3d3e4baf45c7a80e538165360a98c1e58d40cefe761005345c16871b21733"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-push.py",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-push.py",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 1921,
+        "lf": 15,
+        "terminal_LF": true,
+        "sha256": "55e34ffcb370d99d3e4b774f974cc742c7ef7c29304b02ef775725ec9051d503"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-receipt.py",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-receipt.py",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 11060,
+        "lf": 13,
+        "terminal_LF": true,
+        "sha256": "999ef10577e98839cc085831afac0deb01acf94a82107d4050ffe95b99bb9a49"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb6e-5f96-7000-b217-ab265e6f2e5e/ore-publication-transition.py",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/publication/ore-publication-transition.py",
+      "blocker": 1,
+      "proposition": "Exact publication authorization, ordered action/transition, boundary, receipt or invoked capture procedure; source code is inert evidence, never executed from retention.",
+      "source_identity": {
+        "bytes": 3645,
+        "lf": 30,
+        "terminal_LF": true,
+        "sha256": "1ae731d0e733f96bc087b2b0f88fa8876e60710c0826428f3fcfa548b962e713"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb15-819f-75d1-b221-939a84121556/C1-AUTHOR-FREEZE.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-AUTHOR-FREEZE.json",
+      "blocker": 1,
+      "proposition": "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding.",
+      "source_identity": {
+        "bytes": 44172,
+        "lf": 1243,
+        "terminal_LF": true,
+        "sha256": "a938e15517035f9e1b484833a74c48b7f3e83072247c9820f9d33c7dd776ee6b"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb15-819f-75d1-b221-939a84121556/C1-CANONICAL-DELTA.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-CANONICAL-DELTA.json",
+      "blocker": 1,
+      "proposition": "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding.",
+      "source_identity": {
+        "bytes": 13460,
+        "lf": 0,
+        "terminal_LF": false,
+        "sha256": "2e64bc07720a8e91b387724704d44860ee9a16fb5d5e364b46c11c5f97c12b1b"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb15-819f-75d1-b221-939a84121556/C1-FILE-IDENTITIES.md",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-FILE-IDENTITIES.md",
+      "blocker": 1,
+      "proposition": "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding.",
+      "source_identity": {
+        "bytes": 5479,
+        "lf": 53,
+        "terminal_LF": true,
+        "sha256": "43c08a7ce1a9048c79c817d69586fe107afa3ce67fdf5d95ff194ce34cdbaa88"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb15-819f-75d1-b221-939a84121556/C1-FINAL-REPOSITORY-BOUNDARY.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-FINAL-REPOSITORY-BOUNDARY.json",
+      "blocker": 1,
+      "proposition": "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding.",
+      "source_identity": {
+        "bytes": 4505502,
+        "lf": 93448,
+        "terminal_LF": true,
+        "sha256": "5757b1764f3541e4dd3ead19d96c0948968fc799d52e622e5d7c92fdb30eca1d"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb15-819f-75d1-b221-939a84121556/C1-PRE-EDIT-SCOPE.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-author/C1-PRE-EDIT-SCOPE.json",
+      "blocker": 1,
+      "proposition": "Exact reviewed integration author freeze, membership, canonical delta and pre/post boundary binding.",
+      "source_identity": {
+        "bytes": 10881,
+        "lf": 326,
+        "terminal_LF": true,
+        "sha256": "93fbd0573ede5b2e68270393ad23b210218864a04f2ca6d896be2f715437c826"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb5b-7133-7f92-be4c-c11e13d66ae8/REVIEW-FREEZE.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/REVIEW-FREEZE.json",
+      "blocker": 1,
+      "proposition": "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support.",
+      "source_identity": {
+        "bytes": 1073,
+        "lf": 21,
+        "terminal_LF": true,
+        "sha256": "d32a3c45cd599d8e8fcac92442090d8e226ce8d8b8ed0bb95ea1622d203688b5"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb5b-7133-7f92-be4c-c11e13d66ae8/RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS.md",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/RR-ORE-N0-REPOSITORY-INTEGRATION-C1-PASS.md",
+      "blocker": 1,
+      "proposition": "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support.",
+      "source_identity": {
+        "bytes": 41748,
+        "lf": 272,
+        "terminal_LF": true,
+        "sha256": "060db9a1730a55710095142dcebb35e158571988e707f7ce24cca02f9a2266ad"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb5b-7133-7f92-be4c-c11e13d66ae8/anchor-retrieval.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/anchor-retrieval.json",
+      "blocker": 1,
+      "proposition": "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support.",
+      "source_identity": {
+        "bytes": 6291,
+        "lf": 219,
+        "terminal_LF": true,
+        "sha256": "6f59e4e69012076d2a8f07e9ce378d8376dff6305ba4bdb9a04d5f93beaac16b"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb5b-7133-7f92-be4c-c11e13d66ae8/governance-review.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/governance-review.json",
+      "blocker": 1,
+      "proposition": "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support.",
+      "source_identity": {
+        "bytes": 32948,
+        "lf": 724,
+        "terminal_LF": true,
+        "sha256": "5e35f27f8d8781f64c0e3245cb8e1b77cf204746bfe1d47311c098085e17709c"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb5b-7133-7f92-be4c-c11e13d66ae8/independent-attacks.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/independent-attacks.json",
+      "blocker": 1,
+      "proposition": "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support.",
+      "source_identity": {
+        "bytes": 1481,
+        "lf": 62,
+        "terminal_LF": true,
+        "sha256": "8622224fb920b3392aa1fa15d8e43351eb6bac3a493122aa61100cc78a98bca6"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb5b-7133-7f92-be4c-c11e13d66ae8/inherited-anchor-review.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/inherited-anchor-review.json",
+      "blocker": 1,
+      "proposition": "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support.",
+      "source_identity": {
+        "bytes": 283292,
+        "lf": 4277,
+        "terminal_LF": true,
+        "sha256": "f6b2c4ef0f81927c6beb7d5df70cab4a8c69658a0ae728c0b53cf70bdbb8652e"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb5b-7133-7f92-be4c-c11e13d66ae8/repository-review.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/integration-review/repository-review.json",
+      "blocker": 1,
+      "proposition": "Complete independent integration PASS and its necessary exact authority/retrieval/boundary/adverse-case support.",
+      "source_identity": {
+        "bytes": 4372624,
+        "lf": 93550,
+        "terminal_LF": true,
+        "sha256": "51b61e4cb95f366cd63bff5364a7e66784280b10e97b2921c6a8e48ee2352074"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/REVIEW.md",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REVIEW.md",
+      "blocker": 2,
+      "proposition": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review.",
+      "source_identity": {
+        "bytes": 54150,
+        "lf": 318,
+        "terminal_LF": true,
+        "sha256": "7b371223292bef71aafc26896ee73f325171bf199d1f0a2e67f1fec964fc3e2f"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/REVIEW-FREEZE.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REVIEW-FREEZE.json",
+      "blocker": 2,
+      "proposition": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review.",
+      "source_identity": {
+        "bytes": 5785,
+        "lf": 204,
+        "terminal_LF": true,
+        "sha256": "c299263d6fb846730e30dfd7acb50e82b623cb51a2efcd3932bda6768e34645b"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/FINAL-BOUNDARY.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/FINAL-BOUNDARY.json",
+      "blocker": 2,
+      "proposition": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review.",
+      "source_identity": {
+        "bytes": 182165,
+        "lf": 197,
+        "terminal_LF": true,
+        "sha256": "924e9712bc16fc402610ee8c4471c45904cc899700d5dfd64ab75d9f1909ac23"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/PUBLICATION-SUPPORT-CHECK.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/PUBLICATION-SUPPORT-CHECK.json",
+      "blocker": 2,
+      "proposition": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review.",
+      "source_identity": {
+        "bytes": 19615,
+        "lf": 542,
+        "terminal_LF": true,
+        "sha256": "4a6cd606146ce4af7a47f7876bfa4764ae9a73b1946df8f256b9a9dfe9d515f7"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/RECEIPT-CLAIMS.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/RECEIPT-CLAIMS.json",
+      "blocker": 2,
+      "proposition": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review.",
+      "source_identity": {
+        "bytes": 45373,
+        "lf": 952,
+        "terminal_LF": true,
+        "sha256": "0278f6ab4b010f94ec2c144b99e62a54729a4b81ca911cae4b36a773d05f6ad6"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/REMOTE-FULL-TREE.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REMOTE-FULL-TREE.json",
+      "blocker": 2,
+      "proposition": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review.",
+      "source_identity": {
+        "bytes": 191966,
+        "lf": 5329,
+        "terminal_LF": true,
+        "sha256": "b6436bd03385ce16e1bfdcf2c2dd15a26ef20d432fecccacee68bf8b078d659b"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/REMOTE-PACKAGE-RETRIEVAL.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REMOTE-PACKAGE-RETRIEVAL.json",
+      "blocker": 2,
+      "proposition": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review.",
+      "source_identity": {
+        "bytes": 8386,
+        "lf": 191,
+        "terminal_LF": true,
+        "sha256": "5b92fe759f710f9a17bb3c4215d7b2ce9b3aaac0d105b2b09fb57aeba95d1ecd"
+      }
+    },
+    {
+      "source": "/Users/erale/.codex/visualizations/2026/09/29/01a0eb9e-ab48-78d0-8ce4-76ae5ae623f6/REPOSITORY-AUDIT.json",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/activation-readiness/REPOSITORY-AUDIT.json",
+      "blocker": 2,
+      "proposition": "Authenticated publication integrity PASS and activation readiness U/BLOCK; exact postpublication supersession and independent boundary/remote evidence. No new review.",
+      "source_identity": {
+        "bytes": 3156665,
+        "lf": 95754,
+        "terminal_LF": true,
+        "sha256": "cb599633321e436fd63e3ee88ac9e9c7fcc2ad50bef6a0c5419a2ba5c639e935"
+      }
+    },
+    {
+      "source": "/private/tmp/ore-durable-recovery/lineage/C2/original-candidate/completion/git/index",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/index/prepublication-index.bin",
+      "blocker": 3,
+      "proposition": "Exact prepublication index already authenticated in published nested C2 archive; direct retrieval removes temporary-path dependency.",
+      "source_identity": {
+        "bytes": 86080,
+        "lf": 263,
+        "terminal_LF": false,
+        "sha256": "07d944187853f09e383860d24370e5c18052ff962e9bef5133082d739e647fc4"
+      }
+    },
+    {
+      "source": "/Users/erale/Documents/orev3/.git/index",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/index/publication-index.bin",
+      "blocker": 3,
+      "proposition": "Exact publication/readiness/recovery-entry raw index, including entry metadata, flags, extensions and checksum.",
+      "source_identity": {
+        "bytes": 91883,
+        "lf": 272,
+        "terminal_LF": false,
+        "sha256": "ff65baf0e554bdcdaa1024c15fd6c0d8253f307db237f8f6e743f292a6c99699"
+      }
+    },
+    {
+      "source": "/private/tmp/ore-durable-recovery/staged-index.bin",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/index/staged-index.bin",
+      "blocker": 3,
+      "proposition": "Exact staged snapshot reconstructed and checked against independently frozen original SHA-256; no equivalent representation.",
+      "source_identity": {
+        "bytes": 91637,
+        "lf": 266,
+        "terminal_LF": false,
+        "sha256": "cd15512f695b4a83efb17cc04399daff604c3dcda9fa92328dce043e8b8b7faa"
+      }
+    },
+    {
+      "source": "/private/tmp/ore-durable-recovery/RECOVERY-AUTHORITY-original-record.jsonl",
+      "path": "docs/research/governance/ore-n0-durable-authority-publication-handoff-recovery-c1/evidence/RECOVERY-AUTHORITY-original-record.jsonl",
+      "blocker": 2,
+      "proposition": "Exact current recovery-author permission and prohibitions; original session /Users/erale/.codex/sessions/2026/09/28/rollout-2026-09-28T23-11-18-01a0ebc9-fbc7-7c43-82ed-250264b724ff.jsonl line 9",
+      "source_identity": {
+        "bytes": 15469,
+        "lf": 1,
+        "terminal_LF": true,
+        "sha256": "2e6df8ed69293f13be7a74ed7f80814ffe5112b63e9377117242926243777744"
+      }
+    }
+  ]
+}
